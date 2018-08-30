@@ -1,0 +1,100 @@
+# Four Examples
+
+## Multinomial models
+
+Will be the main example used in all sections. A short general intro to 
+multinomial models
+
+### Peppered Moths
+
+```{r moth_figure, echo = FALSE, out.width="70%", fig.align='center'}
+knitr::include_graphics("figures/peppered-moth.jpg")
+```
+
+Three alleles, and six different genotypes (CC, CI, CT, II, IT and TT).
+
+Three different phenotypes (black, mottled, light colored).
+
+Allele frequencies: $p_C$, $p_I$, $p_T$ with $p_C + p_I + p_T = 1.$
+
+The Peppered Moth is called 'Birkemåler' in Danish. There is a nice collection 
+of these in different colors in the Zoological Museum. The alleles are ordered 
+in terms of dominance as C > I > T. Moths with genotype including C are dark. Moths 
+with genotype TT are light colored. Moths with genotypes II and IT are mottled. 
+
+The peppered moth provided an [early demonstration of evolution](https://en.wikipedia.org/wiki/Peppered_moth_evolution) 
+in the 19th 
+centure England, where the light colored moth was outnumered by the dark 
+colored variety. The dark color became advantageous due to the increased 
+polution, where trees were darkened by soot. 
+
+According to the [Hardy-Weinberg principle](https://en.wikipedia.org/wiki/Hardy–Weinberg_principle),
+the genotype frequencies are 
+
+$$p_C^2, 2p_Cp_I, 2p_Cp_T, p_I^2,  2p_Ip_T, p_T^2.$$
+
+The complete multinomial log-likelihood is 
+
+\begin{align}
+ & 2n_{CC} \log(p_C) + n_{CI} \log (2 p_C p_I) + n_{CT} \log(2 p_C p_I) \\
+& \ \ + 2 n_{II} \log(p_I) + n_{IT} \log(2p_I p_T) + 2 n_{TT} \log(p_T),
+\end{align}
+
+We only observe only $(n_C, n_T, n_I)$, where
+$$n = \underbrace{n_{CC} + n_{CI} + n_{CT}}_{= n_C} + 
+\underbrace{n_{IT} + n_{II}}_{=n_I} + \underbrace{n_{TT}}_{=n_T}.$$
+
+For maksimum-likelihood estimation of the parameters in this model from 
+the observation $(n_C, n_T, n_I)$ only, we need the marginal likelihood, 
+that is, the likelihood in the marginal distribution of the observed
+variables. We will compute this in the section below by considering this
+particular problem as an example of a more general problem. 
+
+### Multinomial cell collapsing
+
+The Peppered Moth example is an example of *cell collapsing* in a multinomial model.
+
+In general, let $A_1 \cup \ldots \cup A_{K_0} = \{1, \ldots, K\}$ be a partition and let 
+$$M : \mathbb{N}_0^K \to \mathbb{N}_0^{K_0}$$
+be the map given by
+$$M((n_1, \ldots, n_K))_j = \sum_{i \in A_j} n_i.$$
+
+If $Y \sim \textrm{Mult}(p, n)$ with $p = (p_1, \ldots, p_K)$ then 
+$$X = M(Y) \sim \textrm{Mult}(M(p), n).$$
+
+The conditional distribution of $Y_{A_j} = (Y_i)_{i \in A_j}$, conditionally on 
+$X$, can be found too. It will be used for the EM-algorithm the subsequent 
+in Chapter \@ref(EM). It is easy to see that 
+$$Y_{A_j} \mid X = x \sim \textrm{Mult}\left( \frac{p_{A_j}}{M(p)_j}, x_j \right).$$
+The probability parameters are simply $p$ restricted to $A_j$ and renormalized 
+to a probability vector. Observe that this gives
+$$E (Y_k \mid X = x) = \frac{x_j p_k}{M(p)_j}$$
+for $k \in A_j$. 
+
+For the Peppered Moths, $K = 6$ corresponding to the six genotypes, $K_0 = 3$ and 
+the partition corresponding to the phenotypes is
+$$\{1, 2, 3\} \cup \{4, 5\} \cup \{6\} = \{1, \ldots, 6\},$$
+and
+$$M(n_1, \ldots, n_6) = (n_1 + n_2 + n_3, n_4 + n_5, n_6).$$
+
+In terms of the $(p_C, p_I)$ parametrization, $p_T = 1 - p_C - p_I$ and 
+$$p = (p_C^2, 2p_Cp_I, 2p_Cp_T, p_I^2,  2p_Ip_T, p_T^2).$$
+
+Hence 
+$$M(p) = (p_C^2 + 2p_Cp_I + 2p_Cp_T, p_I^2 +2p_Ip_T, p_T^2).$$
+
+The log-likelihood is
+
+\begin{align}
+\ell(p_C, p_I) & = n_C \log(p_C^2 + 2p_Cp_I + 2p_Cp_T) \\
+& \ \ \ + n_I \log(p_I^2 +2p_Ip_T) + n_T \log (p_T^2).
+\end{align}
+
+
+## Mixtures
+
+### Gaussian mixtures
+
+## Mixed effects models
+
+## Gaussian state space models

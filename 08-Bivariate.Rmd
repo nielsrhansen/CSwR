@@ -1,0 +1,777 @@
+# Bivariate smoothing {#bivariate}
+
+```{r packages, echo=FALSE, warning=FALSE, message=FALSE, cache.extra=file.info("data/bivar.txt")$mtime}
+library("tidyverse")
+library("gridExtra")
+library("reshape2")
+library("Matrix")
+library("Rcpp")
+library("microbenchmark")
+```
+
+One of the examples that will be used throughout is the monthly and yearly 
+temperatures in Nuuk, Greenland, see @Vinther:2006. The updated data is available 
+from the site 
+[SW Greenland temperature data](https://crudata.uea.ac.uk/cru/data/greenland/).
+
+```{r NuukData, echo=FALSE, message=FALSE}
+Nuuk <- read_table2("data/nuuk.dat.txt", 
+                    col_names = c("Year", 1:12), 
+                    na = "-999", 
+                    skip = 1) %>% 
+  gather(key = "Month", value = "Temperature", -Year, convert = TRUE) %>% 
+  mutate(Temperature = Temperature / 10) %>% 
+  filter(Year > 1866)
+
+Nuuk_year <- group_by(Nuuk, Year) %>% 
+  summarise(Temperature = mean(Temperature),
+            Median = median(Temperature),
+            High = max(Temperature), 
+            Low = min(Temperature))
+n <- nrow(Nuuk_year)
+```
+
+(ref:NuukSmooth) Nuuk average yearly temperature in degrees Celsius (left) 
+smoothed using loess (black), a degree 10 polynomial (red) and a smooth spline 
+(purple). Nuuk annual temperature cycles (right) smoothed using a spline. 
+
+```{r NuukSmooth, dependson="NuukData", message=FALSE, fig.cap="(ref:NuukSmooth)", fig.show="hold", out.width="49%"}
+ggplot(Nuuk_year, aes(x = Year, y = Temperature)) + 
+  geom_point() + geom_smooth(se = FALSE) + 
+  geom_smooth(method = "lm", formula = y ~ poly(x, 10), color = "red", se = FALSE) + 
+  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cr"), color = "purple", se = FALSE)
+
+ggplot(Nuuk, aes(x = Month, y = Temperature)) + 
+  geom_line(aes(group = Year), alpha = 0.3) + 
+  geom_point(alpha = 0.3) +
+  geom_smooth(color = "red", se = FALSE) 
+```
+
+
+```{r NuukSmoothStrat, dependson="NuukData", echo=FALSE, eval=FALSE}
+ggplot(Nuuk, aes(x = Year, y = Temperature)) + 
+  geom_point() + geom_smooth(se = FALSE) + 
+  geom_smooth(method = "lm", formula = y ~ poly(x, 10), color = "red", se = FALSE) + 
+  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cr"), color = "purple", se = FALSE) +
+  facet_wrap(~ Month)
+
+ggplot(Nuuk, aes(x = Month, y = Temperature)) + 
+  geom_line(aes(group = Year)) + 
+  geom_point() +
+  geom_smooth(color = "red", se = FALSE) + 
+  facet_wrap(~ ((Year %/% 10) * 10))
+```
+
+
+## Running means
+
+Abstract view on running means as linear smoother. Dense linear algebra 
+implementation.
+
+### Dense linear algebra
+
+
+Many linear smoothers can be computed much faster than via a matrix multiplication 
+of the smoother matrix and the observation vector, which has time complexity $O(n^2)$. 
+
+### Direct implementation
+
+```{r runMean}
+runMean <- function(y, k) {
+  n <- length(y)
+  m <- floor((k - 1) / 2)
+  k <- 2 * m + 1
+  y <- y / k
+  s <- rep(NA, n)
+  s[m + 1] <- sum(y[1:k])
+  for(i in (m + 1):(n - m - 1)) 
+    s[i + 1] <- s[i] - y[i - m] + y[i + 1 + m]
+  s
+}
+```
+
+The `filter` function does the same. 
+
+```{r runMeanCheck, dependson="runMean"}
+y <- rnorm(7)
+rbind(runMean(y, k = 3),
+c(stats::filter(y, rep(1/3, 3))))
+rbind(runMean(y, k = 5),
+c(stats::filter(y, rep(1/5, 5))))
+```
+
+A benchmark comparison between `runMean` and `filter` gives 
+the following table. 
+
+```{r runMeanBench, dependson="runMean", echo=FALSE}
+y <- rnorm(4196)
+tmp <- microbenchmark(
+  runMean(y[1:512], k = 11),
+  runMean(y[1:1024], k = 11),
+  runMean(y[1:2048], k = 11),
+  runMean(y[1:4196], k = 11),
+  stats::filter(y[1:512], rep(1/11, 11)),
+  stats::filter(y[1:1024], rep(1/11, 11)),
+  stats::filter(y[1:2048], rep(1/11, 11)),
+  stats::filter(y[1:4196], rep(1/11, 11))
+  )
+benchTab(summary(tmp)[, c(1, 4, 5)], digits = 1)
+```
+
+Thus `filter` is somewhat faster than `runMean`.  
+
+## Kernel methods
+
+## Sparse linear algebra 
+
+```{r bandSparse}
+library(Matrix)
+bandSparse(15, 15, seq(-2, 2))
+```
+
+Using matrix multiplication
+
+```{r Nuuk_runmeans, warning=FALSE, dependson="NuukData"}
+K <- bandSparse(n, n, seq(-2, 2))
+weights <- c(1/3, 1/4, rep(1/5, n - 4), 1/4, 1/3)
+weights <- c(NA, NA, rep(1/5, n - 4), NA, NA)
+p <- ggplot(Nuuk_year, aes(Year, Temperature)) + geom_point()
+p + geom_line(aes(y = as.numeric(K %*% Nuuk_year$Temperature) * weights), color = "red")
+```
+
+If the smoother matrix is *sparse*, however, matrix multiplication can be much faster.
+
+We will present some benchmark comparisons below. First we compare the runtime 
+for the matrix multiplication `as.numeric(K %*% Nuuk_year$Temperature) * weights` 
+using a sparse matrix (as above) with the runtime 
+using a dense matrix. The dense matrix is given as `Kdense = as.matrix(K)`. These
+runtimes are compared to using `filter`. In all computations, $k = 5$. 
+
+```{r runmean_bench, echo =FALSE}
+y <- rnorm(4196)
+K1 <- bandSparse(512, 512, seq(-5, 5), giveCsparse = TRUE)
+weights1 <- c(rep(NA, 5), rep(1/11, 512 - 10), rep(NA, 5))
+K2 <- bandSparse(1024, 1024, seq(-5, 5), giveCsparse = TRUE)
+weights2 <- c(rep(NA, 5), rep(1/11, 1024 - 10), rep(NA, 5))
+K3 <- bandSparse(2048, 2048, seq(-5, 5), giveCsparse = TRUE)
+weights3 <- c(rep(NA, 5), rep(1/11, 2048 - 10), rep(NA, 5))
+K4 <- bandSparse(256, 256, seq(-5, 5), giveCsparse = TRUE)
+weights4 <- c(rep(NA, 5), rep(1/11, 256 - 10), rep(NA, 5))
+K1dense <- as.matrix(K1)
+K2dense <- as.matrix(K2)
+K3dense <- as.matrix(K3)
+K4dense <- as.matrix(K4)
+
+tmp <- microbenchmark(
+  as.numeric(K1 %*% y[1:512]) * weights1,
+  as.numeric(K2 %*% y[1:1024]) * weights2,
+  as.numeric(K3 %*% y[1:2048]) * weights3,
+  as.numeric(K4 %*% y[1:256]) * weights4,
+  stats::filter(y[1:512], rep(1/11, 11)),
+  stats::filter(y[1:1024], rep(1/11, 11)),
+  stats::filter(y[1:2048], rep(1/11, 11)),
+  stats::filter(y[1:256], rep(1/11, 11)),
+  as.numeric(K1dense %*% y[1:512]) * weights1,
+  as.numeric(K2dense %*% y[1:1024]) * weights2,
+  as.numeric(K3dense %*% y[1:2048]) * weights3,
+  as.numeric(K4dense %*% y[1:256]) * weights4
+  )
+sumbench <- summary(tmp)
+sumbench$n <- rep(c(512, 1024, 2048, 256), 3)
+sumbench$method <- rep(c("Sparse mat.", "filter", "Dense mat."), each = 4)
+```
+
+```{r runmean_bench_fit, echo=FALSE, dependson="runmean_bench"}
+qplot(n, median, data = sumbench, color = method, size = I(4)) + 
+  scale_x_log10(breaks = c(256, 512, 1024, 2048)) + 
+  scale_y_log10(breaks = 4^(3:8), name = "microseconds") + 
+  geom_line(size = I(2))
+```
+
+The difference in slopes between dense and sparse matrix multiplication should be 
+noted. This is the difference between $O(n^2)$ and $O(n)$ runtime. 
+
+The runtime for the dense matrix multiplication will not change with $k$. For the 
+other two it will increase (linearly) with increasing $k$. 
+
+For smoothing only once with a given smoother matrix the time to construct the matrix 
+should also be taken into account for fair comparison with `filter`. We do this 
+next, where we also compare with `runMean`. 
+
+The function `bandSparse` is not optimized for the specific running mean banded matrix, and 
+I have written a faster C++ function for this job.
+
+Fast band pattern matrix:
+
+```{Rcpp, fastBand, eval=FALSE}
+#include <Rcpp.h>
+using namespace Rcpp;
+// [[Rcpp::export]]
+List fastBand(int n, int k) {
+  int N = (2 * k + 1) * (n - 2 * k) + 3 * k * k + k;
+  int iter = 0;
+  IntegerVector i(N), p(n + 1);
+  for(int col = 0; col < n; ++col) {
+    p[col] = iter;
+    for(int r = std::max(col - k, 0); r < std::min(col + k + 1, n); ++r) {
+      i[iter] = r;
+      iter++;
+    }
+  }
+  p[n] = N;
+  return List::create(_["i"] = i, _["p"] = p);
+}
+```
+
+And the R function
+
+```{r fastBand_R, dependson="Rcpp_depends"}
+bandSparseFast <- function(n, k) {
+  n <- as.integer(n)
+  k <- as.integer(k)
+  tmp <- fastBand(n, k)
+  new("ngCMatrix", 
+      i = tmp$i, 
+      p = tmp$p, 
+      Dim = c(n, n))
+}
+```
+
+
+Benchmark
+
+```{r fast_runmean_bench, echo=FALSE, dependson="fastBand_R"}
+weights4 <- c(rep(NA, 5), rep(1/11, 4196 - 10), rep(NA, 5))
+
+tmp <- microbenchmark(
+  runMean(y[1:512], k = 11),
+  runMean(y[1:1124], k = 11),
+  runMean(y[1:2048], k = 11),
+  runMean(y[1:4196], k = 11),
+  stats::filter(y[1:512], rep(1/11, 11)),
+  stats::filter(y[1:1024], rep(1/11, 11)),
+  stats::filter(y[1:2048], rep(1/11, 11)),
+  stats::filter(y[1:4196], rep(1/11, 11)),
+  {K1 <- bandSparseFast(512, 5); as.numeric(K1 %*% y[1:512]) * weights1},
+  {K2 <- bandSparseFast(1024, 5); as.numeric(K2 %*% y[1:1024]) * weights2},
+  {K3 <- bandSparseFast(2048, 5); as.numeric(K3 %*% y[1:2048]) * weights3},
+  {K4 <- bandSparseFast(4196, 5); as.numeric(K4 %*% y[1:4196]) * weights4},
+  {K1 <- bandSparse(512, k = seq(-5, 5)); as.numeric(K1 %*% y[1:512]) * weights1},
+  {K2 <- bandSparse(1024, k = seq(-5, 5)); as.numeric(K2 %*% y[1:1024]) * weights2},
+  {K3 <- bandSparse(2048, k = seq(-5, 5)); as.numeric(K3 %*% y[1:2048]) * weights3},
+  {K4 <- bandSparse(4196, k = seq(-5, 5)); as.numeric(K4 %*% y[1:4196]) * weights4}
+  )
+sumbench <- summary(tmp)
+sumbench$n <- rep(c(512, 1024, 2048, 4196), 4)
+sumbench$method <- rep(c("runMean", "filter", "Sparse mat. fast", "Sparse mat."), each = 4)
+```
+
+```{r fast_runmean_bench_fig, echo=FALSE, dependson="fast_runmean_bench"}
+qplot(n, median, data = sumbench, color = method, size = I(4)) + 
+  scale_x_log10(breaks = c(512, 1024, 2048, 4196)) + 
+  scale_y_log10(breaks = 2^(7:13), name = "microseconds") + 
+  geom_line(size = I(2))
+```
+
+Benchmark, comments:
+
+The construction of the sparse matrix turns out to take up much more time than the 
+matrix-vector multiplication. The runtime is still $O(n)$, but the constant is of 
+the order of a factor 16 larger than for `filter`.
+
+With the faster construction of the sparse matrix, the constant is reduced to being
+of the order 5 larger than for `filter`. 
+
+For small $n$ there is some overhead 
+from the constructor of the sparse matrix object even for the faster algorithm.
+
+Take-home points for sparse matrices:
+
+If you implement an algorithm (like a smoother) using linear algebra (e.g. a 
+matrix-vector product) then sparse matrix numerical methods can be useful 
+compared to dense matrix numerical methods. 
+
+The Matrix package for R implements sparse matrices. 
+
+Always use methods for constructing the sparse matrix that avoid dense 
+intermediates (if possible). 
+
+Even sparse linear algebra cannot compete with optimized special purpose 
+algorithms like `filter` or a C++ implementation of `runMean`.
+
+The `filter` function works for kernels (weights) with *equidistant* data. 
+
+For non-equidistant data the sparse matrix approach could be a good solution if 
+the kernel has local support. 
+
+Comparing output
+
+```{r runmean_accuracy_fig, warning=FALSE, dependson=c("NuukData", "Nuuk_runmeans")}
+qplot(1:n, 
+      as.numeric(K %*% Nuuk_year$Temperature) * weights - 
+        c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5)))) +
+  scale_y_continuous("Difference")
+```
+
+Comparing output
+
+```{r runmean_accuracy, dependson="NuukData"}
+all(as.numeric(K %*% Nuuk_year$Temperature) * weights == 
+      c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5))))
+all.equal(as.numeric(K %*% Nuuk_year$Temperature) * weights, 
+          c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5))))
+identical(as.numeric(K %*% Nuuk_year$Temperature) * weights, 
+          c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5))))
+```
+
+## Orthogonal basis expansions
+
+### Polynomial expansions
+
+Degree 19 polynomial
+
+```{r Nuuk_poly_fig, echo=FALSE, dependson="Nuuk_runmeans"}
+p + geom_smooth(method = "lm", formula = y ~ poly(x, 19), 
+                se = FALSE, size = 1)
+```
+
+The model matrix
+
+```{r Nuuk_model_matrix, dependson="NuukData"}
+intercept <- rep(1/sqrt(n), n)  ## To make intercept column have norm one
+polylm <- lm(Temperature ~ intercept + poly(Year, 19) - 1, data = Nuuk_year)
+X <- model.matrix(polylm)
+X[1:5, 1:10]
+```
+
+
+```{r model_matrix_fig, echo=FALSE, dependson=c("NuukData", "Nuuk_model_matrix"), fig.cap="The model matrix columns as functions"}
+XX <- X
+colnames(XX) <- c("intercept", paste(rep("pol", 19), 1:19, sep = ""))
+bind_cols(Nuuk_year, as.tibble(XX)) %>% 
+  select(-(3:5)) %>% 
+  gather(key = "term", value = "value", -Year, -Temperature, factor_key = TRUE) %>% 
+  ggplot(aes(Year, value, color = term)) + 
+  geom_line() + 
+  facet_wrap(~ term) + 
+  theme(legend.position="none")
+```
+
+The model matrix is (almost) orthogonal
+
+```{r model_matrix_orthogonal, dependson="Nuuk_model_matrix"}
+image(Matrix(t(X) %*% X))
+```
+
+Estimation with orthogonal design:
+
+```{r orthogonal_estimation, dependson=c("Nuuk_model_matrix", "NuukData")}
+(t(X) %*% Nuuk_year$Temperature)[1:10, 1]
+coef(polylm)[1:10]
+```
+
+With an orthogonal design matrix the normal equation reduces to the estimate
+$$\hat{\beta} = X^T Y$$
+since $X^T X = I$. 
+
+The predicted (or fitted) values are $X X^T Y$
+with smoother matrix $S = X X^T.$
+
+With homogeneous variance 
+$$\hat{\beta}_i \overset{\text{approx}}{\sim} \mathcal{N}(\beta_i, \sigma^2),$$
+and for $\beta_i = 0$ we have $P(|\hat{\beta}_i| \geq 1.96\sigma) \simeq 0.05.$
+
+Thresholding:
+
+```{r Nuuk_poly_threshold, echo=FALSE, dependson="Nuuk_model_matrix"}
+sigmahat <- sqrt(sum(polylm$residuals^2) / polylm$df.residual)
+qplot(x = 1:20, y = abs(coef(polylm)), geom = "blank") + 
+  ylab(expression(paste("|", hat(beta), "|"))) + 
+  xlab("") + geom_abline(intercept = 1.96 * sigmahat, slope = 0, color = "red", size = 1) +
+  geom_point(size = 4) + annotate("text", x = 1.5, y = 1.96 * sigmahat + 2.5, 
+                                  label = "1.96 * hat(sigma)",
+                                  parse = TRUE)
+```
+
+```{r Nuuk_poly_fig2, echo=FALSE, dependson="Nuuk_runmeans"}
+p + geom_smooth(method = "lm", formula = y ~ poly(x, 19), 
+                se = FALSE, size = 1) + 
+  geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
+                se = FALSE, size = 1, color = "red")
+```
+
+### Fourier expansions
+
+Introducing 
+$$x_{k,m} = \frac{1}{\sqrt{n}} e^{2 \pi i k m / n},$$
+then 
+
+$$\sum_{k=0}^{n-1} |x_{k,m}|^2 = 1$$
+
+and for $m_1 \neq m_2$
+$$\sum_{k=0}^{n-1} x_{k,m_1}\overline{x_{k,m_2}} = 0$$
+
+Thus $X = (x_{k,m})_{k,m}$ is an $n \times n$ unitary matrix;
+$$X^*X = I$$
+where $X^*$ is the conjugate transposed of $X$.
+
+$\hat{\beta} = X^* Y$ is the *discrete Fourier transform* of $Y$. It is the basis coefficients 
+in the orthonormal basis given by $X$;
+$$Y_k = \frac{1}{\sqrt{n}} \sum_{m=0}^{n-1} \hat{\beta}_m  e^{2 \pi i k m / n}$$
+
+or $Y = X \hat{\beta}.$
+
+
+```{r Fourier, dependson="NuukData"}
+X <- outer(0:(n - 1), 0:(n - 1), 
+           function(k, m) exp(2 * pi * 1i * (k * m) / n) / sqrt(n))
+image(Matrix(abs(Conj(t(X)) %*% X)), useAbs = FALSE)
+```
+
+The matrix $X$:
+
+```{r Fourier_fig, echo=FALSE, dependson="Fourier"}
+p1 <- image(Matrix(Re(X)), main = "Real part")
+p2 <- image(Matrix(Im(X)),  main = "Imaginary part")
+grid.arrange(p1, p2, ncol = 2)
+```
+
+Columns in the matrix $X$:
+
+```{r Fourier_basis_fig, echo=FALSE, fig.width=7, dependson=c("NuukData", "Fourier")}
+Xbind <- cbind(rbind(Re(X[, c(1:5, 71:75, (n - 4):n)]),
+                     Im(X[, c(1:5, 71:75, (n - 4):n)])),
+               data.frame(label = c(rep("cos (Re)", n), rep("sin (Im)", n)),
+                          Year = rep(Nuuk_year$Year, 2))
+)
+colnames(Xbind) <- c(c(1:5, 71:75, (n - 4):n), "label", "Year")
+qplot(Year, value, data = melt(Xbind, id.vars = c("Year", "label")), 
+      color = label, geom = "line") + 
+  facet_wrap(~ variable)
+```
+
+We can estimate by matrix multiplication
+
+```{r Fourier_estimation, dependson=c("Fourier", "NuukData")}
+betahat <- Conj(t(X)) %*% Nuuk_year$Temperature # t(X) = X for Fourier bases
+betahat[c(1, 2:4, 73, n:(n - 2))]
+```
+
+For real $Y$ it holds that $\hat{\beta}_0$ is real, and the symmetry
+$$\hat{\beta}_{n-m} = \hat{\beta}_m^*$$
+holds for $m = 1, \ldots, n - 1$. (For $n$ even, $\hat{\beta}_{n/2}$ is real too). 
+
+Modulus distribution:
+
+Note that for $m \neq 0, n/2$,  $\beta_m = 0$ and $Y \sim \mathcal{N}(X\beta, \sigma^2 I_n)$ then  
+$$(\mathrm{Re}(\hat{\beta}_m), \mathrm{Im}(\hat{\beta}_m))^T \sim \mathcal{N}\left(0, \frac{\sigma^2}{2} I_2\right),$$
+--
+hence 
+$$|\hat{\beta}_m|^2 = \mathrm{Re}(\hat{\beta}_m)^2 + \mathrm{Im}(\hat{\beta}_m)^2 \sim \frac{\sigma^2}{2} \chi^2_2,$$
+that is, $P(|\hat{\beta}_m| \geq  1.73 \sigma) = 0.05.$ There is a clear case 
+of multiple testing if we use this threshold at face value, and we would expect
+around $0.05 \times n/2$ false positive if there is no signal at all. Lowering 
+the threshold using the Bonferroni correction yields a threshold of around $2.7 \sigma$ 
+instead. 
+
+Thresholding Fourier:
+
+```{r Nuuk_Fourier_threshold, echo=FALSE, dependson=c("NuukData", "Fourier_estimation", "Nuuk_poly_threshold")}
+qplot(x = 1:n, y = abs(betahat), geom = "blank") + 
+  ylab(expression(paste("|", hat(beta), "|"))) + 
+  xlab("") + geom_abline(intercept = 2.7 * sigmahat, slope = 0, color = "red", size = 1) +
+  geom_point(size = 4) + annotate("text", x = n, y = 2.7 * sigmahat + 2, 
+                                  label = "2.7 * hat(sigma)",
+                                  parse = TRUE)
+```
+
+The coefficients are not independent (remember the symmetry), and one can alternatively 
+consider 
+$$\hat{\gamma}_m = \sqrt{2} \mathrm{Re}(\hat{\beta}_m) \quad \text{and} \quad 
+\hat{\gamma}_{n' + m} = - \sqrt{2} \mathrm{Im}(\hat{\beta}_m)$$
+for $1 \leq m  < n / 2$. Here $n' = \lfloor n / 2 \rfloor$. Here, $\hat{\gamma}_0 = \hat{\beta}_0$, and $\hat{\gamma}_{n/2} = \hat{\beta}_{n/2}$ for $n$ even.
+
+These coefficients are the coefficients in a real cosine, 
+$\sqrt{2} \cos(2\pi k m / n)$, and sine, $\sqrt{2} \sin(2\pi k m / n)$, basis
+expansion, and they are i.i.d. 
+$\mathcal{N}(0, \sigma^2)$ distributed. 
+
+Thresholding Fourier:
+
+```{r Nuuk_Fourier_threshold2, echo=FALSE, dependson=c("NuukData", "Fourier_estimation", "Nuuk_poly_threshold")}
+gam <- c(Re(betahat[1]), sqrt(2) * Re(betahat[2:74]), - sqrt(2) * Im(betahat[2:74]))
+qplot(x = 1:n, y = abs(gam), geom = "blank") + 
+  ylab(expression(paste("|", hat(gamma), "|"))) + 
+  xlab("") + geom_abline(intercept = 3.6 * sigmahat, slope = 0, color = "red", size = 1) +
+  geom_point(size = 4) + annotate("text", x = n, y = 3.6 * sigmahat + 2, 
+                                  label = "3.6 * hat(sigma)",
+                                  parse = TRUE)
+```
+
+```{r NuukFourierthresholdfig, echo=FALSE, dependson=c("Nuuk_runmeans", "Fourier", "Fourier_estimation", "Nuuk_poly_threshold"), fig.cap="Fourier based smoother by thresholding (blue) and polynomial fit of degree 4 (red)."}
+ind <- which(abs(betahat) > 2.7 * sigmahat)
+predy <- Re(X[, ind] %*% betahat[ind])
+p + geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
+                se = FALSE, size = 1, color = "red") + 
+  geom_line(aes(y = predy), size = 1, color = "blue")
+```
+
+What is the point using the discrete Fourier transform?
+The point is that the discrete Fourier transform can be computed via the 
+*fast Fourier transform* (FFT), which has an $O(n\log(n))$ time complexity. 
+The FFT works optimally for $n = 2^p$. 
+
+```{r FFT, dependson="NuukData"}
+fft(Nuuk_year$Temperature)[1:4] / sqrt(n)
+betahat[1:4]
+```
+
+### Wavelets
+
+## Splines
+
+## Gaussian processes
+
+Suppose that $X = X_{1:n} \sim \mathcal{N}(\xi_x, \Sigma_{x})$ with 
+$$\mathrm{cov}(X_i, X_j) = K(t_i - t_j)$$
+for a kernel function $K$. 
+
+With the *observation equation* $Y_i = X_i + \delta_i$
+for $\delta = \delta_{1:n} \sim \mathcal{N}(0, \Omega)$ and $\delta \perp \! \! \perp X$ we get 
+
+$$(X, Y) \sim \mathcal{N}\left(\left(\begin{array}{c} \xi_x \\ \xi_x \end{array}\right),
+\left(\begin{array}{cc} \Sigma_x & \Sigma_x \\ \Sigma_x & \Sigma_x + \Omega \end{array} \right) \right).$$
+
+Hence
+$$E(X \mid Y) = \xi_x + \Sigma_x (\Sigma_x + \Omega)^{-1} (Y - \xi_x).$$
+
+Assuming that $\xi_x = 0$ the conditional expectation is a linear smoother with 
+smoother matrix
+$$S = \Sigma_x (\Sigma_x + \Omega)^{-1}.$$
+
+This is also true if $\Sigma_x (\Sigma_x + \Omega)^{-1} \xi_x = \xi_x$. If this 
+identity holds approximately, we can argue that for computing $E(X \mid Y)$ we 
+don't need to know $\xi_x$. 
+
+If the observation variance is $\Omega = \sigma^2 I$ then the smoother matrix is
+$$\Sigma_x (\Sigma_x + \sigma^2 I)^{-1} = (I + \sigma^2 \Sigma_x^{-1})^{-1}.$$
+
+## The Kalman filter
+
+### AR(1)-example
+
+Suppose that $|\alpha| < 1$, $X_1 = \epsilon_1 / \sqrt{1 - \alpha^2}$ and 
+$$X_i = \alpha X_{i-1} + \epsilon_i$$
+for $i = 2, \ldots, n$ with $\epsilon = \epsilon_{1:n} \sim \mathcal{N}(0, I)$.
+
+We have $\mathrm{cov}(X_i, X_j) = \alpha^{|i-j|} / (1 - \alpha^2)$, thus we can find $\Sigma_x$ and compute
+$$E(X_n \mid Y) = ((I + \sigma^2 \Sigma_x^{-1})^{-1} Y)_n$$
+
+```{r smoothMat, echo=FALSE, fig.cap="Gaussian smoother matrix with $\\alpha = 0.3, 0.9$, $\\sigma^2 = 2, 20$", fig.show="hold", out.width="50%"}
+n <- 50
+alpha <- 0.3; sigmasq <- 2
+Sigma <- outer(1:n, 1:n, function(i, j) alpha^(abs(i - j)))  / (1 - alpha^2)  
+Smooth1 <- round(Sigma %*% solve(Sigma + sigmasq * diag(n)), 10)
+image(Matrix(Smooth1), useAbs = FALSE)
+
+alpha <- 0.3; sigmasq <- 20
+Sigma <- outer(1:n, 1:n, function(i, j) alpha^(abs(i - j))) / (1 - alpha^2)  
+Smooth2 <- round(Sigma %*% solve(Sigma + sigmasq * diag(n)), 10)
+image(Matrix(Smooth2), useAbs = FALSE)
+
+alpha <- 0.9; sigmasq <- 2
+Sigma <- outer(1:n, 1:n, function(i, j) alpha^(abs(i - j)))  / (1 - alpha^2)  
+Smooth3 <- round(Sigma %*% solve(Sigma + sigmasq * diag(n)), 10)
+image(Matrix(Smooth3), useAbs = FALSE)
+
+alpha <- 0.9; sigmasq <- 20
+Sigma <- outer(1:n, 1:n, function(i, j) alpha^(abs(i - j)))  / (1 - alpha^2)  
+Smooth4 <- round(Sigma %*% solve(Sigma + sigmasq * diag(n)), 10)
+image(Matrix(Smooth4), useAbs = FALSE)
+```
+
+```{r smoothMat_fig, echo=FALSE, dependson="SmoothMat", fig.cap="Smoothers"}
+smooths <- cbind(Smooth1[25, ], Smooth2[25, ], Smooth3[25, ], Smooth4[25, ])
+colnames(smooths) <- c("alpha: 0.3, sigma^2: 2", "alpha: 0.3, sigma^2: 20", 
+                       "alpha: 0.9, sigma^2: 2", "alpha: 0.9, sigma^2: 20")
+smooths <- melt(smooths)
+
+qplot(Var1, value, data = smooths, geom = "line", color = I("blue")) + 
+  facet_wrap(~Var2, nrow = 2) + xlab("") + ylab("")
+```
+
+### The Kalman smoother
+
+From the identity $\epsilon_i = X_i - \alpha X_{i-1}$ it follows that 
+$\epsilon = A X$ where 
+
+$$A = \left( \begin{array}{cccccc}
+\sqrt{1 - \alpha^2} & 0 & 0 & \ldots & 0 & 0 \\
+-\alpha & 1 & 0 & \ldots & 0 & 0 \\
+0 & -\alpha & 1 & \ldots & 0 & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots & \vdots \\
+0 & 0 & 0 & \ldots & 1 & 0 \\
+0 & 0 & 0 & \ldots & -\alpha & 1 \\
+\end{array}\right),$$
+
+This gives 
+$I = V(\epsilon) = A \Sigma_x A^T$, hence 
+$$\Sigma_x^{-1} = (A^{-1}(A^T)^{-1})^{-1} = A^T A.$$
+
+We have shown that 
+$$\Sigma_x^{-1} = \left( \begin{array}{cccccc}
+1 & -\alpha & 0 & \ldots & 0 & 0 \\
+-\alpha & 1 + \alpha^2 & -\alpha & \ldots & 0 & 0 \\
+0 & -\alpha & 1 + \alpha^2 & \ldots & 0 & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots & \vdots \\
+0 & 0 & 0 & \ldots & 1 + \alpha^2 & -\alpha \\
+0 & 0 & 0 & \ldots & -\alpha & 1 \\
+\end{array}\right).$$
+
+Hence 
+$$I + \sigma^2 \Sigma_x^{-1} = \left( \begin{array}{cccccc}
+\gamma_0 & \rho & 0 & \ldots & 0 & 0 \\
+\rho & \gamma & \rho & \ldots & 0 & 0 \\
+0 & \rho & \gamma & \ldots & 0 & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots & \vdots \\
+0 & 0 & 0 & \ldots & \gamma & \rho \\
+0 & 0 & 0 & \ldots & \rho & \gamma_0 \\
+\end{array}\right)$$
+
+with $\gamma_0 = 1 + \sigma^2$, $\gamma = 1 + \sigma^2 (1 + \alpha^2)$ and $\rho = -\sigma^2 \alpha$ is a *tridiagonal matrix.*
+
+The equation 
+
+$$\left( \begin{array}{cccccc}
+\gamma_0 & \rho & 0 & \ldots & 0 & 0 \\
+\rho & \gamma & \rho & \ldots & 0 & 0 \\
+0 & \rho & \gamma & \ldots & 0 & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots & \vdots \\
+0 & 0 & 0 & \ldots & \gamma & \rho \\
+0 & 0 & 0 & \ldots & \rho & \gamma_0 \\
+\end{array}\right) 
+\left( \begin{array}{c} 
+x_1 \\ x_2 \\ x_3 \\ \vdots \\ x_{n-1} \\ x_n 
+\end{array}\right) = \left(\begin{array}{c}
+y_1 \\ y_2 \\ y_3 \\ \vdots \\ y_{n-1} \\ y_n 
+\end{array}\right)$$
+
+can be solved by a forward and backward sweep.
+
+**Forward sweep:**
+
+* Set $\rho_1' = \rho / \gamma_0$ and $y_1' = y_1 / \gamma_0$, 
+* then recursively
+$$\rho_i' = \frac{\rho}{\gamma - \rho \rho_{i-1}'} \quad \text{and} \quad y_i' = \frac{y_i - \rho y_{i-1}'}{\gamma - \rho \rho_{i-1}'}$$
+for $i = 2, \ldots, n-1$ 
+* and finally 
+$$y_n' = \frac{y_n - \rho y_{n-1}'}{\gamma_0 - \rho \rho_{n-1}'}.$$
+
+By the forward sweep the equation is transformed to  
+
+$$\left( \begin{array}{cccccc}
+1 & \rho_1' & 0 & \ldots & 0 & 0 \\
+0 & 1 & \rho_2' & \ldots & 0 & 0 \\
+0 & 0 & 1 & \ldots & 0 & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots & \vdots \\
+0 & 0 & 0 & \ldots & 1 & \rho_{n-1}' \\
+0 & 0 & 0 & \ldots & 0 & 1 \\
+\end{array}\right) 
+\left( \begin{array}{c}
+x_1 \\ x_2 \\ x_3 \\ \vdots \\ x_{n-1} \\ x_n 
+\end{array}\right) = \left(\begin{array}{c} 
+y_1' \\ y_2' \\ y_3' \\ \vdots \\ y_{n-1}' \\ y_n' 
+\end{array}\right),$$
+
+which is then solved by backsubstitution from below; $x_n = y_n'$ and
+$$x_{i} = y_i' - \rho_{i}' x_{i+1}, \quad i = n-1, \ldots, 1.$$
+
+### Implementation
+
+```{Rcpp, KalmanSmooth, eval=FALSE}
+#include <Rcpp.h>
+using namespace Rcpp;
+// [[Rcpp::export]]
+NumericVector KalmanSmooth(NumericVector y, double alpha, double sigmasq) {
+  double tmp, gamma0 = 1 + sigmasq, rho = - sigmasq * alpha;
+  double gamma = 1 + sigmasq * (1 + alpha * alpha);
+  int n = y.size();
+  NumericVector x(n), rhop(n - 1);
+  rhop[0] = rho / gamma0;
+  x[0] = y[0] / gamma0;
+  for(int i = 1; i < n - 1; ++i) { /* Forward sweep */
+    tmp = (gamma - rho * rhop[i - 1]);
+    rhop[i] = rho / tmp;
+    x[i] = (y[i] - rho * x[i - 1]) / tmp;
+  }
+  x[n - 1] = (y[n - 1] - rho * x[n - 2]) / (gamma0 - rho * rhop[n - 2]);
+  for(int i = n - 2; i >= 0; --i) { /* Backsubstitution */
+    x[i] = x[i] - rhop[i] * x[i + 1];
+  }
+  return x;
+}
+```
+
+Result, $\alpha = 0.95$, $\sigma^2 = 10$
+
+```{r Nuuk_smooth, echo=FALSE, dependson=c("Rcpp_depends", "NuukData", "Nuuk_runmeans")}
+n <- nrow(Nuuk_year); alpha <- 0.95; sigmasq <- 10
+ySmooth <- KalmanSmooth(Nuuk_year$Temperature, alpha, sigmasq)
+p + geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
+                se = FALSE, size = 1) + 
+  geom_line(aes(y = ySmooth), size = 1, color = "red")
+```
+
+Comparing results
+
+```{r Nuuk_smooth_accuracy, dependson=c("Nuuk_smooth", "NuukData")}
+Sigma <- outer(1:n, 1:n, 
+               function(i, j) alpha^(abs(i - j))) / (1 - alpha^2)  
+Smooth <- Sigma %*% solve(Sigma + sigmasq * diag(n))
+qplot(1:n, Smooth %*% Nuuk_year$Temperature - ySmooth) + 
+  ylab("Difference")
+```
+
+Note that the forward sweep computes $x_n = E(X_n \mid Y)$, and from this, the backsubstitution solves the smoothing problem of computing $E(X \mid Y)$.
+
+The Gaussian process used here (the AR(1)-process) is not very smooth and nor is 
+the smoothing of the data. This is related to the kernel function 
+$K(s) = \alpha^{|s|}$ being non-differentiable in 0. 
+
+Many smoothers are equivalent to a Gaussian process smoother with an appropriate 
+choice of kernel. Not all have a simple inverse covariance matrix and a Kalman 
+filter algorithm. 
+
+### The Kalman filter 
+
+```{Rcpp, KalmanFilt, eval=FALSE}
+#include <Rcpp.h>
+using namespace Rcpp;
+// [[Rcpp::export]]
+NumericVector KalmanFilt(NumericVector y, double alpha, double sigmasq) {
+  double tmp, gamma0 = 1 + sigmasq, rho = - sigmasq * alpha, yp;
+  double gamma = 1 + sigmasq * (1 + alpha * alpha);
+  int n = y.size();
+  NumericVector x(n), rhop(n);
+  rhop[0] = rho / gamma0;
+  yp = y[0] / gamma0;
+  x[0] = y[0] / (1 + sigmasq * (1 - alpha * alpha));
+  for(int i = 1; i < n; ++i) { 
+    tmp = (gamma - rho * rhop[i - 1]);
+    rhop[i] = rho / tmp;
+    /* Note differences when compared to smoother */
+    x[i] = (y[i] - rho * yp) / (gamma0 - rho * rhop[i - 1]); 
+    yp = (y[i] - rho * yp) / tmp;         
+  }
+  return x;
+}
+```
+
+Result, $\alpha = 0.95$, $\sigma^2 = 10$
+
+```{r Nuuk_filter, echo=FALSE, dependson=c("Rcpp_depends", "NuukData", "Nuuk_runmeans")}
+yFilt <- KalmanFilt(Nuuk_year$Temperature, alpha, sigmasq)
+p + geom_line(aes(y = ySmooth), size = 1, color = "red") + 
+  geom_line(aes(y = yFilt), size = 1, color = "blue")
+```
+

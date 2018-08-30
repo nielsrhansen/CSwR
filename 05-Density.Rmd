@@ -1,0 +1,430 @@
+# Density estimation {#density}
+
+Something about density estimation.
+
+## Univariate density estimation {#unidens}
+
+Recall the data on [$\phi$- and $\psi$-angles](#intro-angles) in 
+polypeptide backbone structures, as considered in Section \@ref(intro-angles).
+
+(ref:phipsiDenscap2) Histograms equipped with a rug plot of the distribution 
+of $\phi$-angles (left) and $\psi$-angles (right) of the peptide planes in 
+the protein human protein [1HMP](https://www.rcsb.org/structure/1HMP).
+
+```{r phipsiDens2, fig.cap="(ref:phipsiDenscap2)", fig.show="hold", out.width="49%", dependson="phipsiLoad", fig.pos="h", echo=FALSE}
+hist(phipsi$phi, prob = TRUE)
+rug(phipsi$phi)
+hist(phipsi$psi, prob = TRUE)
+rug(phipsi$psi)
+```
+
+We will in this section start the treatment of methods for smooth density 
+estimation for univariate data such as data on either the $\phi$- or the 
+$\psi$-angle. [Multivariate methods](#multivariate-smoothing) for estimation
+of e.g. the bivariate joint density of the angles is postponed to 
+Section \@ref(multivariate-smoothing). 
+
+### Likelihood considerations {#likelihood}
+
+Let $f_0$ denote the unknown density we want to estimate.
+
+* If we fit a parametrized statistical model $(f_{\theta})_{\theta}$ to 
+data using the estimator $\hat{\theta}$, then 
+$f_{\hat{\theta}}$ is an estimate of $f_0$.
+
+
+* The histogram is a nonparametric density estimator, $\hat{f}$, of $f_0$. 
+
+
+* We are interested in nonparametric estimators because
+    + we want to compare data with the parametric estimate $f_{\hat{\theta}}$
+    + we don't known a suitable parametric model
+    + visualization
+
+> "With four parameters I can fit an elephant, and with five I can make him wiggle his trunk."
+>
+> --- John von Neumann
+
+
+The Normal-inverse Gaussian distribution has four parameters, the generalised hyperbolic distribution
+is an extension with five, but Neumann was probably thinking more in terms of the 
+spline based expansion in Section \@ref(basis-density) with four or five suitable basis functions. 
+
+
+For a parametric family we can use the MLE
+$$\hat{\theta} = \text{arg max}_{\theta} \sum_{i=1}^n \log f_{\theta}(x_i).$$
+
+For nonparametric estimation we can still introduce the log-likelihood:
+$$\ell(f) = \sum_{i=1}^n \log f(x_i)$$
+
+Let's see what happens if 
+$$f(x) = f_h(x) = \frac{1}{nh \sqrt{2 \pi}} \sum_{j=1}^n e^{- \frac{(x - x_j)^2}{2 h^2} }.$$
+
+
+```{r gausKern, fig.cap="(ref:gausKern)", fig.show="hold", out.width="49%", dependson="phipsiLoad", fig.pos="h", echo=FALSE}
+ffun <- function(x, h) mean(dnorm(x, phipsi$psi, h))
+ffun <- Vectorize(ffun)
+hist(phipsi$psi, prob = TRUE, main = "h = 1")
+rug(phipsi$psi)
+curve(ffun(x, 1), add = TRUE, col = "red")
+hist(phipsi$psi, prob = TRUE, main = "h = 0.25")
+rug(phipsi$psi)
+curve(ffun(x, 0.25), add = TRUE, col = "red", n = 1001)
+hist(phipsi$psi, prob = TRUE, main = "h = 0.1")
+rug(phipsi$psi)
+curve(ffun(x, 0.1), add = TRUE, col = "red", n = 1001)
+hist(phipsi$psi, prob = TRUE, main = "h = 0.025")
+rug(phipsi$psi)
+curve(ffun(x, 0.025), add = TRUE, col = "red", n = 10001)
+hist(phipsi$psi, prob = TRUE, main = "h = 0.01")
+rug(phipsi$psi)
+curve(ffun(x, 0.01), add = TRUE, col = "red", n = 10001)
+hist(phipsi$psi, prob = TRUE, main = "h = 0.0001")
+rug(phipsi$psi)
+curve(ffun(x, 0.0001), add = TRUE, col = "red", n = 10001)
+```
+
+
+
+Log-likelihood 
+
+```{r LogLike, dependson=c("phipsiLoad", "gausKern")}
+hseq <- seq(1, 0.001, -0.001)
+ll <- sapply(hseq, function(h) 
+         sum(log(ffun(phipsi$psi, h))))
+```
+
+```{r LogLikePlot, dependson="LogLike", echo=FALSE}
+p1 <- qplot(hseq, ll, geom = "line") + xlab("h")
+p2 <- qplot(hseq, ll, geom = "line") + scale_x_log10("h")
+```
+
+```{r pside, echo=FALSE, dependson="LogLikePlot", fig.width=10}
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+Log-likelihood
+
+If $x_i \neq x_j$ when $i \neq j$
+
+\begin{align*}
+\ell(f_h) & = \sum_{i} \log\left(1 + \sum_{j \neq i} e^{-(x_i - x_j)^2 / (2 h^2)} \right) - 
+n \log(nh\sqrt{2 \pi}) \\
+& \sim - n \log(nh\sqrt{2 \pi})
+\end{align*}
+
+for $h \to 0$. 
+
+Hence, $\ell(f_h) \to \infty$ for $h \to 0$ and there is no MLE in the set of distributions
+with densities.
+
+```{r asymp, dependson="LogLikePlot"}
+n <- nrow(phipsi)
+asympll <- - n * log(n * hseq * sqrt(2 * pi))
+```
+
+```{r LogLikePlot2, dependson=c("asymp", "LogLikePlot")}
+p1 <- p1 + geom_line(aes(hseq, asympll))
+p2 <- p2 + geom_line(aes(hseq, asympll))
+```
+
+```{r pside2, echo=FALSE, dependson="LogLikePlot2", fig.width=10}
+<<pside>>
+```
+
+In the sense of [weak convergence](https://en.wikipedia.org/wiki/Convergence_of_measures#Weak_convergence_of_measures) it actually holds that 
+$$f_h \cdot m \overset{\mathrm{wk}}{\longrightarrow} 
+\varepsilon_n = \frac{1}{n} \sum_{i=1}^n \delta_{x_i}$$
+for $h \to 0$.
+
+The *empirical measure* $\varepsilon_n$ can sensibly be regarded as 
+the nonparametric MLE of the distribution. But the empirical measure does not have a density, 
+
+### R digression
+
+Alternative, which is faster but more special purpose:
+
+```{r fastLogLike}
+diffsq <- outer(phipsi$psi, phipsi$psi, 
+                function(x, y) (x - y)^2 / 2)
+n <- nrow(phipsi)
+ll2 <- sapply(hseq, function(h) 
+                sum(log(colSums(exp(-diffsq / h^2)))) - 
+                n * log(n * h * sqrt(2 * pi)))
+```
+
+The second implementation reveals the $n^2$-complexity of the computations 
+by the call to `outer`. 
+
+### Method of sieves {#sieves}
+
+[Nonparametric Maximum Likelihood Estimation by the Method of Sieves](https://projecteuclid.org/euclid.aos/1176345782)
+
+Penalized and constraint MLE.
+
+### Basis expansions {#basis-density}
+
+## Kernel methods {#kernel-density}
+
+In Section \@ref(density) we pursued the principled but also somewhat 
+abstract approach to density estimation via maximum-likelihood estimation 
+over a suitably constrained set of distributions. In this section we
+will pursue the more basic idea of smooth density estimation relying on 
+the approximation
+$$P(X \in (x-h, x+h)) = \int_{x-h}^{x+h} f_0(z) \ dz \simeq f_0(x) 2h,$$
+which is valid for any continuous density $f_0$. Inverting this approximation
+and using the law of large numbers, 
+
+\begin{align*}
+f_0(x) & \simeq \frac{1}{2h}P(X \in (x-h, x+h)) \\
+& \simeq \frac{1}{2hn} \sum_{i=1}^n 1_{(x-h, x+h)}(x_i) \\
+& =  \underbrace{\frac{1}{2hn} \sum_{i=1}^n 1_{(-h, h)}(x - x_i)}_{\hat{f}_h(x)}
+\end{align*}
+
+for i.i.d. observations $x_1, \ldots, x_n$ having distribution $f_0 \cdot m$. 
+The function $\hat{f}_h$ defined as above is an example of a kernel 
+density estimator with a rectangular kernel. We immediately note that $h$ has 
+to be chosen appropriately. If $h$ is large, $\hat{f}_h$ will be flat and close to 
+a constant, and for $h \to \infty$ the estimated distribution will eventually 
+become  uniform distributions over larger and larger intervals. If $h$ is small,
+$\hat{f}_h$ will make large jumps close to the observations, and for $h \to 0$
+the estimated distribution will tend to the empirical distribution with 
+point masses in the observations just as in Section \@ref(likelihood). 
+
+What do we then mean by an "appropriate" choice of $h$ above? Just as for the
+methods of sieves we must have some prior assumptions about what we expect
+$f_0$ to look like. Typically, we expect $f_0$ to have few oscillations and to be
+fairly smooth, and we want $\hat{f}_h$ to reflect that. A too large $h$ will oversmooth
+the data relative to $f_0$ by effectively ignoring the data, while a too small $h$ will undersmooth 
+the data relative to $f_0$ by allowing individual data points to have large local effects that 
+make the estimate wiggly. More formally, we can look at the mean and variance 
+of $\hat{f}_h$. Letting $p(x, h) = P(X \in (x-h, x+h))$, it follows that 
+$f_h(x) = E(\hat{f}_h(x)) = p(x, h) / (2h)$ while 
+
+\begin{equation} 
+V(\hat{f}_h(x)) = \frac{p(x, h) (1 - p(x, h))}{4h^2 n} \simeq f_h(x) \frac{1}{2hn}.
+(\#eq:varRect)
+\end{equation}
+
+We see from these computations that for the $\hat{f}_h(x)$ to be approximately unbiased for any $x$
+we need $h$ to be small -- ideally letting $h \to 0$ since then $f_h(x) \to f_0(x)$. 
+However, this will make the variance blow up, and to minimize variance we should 
+instead choose $h$ as large as possible. One way to define "appropriate" is
+then to strike a balance between the bias and the variance as a function 
+of $h$ so as to minimize its mean squared error.
+
+We will find the optimal tradeoff for the rectangular kernel in Section \@ref(bandwidth)
+on [bandwidth selection](#bandwidth). It's not difficult, and you are encouraged 
+to try finding it yourself at this point. In this section we will focus on 
+computational aspects of kernel density estimation, but first we will generalize
+the estimator by allowing for other kernels. 
+
+The estimate $\hat{f}_h(x)$ will be unbiased if $f_0$ is constantly equal to $f_0(x)$ 
+in the entire interval $(x-h, x+h)$. This is atypical and can only happen for all $x$
+if $f_0$ is constant. We expect the typical situation to be that 
+$f_0$ deviates the most from $f_0(x)$ close to $x \pm h$, and 
+that this causes a bias of $\hat{f}_h(x).$ 
+Observations falling close to $x + h$, say, should thus perhaps count less 
+than observations falling close to $x$? The rectangular kernel makes a sharpe 
+cut; either a data point is in or it is out. If we use a smooth weighting 
+function instead of a sharp cut, we might be able to include more
+data points and lower the variance while keeping the bias small? This is 
+precisely the idea of *kernel estimators*, defined generally as
+$$\hat{f}_h(x) = \frac{1}{hn} \sum_{i=1}^n K\left(\frac{x - x_i}{h}\right)$$
+for a kernel $K : \mathbb{R} \to \mathbb{R}$. The *uniform* or *rectangular kernel* is 
+$$K(x) = \frac{1}{2} 1_{(-1,1)}(x).$$
+The *Gaussian kernel* is 
+$$K(x) = \frac{1}{\sqrt{2\pi}} e^{-\frac{x^2}{2}}.$$
+
+One direct benefit of considering other kernels than the rectangular is that 
+$\hat{f}_h$ inherits all smoothness properties from $K$. Whereas the rectangular 
+kernel is not even continuous, the Gaussian kernel is $C^{\infty}$ and so is 
+the resulting kernel density estimate. 
+
+### Benchmarking
+
+
+## Bandwidth selection {#bandwidth}
+
+### Revisiting the rectangular kernel
+
+We return to the rectangular kernel and compute the mean squared error. In the 
+analysis it may be helpful to think about $n$ large and $h$ small. Indeed, 
+we will eventually choose $h = h_n$ as a function of $n$ such 
+that as $n \to \infty$ we have $h_n \to 0$. We should also note the $f_h(x) = E (\hat{f}_h(x))$
+is a density, thus $\int f_h(x) \mathrm{d}x = 1$. 
+
+We will assume that $f_0$ is sufficiently differentiable 
+and use a Taylor expansion of the distribution function $F_0$ to get that
+
+\begin{align*}
+f_h(x) & = \frac{1}{2h}\left(F_0(x + h) - F_0(x - h)\right) \\
+& = \frac{1}{2h}\left(2h f_0(x) + \frac{h^3}{3} f_0''(x) + R_0(x,h) \right) \\
+& = f_0(x) + \frac{h^2}{6} f_0''(x) + R_1(x,h) 
+\end{align*}
+
+where $R_1(x, h) = o(h^2)$. One should note how the quadratic terms in $h$ 
+in the Taylor expansion canceled. This gives the following formula for 
+the bias of $\hat{f}_h$.
+
+\begin{align*}
+\mathrm{bias}(\hat{f}_h(x)) & = (f_h(x) - f_0(x))^2 \\
+& = \left(\frac{h^2}{6} f_0''(x) + R_1(x,h) \right)^2 \\
+& = \frac{h^4}{36} f_0''(x)^2 + R_2(x,h)
+\end{align*}
+
+where $R(x,h) = o(h^4)$. For the variance we see from \@ref(eq:varRect)
+that 
+$$V(\hat{f}_h(x)) = f_h(x)\frac{1}{2hn} - f_h(x)^2 \frac{1}{n}.$$
+Integrating the sum of the bias and the variance over $x$ gives the 
+integrated mean squared error
+
+\begin{align*}
+\mathrm{MISE}(h) & = \int \mathrm{bias}(\hat{f}_h(x)) + V(\hat{f}_h(x)) \mathrm{d}x \\
+& = \frac{h^4}{36} \|f_0''\|^2_2 + \frac{1}{2hn} + \int R(x,h) \mathrm{d} x - 
+\frac{1}{n} \int f_h(x)^2 \mathrm{d} x.
+\end{align*}
+
+Since $f_h(x) \leq 1$, 
+$$\int f_h(x)^2 \mathrm{d} x \leq \int f_h(x) \mathrm{d} x = 1,$$
+and the last term is $o((nh)^{-1})$. The second last term is $o(h^4)$ 
+if we can interchange the limit and intergration order. It is concievable
+that we can do so under suitable assumptions on $f_0$, but we will not pursue 
+those at this place. The two remaining and asymptotically dominating terms in 
+the formula for MISE are   
+$$\mathrm{AMISE}(h) = \frac{h^4}{36} \|f_0''\|^2_2 + \frac{1}{2hn},$$
+which is known as the asymptotic mean integrated squared error. Clearly, 
+for this to be a useful formula, we must assume $\|f_0''\|_2^2 < \infty$. 
+In this case the formula for AMISE can be used to find the asymptotic 
+optimal tradeoff between (integrated) bias and variance. We find that
+$$\mathrm{AMISE}'(h) = \frac{h^3}{9} \|f_0''\|^2_2 - \frac{1}{2h^2n},$$
+and solving for $\mathrm{AMISE}'(h) = 0$ yields 
+$$h_n = \left(\frac{9}{2 \|f_0''\|_2^2}\right)^{1/5} n^{-1/5}.$$
+We conclude that AMISE has a unique stationary point, and as it tends 
+to $\infty$ for $h \to 0$ as well as for $h \to \infty$, this stationary point
+is a unique global minimizer. 
+
+We see how "wiggliness" of $f_0$ enters into the formula for the optimal 
+bandwidth $h_n$ via $\|f_0''\|_2$. This norm of the second derivative 
+is precisely a quantification of how much $f_0$ oscillates. A large value, 
+indicating a wiggly $f_0$, will drive the optimal bandwidth down whereas
+a small value will drive the optimal bandwidth up. 
+
+We should also observe that if we plug the optimal bandwidth into the formula
+for AMISE, we get 
+\begin{align*}
+\mathrm{AMISE}(h_n) & = \frac{h_n^4}{36} \|f_0''\|^2_2 + \frac{1}{2h_n n} \\
+& = C n^{-4/5},
+\end{align*}
+which indicates that in terms of integrated mean squared error the rate 
+at which we can nonparametrically estimate 
+$f_0$ is $n^{-4/5}$. This should be contrasted to the standard parametric
+rate of $n^{-1}$ for mean squared error. 
+
+From a practical viewpoint there is one major problem with the optimal 
+bandwidth $h_n$; it depends via $\|f_0''\|^2_2$ upon the unknown $f_0$ 
+that we are trying to estimate. We therefore refer to $h_n$ as an *oracle* 
+bandwidth -- it is the bandwidth that an oracle that knows $f_0$ would 
+tell us to use. In practice, we will have to come up with an estimate 
+of $\|f_0''\|^2_2$ and plug that estimate into the formula for $h_n$.
+We pursue a couple of different options for doing so for general kernel 
+density estimators below together with methods that do not rely on the 
+AMISE formula. 
+
+### ISE, MISE and MSE for kernel estimators
+
+Quality of $\hat{f}_h$ can be quantified by the *integrated squared error*,
+$$\mathrm{ISE}(\hat{f}_h) = \int (\hat{f}_h(x) - f_0(x))^2 \ dx = \|\hat{f}_h - f_0\|_2^2.$$ 
+
+Quality of the estimation procedure producing $\hat{f}_h$ can be quantified by taking the mean ISE,
+$$\mathrm{MISE}(h) = E(\mathrm{ISE}(\hat{f}_h)),$$
+where the expectation integral is over the data.
+
+
+$$\mathrm{MISE}(h) = \int \mathrm{MSE}_x(h) \ dx$$ 
+where $\mathrm{MSE}_h(x) = \mathrm{var}(\hat{f}_h(x)) + (\mathrm{bias}(\hat{f}_h(x)))^2$.
+
+If $K$ integrates to 1 and is symmetric about 0 it holds that
+
+$$\mathrm{MISE}(h) = \mathrm{AMISE}(h) + o((nh)^{-1} + h^4)$$
+
+where the *asymptotic mean integrated squared error* is 
+
+$$\mathrm{AMISE}(h) = \frac{R(K)}{nh} + \frac{h^4 \sigma^4_K R(f'')}{4}$$
+with 
+$$R(g) = \int g(t)^2 \ dt = \|g\|_2^2 \quad (\mathrm{squared } \ L_2\mathrm{-norm})$$
+and $\sigma_K^2 = \int t^2 K(t) \ dt.$
+
+The derivation of AMISE is presented with a slightly more careful treatment of the error in the Taylor expansion than in the book. It is, however, not completely trivial to rigorously interchange the limit (h -> 0) and the integrations. As a consequence of the AMISE formula it is possible to derive the asymptotically optimal choice of bandwidth. Among several methods discussed in the book (some based on cross validation and some on plug-in estimates using the formula for the optimal h), the Sheather-Jones method is recommended. This is not the default for the density() function in R. The default is a version of Silverman's rule of thumb. 
+
+## Multivariate methods {#multivariate-smoothing}
+
+```{r multDensPackages, message=FALSE}
+library(MASS) ## kde2d
+library(KernSmooth) ## bkde2D
+```
+
+We compute the density estimate in a grid of size 100 by 100 using a bandwidth 
+of 2 and using the `kde2d` function that uses a bivariate normal kernel. 
+
+```{r denshat, dependson="phipsiload"}
+denshat <- kde2d(phipsi$phi, phipsi$psi, h = 2, n = 100)
+```
+
+```{r manip, dependson="denshat"}
+denshat <- data.frame(
+  cbind(denshat$x, 
+        rep(denshat$y, each = length(denshat$x)), 
+        as.vector(denshat$z))
+)
+```
+
+```{r bidens, dependson=c("manip", "phipsiload")}
+colnames(denshat) <- c("phi", "psi", "dens")
+ggplot(denshat, aes(phi, psi)) +
+  geom_tile(aes(fill = dens), alpha = 0.5) +
+  geom_contour(aes(z = sqrt(dens))) + 
+  geom_point(data = phipsi, aes(fill = NULL)) +
+  scale_fill_gradient(low = "white", high = "darkblue", trans = "sqrt")
+```
+
+We then recompute the density estimate in the same grid of size using 
+the smaller bandwidth of 0.5.
+
+```{r denshat2, dependson="phipsiload"}
+denshat <- kde2d(phipsi$phi, phipsi$psi, h = 0.5, n = 100)
+```
+
+```{r bidens2, echo = FALSE, dependson=c("denshat2", "phipsiload")}
+<<manip>>
+<<bidens>>  
+```
+
+To illustrate the use of `bkde2D` we load a larger data set of angles for 100 
+proteins. 
+
+```{r bkde2D}
+load("data/top100dih.RData")
+phipsi2 <- na.omit(dataset)
+denshat <- bkde2D(phipsi2[, c("phi", "psi")], bandwidth = 0.3, 
+                  gridsize = c(100, 100), 
+                  range.x = list(c(-pi, pi), c(-pi, pi)))
+
+denshat <- data.frame(
+  cbind(denshat$x1, 
+        rep(denshat$x2, each = length(denshat$x1)), 
+        as.vector(denshat$fhat))
+)
+```
+
+
+```{r bidens3, dependson="bkde2D"}
+colnames(denshat) <- c("phi", "psi", "dens")
+ggplot(denshat, aes(phi, psi)) +
+  geom_tile(aes(fill = dens), alpha = 0.5) +
+  geom_contour(aes(z = sqrt(dens)), bins = 20) + 
+  geom_point(data = phipsi2, aes(fill = NULL), alpha = 0.2) +
+  scale_fill_gradient(low = "white", high = "darkblue", trans = "sqrt")
+
+```
+

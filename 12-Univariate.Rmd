@@ -1,0 +1,291 @@
+# Univariate random variables
+
+This chapter will deal with algorithms for simulating observations from a 
+distribution on $\mathbb{R}$ or any subset thereof. There can be several 
+purposes of doing so, for instance:
+
+* We want to investigate properties of the distribution.
+* We want to simulate independent realizations of univariate random variables to 
+investigate the distribution of a transformation.
+* We want to use Monte Carlo integration to compute numerically an integral 
+(which could be a probability). 
+
+In this chapter the focus is on the simulation of a single random variable 
+or an i.i.d. sequence of random variables primarily via various transformations 
+of pseudo random numbers. The pseudo 
+random numbers themselves being approximate simulations of i.i.d. random 
+variables uniformly distributed on $(0, 1)$. 
+
+## Pseudo random numbers
+
+Most sampling algorithms are based on algorithms for generating 
+*pseudo random* uniformly distributed samples on $(0, 1)$. They arise from 
+deterministic integer sequences initiated by a *seed*.
+
+In R you can get the same sequence by setting the seed.
+```{r seed}
+set.seed(27112015)
+oldseed <- head(.Random.seed, 10)
+tmp <- runif(1)
+tmp
+```
+
+```{r newseed, dependson="seed"}
+oldseed
+head(.Random.seed, 10)
+c(tmp, runif(1))
+set.seed(27112015)
+head(.Random.seed, 10)
+oldseed  ## Same as current .Random.seed
+runif(1) ## Same as tmp
+```
+
+It is a research field to develop pseudo random number generators, see `?RNG` 
+in R for the algorithms available. 
+
+The R default (v. 3.4.1) is the 32-bit *Mersenne Twister*, which generates integers in the range
+$$\{0, 1, \ldots, 2^{32} -1\}.$$
+It has a long period and all combinations of consecutive integers up to dimension 623
+occur equally often in a period. It has good statistical properties.
+
+Pseudo random numbers in $(0, 1)$ are returned by `runif` by division with $2^{32}$ and a fix 
+to prevent the algorithm from returning 0. 
+
+## Transformation techniques
+
+If $T : \mathcal{Z} \to \mathbb{R}$ is a map and $Z \in \mathcal{Z}$ is a random 
+variable we can sample, then we can sample $X = T(Z).$
+
+**Classical example:** If $F^{\leftarrow} : (0,1) \mapsto \mathbb{R}$
+is the (generalized) inverse of a distribution function and $U$ is uniformly distributed 
+on $(0, 1)$ then  
+$$F^{\leftarrow}(U)$$
+has distribution function $F$.
+
+This is [how R](https://github.com/wch/r-source/blob/af7f52f70101960861e5d995d3a4bec010bc89e6/src/nmath/snorm.c#L265) generates samples from $\mathcal{N}(0,1)$ using a
+[technical approximation](https://github.com/wch/r-source/blob/af7f52f70101960861e5d995d3a4bec010bc89e6/src/nmath/qnorm.c#L52) of $\Phi^{-1}$ based on rational functions. 
+
+### Sampling from a $t$-distribution 
+
+Let $Z = (Y, W) \in \mathbb{R} \times (0, \infty)$ with $Z \sim \mathcal{N}(0, 1)$ and 
+$W \sim \chi^2_k$ independent. 
+
+Define $T : \mathbb{R} \times (0, \infty) \to \mathbb{R}$ by 
+$$T(z,w) = \frac{z}{\sqrt{w/k}},$$
+then 
+$$X = T(Z, W) = \frac{Z}{\sqrt{W/k}} \sim t_k.$$
+
+This is how R simulates from a $t$-distribution with $W$ generated from a  
+gamma distribution with shape parameter $k / 2$ and scale parameter $2$.
+
+## Rejection sampling {#reject-samp}
+
+Let $Y_1, Y_2, \ldots$ be i.i.d. with density $g$ on $\mathbb{R}$ and $U_1, U_2, \ldots$ 
+be i.i.d. uniformly distributed on $(0,1)$ and independent of the $Y_i$s. Define
+$$T(\mathbf{Y}, \mathbf{U}) = Y_{\sigma}$$
+with 
+$$\sigma = \inf\{n \geq 1 \mid U_n \leq \alpha f(Y_n) / g(Y_n)\},$$
+for $\alpha \in (0, 1]$ and $f$ a density. Rejection sampling then consists 
+of sampling independent pairs $(Y_n, U_n)$ as long as we *reject* the 
+proposals $Y_n$ sampled from $g$, 
+that is, as long as 
+$$U_n > \alpha f(Y_n) / g(Y_n).$$
+The first time we *accept* a proposal is $\sigma$, and then we stop the 
+sampling and return the proposal $Y_{\sigma}$. The result is, indeed, 
+a sample from the distribution with density $f$ as the following theorem states. 
+
+```{theorem, label="reject"}
+If $\alpha f(y) \leq g(y)$ for all $y \in \mathbb{R}$ then the 
+distribution of $Y_{\sigma}$ has density $f$. 
+```
+
+```{proof}
+The formal proof decomposes the event $(Y_{\sigma} \leq y)$ according to the 
+value of $\sigma$ to reduce the computation to the one on page 155,
+
+\begin{align}
+P(Y_{\sigma} \leq y) & = \sum_{n = 1}^{\infty} P(Y_{n} \leq y, \ \sigma = k) \\
+& = \sum_{n = 1}^{\infty} P(Y_{n} \leq y, \ U_n \leq \alpha f(Y_n) / g(Y_n)) P(\sigma > n - 1) \\
+& = \ldots \\
+& = \int_{-\infty}^y f(z) \mathrm{d} z.
+\end{align}
+```
+
+Note that if $\alpha f \leq g$ for *densities* $f$ and $g$, then 
+$$\alpha = \int \alpha f(x) \mathrm{d}x \leq \int g(x) \mathrm{d}x = 1,$$
+whence it follows automatically that $\alpha \leq 1$ whenever $\alpha f$ is 
+dominated by $g$. The function $g/\alpha$ is called the *envelope* of $f$.
+The tighter the envelope, the smaller is the probability of rejecting 
+a sample from $g$, and this is quantified explicitly by $\alpha$ as $1 - \alpha$
+is the rejection probability. Thus $\alpha$ should preferably be as close to 
+one as possible. 
+
+If $f(y) = c q(y)$ and $g(y) = d p(y)$ for (unknown) normalizing constants 
+$c, d > 0$ and $\alpha' q \leq p$ then 
+$$\underbrace{\left(\frac{\alpha' d}{c}\right)}_{= \alpha} \ f \leq g.$$
+The constant $\alpha'$ may be larger than 1, but from the argument above
+we know that $\alpha \leq 1$, and Theorem \@ref(thm:reject) gives that 
+$Y_{\sigma}$ has distribution with density $f$. It appears that we need to 
+compute the normalizing constants to implement rejection sampling. However, 
+observe that
+$$u \leq \frac{\alpha f(y)}{g(y)} \Leftrightarrow u \leq \frac{\alpha' q(y)}{p(y)},$$
+whence rejection sampling can actually be implemented with knowledge 
+of the unnormalized densities and $\alpha'$ only and without computing $c$ or $d$. 
+This is one great advantages of rejection sampling, though we should 
+note that when we don't know the normalizing constants, $\alpha'$ does not tell 
+us anything about how tight the envelope is, and thus how small the rejection 
+probability is.  
+
+### Gamma distribution
+
+It may be possible to find a suitable envelope of the density for the 
+gamma distribution on $(0, \infty)$, but it turns out that there is a 
+very efficient rejection sampler of a non-standard distribution that 
+can be transformed it by a simple transformation. 
+
+Let $t(y) = a(1 + by)^3$ for $y \in (-b^{-1}, \infty)$, then $t(Y) \sim \Gamma(r,1)$ if $r \geq 1$
+and $Y$ has density 
+$$f(y) \propto t(y)^{r-1}t'(y) e^{-t(y)} = e^{(r-1)\log t(y) + \log t'(y) - t(y)}.$$
+
+[Proof: Use univariate density transformation theorem.]
+
+The density $f$ will be the *target density* for a rejection sampler. 
+
+With 
+$$f(y) \propto e^{(r-1)\log t(y) + \log t'(y) - t(y)},$$
+$a = r - 1/3$ and $b = 1/(3 \sqrt{a})$ 
+$$f(y) \propto e^{a \log t(y)/a - t(y) + a \log a} \propto \underbrace{e^{a \log t(y)/a - t(y) + a}}_{q(y)}.$$
+
+An analysis of $w(y) := - y^2/2 - \log q(y)$ shows that it is convex on $(-b^{-1}, \infty)$ 
+and it attains its minimum in $0$ with $w(0) = 0$, whence 
+$$q(y) \leq e^{-y^2/2}.$$
+This gives us an envelope expressed in terms of unnormalized densities 
+with $\alpha' = 1$. 
+
+The implementation of a rejection sampler based on this analysis is relatively 
+straightforward. The rejection sampler will simulate from the distribution 
+with density $f$ by simulating from the Gaussian distribution (the envelope). 
+For the rejection step we need to implement $q$. Finally, we also need 
+to implement $t$ to transform the result from the rejection sampler to be 
+gamma distributed.
+
+```{r gammasim}
+## r >= 1 
+tfun <- function(y, a) {
+  b <- 1 / (3 * sqrt(a))
+  (y > -1/b) * a * (1 + b * y)^3  ## 0 when y <= -1/b
+}
+
+qfun <- function(y, r) {
+  a <- r - 1/3
+  tval <- tfun(y, a)
+  exp(a * log(tval / a) - tval + a)
+}
+
+gammasim <- function(n, r) {
+  y <- numeric(n)
+  for(i in 1:n) {
+    ratio <- 0 
+    u <- 1
+    while(u > ratio) {
+      y0 <- rnorm(1)
+      ratio <- qfun(y0, r) * exp(y0^2/2)
+      u <- runif(1)
+    }
+    y[i] <- y0
+  }
+  tfun(y, r - 1/3)
+}
+```
+
+Even if the implementation is not optimized in any way, it can quickly simulate thousands 
+of random variables. We test the implementation by simulating 10,000 values 
+with parameters $r = 8$ as well as $r = 1$ and compare the resulting histograms 
+to the respective theoretical densities. 
+
+```{r gammaBench, echo=1, dependson="gammasim"}
+system.time(y <- gammasim(10000, 8))
+hist(y, freq = FALSE, ylim = c(0, 0.18), 
+     main = "Simulated gamma distribution",
+     xlab = "y")
+curve(dgamma(x, 8), col = "blue", lwd = 2, add = TRUE)
+```
+
+```{r gammaBench2, echo=1, dependson="gammasim"}
+system.time(y <- gammasim(10000, 1))
+hist(y, freq = FALSE, ylim = c(0, 0.9), 
+     main = "Simulated gamma distribution",
+     xlab = "y")
+curve(dgamma(x, 1), col = "blue", lwd = 2, add = TRUE)
+```
+
+Though this is only a brief and informal test, it indicates that the implementation
+correctly simulates from the gamma distribution.
+
+Rejection sampling can be computationally expensive if many samples are rejected. 
+A very tight envelope will lead to fewer rejections, while a loose envelope will
+lead to many rejections. We modify the code above to estimate the 
+rejection probability and thus quantify how tight the envelope is. 
+
+```{r gammasim2, dependson="gammasim"}
+gammasim_trace <- function(n, r) {
+  count <- 0
+  y <- numeric(n)
+  for(i in 1:n) {
+    ratio <- 0 
+    u <- 1
+    while(u > ratio) {
+      count <- count + 1
+      y0 <- rnorm(1)
+      ratio <- qfun(y0, r) * exp(y0^2/2)
+      u <- runif(1)
+    }
+    y[i] <- y0
+  }
+  cat((count - n) / count)  ## Rejection frequency
+  tfun(y, r - 1/3)
+}
+```
+
+```{r tracing, dependson="gammasim2"}
+y <- gammasim_trace(100000, 16)
+y <- gammasim_trace(100000, 8)
+y <- gammasim_trace(100000, 4)
+y <- gammasim_trace(100000, 1)
+```
+
+We observe that the rejection frequencies are small with $r = 1$ being the 
+worst case with around 5% rejections. For the other cases the rejection 
+frequencies are all below 1%, thus rejection is rare. 
+
+A visual comparison of $q$ to the (unnormalized) Gaussian density also 
+shows that the two (unnormalized) densities are very close except
+in the tails where there is very little probability mass. 
+
+```{r densComparison, echo = FALSE, fig.show='hold', out.width="100%"}
+par(mfcol = c(2, 2), mex = 0.7, cex = 0.6, font.main = 1)
+curve(qfun(x, 1), - 3 * sqrt(1 - 1/3), 8, lwd = 1.5, 
+      main = "Target and proposal densities, shape = 1", 
+      col = "blue", ylab = "density", xlab = "y")
+curve(exp(-x^2 / 2), add= TRUE, col = "red", lwd = 1.5)
+curve(log(qfun(x, 2)), - 3 * sqrt(1 - 1/3), 8, lwd = 1.5, 
+      col = "blue", ylab = "log-density", ylim = c(-20, 0), xlab = "y")
+curve(-x^2 / 2, add= TRUE, col = "red", lwd = 1.5)
+legend(-2.5, -4, c("q", "Gaussian"), 
+       col = c("blue", "red"), 
+       lwd = 1.5, 
+       bty = "n", 
+       y.intersp = 1.2)
+curve(qfun(x, 8), - 3 * sqrt(8 - 1/3), 8, lwd = 1.5,
+      main = "Target and proposal densities, shape = 8",
+      col = "blue", ylab = "density", xlab = "y")
+curve(exp(-x^2 / 2), add= TRUE, col = "red", lwd = 1.5)
+curve(log(qfun(x, 8)), - 3 * sqrt(8 - 1/3), 8, lwd = 1.5, col = "blue", 
+      ylab = "log-density", ylim = c(-20, 0), xlab = "y")
+curve(-x^2 / 2, add= TRUE, col = "red", lwd = 1.5)
+legend(-8.5, -1, c("q", "Gaussian"), 
+       col = c("blue", "red"), 
+       lwd = 1.5, 
+       bty = "n", 
+       y.intersp = 1.2)
+```

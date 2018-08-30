@@ -1,0 +1,93 @@
+# Numerical optimization 
+
+Iteration, fixed points, convergence criteria. Ref to [Nonlinear Parameter Optimization Using R Tools](http://onlinelibrary.wiley.com/book/10.1002/9781118884003).
+
+## Gradient based algorithms
+
+### Gradient descent and conjugate gradient
+
+### Peppered Moths 
+
+We can code a problem specific version of the negative log-likelihood and 
+use `optim` to minimize it. 
+
+```{r moth_likelihood}
+## par = c(pC, pI), pT = 1 - pC - pI
+## x is the data vector
+loglik <- function(par, x) {
+  pT <- 1 - par[1] - par[2]
+  if (par[1] > 1 || par[1] < 0 || par[2] > 1 || par[2] < 0 || pT < 0)
+    return(Inf)
+  PC <- par[1]^2 + 2 * par[1] * par[2] + 2 * par[1] * pT
+  PI <- par[2]^2 + 2 * par[2] * pT
+  PT <- pT^2
+  - (x[1] * log(PC) + x[2] * log(PI) + x[3]* log(PT))
+}
+```
+
+
+```{r moth_optim, dependson="moth_likelihood"}
+optim(c(0.3, 0.3), loglik, x = c(85, 196, 341), method = "CG")
+```
+
+The computations can beneficially be implemented in greater 
+generality. 
+
+The function `M` sums the cells that are collapsed, 
+which has to be specified by the `group` argument.
+
+```{r moth_M}
+M <- function(x, group)
+  as.vector(tapply(x, group, sum))
+```
+
+The function `prob` maps the parameters to the multinomial probability vector. 
+This function will have to be problem specific.
+
+```{r moth_prob}
+prob <- function(p) {
+  p[3] <- 1 - p[1] - p[2]
+  c(p[1]^2, 2 * p[1] * p[2], 2* p[1] * p[3], 
+    p[2]^2, 2 * p[2] * p[3], p[3]^2)
+}
+```
+
+```{r moth_loglikelihood, dependson=c("moth_M", "moth_prob")}
+loglik <- function(par, x) {
+  pT <- 1 - par[1] - par[2]
+  if (par[1] > 1 || par[1] < 0 || par[2] > 1 || par[2] < 0 || pT < 0)
+    return(Inf)
+  - sum(x * log(M(prob(par), c(1, 1, 1, 2, 2, 3))))
+}
+```
+
+```{r moth_optim2, dependson="moth_likelihood"}
+optim(c(0.3, 0.3), loglik, x = c(85, 196, 341), method = "CG")
+```
+
+The Peppered Moth example is very simple. 
+The marginal log-likelihood can easily be computed, and we used this 
+problem to illustrate different ways of implementing a 
+likelihood computation in R. One was very problem specific and one was more 
+abstract and general. We demonstrated how to use 
+standard optimization algorithms like conjugate gradient with or without implementing
+the gradient. If we don't implement a gradient, a numerical gradient is 
+used by `optim` This can very well result in a slower algorithm than if the 
+gradient is implemented, but more seriously, in can result in convergence 
+problems. This is because there is a subtle tradeoff between numerical 
+accuracy and accuracy of the finite difference approximation. We did not 
+experience this in the example above, but one way to remedy such problems 
+is to set the `parscale` or `fnscale` entries in the `control`
+list argument to `optim`. 
+
+Below we will illustrate how to use Newton-type methods for optimizing the 
+marginal likelihood, and in the following chapter this same example is used to illustrate 
+the EM-algorithm. It is important to understand that the EM-algorithm does not 
+rely on computations of the marginal likelihood. In many real applications 
+computation of the marginal likelihood is computationally challenging or even 
+impossible, thus most standard optimization algorithms will not be directly 
+applicable, the EM-algorithm will. 
+
+
+
+## Newton-type algorithms

@@ -1,0 +1,175 @@
+# Expectation Maximization algorithms {#EM}
+
+## Basic properties 
+
+### Incomplete data likelihood
+
+Suppose that $Y$ is a random variable and $X = M(Y)$. Suppose that $Y$ has density 
+$f(\cdot \mid \theta)$ and that $X$ has marginal density $g(x \mid \theta)$. 
+
+The marginal density is typically of the form 
+$$g(x \mid \theta) = \int_{\{y: M(y) = x\}} f(y \mid \theta) \ \mu_x(\mathrm{d} y)$$
+for a suitable measure $\mu_x$ depending on $M$ and $x$ but not $\theta$. 
+The general argument for the marginal density relies on the coarea formula. 
+
+The log-likelihood for observing $X = x$ is
+$$\ell(\theta) = \log g(x \mid \theta).$$ 
+The marginal likelihood is often 
+impossible to compute analytically and difficult and expensive to compute 
+numerically. The complete log-likelihood, $\log f(y \mid \theta)$, is often easy to 
+compute, but we don't know $Y$, only that $M(Y) = x$.
+
+In some cases it is possible to compute 
+$$Q(\theta \mid \theta') := E_{\theta'}(\log f(Y \mid \theta) \mid X = x),$$
+which is the conditional expectation of the complete log-likelihood given 
+the observed data and computed using the probability measure given by $\theta'$.
+Thus for fixed $\theta'$ this is a computable function of $\theta$ depending
+only on the observed data $x$. 
+
+One could get the following idea: with an initial guess of 
+$\theta' = \theta^{(0)}$ compute iteratively
+$$\theta^{(t + 1)} = \textrm{arg max} \ Q(\theta \mid \theta^{(t)})$$
+ for $t = 0, 1, 2, \ldots$. This idea is the EM-algorithm:
+
+* **E-step**: Compute the conditional expectation $Q(\theta \mid \theta^{(t)})$. 
+* **M-step**: Maximize $\theta \mapsto Q(\theta \mid \theta^{(t)})$. 
+
+It is a bit weird to present the algorithm as a two-step algorithm in its abstract 
+formulation. Even though we can regard $Q(\theta \mid \theta^{(t)})$ as 
+something we can compute abstractly for each $\theta$ for a given $\theta^{(t)}$, 
+the maximization is in practice not really done using all these evaluations. It is 
+computed either by an analytic formula involving $x$ and $\theta^{(t)}$, or by a 
+numerical algorithm that computes certain evaluations of $Q( \cdot \mid \theta^{(t)})$
+and perhaps its gradient and Hessian. In computing these specific evaluations 
+there is, of course, a need for the computation of conditional expectations,
+but we would compute these as they are needed and not upfront.
+
+However, in some of the most important applications of the EM-algorithm, particularly 
+for exponential families covered in Section \@ref(EM-exp), it makes a lot of sense to regard
+the algorithm as a two-step algorithm. This is the case whenever 
+$Q(\theta \mid \theta^{(t)}) = q(\theta, t(x, \theta^{(t)}))$ is given 
+in terms of $\theta$ and a function $t(x, \theta^{(t)})$ of $x$ and $\theta^{(t)}$ 
+that doesn't depend on $\theta$. Then the E-step becomes the computation of 
+$t(x, \theta^{(t)})$, and in the M-step, $Q(\cdot \mid \theta^{(t)})$ is 
+maximized by maximizing $q(\cdot, t(x, \theta^{(t)}))$, 
+and the maximum is a function of $t(x, \theta^{(t)})$. 
+
+
+### The EM-algorithm is ascending
+
+We prove below that the algorithm is an ascent algorithm; it (weakly) increases the marginal likelihood 
+in every step.
+
+THEOREM AND PROOF
+
+It holds in great generality that the conditional distribution of $Y$ given $X = x$ has density 
+$$h(y \mid x, \theta) = \frac{f(y \mid \theta)}{g(x \mid \theta)}$$
+w.r.t. a suitable measure $\mu_x$ that does not depend upon $\theta$. 
+
+You can verify this for discrete distributions and when 
+$Y = (Z, X)$ with joint density w.r.t. a product measure $\mu \otimes \nu$ that does not depend upon $\theta$. 
+
+In the latter case, $f(y \mid \theta) = f(z, x \mid \theta)$ and 
+$$g(x \mid \theta) = \int f(z, x \mid \theta) \ \mu(\mathrm{d} z)$$
+is the marginal density w.r.t. $\nu$. 
+
+In general 
+$$\log g(x \mid \theta) = \log f(y \mid \theta) - \log h(y \mid x, \theta),$$
+and under some integrability conditions, this decomposition is used to show
+that the EM-algorithm increases the likelihood, $\ell(\theta)$, in each iteration.
+
+### Multinomial cell collapsing
+
+The EM-algorithm can be implemented by two simple functions that compute
+the conditional expectations above (the E-step) and then maximization 
+of the complete observation log-likelihood.
+
+```{r multinomial_E0, dependson=c("moth_M", "moth_prob")}
+EStep0 <- function(p, x, group) {
+  pp <- prob(p)
+  x[group] * pp / M(pp, group)[group]
+}
+```
+
+The MLE of the complete log-likelihood is a linear estimator, 
+as is the case in many examples with explicit MLEs.
+
+```{r multinomial_MLE}
+MStep0 <- function(n, X)
+  as.vector(X %*% n / (sum(n)))
+```
+
+The `EStep0` and `MStep0` functions are abstract implementations. They require 
+specification of the arguments `group` and `X`, respectively, to become concrete. 
+
+### Peppered Moths E- and M-steps
+
+Concrete functions for the E- and M-steps are implemented for the particular 
+example.
+
+```{r moth_E_M, dependson=c("multinomial_E", "multinomial_MLE")}
+EStep <- function(p, x)
+  EStep0(p, x, c(1, 1, 1, 2, 2, 3))
+
+MStep <- function(n) {
+  X <- matrix(
+  c(2, 1, 1, 0, 0, 0,
+    0, 1, 0, 2, 1, 0) / 2,
+  2, 6, byrow = TRUE)
+  MStep0(n, X)
+}
+```
+
+```{r moth_EM, dependson="moth_E_M"}
+EM <- function(par, x, tmax = 10) {
+  for(i in 1:tmax) 
+    par <- MStep(EStep(par, x))
+  par  ## Remember to return the parameter estimate
+}
+  
+phat <- EM(c(0.3, 0.3), c(85, 196, 341))
+phat
+```
+
+
+### Inside the EM
+
+Check what is going on in each step of the EM-algorithm.
+
+```{r moth_EM_convergence, dependson=c("moth_EM", "moth_loglikelihood")}
+conv_diag <- matrix(nrow = 10, ncol = 5)
+colnames(conv_diag) <- c("t", "pC", "pI", "R", "loglik")
+par <- c(0.3, 0.3)
+for(t in 1:10) {
+    par0 <- par
+    par <- EM(par0, c(85, 196, 341), tmax = 1)
+    R <- par - par0
+    R <- sqrt(t(R) %*% R / (t(par0) %*% par0))
+    conv_diag[t, ] <- c(t, par[1], par[2], R, 
+                        loglik(par[-3], c(85, 196, 341)))
+}
+```
+
+
+```{r moth_EM_table, dependson="moth_EM_convergence", echo=FALSE}
+knitr::kable(conv_diag)
+```
+
+
+```{r moth_EM_figure, dependson="moth_EM_convergence", echo=FALSE}
+qplot(t, log(R), data = as.data.frame(conv_diag), geom = "line")
+```
+
+Note the log-axis. The EM-algorithm converges rapidly in this example. 
+This is not always the case. If the log-likelihood is flat, the EM-algorithm 
+can become quite slow. 
+
+## Exponential families {#EM-exp}
+
+## Fisher information
+
+## Two examples revisited
+
+### Gaussian mixtures
+
+### Gaussian state space

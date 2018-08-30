@@ -1,0 +1,124 @@
+---
+title: "Temperatures"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Data from Berkeley Earth
+
+http://berkeleyearth.org/source-files/
+
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+
+```{r}
+data <- read_table2("data/LATEST/data.txt", 
+    col_names = c(
+      "Station_ID", 
+      "Series_Number", 
+      "Date", 
+      "Temperature", 
+      "Uncertainty", 
+      "Observations", 
+      "Time_of_Observatio"), 
+    skip = 111)
+
+site_detail <- read_delim("data/LATEST/site_detail.txt", 
+    "\t", escape_double = FALSE, col_names = c(
+      "Station_ID", 
+      "Station_Name", 
+      "Latitude", 
+      "Longitude", 
+      "Elevation", 
+      "Lat.Uncertainty", 
+      "Long.Uncertainty", 
+      "Elev.Uncertainty", 
+      "Country", 
+      "State_Province_Code", 
+      "County", 
+      "Time_Zone", 
+      "WMO_ID", 
+      "Coop_ID", 
+      "WBAN_ID", 
+      "ICAO_I", 
+      "Nr_Relocations", 
+      "Nr_Sug_Relocations",
+      "Nr_Sources", 
+      "Hash"
+    ), 
+    comment = "%", trim_ws = TRUE)
+```
+
+```{r}
+count(data, Station_ID) %>% 
+  arrange(desc(n))
+```
+
+
+```{r}
+filter(site_detail, Country == "Greenland [Denmark]")
+```
+
+```{r}
+ Nuuk <- filter(data, Station_ID == 136976) %>% 
+# Nuuk <- filter(data, Station_ID == 136977) %>% 
+  mutate(Date = ymd(round((Date %% 1) * 12 + 0.5) * 100 + Date %/% 1 * 10000 + 01))
+```
+
+
+```{r}
+Nuuk_year <- mutate(Nuuk, year = year(Date)) %>% 
+  group_by(year) %>% 
+  summarise(mean = mean(Temperature),
+            median = median(Temperature),
+            high = max(Temperature), 
+            low = min(Temperature))
+
+ggplot(Nuuk_year, aes(x = year, y = mean)) + 
+  geom_point()
+```
+
+
+## Data from SW Greenland temperature data
+
+https://crudata.uea.ac.uk/cru/data/greenland/
+
+```{r}
+nuuk_dat <- read_table2("data/nuuk.dat.txt", 
+    col_names = c("year", 1:12), na = "-999", skip = 1) %>% 
+  gather(key = "Month", value = "Temperature", -year, convert = TRUE) %>% 
+  mutate(Temperature = Temperature / 10)
+```
+
+```{r}
+Nuuk_year <- group_by(nuuk_dat, year) %>% 
+  summarise(mean = mean(Temperature),
+            median = median(Temperature),
+            high = max(Temperature), 
+            low = min(Temperature)) %>% 
+  filter(year > 1866)
+
+ggplot(Nuuk_year, aes(x = year, y = mean)) + 
+  geom_point() + geom_smooth(se = FALSE) + 
+  geom_smooth(method = "lm", formula = y ~ poly(x, 10), color = "red", se = FALSE) + 
+  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cr"), color = "purple", se = FALSE)
+```
+
+```{r}
+plot(Nuuk_year$year, Nuuk_year$mean)
+lines(smooth.spline(Nuuk_year$year, Nuuk_year$mean))
+```
+
+```{r}
+filter(nuuk_dat, year > 1866) %>% 
+ggplot(aes(x = Month, y = Temperature, color = year)) + 
+  geom_line(aes(group = year)) + 
+  geom_point() +
+  geom_smooth()
+```
+
+
