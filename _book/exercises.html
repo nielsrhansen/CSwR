@@ -122,6 +122,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="1.4" data-path="exercises.html"><a href="exercises.html"><i class="fa fa-check"></i><b>1.4</b> Exercises</a><ul>
 <li class="chapter" data-level="" data-path="exercises.html"><a href="exercises.html#r-training-exercises"><i class="fa fa-check"></i>R training exercises</a></li>
 <li class="chapter" data-level="" data-path="exercises.html"><a href="exercises.html#histograms-with-non-equidistant-breaks"><i class="fa fa-check"></i>Histograms with non-equidistant breaks</a></li>
+<li class="chapter" data-level="" data-path="exercises.html"><a href="exercises.html#functions-and-functional-programming"><i class="fa fa-check"></i>Functions and functional programming</a></li>
 </ul></li>
 </ul></li>
 <li class="part"><span><b>Part I: Smoothing</b></span></li>
@@ -274,7 +275,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </div>
 <div id="histograms-with-non-equidistant-breaks" class="section level3 unnumbered">
 <h3>Histograms with non-equidistant breaks</h3>
-<p>The following exercises will use a data set consisting of measurements from objects outside of our galaxy including infered emissions. We will focus on the variable F12, which is the total 12 micron band flux density.</p>
+<p>The following three exercises will use a data set consisting of measurements from objects outside of our galaxy including infered emissions. We will focus on the variable F12, which is the total 12 micron band flux density.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">infrared &lt;-<span class="st"> </span><span class="kw">read.table</span>(<span class="st">&quot;data/infrared.txt&quot;</span>, <span class="dt">header =</span> <span class="ot">TRUE</span>)
 F12 &lt;-<span class="st"> </span>infrared<span class="op">$</span>F12</code></pre></div>
 <p>The purpose of this exercise is two-fold. First, you will get familiar with the data and see how different choices of visualizations using histograms can affect your interpretation of the data. Second, you will learn more about how to write functions in R and gain a better understanding of how they work.</p>
@@ -293,7 +294,7 @@ F12 &lt;-<span class="st"> </span>infrared<span class="op">$</span>F12</code></p
 
 
 <div class="exercise">
-<p><span id="exr:unnamed-chunk-1" class="exercise"><strong>Exercise 1.6  </strong></span>If there are no ties in the data set, the function above will produce breakpoints with <code>h</code> observations in the interval between two consecutive breakpoints (except the last two perhaps). If there are ties, the function will by construction return unique breakpoints, but there may be more than <code>h</code> observations in some intervals.</p>
+<p><span id="exr:myBreaks-advanced" class="exercise"><strong>Exercise 1.6  </strong></span>If there are no ties in the data set, the function above will produce breakpoints with <code>h</code> observations in the interval between two consecutive breakpoints (except the last two perhaps). If there are ties, the function will by construction return unique breakpoints, but there may be more than <code>h</code> observations in some intervals.</p>
 <p><em>The intention is now to rewrite <code>myBreaks</code> so that if possible each interval contains <code>h</code> observations.</em></p>
 <p>Modify the <code>myBreaks</code> function with this intention and so that is has the following properties:</p>
 <ul>
@@ -303,6 +304,37 @@ F12 &lt;-<span class="st"> </span>infrared<span class="op">$</span>F12</code></p
 </ul>
 </div>
 
+</div>
+<div id="functions-and-functional-programming" class="section level3 unnumbered">
+<h3>Functions and functional programming</h3>
+<p>The following four exercises build on having implemented a function that computes breakpoints for a histogram either either as in Exercise <a href="exercises.html#exr:myBreaks">1.5</a> or as in Exercise <a href="exercises.html#exr:myBreaks-advanced">1.6</a>. The purpose of the exercises is to explore.</p>
+
+<div class="exercise">
+<span id="exr:myHist" class="exercise"><strong>Exercise 1.7  </strong></span>Write a function called <code>myHist</code>, which takes a single argument <code>h</code> and plots a histogram of <code>log(F12)</code> using your function. Extend the implementation so that any additional argument specified when calling <code>myHist</code> is passed on to <code>hist</code>. Investigate and explain what happens when executing the following function calls.
+</div>
+
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">myHist</span>()
+<span class="kw">myHist</span>(<span class="dt">h =</span> <span class="dv">5</span>, <span class="dt">freq =</span> <span class="ot">TRUE</span>)
+<span class="kw">myHist</span>(<span class="dt">h =</span> <span class="dv">0</span>)</code></pre></div>
+<p>Finally, what happens if you remove that data from the global environment and call <code>myHist</code> subsequently?</p>
+
+<div class="exercise">
+<p><span id="exr:myHist-env" class="exercise"><strong>Exercise 1.8  </strong></span>What is the environment of <code>myHist</code>? Change it to a new environment, and assign (using the function <code>assign</code>) the data to a variable with an appropriate name in that environment. Once this is done, check what now happens when calling <code>myHist</code> after the data is removed from the global environment.</p>
+</div>
+
+
+<div class="exercise">
+<p><span id="exr:myHist-funfact" class="exercise"><strong>Exercise 1.9  </strong></span>Write a function that takes an argument <code>x</code> (the data) and returns a function, where the returned function takes an argument <code>h</code> (just as <code>myHist</code>) and plots a histogram (just as <code>myHist</code>). Because the return value is a function, we may refer to the function as a <a href="https://adv-r.hadley.nz/function-factories.html">function factory</a>.</p>
+<p>What is the environment of the function created by the function factory? What is in the environment? Does it have any effect when calling the function whether the data is altered or removed from the global environment?</p>
+</div>
+
+
+<div class="exercise">
+<p><span id="exr:unnamed-chunk-2" class="exercise"><strong>Exercise 1.10  </strong></span>Evaluate the following function call:</p>
+</div>
+
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">tmp &lt;-<span class="st"> </span><span class="kw">myHist</span>(<span class="dv">10</span>, <span class="dt">plot =</span> <span class="ot">FALSE</span>)</code></pre></div>
+<p>What is the type and class of <code>tmp</code>? What happens when <code>plot(tmp, col = &quot;red&quot;)</code> is executed? How can you find help on what <code>plot</code> does with an object of this class? Specifically, how do you find the documentation for the argument <code>col</code>, which is not an argument of <code>plot</code>?</p>
 
 </div>
 </div>
