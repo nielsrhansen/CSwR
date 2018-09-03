@@ -663,7 +663,7 @@ function (if necessary) to exclude all or some of such values from `x`.
 
 ### Histograms with non-equidistant breaks {-}
 
-The following exercises will use a data set consisting of measurements from objects 
+The following three exercises will use a data set consisting of measurements from objects 
 outside of our galaxy including infered emissions. We will focus on the variable 
 F12, which is the total 12 micron band flux density.
 
@@ -701,14 +701,18 @@ Use your function to construct *breakpoints* for the histogram for different val
 ```
 
 
-```{exercise}
-If there are no ties in the data set, the function above will produce breakpoints with `h` 
-observations in the interval between two consecutive breakpoints (except the last two perhaps). If there are ties, the function will by construction return unique breakpoints, but there may be 
+```{exercise, myBreaks-advanced}
+If there are no ties in the data set, the function above will produce breakpoints 
+with `h` observations in the interval between two consecutive breakpoints 
+(except the last two perhaps). If there are ties, the function will by construction 
+return unique breakpoints, but there may be 
 more than `h` observations in some intervals. 
 
-*The intention is now to rewrite `myBreaks` so that if possible each interval contains `h` observations.*
+*The intention is now to rewrite `myBreaks` so that if possible each interval 
+contains `h` observations.*
 
-Modify the `myBreaks` function with this intention and so that is has the following properties:
+Modify the `myBreaks` function with this intention and so that is has the 
+following properties:
 
 * All breakpoints must be unique.
 * The range of the breakpoints must cover the range of `x`.
@@ -716,4 +720,63 @@ Modify the `myBreaks` function with this intention and so that is has the follow
 
 ```
 
+### Functions and functional programming {-}
 
+The following four exercises build on having implemented a function that 
+computes breakpoints for a histogram either either as in 
+Exercise \@ref(exr:myBreaks) or as in Exercise \@ref(exr:myBreaks-advanced).
+The purpose of the exercises is to explore. 
+
+```{exercise, myHist}
+Write a function called `myHist`, which takes a single argument `h` and plots a 
+histogram of `log(F12)` using your function. Extend 
+the implementation so that any additional argument specified when calling `myHist` 
+is passed on to `hist`. Investigate and explain what happens when executing 
+the following function calls.
+```
+
+```{r, eval = FALSE}
+myHist()
+myHist(h = 5, freq = TRUE)
+myHist(h = 0)
+```
+
+Finally, what happens if you remove that data from the global environment and 
+call `myHist` subsequently? 
+
+```{exercise, myHist-env}
+What is the environment of `myHist`? Change it to a new environment, and assign 
+(using the function `assign`) the data to a 
+variable with an appropriate name in that environment. Once this is done, 
+check what now happens when calling `myHist` after
+the data is removed from the global environment. 
+
+```
+
+```{exercise, myHist-funfact}
+Write a function that takes an argument `x` (the data) and 
+returns a function, where the returned function 
+takes an argument `h` (just as `myHist`) and plots a histogram (just as `myHist`). 
+Because the return value is a function, we may refer to the function 
+as a [function factory](https://adv-r.hadley.nz/function-factories.html). 
+
+What is the environment of the function created by the function factory? What 
+is in the environment? 
+Does it have any effect when calling the function whether the data is altered 
+or removed from the global environment? 
+
+```
+
+```{exercise, }
+Evaluate the following function call:
+
+```
+
+```{r, eval = FALSE}
+tmp <- myHist(10, plot = FALSE)
+```
+
+What is the type and class of `tmp`? What happens when `plot(tmp, col = "red")` 
+is executed? How can you find help on what `plot` does with an 
+object of this class? Specifically, how do you find the documentation for the 
+argument `col`, which is not an argument of `plot`?
