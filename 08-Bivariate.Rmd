@@ -203,7 +203,7 @@ I have written a faster C++ function for this job.
 
 Fast band pattern matrix:
 
-```{Rcpp, fastBand, eval=FALSE}
+```{Rcpp, fastBand}
 #include <Rcpp.h>
 using namespace Rcpp;
 // [[Rcpp::export]]
@@ -225,7 +225,7 @@ List fastBand(int n, int k) {
 
 And the R function
 
-```{r fastBand_R, dependson="Rcpp_depends"}
+```{r fastBand_R, dependson="fastBand"}
 bandSparseFast <- function(n, k) {
   n <- as.integer(n)
   k <- as.integer(k)
@@ -688,7 +688,7 @@ $$x_{i} = y_i' - \rho_{i}' x_{i+1}, \quad i = n-1, \ldots, 1.$$
 
 ### Implementation
 
-```{Rcpp, KalmanSmooth, eval=FALSE}
+```{Rcpp, KalmanSmooth}
 #include <Rcpp.h>
 using namespace Rcpp;
 // [[Rcpp::export]]
@@ -714,7 +714,7 @@ NumericVector KalmanSmooth(NumericVector y, double alpha, double sigmasq) {
 
 Result, $\alpha = 0.95$, $\sigma^2 = 10$
 
-```{r Nuuk_smooth, echo=FALSE, dependson=c("Rcpp_depends", "NuukData", "Nuuk_runmeans")}
+```{r Nuuk_smooth, echo=FALSE, dependson=c("KalmanSmooth", "NuukData", "Nuuk_runmeans")}
 n <- nrow(Nuuk_year); alpha <- 0.95; sigmasq <- 10
 ySmooth <- KalmanSmooth(Nuuk_year$Temperature, alpha, sigmasq)
 p + geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
@@ -744,7 +744,7 @@ filter algorithm.
 
 ### The Kalman filter 
 
-```{Rcpp, KalmanFilt, eval=FALSE}
+```{Rcpp, KalmanFilt}
 #include <Rcpp.h>
 using namespace Rcpp;
 // [[Rcpp::export]]
@@ -769,7 +769,7 @@ NumericVector KalmanFilt(NumericVector y, double alpha, double sigmasq) {
 
 Result, $\alpha = 0.95$, $\sigma^2 = 10$
 
-```{r Nuuk_filter, echo=FALSE, dependson=c("Rcpp_depends", "NuukData", "Nuuk_runmeans")}
+```{r Nuuk_filter, echo=FALSE, dependson=c("KalmanFilt", "NuukData", "Nuuk_runmeans")}
 yFilt <- KalmanFilt(Nuuk_year$Temperature, alpha, sigmasq)
 p + geom_line(aes(y = ySmooth), size = 1, color = "red") + 
   geom_line(aes(y = yFilt), size = 1, color = "blue")

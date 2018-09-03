@@ -10,25 +10,6 @@ knitr::opts_chunk$set(cache = TRUE, dev.args = list(bg = 'transparent'),
 theme_replace(plot.background = element_rect(fill = NA, color = NA))
 ```
 
-```{Rcpp, Rcpp_chunk, ref.label=knitr::all_rcpp_labels(), include=FALSE}
-```
-
-```{r Rcpp_depends, include=FALSE}
-## The dependson functionality for cached Rcpp-chunks appears not to work.
-## Every run triggers the evalution of all chunks dependent on Rcpp-chunks.
-## I belive this is caused by the way the knitr function 'block_exec' 
-## treats non-R engines, and that there is the same problem for all 
-## non-R engines. For non-R engines, 'block_cache' is always called if the chunk 
-## is cached, and this results in deletion (in purge_cache) of the cache
-## for this chuck and all dependent chunks. This might be fixed by 
-## checking if the cache exists for non-R engines before calling 
-## 'block_cache'.
-
-## This chunck does nothing but ensure that if changed, then all chunks
-## dependent upon this chunk are evaluated. This is a hack!
-1
-```
-
 Computational statistics is about turning theory and methods into algorithms and 
 actual numerical computations with data. It is about solving real computational
 problems that arise when we visualize, analyze and model data. 
@@ -648,15 +629,62 @@ Relations to complex optimization problems. Ex. deep learning, tensorflow.
 
 ## Exercises
 
+### R training exercises {-}
+
+```{exercise, numerics}
+Explain the result of evaluating the following R expression. 
+```
+
+```{r ex-numerics}
+(0.1 + 0.1 + 0.1) > 0.3
+
+```
+
+
+```{exercise, filter-function}
+Write a function that takes a numeric vector `x` and a threshold value `h` 
+as arguments and returns the vector of all values in `x` greater than `h`.
+Test the function on `seq(0, 1, 0.1)` with threshold 0.3. Have the example 
+from Exercise \@ref(exr:numerics) in mind.
+
+```
+  
+  
+```{exercise, special-values}
+Investigate how your function from Exercise \@ref(exr:filter-function) 
+treats missing values (`NA`), infinite values
+(`Inf` and `-Inf`) and the special value "Not a Number" (`NaN`). Rewrite your
+function (if necessary) to exclude all or some of such values from `x`.
+
+*Hint: The functions `is.na`, `is.nan` and `is.finite` are useful.* 
+
+```
+
+
 ### Histograms with non-equidistant breaks {-}
 
-This exercise uses the data set `infrared`, which is also used in Problem 10.1 in the book *Computational Statistics*. Start by locating this data set from the book homepage and load it into R using the `read.table` function. As in Problem 10.1 you will throughout study the distribution of the logarithm of the variable called F12. 
+The following exercises will use a data set consisting of measurements from objects 
+outside of our galaxy including infered emissions. We will focus on the variable 
+F12, which is the total 12 micron band flux density.
 
-The purpose of this exercise is two-fold. First, you will get familiar with the data and see how different choices of visualizations using histograms can affect your interpretation of the data. Second, you will learn more about how to write functions in R and gain a better understanding of how they work.
+
+```{r infrared-read}
+infrared <- read.table("data/infrared.txt", header = TRUE)
+F12 <- infrared$F12
+```
+
+
+The purpose of this exercise is two-fold. First, you will get familiar with the 
+data and see how different choices of visualizations using histograms can affect 
+your interpretation of the data. Second, you will learn more about how to write 
+functions in R and gain a better understanding of how they work.
+
 
 ```{exercise, plotHist}
 Plot a histogram of `log(F12)` using the default value of the argument `breaks`. Experiment with alternative values of `breaks`. 
+
 ```
+
 
 ```{exercise, myBreaks}
 Write your own function, called `myBreaks`, which takes two arguments, `x` (a vector) and `h` (a positive integer). Let `h` have default value `5`. The function should first sort
@@ -668,8 +696,10 @@ values are `c(1, 2, 3, 5, 10, 11)`. Every second unique entry is `c(1, 3, 10)`, 
 
 *Hint: The functions `sort` and `unique` can be useful.* 
   
-Use your function to construct *breakpoints* for the histogram for different values of `h`, and compare with the histograms obtained in Exercise \@ref(plotHist).  
+Use your function to construct *breakpoints* for the histogram for different values of `h`, and compare with the histograms obtained in Exercise \@ref(exr:plotHist).  
+
 ```
+
 
 ```{exercise}
 If there are no ties in the data set, the function above will produce breakpoints with `h` 
