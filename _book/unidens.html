@@ -137,7 +137,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="2.2.2" data-path="kernel-density.html"><a href="kernel-density.html#benchmarking"><i class="fa fa-check"></i><b>2.2.2</b> Benchmarking</a></li>
 </ul></li>
 <li class="chapter" data-level="2.3" data-path="bandwidth.html"><a href="bandwidth.html"><i class="fa fa-check"></i><b>2.3</b> Bandwidth selection</a><ul>
-<li class="chapter" data-level="2.3.1" data-path="bandwidth.html"><a href="bandwidth.html#rectanglar"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
+<li class="chapter" data-level="2.3.1" data-path="bandwidth.html"><a href="bandwidth.html#rectangular"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
 <li class="chapter" data-level="2.3.2" data-path="bandwidth.html"><a href="bandwidth.html#ise-mise-and-mse-for-kernel-estimators"><i class="fa fa-check"></i><b>2.3.2</b> ISE, MISE and MSE for kernel estimators</a></li>
 <li class="chapter" data-level="2.3.3" data-path="bandwidth.html"><a href="bandwidth.html#plug-in-estimation-of-the-oracle-bandwidth"><i class="fa fa-check"></i><b>2.3.3</b> Plug-in estimation of the oracle bandwidth</a></li>
 <li class="chapter" data-level="2.3.4" data-path="bandwidth.html"><a href="bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
@@ -145,9 +145,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="2.4" data-path="multivariate-smoothing.html"><a href="multivariate-smoothing.html"><i class="fa fa-check"></i><b>2.4</b> Multivariate methods</a></li>
 </ul></li>
 <li class="chapter" data-level="3" data-path="bivariate.html"><a href="bivariate.html"><i class="fa fa-check"></i><b>3</b> Bivariate smoothing</a><ul>
-<li class="chapter" data-level="3.1" data-path="running-means.html"><a href="running-means.html"><i class="fa fa-check"></i><b>3.1</b> Running means</a><ul>
-<li class="chapter" data-level="3.1.1" data-path="running-means.html"><a href="running-means.html#dense-linear-algebra"><i class="fa fa-check"></i><b>3.1.1</b> Dense linear algebra</a></li>
-<li class="chapter" data-level="3.1.2" data-path="running-means.html"><a href="running-means.html#direct-implementation"><i class="fa fa-check"></i><b>3.1.2</b> Direct implementation</a></li>
+<li class="chapter" data-level="3.1" data-path="nearest-neighbor-smoothers.html"><a href="nearest-neighbor-smoothers.html"><i class="fa fa-check"></i><b>3.1</b> Nearest neighbor smoothers</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="nearest-neighbor-smoothers.html"><a href="nearest-neighbor-smoothers.html#linear-smoothers"><i class="fa fa-check"></i><b>3.1.1</b> Linear smoothers</a></li>
+<li class="chapter" data-level="3.1.2" data-path="nearest-neighbor-smoothers.html"><a href="nearest-neighbor-smoothers.html#implementing-the-running-mean"><i class="fa fa-check"></i><b>3.1.2</b> Implementing the running mean</a></li>
 </ul></li>
 <li class="chapter" data-level="3.2" data-path="kernel-methods.html"><a href="kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a></li>
 <li class="chapter" data-level="3.3" data-path="sparse-linear-algebra.html"><a href="sparse-linear-algebra.html"><i class="fa fa-check"></i><b>3.3</b> Sparse linear algebra</a></li>
@@ -267,10 +267,10 @@ Figure 2.1: Histograms equipped with a rug plot of the distribution of <span cla
 <h3><span class="header-section-number">2.1.1</span> Likelihood considerations</h3>
 <p>Let <span class="math inline">\(f_0\)</span> denote the unknown density that we want to estimate. That is, we imagine that the data points <span class="math inline">\(x_1, \ldots, x_n\)</span> are all observations drawn from the probability measure with density <span class="math inline">\(f_0\)</span> w.r.t. Lebesgue measure on <span class="math inline">\(\mathbb{R}\)</span>.</p>
 <p>Note that whenever we have a parametrized statistical model <span class="math inline">\((f_{\theta})_{\theta}\)</span>, where <span class="math inline">\(f_{\theta}\)</span> is a density w.r.t. Lebesgue measure on <span class="math inline">\(\mathbb{R}\)</span>, and an estimate <span class="math inline">\(\hat{\theta}\)</span> of the parameter, then <span class="math inline">\(f_{\hat{\theta}}\)</span> is an estimate of the unknown density <span class="math inline">\(f_0\)</span>. For a parametric family we can always try to use the MLE <span class="math display">\[\hat{\theta} = \text{arg max}_{\theta} \sum_{i=1}^n \log f_{\theta}(x_i)\]</span> as an estimate of <span class="math inline">\(\theta\)</span>. Likewise, we might compute the empirical mean and variance for the data and plug those numbers into the density for the Gaussian distribution, and in this way obtain a Gaussian density estimate of <span class="math inline">\(f_0\)</span>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">psi_mean &lt;-<span class="st"> </span><span class="kw">mean</span>(phipsi<span class="op">$</span>psi)
-psi_sd &lt;-<span class="st"> </span><span class="kw">sd</span>(phipsi<span class="op">$</span>psi)
-<span class="kw">hist</span>(phipsi<span class="op">$</span>psi, <span class="dt">prob =</span> <span class="ot">TRUE</span>)
-<span class="kw">rug</span>(phipsi<span class="op">$</span>psi)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">psi_mean &lt;-<span class="st"> </span><span class="kw">mean</span>(psi)
+psi_sd &lt;-<span class="st"> </span><span class="kw">sd</span>(psi)
+<span class="kw">hist</span>(psi, <span class="dt">prob =</span> <span class="ot">TRUE</span>)
+<span class="kw">rug</span>(psi)
 <span class="kw">curve</span>(<span class="kw">dnorm</span>(x, psi_mean, psi_sd), <span class="dt">add =</span> <span class="ot">TRUE</span>, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)</code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:psi-gauss"></span>
 <img src="CSwR_files/figure-html/psi-gauss-1.png" alt="Gaussian density (red) fitted to the $\psi$-angles." width="70%" />
@@ -282,7 +282,7 @@ Figure 2.2: Gaussian density (red) fitted to the <span class="math inline">\(\ps
 <p>It is natural to ask why we don’t go all-in and simply try to find the maximum likelihood estimate of the density among all possible densities? Why restrict attention to some subset of densities in a particular parametric family? For nonparametric estimation we can still introduce the log-likelihood <span class="math display">\[\ell(f) = \sum_{i=1}^n \log f(x_i).\]</span> To investigate if a nonparametric MLE is meaningful we consider how the likelihood behaves for the densities <span class="math display">\[f(x) = f_h(x) = \frac{1}{nh \sqrt{2 \pi}} \sum_{j=1}^n e^{- \frac{(x - x_j)^2}{2 h^2} }\]</span> for different choices of <span class="math inline">\(h\)</span>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## The densities can easily be implemented using the density implementation
 ## of the Gaussian density in R
-f_h &lt;-<span class="st"> </span><span class="cf">function</span>(x, h) <span class="kw">mean</span>(<span class="kw">dnorm</span>(x, phipsi<span class="op">$</span>psi, h))
+f_h &lt;-<span class="st"> </span><span class="cf">function</span>(x, h) <span class="kw">mean</span>(<span class="kw">dnorm</span>(x, psi, h))
 ## This function does not work as a vectorized function as it is, but there is 
 ## a convenience function, &#39;Vectorize&#39;, in R that turns the function into a 
 ## function that can actually be applied correctly to a vector. 
@@ -302,7 +302,7 @@ hseq &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">
 ## that f_h is vectorized. There are other ways to implement this computation
 ## in R, and some are more efficient, but the computation of the log-likelihood 
 ## for each h scales as O(n^2) with n the number of data points. 
-ll &lt;-<span class="st"> </span><span class="kw">sapply</span>(hseq, <span class="cf">function</span>(h) <span class="kw">sum</span>(<span class="kw">log</span>(<span class="kw">f_h</span>(phipsi<span class="op">$</span>psi, h))))
+ll &lt;-<span class="st"> </span><span class="kw">sapply</span>(hseq, <span class="cf">function</span>(h) <span class="kw">sum</span>(<span class="kw">log</span>(<span class="kw">f_h</span>(psi, h))))
 <span class="kw">qplot</span>(hseq, ll, <span class="dt">geom =</span> <span class="st">&quot;line&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">xlab</span>(<span class="st">&quot;h&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;Log-likelihood&quot;</span>)
 <span class="kw">qplot</span>(hseq, ll, <span class="dt">geom =</span> <span class="st">&quot;line&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_x_log10</span>(<span class="st">&quot;h&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;&quot;</span>)</code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:LogLike"></span>
@@ -331,7 +331,7 @@ n \log(nh\sqrt{2 \pi}) \\
 </div>
 <div id="basis-density" class="section level3">
 <h3><span class="header-section-number">2.1.3</span> Basis expansions</h3>
-<p>We suppose in this section that the data points are all contained in the interval <span class="math inline">\([a,b]\)</span> for <span class="math inline">\(a, b \in \mathbb{R}\)</span>. This is true for the angle data with <span class="math inline">\(a = -\pi\)</span> and <span class="math inline">\(b = \pi\)</span> nomatter the size of the data set, but if <span class="math inline">\(f_0\)</span> does not have a bounded support it may be necessary to let <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> change with the data. However, for any fixed data set we can choose some sufficiently large <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span>.</p>
+<p>We suppose in this section that the data points are all contained in the interval <span class="math inline">\([a,b]\)</span> for <span class="math inline">\(a, b \in \mathbb{R}\)</span>. This is true for the angle data with <span class="math inline">\(a = -\pi\)</span> and <span class="math inline">\(b = \pi\)</span> no matter the size of the data set, but if <span class="math inline">\(f_0\)</span> does not have a bounded support it may be necessary to let <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> change with the data. However, for any fixed data set we can choose some sufficiently large <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span>.</p>
 <p>In this section the sieve will be indexed by integers, and for <span class="math inline">\(h \in \mathbb{N}\)</span> we suppose that we have chosen continuous functions <span class="math inline">\(b_1, \ldots, b_h : [a,b] \to \mathbb{R}\)</span>. These will be called <em>basis functions</em>. We then define <span class="math display">\[\Theta_h = \left\{ x \mapsto  \varphi(\boldsymbol{\beta})^{-1} 
 \exp\left(\sum_{k=1}^h \beta_k b_k(x)\right) \Biggm| \boldsymbol{\beta} = (\beta_1, \ldots, \beta_h)^T \in \mathbb{R}^h \right\},\]</span> where <span class="math display">\[\varphi(\boldsymbol{\beta}) = \int_a^b \exp\left(\sum_{k=1}^h \beta_k b_k(x)\right) \mathrm{d} x.\]</span></p>
 <p>The MLE over <span class="math inline">\(\Theta_h\)</span> is then given as <span class="math display">\[\hat{f}_h(x) =  \varphi(\hat{\boldsymbol{\beta}})^{-1} 
@@ -349,8 +349,8 @@ n \log(nh\sqrt{2 \pi}) \\
 <p>“With four parameters I can fit an elephant, and with five I can make him wiggle his trunk.”</p>
 <p>— John von Neumann</p>
 </blockquote>
-<p>The Normal-inverse Gaussian distribution has four parameters and the generalised hyperbolic distribution is an extension with five, but von Neumann was probably thinking more in terms of a spline or a polynomial expansion as above with four or five suitably chosen basis functions.</p>
-<p>The quote is not a mathematical statement but an empirical observation. With a handful of parameters you already have a quite flexible class of densities that will fit many real data sets well. But remember that a reasonably good fit doesn’t mean that you have found the “true” data generating model. Though data is in some situations not as scarce a resource today as when von Neumann made elephants wiggle their trunk, the quote still suggests that <span class="math inline">\(h\)</span> should grow rather slowly with <span class="math inline">\(n\)</span> to avoid overfitting.</p>
+<p>The Normal-inverse Gaussian distribution has four parameters and the generalized hyperbolic distribution is an extension with five, but von Neumann was probably thinking more in terms of a spline or a polynomial expansion as above with four or five suitably chosen basis functions.</p>
+<p>The quote is not a mathematical statement but an empirical observation. With a handful of parameters you already have a quite flexible class of densities that will fit many real data sets well. But remember that a reasonably good fit doesn’t mean that you have found the “true” data generating model. Though data is in some situations not as scarce a resource today as when von Neumann made elephants wiggle their trunks, the quote still suggests that <span class="math inline">\(h\)</span> should grow rather slowly with <span class="math inline">\(n\)</span> to avoid overfitting.</p>
 </div>
 </div>
             </section>

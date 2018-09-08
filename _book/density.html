@@ -137,7 +137,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="2.2.2" data-path="kernel-density.html"><a href="kernel-density.html#benchmarking"><i class="fa fa-check"></i><b>2.2.2</b> Benchmarking</a></li>
 </ul></li>
 <li class="chapter" data-level="2.3" data-path="bandwidth.html"><a href="bandwidth.html"><i class="fa fa-check"></i><b>2.3</b> Bandwidth selection</a><ul>
-<li class="chapter" data-level="2.3.1" data-path="bandwidth.html"><a href="bandwidth.html#rectanglar"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
+<li class="chapter" data-level="2.3.1" data-path="bandwidth.html"><a href="bandwidth.html#rectangular"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
 <li class="chapter" data-level="2.3.2" data-path="bandwidth.html"><a href="bandwidth.html#ise-mise-and-mse-for-kernel-estimators"><i class="fa fa-check"></i><b>2.3.2</b> ISE, MISE and MSE for kernel estimators</a></li>
 <li class="chapter" data-level="2.3.3" data-path="bandwidth.html"><a href="bandwidth.html#plug-in-estimation-of-the-oracle-bandwidth"><i class="fa fa-check"></i><b>2.3.3</b> Plug-in estimation of the oracle bandwidth</a></li>
 <li class="chapter" data-level="2.3.4" data-path="bandwidth.html"><a href="bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
@@ -145,9 +145,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="2.4" data-path="multivariate-smoothing.html"><a href="multivariate-smoothing.html"><i class="fa fa-check"></i><b>2.4</b> Multivariate methods</a></li>
 </ul></li>
 <li class="chapter" data-level="3" data-path="bivariate.html"><a href="bivariate.html"><i class="fa fa-check"></i><b>3</b> Bivariate smoothing</a><ul>
-<li class="chapter" data-level="3.1" data-path="running-means.html"><a href="running-means.html"><i class="fa fa-check"></i><b>3.1</b> Running means</a><ul>
-<li class="chapter" data-level="3.1.1" data-path="running-means.html"><a href="running-means.html#dense-linear-algebra"><i class="fa fa-check"></i><b>3.1.1</b> Dense linear algebra</a></li>
-<li class="chapter" data-level="3.1.2" data-path="running-means.html"><a href="running-means.html#direct-implementation"><i class="fa fa-check"></i><b>3.1.2</b> Direct implementation</a></li>
+<li class="chapter" data-level="3.1" data-path="nearest-neighbor-smoothers.html"><a href="nearest-neighbor-smoothers.html"><i class="fa fa-check"></i><b>3.1</b> Nearest neighbor smoothers</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="nearest-neighbor-smoothers.html"><a href="nearest-neighbor-smoothers.html#linear-smoothers"><i class="fa fa-check"></i><b>3.1.1</b> Linear smoothers</a></li>
+<li class="chapter" data-level="3.1.2" data-path="nearest-neighbor-smoothers.html"><a href="nearest-neighbor-smoothers.html#implementing-the-running-mean"><i class="fa fa-check"></i><b>3.1.2</b> Implementing the running mean</a></li>
 </ul></li>
 <li class="chapter" data-level="3.2" data-path="kernel-methods.html"><a href="kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a></li>
 <li class="chapter" data-level="3.3" data-path="sparse-linear-algebra.html"><a href="sparse-linear-algebra.html"><i class="fa fa-check"></i><b>3.3</b> Sparse linear algebra</a></li>
@@ -258,12 +258,12 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p><em>Kernel methods</em> form an important class of smooth density estimators as implemented by the R function <code>density</code>. These estimators are essentially just locally weighted averages, and their computation is relatively straightforward in theory. In practice, different choices of how to implement the computations can, however, have a big effect on the actual computation time, and the implementation of kernel density estimators will illustrate three points:</p>
 <ul>
 <li>if possible, choose vectorized implementations in R,</li>
-<li>if a small loss in accuracy is acceptable, an approximate solution can be orders of magnitude faster than a literate implementation,</li>
+<li>if a small loss in accuracy is acceptable, an approximate solution can be orders of magnitude faster than a literal implementation,</li>
 <li>and the time it takes to numerically evaluate different <a href="https://en.wikipedia.org/wiki/Elementary_function">elementary functions</a> can depend a lot on the function and how you implement the computation.</li>
 </ul>
 <p>The first point is emphasized because it results in implementations that are short, expressive and easier to understand just as much as it typically results in computationally more efficient implementations. Note also that not every computation can be vectorized in a beneficial way, and one should never go through hoops to vectorize a computation at all costs.</p>
 <p>Before the chapter turns to the main topic on kernel methods a brief likelihood analysis is carried out. This is done to illustrate that in nonparametric statistics the estimators must be regularized to not overfit the data. The estimators need to achieve the right balance of adapting to data without adapting too much to the random variation in the data. With the likelihood approach regularization can be achieved by constraining the density estimates to belong to a family of increasingly flexible parametric densities that are fitted to data. This is known as the <em>method of sieves</em>. For the kernel methods the regularization is controlled by the bandwidth tuning parameter. In either case, methods are developed in this chapter for automatically choosing the amount of regularization.</p>
-<p>Choosing the right amount of regularization is just as important as choosing the method to use in the first place. It may, in fact, be more important. We actually don’t have a complete implementation of a nonparametric estimator until we have implemented a data driven and automatic way of choosing the amount of regularization. Implementating only the computations for evaluating a kernel estimator, say, and leaving it completely to the user to choose the bandwidth is a job half done. Methods and implementations for choosing the bandwidth are therefore treated in some detail in this chapter.</p>
+<p>Choosing the right amount of regularization is just as important as choosing the method to use in the first place. It may, in fact, be more important. We actually don’t have a complete implementation of a nonparametric estimator until we have implemented a data driven and automatic way of choosing the amount of regularization. Implementing only the computations for evaluating a kernel estimator, say, and leaving it completely to the user to choose the bandwidth is a job half done. Methods and implementations for choosing the bandwidth are therefore treated in some detail in this chapter.</p>
 <p>The chapter concludes by a section on multivariate nonparametric density estimation via kernel methods. However, the treatment is currently incomplete and only scratches the surface by showcasing a few R function.</p> 
 </div>
             </section>
