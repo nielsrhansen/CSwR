@@ -44,8 +44,8 @@ smoothed using loess (black), a degree 10 polynomial (red) and a smooth spline
 (purple). Nuuk annual temperature cycles (right) smoothed using a spline. 
 
 ```{r NuukSmooth, dependson="NuukData", message=FALSE, fig.cap="(ref:NuukSmooth)", fig.show="hold", out.width="49%"}
-ggplot(Nuuk_year, aes(x = Year, y = Temperature)) + 
-  geom_point() + geom_smooth(se = FALSE) + 
+p_Nuuk <- ggplot(Nuuk_year, aes(x = Year, y = Temperature)) + geom_point()
+p_Nuuk + geom_smooth(se = FALSE) + 
   geom_smooth(method = "lm", formula = y ~ poly(x, 10), color = "red", se = FALSE) + 
   geom_smooth(method = "gam", formula = y ~ s(x, bs = "cr"), color = "purple", se = FALSE)
 
@@ -57,8 +57,7 @@ ggplot(Nuuk, aes(x = Month, y = Temperature)) +
 
 
 ```{r NuukSmoothStrat, dependson="NuukData", echo=FALSE, eval=FALSE}
-ggplot(Nuuk, aes(x = Year, y = Temperature)) + 
-  geom_point() + geom_smooth(se = FALSE) + 
+ggplot(Nuuk, aes(x = Year, y = Temperature)) + geom_point() + geom_smooth(se = FALSE) + 
   geom_smooth(method = "lm", formula = y ~ poly(x, 10), color = "red", se = FALSE) + 
   geom_smooth(method = "gam", formula = y ~ s(x, bs = "cr"), color = "purple", se = FALSE) +
   facet_wrap(~ Month)
@@ -71,20 +70,119 @@ ggplot(Nuuk, aes(x = Month, y = Temperature)) +
 ```
 
 
-## Running means
+## Nearest neighbor smoothers
 
-Abstract view on running means as linear smoother. Dense linear algebra 
-implementation.
+One of the most basic ideas on smoothing bivariate data is to do use a 
+running mean or moving average. This is particularly sensible when the 
+$x$-variable takes equidistant values, e.g. when the observations constitute
+a time series such as the Nuuk temperature data. The running mean is 
+an example of a nearest neighbor smoother. 
 
-### Dense linear algebra
+Mathematically, the $k$ nearest neighbor smoother is defined as 
+$$\hat{s}_i = \frac{1}{k} \sum_{j \in N_i} y_j$$
+where $N_i$ is the set of indices for the $k$ nearest neighbors of $x_i$. 
+This simple idea is actually very general and powerful. It works as long
+as the $x$-values lie in a metric space, and by letting $k$ grow with 
+$n$ it is possible to construct consistent nonparametric estimators of 
+regression functions, $s(x) = E(Y \mid X)$, under minimal assumptions. 
+The practical problem is that $k$ must grow slowly in high dimensions, 
+and the estimator is not a panacea. 
 
+In this chapter we focus exclusively on $x$ being real valued with the 
+ordinary metric used to define the nearest neighbors, but even in 
+this case the total ordering of the real line adds a couple of extra 
+possibilities. When $k$ is odd, the *symmetric* 
+nearest neighbor smoother uses $x_i$, the $(k-1)/2$ smaller $x_j$ closest to
+$x_i$ together with the $(k-1)/2$ larger $x_j$ closest to $x_i$. It is 
+also possible to choose a one-sided smoother with $N_i$ corresponding 
+to the $k$ smaller $x_j$ closest to $x_i$, in which case the smoother would 
+be known as a causal filter. 
 
-Many linear smoothers can be computed much faster than via a matrix multiplication 
-of the smoother matrix and the observation vector, which has time complexity $O(n^2)$. 
+A benefit of the symmetric definition of neighbors makes it very easy 
+to handle the neighbors computationally; we don't need to compute and keep 
+track of the $n^2$ pairwise distances between the $x_i$s, we only need 
+to sort data according to the $x$-values. Once data is sorted,
+$$N_i = \{i - (k - 1) / 2, i - (k - 1) / 2 + 1, \ldots, i - 1 , i, i + 1, \ldots,   i + (k - 1) / 2\}$$
+for $(k - 1) / 2 \leq i \leq n - (k - 1) / 2$. The symmetric $k$ nearest neighbor 
+smoother is thus a running mean of the $y$-values when sorted according to 
+the $x$-values. There are a couple of possibilities for handling the boundaries,
+one being simply to not define a value of $\hat{s}_i$ outside of the interval
+above. 
 
-### Direct implementation
+With $\mathbf{s}$ denoting the vector of smoothed values by a nearest 
+neighbor smoother we can observe that it is always possible to write 
+$\mathbf{s} = \mathbf{S}y$ for a matrix $\mathbf{S}$. For the symmetric 
+nearest neighbor smoother and with data is sorted according to the $x$-values, 
+the matrix has the following band diagonal form
+
+$$
+\mathbf{S} = \left( \begin{array}{cccccccccc} 
+\frac{1}{5} & \frac{1}{5} & \frac{1}{5} & \frac{1}{5} & \frac{1}{5} & 0 & 0 & \ldots & 0 & 0 \\
+0 & \frac{1}{5} & \frac{1}{5} & \frac{1}{5} & \frac{1}{5} & \frac{1}{5} & 0 & \ldots & 0 & 0\\
+0 & 0 & \frac{1}{5} & \frac{1}{5} & \frac{1}{5} & \frac{1}{5} & \frac{1}{5} & \ldots & 0 & 0 \\
+\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ldots & \vdots & \vdots \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & \ldots & \frac{1}{5} & \frac{1}{5} \\
+\end{array} \right) 
+$$
+
+here given for $k = 5$ and with dimensions $(n - 4) \times n$ due to the 
+undefined boundary values. 
+
+### Linear smoothers
+
+A smoother of the form $\mathbf{s} = \mathbf{S}y$ for a *smoother matrix* $\mathbf{S}$, 
+such as the nearest neighbor smoother, is known as a *linear smoother*. 
+The linear form is often beneficial for theoretical arguments, and many smoothers
+considered in this chapter will be linear smoothers. For computing $\mathbf{s}$
+there may, however, be many alternatives to forming the matrix $\mathbf{S}$ 
+and computing the matrix-vector product. Indeed, this is often not then best 
+way to compute the smoothed values. 
+
+It is, on the other hand, useful to see how $\mathbf{S}$ can be constructed
+for the symmetric nearest neighbor smoother. 
+
+```{r S-NN}
+w <- c(rep(1/11, 11), rep(0, 147 - 10))
+S <- matrix(w, 147 - 10, 147, byrow = TRUE)
+```
+
+The construction above relies on vector recycling of `w` in the construction of `S` 
+and `w` having length $147 + 1$, which will effectively cause `w` to be 
+translated by one to the right every time it is recycled for a new row. As seen, 
+the code triggers a warning by R, but in this case we get what we want. 
+
+```{r S-NN-top, echo=2, dependson="S-NN"}
+old_options <- options(digits = 1)
+S[1:13, 1:13]
+options(digits = old_options$digits)
+```
+
+We can use the matrix to smooth the annual average temperature in Nuuk using a 
+running mean with a window of $k = 11$ years. That is, the smoothed temperature 
+at a given year is the average of the temperatures in the period 
+from five years before to five years after. Note that to add the smoothed 
+values to the previous plot we need to pad the values at the boundaries 
+with `NA`s to get a vector of length 147.
+
+```{r Nuuk-NN-plot, dependson=c("NuukSmooth", "S-NN"), fig.cap = "Annual average temperature in Nuuk smoothed using the running mean with $k = 11$ neighbors.", warning=FALSE}
+## Check first if data is sorted correctly.
+is.unsorted(Nuuk_year$Year)
+## The test is backwards, but confirms that data isn't unsorted :-)
+s_hat <- c(rep(NA, 5), S %*% Nuuk_year$Temperature, rep(NA, 5))
+p_Nuuk + geom_line(aes(y = s_hat), color = "blue")
+```
+
+### Implementing the running mean
+
+The running mean smoother fulfills the following identity
+$$s_{i+1} = s_{i} - y_{i - (k-1)/2} + y_{i + (k + 1)/2},$$
+which can form the basis for a much more efficient implementation 
+than the matrix-vector multiplication. It should be emphasized 
+again that the identity above and the implementation below 
+assumes that data is sorted according to $x$-values. 
 
 ```{r runMean}
+## The vector 'y' must be sorted according to the x-values
 runMean <- function(y, k) {
   n <- length(y)
   m <- floor((k - 1) / 2)
@@ -98,22 +196,44 @@ runMean <- function(y, k) {
 }
 ```
 
-The `filter` function does the same. 
+(ref:NN-smooth) Annual average temperature in Nuuk smoothed using the running 
+mean with $k = 11$ neighbors. This time using a different implementation than 
+in Figure \@ref(fig:Nuuk-NN-plot).
 
-```{r runMeanCheck, dependson="runMean"}
-y <- rnorm(7)
-rbind(runMean(y, k = 3),
-c(stats::filter(y, rep(1/3, 3))))
-rbind(runMean(y, k = 5),
-c(stats::filter(y, rep(1/5, 5))))
+```{r Nuuk-NN-plot2, dependson=c("NuukSmooth", "runMean"), fig.cap = "(ref:NN-smooth)", warning=FALSE}
+p_Nuuk + geom_line(aes(y = runMean(Nuuk_year$Temperature, 11)), color = "blue")
 ```
 
-A benchmark comparison between `runMean` and `filter` gives 
-the following table. 
+The R function `filter` (from the stats package) can be used to compute running 
+means and general moving averages using any weight vector. We compare our two 
+implementations to `filter`.
 
-```{r runMeanBench, dependson="runMean", echo=FALSE}
+```{r runMeanCheck, dependson="runMean"}
+s_hat_filter <- stats::filter(Nuuk_year$Temperature, rep(1/11, 11))
+range(s_hat_filter - s_hat, na.rm = TRUE)
+range(s_hat_filter - runMean(Nuuk_year$Temperature, 11), na.rm = TRUE)
+```
+
+Note that `filter` uses the same boundary convention as used in our implementations.
+
+A benchmark comparison between matrix-vector multiplication, `runMean` and `filter` 
+gives the following table with median run times in microseconds. 
+
+```{r runMeanBench, dependson="runMean", echo=FALSE, warning=FALSE}
 y <- rnorm(4196)
+w <- c(rep(1/11, 11), rep(0, 512 - 10))
+S1 <- matrix(w, 512 - 10, 512, byrow = TRUE)
+w <- c(rep(1/11, 11), rep(0, 1024 - 10))
+S2 <- matrix(w, 1024 - 10, 1024, byrow = TRUE)
+w <- c(rep(1/11, 11), rep(0, 2048 - 10))
+S3 <- matrix(w, 2048 - 10, 2048, byrow = TRUE)
+w <- c(rep(1/11, 11), rep(0, 4196 - 10))
+S4 <- matrix(w, 4196 - 10, 4196, byrow = TRUE)
 tmp <- microbenchmark(
+  S1 %*% y[1:512],
+  S2 %*% y[1:1024],
+  S3 %*% y[1:2048],
+  S4 %*% y[1:4196],
   runMean(y[1:512], k = 11),
   runMean(y[1:1024], k = 11),
   runMean(y[1:2048], k = 11),
@@ -123,10 +243,21 @@ tmp <- microbenchmark(
   stats::filter(y[1:2048], rep(1/11, 11)),
   stats::filter(y[1:4196], rep(1/11, 11))
   )
-benchTab(summary(tmp)[, c(1, 4, 5)], digits = 1)
+benchTab(summary(tmp)[, c(1, 5)], digits = 1)
 ```
 
-Thus `filter` is somewhat faster than `runMean`.  
+The matrix-vector computation is clearly much slower than the two alternatives,
+and the time to construct the $\mathbf{S}$-matrix has not even been included 
+in the benchmark above. There is also a difference in how the matrix-vector 
+multiplication scales with the size of data compared to the alternatives. 
+Whenever the data size doubles the run time approximately doubles for 
+both `filter` and `runMean`, while it quadruples for the matrix-vector 
+multiplication. This shows the difference between an algorithm 
+that scales like $O(n^2)$ and an algorithm that scales like $O(n)$. 
+
+Despite the fact that `filter` is actually implementing a more general 
+algorithm than `runMean`, it is still faster. This reflects the fact that 
+it is implemented in C and compiled.
 
 ## Kernel methods
 
@@ -211,7 +342,7 @@ I have written a faster C++ function for this job.
 
 Fast band pattern matrix:
 
-```{Rcpp, fastBand, eval=FALSE}
+```{Rcpp, fastBand}
 #include <Rcpp.h>
 using namespace Rcpp;
 // [[Rcpp::export]]
@@ -233,7 +364,7 @@ List fastBand(int n, int k) {
 
 And the R function
 
-```{r fastBand_R, dependson="Rcpp_depends"}
+```{r fastBand_R, dependson="fastBand"}
 bandSparseFast <- function(n, k) {
   n <- as.integer(n)
   k <- as.integer(k)
@@ -696,7 +827,7 @@ $$x_{i} = y_i' - \rho_{i}' x_{i+1}, \quad i = n-1, \ldots, 1.$$
 
 ### Implementation
 
-```{Rcpp, KalmanSmooth, eval=FALSE}
+```{Rcpp, KalmanSmooth}
 #include <Rcpp.h>
 using namespace Rcpp;
 // [[Rcpp::export]]
@@ -722,7 +853,7 @@ NumericVector KalmanSmooth(NumericVector y, double alpha, double sigmasq) {
 
 Result, $\alpha = 0.95$, $\sigma^2 = 10$
 
-```{r Nuuk_smooth, echo=FALSE, dependson=c("Rcpp_depends", "NuukData", "Nuuk_runmeans")}
+```{r Nuuk_smooth, echo=FALSE, dependson=c("KalmanSmooth", "NuukData", "Nuuk_runmeans")}
 n <- nrow(Nuuk_year); alpha <- 0.95; sigmasq <- 10
 ySmooth <- KalmanSmooth(Nuuk_year$Temperature, alpha, sigmasq)
 p + geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
@@ -752,7 +883,7 @@ filter algorithm.
 
 ### The Kalman filter 
 
-```{Rcpp, KalmanFilt, eval=FALSE}
+```{Rcpp, KalmanFilt}
 #include <Rcpp.h>
 using namespace Rcpp;
 // [[Rcpp::export]]
@@ -777,7 +908,7 @@ NumericVector KalmanFilt(NumericVector y, double alpha, double sigmasq) {
 
 Result, $\alpha = 0.95$, $\sigma^2 = 10$
 
-```{r Nuuk_filter, echo=FALSE, dependson=c("Rcpp_depends", "NuukData", "Nuuk_runmeans")}
+```{r Nuuk_filter, echo=FALSE, dependson=c("KalmanFilt", "NuukData", "Nuuk_runmeans")}
 yFilt <- KalmanFilt(Nuuk_year$Temperature, alpha, sigmasq)
 p + geom_line(aes(y = ySmooth), size = 1, color = "red") + 
   geom_line(aes(y = yFilt), size = 1, color = "blue")
