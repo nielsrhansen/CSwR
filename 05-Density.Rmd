@@ -444,9 +444,10 @@ kernDens_vec <- function (x, h, m = 512) {
   xx <- seq(rg[1] - 3 * h, rg[2] + 3 * h, length.out = m)
   y <- numeric(m) 
   ## The inner loop from 'kernDens' has been vectorized, and only the 
-  ## outer loop over the grid points remains.
+  ## outer loop over the grid points remains. 
+  const <- (sqrt(2 * pi) * h * length(x))
   for (i in seq_along(xx))
-      y[i] <- sum(exp(-(xx[i] - x)^2 / (2 * h^2)) / (sqrt(2 * pi) * h *length(x)))
+      y[i] <- sum(exp(-(xx[i] - x)^2 / (2 * h^2)) / const)
   list(x = xx, y = y)
 }
 ```
@@ -475,7 +476,8 @@ of the functional, or higher-order-function, known as [map](https://en.wikipedia
 kernDens_apply <- function (x, h, m = 512) {
   rg <- range(x)
   xx <- seq(rg[1] - 3 * h, rg[2] + 3 * h, length.out = m)
-  y <- sapply(xx, function(z) sum(exp(-(z - x)^2 / (2 * h^2)) / (sqrt(2 * pi) * h *length(x))))
+  const <- sqrt(2 * pi) * h * length(x)
+  y <- sapply(xx, function(z) sum(exp(-(z - x)^2 / (2 * h^2)) / const))
   list(x = xx, y = y)
 }
 ```
@@ -528,7 +530,7 @@ instead of the incremental addition in the for-loop. For
 these specific implementations these differences are nuances 
 and preferences may be more subjective and aesthetic than substantial. 
 
-To make a qualified  choice between the implementations we should  
+To make a qualified choice between the implementations we should
 investigate if they differ in terms of time and memory consumption, and 
 this is precisely the topic of the next section. 
 
@@ -1067,4 +1069,69 @@ ggplot(denshat, aes(phi, psi)) +
   scale_fill_gradient(low = "white", high = "darkblue", trans = "sqrt")
 
 ```
+
+## Exercises
+
+### Kernel density estimation {-}
+
+```{exercise, epanechnikov}
+The Epanechnikov kernel is given by 
+$$K(x) = \frac{3}{4}(1 - x)^2$$
+for $x \in [-1, 1]$ and 0 elsewhere. Show that this is a probability density
+with mean zero and compute $\sigma_K^2$ as well as $\|K\|_2^2$. 
+
+```
+
+
+For the following exercises use the log(F12) variable as considered in 
+Exercise \@ref(exr:plotHist).
+
+```{exercise, epanechnikov-density}
+Use `density` to compute the kernel density estimate with the Epanechnikov kernel
+to the log(F12) data. Try different bandwidths. 
+
+```
+
+```{exercise, epanechnikov-implement}
+Implement kernel density estimation yourself using the Epanechnikov kernel. 
+Test your implementation by comparing it to `density` using the log(F12) data.
+
+```
+
+### Benchmarking {-}
+
+```{exercise, benchmark-epanechnikov}
+Construct the following vector
+```
+
+```{r xsim}
+x <- rnorm(2^13)
+```
+
+Then use `microbenchmark` to benchmark the computation of 
+
+```{r density-xsim, eval = FALSE}
+density(x[1:k], 0.2)
+```
+
+for `k` ranging from $2^5$ to $2^{13}$. Summarize the benchmarking results. 
+
+```{exercise, benchmark-own-epanechnikov}
+Benchmark your own implementation of kernel density estimation using the Epanechnikov
+kernel. Compare the results to those obtained for `density`. 
+
+```
+
+```{exercise, benchmark-kernel}
+Experiment with different implementations of kernel evaluation in R using 
+the Gaussian kernel and the Epanechnikov kernel. Use `microbenchmark` to compare 
+the different implementations. 
+
+```
+
+
+
+
+
+
 

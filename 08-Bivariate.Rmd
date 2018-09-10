@@ -98,7 +98,7 @@ also possible to choose a one-sided smoother with $N_i$ corresponding
 to the $k$ smaller $x_j$ closest to $x_i$, in which case the smoother would 
 be known as a causal filter. 
 
-A benefit of the symmetric definition of neighbors makes it very easy 
+The symmetric definition of neighbors makes it very easy 
 to handle the neighbors computationally; we don't need to compute and keep 
 track of the $n^2$ pairwise distances between the $x_i$s, we only need 
 to sort data according to the $x$-values. Once data is sorted,
@@ -109,10 +109,10 @@ the $x$-values. There are a couple of possibilities for handling the boundaries,
 one being simply to not define a value of $\hat{s}_i$ outside of the interval
 above. 
 
-With $\mathbf{s}$ denoting the vector of smoothed values by a nearest 
+With $\mathbf{f}$ denoting the vector of smoothed values by a nearest 
 neighbor smoother we can observe that it is always possible to write 
-$\mathbf{s} = \mathbf{S}y$ for a matrix $\mathbf{S}$. For the symmetric 
-nearest neighbor smoother and with data is sorted according to the $x$-values, 
+$\mathbf{f} = \mathbf{S}y$ for a matrix $\mathbf{S}$. For the symmetric 
+nearest neighbor smoother and with data sorted according to the $x$-values, 
 the matrix has the following band diagonal form
 
 $$
@@ -130,12 +130,12 @@ undefined boundary values.
 
 ### Linear smoothers
 
-A smoother of the form $\mathbf{s} = \mathbf{S}y$ for a *smoother matrix* $\mathbf{S}$, 
+A smoother of the form $\mathbf{f} = \mathbf{S}y$ for a *smoother matrix* $\mathbf{S}$, 
 such as the nearest neighbor smoother, is known as a *linear smoother*. 
 The linear form is often beneficial for theoretical arguments, and many smoothers
-considered in this chapter will be linear smoothers. For computing $\mathbf{s}$
+considered in this chapter will be linear smoothers. For computing $\mathbf{f}$
 there may, however, be many alternatives to forming the matrix $\mathbf{S}$ 
-and computing the matrix-vector product. Indeed, this is often not then best 
+and computing the matrix-vector product. Indeed, this is often not the best 
 way to compute the smoothed values. 
 
 It is, on the other hand, useful to see how $\mathbf{S}$ can be constructed
@@ -166,20 +166,20 @@ with `NA`s to get a vector of length 147.
 
 ```{r Nuuk-NN-plot, dependson=c("NuukSmooth", "S-NN"), fig.cap = "Annual average temperature in Nuuk smoothed using the running mean with $k = 11$ neighbors.", warning=FALSE}
 ## Check first if data is sorted correctly.
-is.unsorted(Nuuk_year$Year)
 ## The test is backwards, but confirms that data isn't unsorted :-)
-s_hat <- c(rep(NA, 5), S %*% Nuuk_year$Temperature, rep(NA, 5))
-p_Nuuk + geom_line(aes(y = s_hat), color = "blue")
+is.unsorted(Nuuk_year$Year)
+f_hat <- c(rep(NA, 5), S %*% Nuuk_year$Temperature, rep(NA, 5))
+p_Nuuk + geom_line(aes(y = f_hat), color = "blue")
 ```
 
 ### Implementing the running mean
 
 The running mean smoother fulfills the following identity
 $$s_{i+1} = s_{i} - y_{i - (k-1)/2} + y_{i + (k + 1)/2},$$
-which can form the basis for a much more efficient implementation 
+which can be used for much more efficient implementation 
 than the matrix-vector multiplication. It should be emphasized 
 again that the identity above and the implementation below 
-assumes that data is sorted according to $x$-values. 
+assume that data is sorted according to $x$-values. 
 
 ```{r runMean}
 ## The vector 'y' must be sorted according to the x-values
@@ -209,9 +209,9 @@ means and general moving averages using any weight vector. We compare our two
 implementations to `filter`.
 
 ```{r runMeanCheck, dependson="runMean"}
-s_hat_filter <- stats::filter(Nuuk_year$Temperature, rep(1/11, 11))
-range(s_hat_filter - s_hat, na.rm = TRUE)
-range(s_hat_filter - runMean(Nuuk_year$Temperature, 11), na.rm = TRUE)
+f_hat_filter <- stats::filter(Nuuk_year$Temperature, rep(1/11, 11))
+range(f_hat_filter - f_hat, na.rm = TRUE)
+range(f_hat_filter - runMean(Nuuk_year$Temperature, 11), na.rm = TRUE)
 ```
 
 Note that `filter` uses the same boundary convention as used in our implementations.
@@ -253,7 +253,8 @@ multiplication scales with the size of data compared to the alternatives.
 Whenever the data size doubles the run time approximately doubles for 
 both `filter` and `runMean`, while it quadruples for the matrix-vector 
 multiplication. This shows the difference between an algorithm 
-that scales like $O(n^2)$ and an algorithm that scales like $O(n)$. 
+that scales like $O(n)$ and an algorithm that scales like $O(n^2)$ 
+as the matrix-vector product does.
 
 Despite the fact that `filter` is actually implementing a more general 
 algorithm than `runMean`, it is still faster. This reflects the fact that 
@@ -668,6 +669,91 @@ betahat[1:4]
 ### Wavelets
 
 ## Splines
+
+The minimizer of 
+$$\text{RSS}(s) = \sum_{i=1}^n (y_i - s(x_i))^2 + \lambda \int s''(t)^2 \mathrm{d} t$$
+is a cubic spline
+
+with *knots* in the data points $x_i$, that is, a function 
+$$f = \sum_i \beta_i \phi_i$$
+where $\phi_i$ are basis functions for the $n$-dimensional space of such splines. 
+
+Cubic splines are piecewise degree 3 polynomials in between knots.
+
+In vector notation 
+$$\hat{\mathbf{f}} = \boldsymbol{\Phi}\hat{\beta}$$
+with $\boldsymbol{\Phi}_{ij} = \phi_j(x_i)$, and
+
+\begin{aligned}
+ \text{RSS}(\mathbf{f}, \lambda) & = (\mathbf{Y} - \mathbf{f})^T (\mathbf{Y} - \mathbf{f}) + \lambda \int_a^b s''(t)^2 \mathrm{d} t \\
+& = ( \mathbf{Y} -  \boldsymbol{\Phi}\beta)^T (\mathbf{Y} -  \boldsymbol{\Phi}\beta) + \lambda \beta^T \mathbf{\Omega} \beta
+\end{aligned}
+
+with 
+$$\mathbf{\Omega}_{ij} = \int \phi_i''(t) \phi_j''(t) \mathrm{d}t.$$
+
+The minimizer is 
+$$\hat{\beta} = (\boldsymbol{\Phi}^T \boldsymbol{\Phi} + \lambda \mathbf{\Omega}_N)^{-1}\boldsymbol{\Phi}^T \mathbf{Y}$$
+
+with resulting smoother
+$$\hat{\mathbf{f}} = \boldsymbol{\Phi} ((\boldsymbol{\Phi}^T \boldsymbol{\Phi} + \lambda \mathbf{\Omega})^{-1}\boldsymbol{\Phi}^T \mathbf{Y}.$$
+
+Smoothing splines are linear smoothers. The basic function in R for computing 
+a smoothing spline is `smooth.spline`. It automatically uses LOOCV (or GCV if requested) 
+for optimizing the parameter $\lambda$, but one can also manually specify the 
+degree of smoothing using the arguments `spar` or `df` (the latter being the trace of the smoother matrix).
+
+Note that `smooth.spline` "cheats" by default and uses only a subset of the $x_i$s
+as knots for $n > 50$ unless `all.knots = TRUE`. 
+
+The result is an object of class smooth.spline. The `lev` entry contains the diagonals
+of the smoother matrix. 
+
+The `gam` function from the mgcv package produces a penalized spline fit,
+where the smoothing parameter is selected by GCV by default. The function does not 
+attempt to implement smoothing splines exactly, but it provides a vastly more general framework 
+for smoothing via generalized additive models and spline basis expansions. 
+
+One hurdle is the computation of the matrix $\Omega$. 
+The slides do not explain exactly how to compute this matrix in practice using the `splineDesign`
+function. The problem is the boundaries. It is true that there is an $n$-dimensional basis 
+that spans the space of splines solving the optimization problem. It may, however, be more convenient 
+to work with a slightly larger space. If the knot sequence consists of the sequence of data points 
+with the smallest and largest point each replicated 3 times then the resulting basis is $(n+2)$-dimensional, 
+and you can use this basis.
+
+The `splineDesign` function can be used to evaluate the second derivatives of the basis 
+functions (by specifying the knots as described above) in an equidistant grid,
+which can then be used to compute a Riemann-sum approximation of the integrals. 
+This was the procedure I had in mind for the assignment. You can actually quite easily compute 
+the integral exactly using Simpson's rule. This is because the integrands are piecewise quadratic. 
+
+
+However, if you don't want to go into any of this, you are also welcome to install the fda package, 
+and then you can compute $\Omega$ by 
+
+```{r}
+fda::bsplinepen(fda::create.bspline.basis(c(0, 1), breaks = seq(0, 1, 0.1)))
+```
+
+```{r}
+library(splines)
+knots <- c(0, 0, 0, seq(0, 1, 0.1), 1, 1, 1)
+tmp <- splineDesign(knots, seq(0, 1, 0.005))
+matplot(tmp, type = "l", lty = 1)
+tmp_deriv <- splineDesign(knots, seq(0, 1, 0.00005), derivs = 2)
+matplot(tmp_deriv, type = "l", lty = 1)
+Omega0 <- crossprod(tmp_deriv) * 0.00005
+
+ab <- splineDesign(knots, seq(0, 1, 0.1), derivs = 2)
+ab_mid <- splineDesign(knots, seq(0.05, 0.95, 0.1), derivs = 2)
+Omega <- (crossprod(ab) + 4 * crossprod(ab_mid)) * 0.1 / 6 
+Omega - Omega0
+matplot(ab, type = "l", lty = 1)
+matplot(ab_mid, type = "l", lty = 1)
+```
+
+
 
 ## Gaussian processes
 

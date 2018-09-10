@@ -143,6 +143,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="2.3.4" data-path="bandwidth.html"><a href="bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
 </ul></li>
 <li class="chapter" data-level="2.4" data-path="multivariate-smoothing.html"><a href="multivariate-smoothing.html"><i class="fa fa-check"></i><b>2.4</b> Multivariate methods</a></li>
+<li class="chapter" data-level="2.5" data-path="exercises-1.html"><a href="exercises-1.html"><i class="fa fa-check"></i><b>2.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="exercises-1.html"><a href="exercises-1.html#kernel-density-estimation"><i class="fa fa-check"></i>Kernel density estimation</a></li>
+<li class="chapter" data-level="" data-path="exercises-1.html"><a href="exercises-1.html#benchmarking-1"><i class="fa fa-check"></i>Benchmarking</a></li>
+</ul></li>
 </ul></li>
 <li class="chapter" data-level="3" data-path="bivariate.html"><a href="bivariate.html"><i class="fa fa-check"></i><b>3</b> Bivariate smoothing</a><ul>
 <li class="chapter" data-level="3.1" data-path="nearest-neighbor-smoothers.html"><a href="nearest-neighbor-smoothers.html"><i class="fa fa-check"></i><b>3.1</b> Nearest neighbor smoothers</a><ul>
@@ -254,6 +258,127 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
             <section class="normal" id="section-">
 <div id="splines" class="section level2">
 <h2><span class="header-section-number">3.5</span> Splines</h2>
+<p>The minimizer of <span class="math display">\[\text{RSS}(s) = \sum_{i=1}^n (y_i - s(x_i))^2 + \lambda \int s&#39;&#39;(t)^2 \mathrm{d} t\]</span> is a cubic spline</p>
+<p>with <em>knots</em> in the data points <span class="math inline">\(x_i\)</span>, that is, a function <span class="math display">\[f = \sum_i \beta_i \phi_i\]</span> where <span class="math inline">\(\phi_i\)</span> are basis functions for the <span class="math inline">\(n\)</span>-dimensional space of such splines.</p>
+<p>Cubic splines are piecewise degree 3 polynomials in between knots.</p>
+<p>In vector notation <span class="math display">\[\hat{\mathbf{f}} = \boldsymbol{\Phi}\hat{\beta}\]</span> with <span class="math inline">\(\boldsymbol{\Phi}_{ij} = \phi_j(x_i)\)</span>, and</p>
+<span class="math display">\[\begin{aligned}
+ \text{RSS}(\mathbf{f}, \lambda) &amp; = (\mathbf{Y} - \mathbf{f})^T (\mathbf{Y} - \mathbf{f}) + \lambda \int_a^b s&#39;&#39;(t)^2 \mathrm{d} t \\
+&amp; = ( \mathbf{Y} -  \boldsymbol{\Phi}\beta)^T (\mathbf{Y} -  \boldsymbol{\Phi}\beta) + \lambda \beta^T \mathbf{\Omega} \beta
+\end{aligned}\]</span>
+<p>with <span class="math display">\[\mathbf{\Omega}_{ij} = \int \phi_i&#39;&#39;(t) \phi_j&#39;&#39;(t) \mathrm{d}t.\]</span></p>
+<p>The minimizer is <span class="math display">\[\hat{\beta} = (\boldsymbol{\Phi}^T \boldsymbol{\Phi} + \lambda \mathbf{\Omega}_N)^{-1}\boldsymbol{\Phi}^T \mathbf{Y}\]</span></p>
+<p>with resulting smoother <span class="math display">\[\hat{\mathbf{f}} = \boldsymbol{\Phi} ((\boldsymbol{\Phi}^T \boldsymbol{\Phi} + \lambda \mathbf{\Omega})^{-1}\boldsymbol{\Phi}^T \mathbf{Y}.\]</span></p>
+<p>Smoothing splines are linear smoothers. The basic function in R for computing a smoothing spline is <code>smooth.spline</code>. It automatically uses LOOCV (or GCV if requested) for optimizing the parameter <span class="math inline">\(\lambda\)</span>, but one can also manually specify the degree of smoothing using the arguments <code>spar</code> or <code>df</code> (the latter being the trace of the smoother matrix).</p>
+<p>Note that <code>smooth.spline</code> “cheats” by default and uses only a subset of the <span class="math inline">\(x_i\)</span>s as knots for <span class="math inline">\(n &gt; 50\)</span> unless <code>all.knots = TRUE</code>.</p>
+<p>The result is an object of class smooth.spline. The <code>lev</code> entry contains the diagonals of the smoother matrix.</p>
+<p>The <code>gam</code> function from the mgcv package produces a penalized spline fit, where the smoothing parameter is selected by GCV by default. The function does not attempt to implement smoothing splines exactly, but it provides a vastly more general framework for smoothing via generalized additive models and spline basis expansions.</p>
+<p>One hurdle is the computation of the matrix <span class="math inline">\(\Omega\)</span>. The slides do not explain exactly how to compute this matrix in practice using the <code>splineDesign</code> function. The problem is the boundaries. It is true that there is an <span class="math inline">\(n\)</span>-dimensional basis that spans the space of splines solving the optimization problem. It may, however, be more convenient to work with a slightly larger space. If the knot sequence consists of the sequence of data points with the smallest and largest point each replicated 3 times then the resulting basis is <span class="math inline">\((n+2)\)</span>-dimensional, and you can use this basis.</p>
+<p>The <code>splineDesign</code> function can be used to evaluate the second derivatives of the basis functions (by specifying the knots as described above) in an equidistant grid, which can then be used to compute a Riemann-sum approximation of the integrals. This was the procedure I had in mind for the assignment. You can actually quite easily compute the integral exactly using Simpson’s rule. This is because the integrands are piecewise quadratic.</p>
+<p>However, if you don’t want to go into any of this, you are also welcome to install the fda package, and then you can compute <span class="math inline">\(\Omega\)</span> by</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">fda<span class="op">::</span><span class="kw">bsplinepen</span>(fda<span class="op">::</span><span class="kw">create.bspline.basis</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.1</span>)))</code></pre></div>
+<pre><code>##         [,1]   [,2]        [,3]          [,4]          [,5]          [,6]
+##  [1,]  12000 -16500  3500.00000  1.000000e+03  0.000000e+00  0.000000e+00
+##  [2,] -16500  24000 -6750.00000 -1.000000e+03  2.500000e+02  0.000000e+00
+##  [3,]   3500  -6750  4500.00000 -1.333333e+03 -8.333333e+01  1.666667e+02
+##  [4,]   1000  -1000 -1333.33333  2.666667e+03 -1.500000e+03  1.136868e-13
+##  [5,]      0    250   -83.33333 -1.500000e+03  2.666667e+03 -1.500000e+03
+##  [6,]      0      0   166.66667  1.136868e-13 -1.500000e+03  2.666667e+03
+##  [7,]      0      0     0.00000  1.666667e+02  6.821210e-13 -1.500000e+03
+##  [8,]      0      0     0.00000  0.000000e+00  1.666667e+02  0.000000e+00
+##  [9,]      0      0     0.00000  0.000000e+00  0.000000e+00  1.666667e+02
+## [10,]      0      0     0.00000  0.000000e+00  0.000000e+00  0.000000e+00
+## [11,]      0      0     0.00000  0.000000e+00  0.000000e+00  0.000000e+00
+## [12,]      0      0     0.00000  0.000000e+00  0.000000e+00  0.000000e+00
+## [13,]      0      0     0.00000  0.000000e+00  0.000000e+00  0.000000e+00
+##                [,7]          [,8]          [,9]         [,10]       [,11]
+##  [1,]  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00     0.00000
+##  [2,]  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00     0.00000
+##  [3,]  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00     0.00000
+##  [4,]  1.666667e+02  0.000000e+00  0.000000e+00  0.000000e+00     0.00000
+##  [5,]  6.821210e-13  1.666667e+02  0.000000e+00  0.000000e+00     0.00000
+##  [6,] -1.500000e+03  0.000000e+00  1.666667e+02  0.000000e+00     0.00000
+##  [7,]  2.666667e+03 -1.500000e+03 -3.410605e-13  1.666667e+02     0.00000
+##  [8,] -1.500000e+03  2.666667e+03 -1.500000e+03  6.821210e-13   166.66667
+##  [9,] -3.410605e-13 -1.500000e+03  2.666667e+03 -1.500000e+03   -83.33333
+## [10,]  1.666667e+02  6.821210e-13 -1.500000e+03  2.666667e+03 -1333.33333
+## [11,]  0.000000e+00  1.666667e+02 -8.333333e+01 -1.333333e+03  4500.00000
+## [12,]  0.000000e+00  0.000000e+00  2.500000e+02 -1.000000e+03 -6750.00000
+## [13,]  0.000000e+00  0.000000e+00  0.000000e+00  1.000000e+03  3500.00000
+##        [,12]  [,13]
+##  [1,]      0      0
+##  [2,]      0      0
+##  [3,]      0      0
+##  [4,]      0      0
+##  [5,]      0      0
+##  [6,]      0      0
+##  [7,]      0      0
+##  [8,]      0      0
+##  [9,]    250      0
+## [10,]  -1000   1000
+## [11,]  -6750   3500
+## [12,]  24000 -16500
+## [13,] -16500  12000</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(splines)
+knots &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.1</span>), <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)
+tmp &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(knots, <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.005</span>))
+<span class="kw">matplot</span>(tmp, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">lty =</span> <span class="dv">1</span>)</code></pre></div>
+<p><img src="CSwR_files/figure-html/unnamed-chunk-5-1.png" width="70%" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">tmp_deriv &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(knots, <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.00005</span>), <span class="dt">derivs =</span> <span class="dv">2</span>)
+<span class="kw">matplot</span>(tmp_deriv, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">lty =</span> <span class="dv">1</span>)</code></pre></div>
+<p><img src="CSwR_files/figure-html/unnamed-chunk-5-2.png" width="70%" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Omega0 &lt;-<span class="st"> </span><span class="kw">crossprod</span>(tmp_deriv) <span class="op">*</span><span class="st"> </span><span class="fl">0.00005</span>
+
+ab &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(knots, <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.1</span>), <span class="dt">derivs =</span> <span class="dv">2</span>)
+ab_mid &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(knots, <span class="kw">seq</span>(<span class="fl">0.05</span>, <span class="fl">0.95</span>, <span class="fl">0.1</span>), <span class="dt">derivs =</span> <span class="dv">2</span>)
+Omega &lt;-<span class="st"> </span>(<span class="kw">crossprod</span>(ab) <span class="op">+</span><span class="st"> </span><span class="dv">4</span> <span class="op">*</span><span class="st"> </span><span class="kw">crossprod</span>(ab_mid)) <span class="op">*</span><span class="st"> </span><span class="fl">0.1</span> <span class="op">/</span><span class="st"> </span><span class="dv">6</span> 
+Omega <span class="op">-</span><span class="st"> </span>Omega0</code></pre></div>
+<pre><code>##            [,1]         [,2]          [,3]          [,4]          [,5]
+##  [1,] -9.001500   13.5026250 -4.501375e+00  2.500000e-04  0.000000e+00
+##  [2,] 13.502625 -395.2546875  6.317526e+02 -2.500006e+02  6.250000e-05
+##  [3,] -4.501375  631.7526250 -1.210585e+03  7.500008e+02 -1.666669e+02
+##  [4,]  0.000250 -250.0006250  7.500008e+02 -1.000001e+03  6.666673e+02
+##  [5,]  0.000000    0.0000625 -1.666669e+02  6.666673e+02 -1.000001e+03
+##  [6,]  0.000000    0.0000000  4.166667e-05 -1.666669e+02  6.666673e+02
+##  [7,]  0.000000    0.0000000  0.000000e+00  4.166667e-05 -1.666669e+02
+##  [8,]  0.000000    0.0000000  0.000000e+00  0.000000e+00  4.166667e-05
+##  [9,]  0.000000    0.0000000  0.000000e+00  0.000000e+00  0.000000e+00
+## [10,]  0.000000    0.0000000  0.000000e+00  0.000000e+00  0.000000e+00
+## [11,]  0.000000    0.0000000  0.000000e+00  0.000000e+00  0.000000e+00
+## [12,]  0.000000    0.0000000  0.000000e+00  0.000000e+00  0.000000e+00
+## [13,]  0.000000    0.0000000  0.000000e+00  0.000000e+00  0.000000e+00
+##                [,6]          [,7]          [,8]          [,9]
+##  [1,]  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00
+##  [2,]  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00
+##  [3,]  4.166667e-05  0.000000e+00  0.000000e+00  0.000000e+00
+##  [4,] -1.666669e+02  4.166667e-05  0.000000e+00  0.000000e+00
+##  [5,]  6.666673e+02 -1.666669e+02  4.166667e-05  0.000000e+00
+##  [6,] -1.000001e+03  6.666673e+02 -1.666669e+02  4.166667e-05
+##  [7,]  6.666673e+02 -1.000001e+03  6.666673e+02 -1.666669e+02
+##  [8,] -1.666669e+02  6.666673e+02 -1.000001e+03  6.666673e+02
+##  [9,]  4.166667e-05 -1.666669e+02  6.666673e+02 -1.000001e+03
+## [10,]  0.000000e+00  4.166667e-05 -1.666669e+02  6.666673e+02
+## [11,]  0.000000e+00  0.000000e+00  4.166667e-05 -1.666669e+02
+## [12,]  0.000000e+00  0.000000e+00  0.000000e+00  6.250000e-05
+## [13,]  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00
+##               [,10]         [,11]        [,12]     [,13]
+##  [1,]  0.000000e+00  0.000000e+00    0.0000000  0.000000
+##  [2,]  0.000000e+00  0.000000e+00    0.0000000  0.000000
+##  [3,]  0.000000e+00  0.000000e+00    0.0000000  0.000000
+##  [4,]  0.000000e+00  0.000000e+00    0.0000000  0.000000
+##  [5,]  0.000000e+00  0.000000e+00    0.0000000  0.000000
+##  [6,]  0.000000e+00  0.000000e+00    0.0000000  0.000000
+##  [7,]  4.166667e-05  0.000000e+00    0.0000000  0.000000
+##  [8,] -1.666669e+02  4.166667e-05    0.0000000  0.000000
+##  [9,]  6.666673e+02 -1.666669e+02    0.0000625  0.000000
+## [10,] -1.000001e+03  7.500008e+02 -250.0006250  0.000250
+## [11,]  7.500008e+02 -1.210585e+03  631.7526250 -4.501375
+## [12,] -2.500006e+02  6.317526e+02 -395.2546875 13.502625
+## [13,]  2.500000e-04 -4.501375e+00   13.5026250 -9.001500</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">matplot</span>(ab, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">lty =</span> <span class="dv">1</span>)</code></pre></div>
+<p><img src="CSwR_files/figure-html/unnamed-chunk-5-3.png" width="70%" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">matplot</span>(ab_mid, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">lty =</span> <span class="dv">1</span>)</code></pre></div>
+<p><img src="CSwR_files/figure-html/unnamed-chunk-5-4.png" width="70%" style="display: block; margin: auto;" /></p>
 </div>
             </section>
 
