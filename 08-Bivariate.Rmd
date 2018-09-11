@@ -74,17 +74,17 @@ ggplot(Nuuk, aes(x = Month, y = Temperature)) +
 
 One of the most basic ideas on smoothing bivariate data is to do use a 
 running mean or moving average. This is particularly sensible when the 
-$x$-variable takes equidistant values, e.g. when the observations constitute
+$x$-values are equidistant, e.g. when the observations constitute
 a time series such as the Nuuk temperature data. The running mean is 
-an example of a nearest neighbor smoother. 
+an example of the more general nearest neighbor smoothers.
 
-Mathematically, the $k$ nearest neighbor smoother is defined as 
-$$\hat{s}_i = \frac{1}{k} \sum_{j \in N_i} y_j$$
+Mathematically, the $k$ nearest neighbor smoother in $x_i$ is defined as 
+$$\hat{f}_i = \frac{1}{k} \sum_{j \in N_i} y_j$$
 where $N_i$ is the set of indices for the $k$ nearest neighbors of $x_i$. 
 This simple idea is actually very general and powerful. It works as long
 as the $x$-values lie in a metric space, and by letting $k$ grow with 
 $n$ it is possible to construct consistent nonparametric estimators of 
-regression functions, $s(x) = E(Y \mid X)$, under minimal assumptions. 
+regression functions, $f(x) = E(Y \mid X)$, under minimal assumptions. 
 The practical problem is that $k$ must grow slowly in high dimensions, 
 and the estimator is not a panacea. 
 
@@ -106,12 +106,12 @@ $$N_i = \{i - (k - 1) / 2, i - (k - 1) / 2 + 1, \ldots, i - 1 , i, i + 1, \ldots
 for $(k - 1) / 2 \leq i \leq n - (k - 1) / 2$. The symmetric $k$ nearest neighbor 
 smoother is thus a running mean of the $y$-values when sorted according to 
 the $x$-values. There are a couple of possibilities for handling the boundaries,
-one being simply to not define a value of $\hat{s}_i$ outside of the interval
+one being simply to not define a value of $\hat{f}_i$ outside of the interval
 above. 
 
-With $\mathbf{f}$ denoting the vector of smoothed values by a nearest 
+With $\hat{\mathbf{f}}$ denoting the vector of smoothed values by a nearest 
 neighbor smoother we can observe that it is always possible to write 
-$\mathbf{f} = \mathbf{S}y$ for a matrix $\mathbf{S}$. For the symmetric 
+$\hat{\mathbf{f}} = \mathbf{S}\mathbf{y}$ for a matrix $\mathbf{S}$. For the symmetric 
 nearest neighbor smoother and with data sorted according to the $x$-values, 
 the matrix has the following band diagonal form
 
@@ -130,7 +130,7 @@ undefined boundary values.
 
 ### Linear smoothers
 
-A smoother of the form $\mathbf{f} = \mathbf{S}y$ for a *smoother matrix* $\mathbf{S}$, 
+A smoother of the form $\hat{\mathbf{f}} = \mathbf{S}\mathbf{y}$ for a *smoother matrix* $\mathbf{S}$, 
 such as the nearest neighbor smoother, is known as a *linear smoother*. 
 The linear form is often beneficial for theoretical arguments, and many smoothers
 considered in this chapter will be linear smoothers. For computing $\mathbf{f}$
@@ -259,6 +259,79 @@ as the matrix-vector product does.
 Despite the fact that `filter` is actually implementing a more general 
 algorithm than `runMean`, it is still faster. This reflects the fact that 
 it is implemented in C and compiled.
+
+### Choose $k$ by cross-validation
+
+Many (linear) smoothers have a natural definition of an "out-of-sample" 
+prediction, that is, how $\hat{f}(x)$ is computed for $x$ not 
+in the data. If so, it becomes possible to define 
+$$\hat{f}^{-i}_i = \hat{f}^{-i}(x_i)$$
+as the prediction at $x_i$ using the smoother computed from data 
+with $(x_i, y_i)$ excluded. However, instead of relying on this, 
+we *define*
+$$\hat{f}^{-i}_i = \sum_{j \neq i} \frac{S_{ij}y_j}{1 - S_{ii}}$$
+for any linear smoother. This definition will concur with $\hat{f}^{-i}(x_i)$
+for most smoothers, but this has to be verified case-by-case.
+
+The running mean is a little speciel in this respect. In the 
+previous section, the 
+running mean was only considered for odd $k$ and using 
+a symmetric neighbor definition. This is convenient 
+when considering the running mean *in the observations* $x_i$. 
+When considering the running mean in any other point, a symmetric 
+neighbor definition works better with an even $k$. This 
+is exactly what the definition of $\hat{f}^{-i}_i$ above amounts to.
+If $\mathbf{S}$ is the running mean smoother matrix for an odd $k$, 
+then $\hat{f}^{-i}_i$ corresponds to symmetric $(k-1)$-nearest 
+neighbor smoothing excluding $(x_i, y_i)$ from the data. 
+
+Using the definition above, we get that the *leave-one-out cross-validation*
+squared error criterion becomes 
+$$\mathrm{LOOCV} = \sum_{i=1}^n (y_i - \hat{f}^{-i}_i)^2 = 
+\sum_{i=1}^n \left(\frac{y_i - \hat{f}_i}{1 - S_{ii}}\right)^2.$$
+What is important to observe from the identity above is that LOOCV
+can be computed without 
+actually computing all the $\hat{f}^{-i}_i$. 
+
+In some cases the diagonal elements, $S_{ii}$, of the smoother matrix 
+are not computed as part of computing $\hat{f}$, but it is possible to 
+compute the trace 
+$$\mathrm{df} = \mathrm{trace}(\mathbf{S}) = \sum_{i=1}^n S_{ii}$$
+easily. If we then replace $S_{ii}$ in the formula by $\mathrm{df} / n$ we 
+get the *generalized* cross-validation criterion
+$$\mathrm{GCV} = \sum_{i=1}^n \left(\frac{y_i - \hat{f}_i}{1 - \mathrm{df} / n}\right)^2.$$
+
+For the running mean, LOOCV and GCV are identical as all diagonal elements of 
+the smoother matrix are identical. We disregard boundary values, and to get 
+a comparable quantity across different choices of $k$ we use `mean` instead of 
+`sum` in the implementation. 
+
+```{r LOOCV-runMean}
+loocv <- function(k, y) {
+  f_hat <- runMean(y, k)
+  mean(((y - f_hat) / (1 - 1/k))^2, na.rm = TRUE) 
+}
+```
+
+```{r Nuuk-running-loocv, fig.cap="The leave-one-out cross-validation criterion for the running mean as a function of the number of neighbors $k$.", dependson=c("LOOCV-runMean", "NuukData")}
+k <- seq(3, 40, 2)
+CV <- sapply(k, function(kk) loocv(kk, Nuuk_year$Temperature))
+k_opt <- k[which.min(CV)]
+qplot(k, CV) + geom_line() + geom_vline(xintercept = k_opt, color = "red")
+```
+
+The optimal choice of $k$ is `r k_opt`, but the LOOCV criterion jumps quite a
+lot up and down with changing neighbor size, and $k = 25$ gives a rather
+low value as well.
+
+```{r Nuuk-NN-plot3, dependson=c("NuukData", "runMean", "Nuuk-running-loocv"), fig.cap = "The $k$-nearest neighbor smoother with the optimal choice of $k$ based on LOOCV (blue) and with $k = 25$ (red).", warning=FALSE}
+p_Nuuk + geom_line(aes(y = runMean(Nuuk_year$Temperature, 25)), color = "red") +
+   geom_line(aes(y = runMean(Nuuk_year$Temperature, k_opt)), color = "blue")
+```
+
+
+
+
 
 ## Kernel methods
 
@@ -464,29 +537,28 @@ identical(as.numeric(K %*% Nuuk_year$Temperature) * weights,
           c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5))))
 ```
 
-## Orthogonal basis expansions
+## Orthogonal basis expansions {#onb}
 
 ### Polynomial expansions
 
-Degree 19 polynomial
+Degree 19 polynomial fitted to the temperature data.
 
 ```{r Nuuk_poly_fig, echo=FALSE, dependson="Nuuk_runmeans"}
 p + geom_smooth(method = "lm", formula = y ~ poly(x, 19), 
                 se = FALSE, size = 1)
 ```
 
-The model matrix
+We can extract the model matrix from the lm-object.
 
 ```{r Nuuk_model_matrix, dependson="NuukData"}
 intercept <- rep(1/sqrt(n), n)  ## To make intercept column have norm one
 polylm <- lm(Temperature ~ intercept + poly(Year, 19) - 1, data = Nuuk_year)
-X <- model.matrix(polylm)
-X[1:5, 1:10]
+Phi <- model.matrix(polylm)
 ```
 
 
-```{r model-matrix-fig, echo=FALSE, dependson=c("NuukData", "Nuuk_model_matrix"), fig.cap="The model matrix columns as functions"}
-XX <- X
+```{r model-matrix-fig, echo=FALSE, dependson=c("NuukData", "Nuuk_model_matrix"), fig.cap="The model matrix columns as functions", out.width="100%"}
+XX <- Phi
 colnames(XX) <- c("intercept", paste(rep("pol", 19), 1:19, sep = ""))
 bind_cols(Nuuk_year, as.tibble(XX)) %>% 
   select(-(3:5)) %>% 
@@ -497,25 +569,17 @@ bind_cols(Nuuk_year, as.tibble(XX)) %>%
   theme(legend.position="none")
 ```
 
-The model matrix is (almost) orthogonal
-
-```{r model_matrix_orthogonal, dependson="Nuuk_model_matrix"}
-image(Matrix(t(X) %*% X))
-```
-
-Estimation with orthogonal design:
+The model matrix is (almost) orthogonal, and estimation becomes quite simple. 
+With an orthogonal model matrix the normal equation reduces to the estimate
+$$\hat{\beta} = \Phi^T Y$$
+since $\phi^T \phi = I$. The predicted (or fitted) values are $\Phi \Phi^T Y$
+with smoother matrix $\mathbf{S} = \Phi \Phi^T$ being a projection. 
 
 ```{r orthogonal_estimation, dependson=c("Nuuk_model_matrix", "NuukData")}
-(t(X) %*% Nuuk_year$Temperature)[1:10, 1]
+(t(Phi) %*% Nuuk_year$Temperature)[1:10, 1]
 coef(polylm)[1:10]
 ```
 
-With an orthogonal design matrix the normal equation reduces to the estimate
-$$\hat{\beta} = X^T Y$$
-since $X^T X = I$. 
-
-The predicted (or fitted) values are $X X^T Y$
-with smoother matrix $S = X X^T.$
 
 With homogeneous variance 
 $$\hat{\beta}_i \overset{\text{approx}}{\sim} \mathcal{N}(\beta_i, \sigma^2),$$
@@ -533,7 +597,7 @@ qplot(x = 1:20, y = abs(coef(polylm)), geom = "blank") +
                                   parse = TRUE)
 ```
 
-```{r Nuuk_poly_fig2, echo=FALSE, dependson="Nuuk_runmeans"}
+```{r Nuuk_poly_fig2, echo=FALSE, dependson="Nuuk_runmeans", fig.cap="Polynomial fit using all 19 basis functions (blue) and using a degree 5 polynomial (red)."}
 p + geom_smooth(method = "lm", formula = y ~ poly(x, 19), 
                 se = FALSE, size = 1) + 
   geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
@@ -551,40 +615,39 @@ $$\sum_{k=0}^{n-1} |x_{k,m}|^2 = 1$$
 and for $m_1 \neq m_2$
 $$\sum_{k=0}^{n-1} x_{k,m_1}\overline{x_{k,m_2}} = 0$$
 
-Thus $X = (x_{k,m})_{k,m}$ is an $n \times n$ unitary matrix;
-$$X^*X = I$$
-where $X^*$ is the conjugate transposed of $X$.
+Thus $\Phi = (x_{k,m})_{k,m}$ is an $n \times n$ unitary matrix;
+$$\Phi^*\Phi = I$$
+where $\Phi^*$ is the conjugate transposed of $\Phi$.
 
-$\hat{\beta} = X^* Y$ is the *discrete Fourier transform* of $Y$. It is the basis coefficients 
-in the orthonormal basis given by $X$;
-$$Y_k = \frac{1}{\sqrt{n}} \sum_{m=0}^{n-1} \hat{\beta}_m  e^{2 \pi i k m / n}$$
+$\hat{\beta} = \Phi^* y$ is the *discrete Fourier transform* of $y$. 
+It is the basis coefficients in the orthonormal basis given by $\Phi$;
+$$y_k = \frac{1}{\sqrt{n}} \sum_{m=0}^{n-1} \hat{\beta}_m  e^{2 \pi i k m / n}$$
 
-or $Y = X \hat{\beta}.$
+or $y = \Phi \hat{\beta}.$
 
 
 ```{r Fourier, dependson="NuukData"}
-X <- outer(0:(n - 1), 0:(n - 1), 
+Phi <- outer(0:(n - 1), 0:(n - 1), 
            function(k, m) exp(2 * pi * 1i * (k * m) / n) / sqrt(n))
-image(Matrix(abs(Conj(t(X)) %*% X)), useAbs = FALSE)
 ```
 
-The matrix $X$:
+The matrix $\Phi$ generates an interesting pattern.
 
-```{r Fourier_fig, echo=FALSE, dependson="Fourier"}
-p1 <- image(Matrix(Re(X)), main = "Real part")
-p2 <- image(Matrix(Im(X)),  main = "Imaginary part")
+```{r Fourier_fig, echo=FALSE, dependson="Fourier", out.width="100%", fig.width=10}
+p1 <- image(Matrix(Re(Phi)), main = "Real part")
+p2 <- image(Matrix(Im(Phi)),  main = "Imaginary part")
 grid.arrange(p1, p2, ncol = 2)
 ```
 
-Columns in the matrix $X$:
+Columns in the matrix $\Phi$:
 
-```{r Fourier_basis_fig, echo=FALSE, fig.width=7, dependson=c("NuukData", "Fourier")}
-Xbind <- cbind(rbind(Re(X[, c(1:5, 71:75, (n - 4):n)]),
-                     Im(X[, c(1:5, 71:75, (n - 4):n)])),
+```{r Fourier_basis_fig, echo=FALSE, dependson=c("NuukData", "Fourier"), out.width="100%"}
+Xbind <- cbind(rbind(Re(Phi[, c(1:6, 71:77, (n - 6):n)]),
+                     Im(Phi[, c(1:6, 71:77, (n - 6):n)])),
                data.frame(label = c(rep("cos (Re)", n), rep("sin (Im)", n)),
                           Year = rep(Nuuk_year$Year, 2))
 )
-colnames(Xbind) <- c(c(1:5, 71:75, (n - 4):n), "label", "Year")
+colnames(Xbind) <- c(c(1:6, 71:77, (n - 6):n), "label", "Year")
 qplot(Year, value, data = melt(Xbind, id.vars = c("Year", "label")), 
       color = label, geom = "line") + 
   facet_wrap(~ variable)
@@ -593,25 +656,25 @@ qplot(Year, value, data = melt(Xbind, id.vars = c("Year", "label")),
 We can estimate by matrix multiplication
 
 ```{r Fourier_estimation, dependson=c("Fourier", "NuukData")}
-betahat <- Conj(t(X)) %*% Nuuk_year$Temperature # t(X) = X for Fourier bases
+betahat <- Conj(t(Phi)) %*% Nuuk_year$Temperature # t(Phi) = Phi for Fourier bases
 betahat[c(1, 2:4, 73, n:(n - 2))]
 ```
 
-For real $Y$ it holds that $\hat{\beta}_0$ is real, and the symmetry
+For real $y$ it holds that $\hat{\beta}_0$ is real, and the symmetry
 $$\hat{\beta}_{n-m} = \hat{\beta}_m^*$$
 holds for $m = 1, \ldots, n - 1$. (For $n$ even, $\hat{\beta}_{n/2}$ is real too). 
 
 Modulus distribution:
 
-Note that for $m \neq 0, n/2$,  $\beta_m = 0$ and $Y \sim \mathcal{N}(X\beta, \sigma^2 I_n)$ then  
+Note that for $m \neq 0, n/2$,  $\beta_m = 0$ and $y \sim \mathcal{N}(\Phi\beta, \sigma^2 I_n)$ then  
 $$(\mathrm{Re}(\hat{\beta}_m), \mathrm{Im}(\hat{\beta}_m))^T \sim \mathcal{N}\left(0, \frac{\sigma^2}{2} I_2\right),$$
---
+
 hence 
 $$|\hat{\beta}_m|^2 = \mathrm{Re}(\hat{\beta}_m)^2 + \mathrm{Im}(\hat{\beta}_m)^2 \sim \frac{\sigma^2}{2} \chi^2_2,$$
 that is, $P(|\hat{\beta}_m| \geq  1.73 \sigma) = 0.05.$ There is a clear case 
 of multiple testing if we use this threshold at face value, and we would expect
 around $0.05 \times n/2$ false positive if there is no signal at all. Lowering 
-the threshold using the Bonferroni correction yields a threshold of around $2.7 \sigma$ 
+the probability using the Bonferroni correction yields a threshold of around $2.7 \sigma$ 
 instead. 
 
 Thresholding Fourier:
@@ -648,9 +711,9 @@ qplot(x = 1:n, y = abs(gam), geom = "blank") +
                                   parse = TRUE)
 ```
 
-```{r NuukFourierthresholdfig, echo=FALSE, dependson=c("Nuuk_runmeans", "Fourier", "Fourier_estimation", "Nuuk_poly_threshold"), fig.cap="Fourier based smoother by thresholding (blue) and polynomial fit of degree 4 (red)."}
+```{r NuukFourierthresholdfig, echo=FALSE, dependson=c("Nuuk_runmeans", "Fourier", "Fourier_estimation", "Nuuk_poly_threshold"), fig.cap="Fourier based smoother by thresholding (blue) and polynomial fit of degree 5 (red)."}
 ind <- which(abs(betahat) > 2.7 * sigmahat)
-predy <- Re(X[, ind] %*% betahat[ind])
+predy <- Re(Phi[, ind] %*% betahat[ind])
 p + geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
                 se = FALSE, size = 1, color = "red") + 
   geom_line(aes(y = predy), size = 1, color = "blue")
@@ -670,90 +733,366 @@ betahat[1:4]
 
 ## Splines
 
-The minimizer of 
-$$\text{RSS}(s) = \sum_{i=1}^n (y_i - s(x_i))^2 + \lambda \int s''(t)^2 \mathrm{d} t$$
-is a cubic spline
+In [the previous section](#onb) orthogonality of basis functions played an 
+important role for computing basis function expansions efficiently as well
+as for the statistical assessment of estimated coefficients. This section 
+will deal with bivariate smoothing via basis functions that are not 
+necessarily orthogonal. 
 
-with *knots* in the data points $x_i$, that is, a function 
-$$f = \sum_i \beta_i \phi_i$$
-where $\phi_i$ are basis functions for the $n$-dimensional space of such splines. 
+Though some of the material of this section will apply to any choice of 
+basis, we restrict attention to splines and consider almost 
+exclusively the widely used B-splines (the "B" is for basis). 
 
-Cubic splines are piecewise degree 3 polynomials in between knots.
+### Smoothing splines
 
-In vector notation 
+To motivate splines we briefly consider the following penalized least squares
+criterion for finding a smooth approximation to bivariate data: minimize
+\begin{equation}
+L(f) = \sum_{i=1}^n (y_i - f(x_i))^2 + \lambda \|f''\|_2^2
+(\#eq:spline-criterion)
+\end{equation}
+over all twice differentiable functions $f$. The first term is the standard 
+squared error, and we can easily find a smooth function interpolating the 
+$y$-values (if all the $x$-values are different), which will thus drive 
+the squared error to 0. The squared 2-norm regularizes the minimization 
+problem so that the minimizer finds a balance between interpolation and 
+having a small second derivative (note that $\|f''\|_2 = 0$ if and only if $f$ is an 
+affine function). The tuning parameter $\lambda$ controls this balance. 
+
+It is possible to show that the minimizer of \@ref(eq:spline-criterion) is a 
+[natural cubic spline](https://en.wikipedia.org/wiki/Spline_(mathematics)) with
+*knots* in the data points $x_i$. That is, the spline is a $C^2$-function 
+that equals a third degree polynomial in between the knots. At the knots,
+the two polynomials that meet fit together up to the second derivative, but they 
+may differ on the third derivative. That the solution is *natural* means 
+that it has zero second and third derivative at and beyond the two boundary knots.
+
+It is not particularly difficult to show that the space of natural cubic
+splines is a vector space of dimension $n$ if all the $x$-values are different. 
+It is therefore possible to find a basis of splines, $\varphi_1, \ldots, \varphi_n$, 
+such that the $f$ that minimizes \@ref(eq:spline-criterion) is of the form
+$$f = \sum_{i=1}^n \beta_i \varphi_i.$$
+What is remarkable about this is that the basis (and the finite dimensional
+vector space it spans) doesn't depend upon the $y$-values. Though the 
+optimization is over an infinite dimensional space, the penalization ensures
+that the minimizer is always in the same finite dimensional space nomatter 
+what $y_1, \ldots, y_n$ are. Moreover, since \@ref(eq:spline-criterion) is 
+a quite natural criterion to minimize to find a smooth function fitting 
+the bivariate data, splines appear as good candidates 
+for producing such smooth fits. On top of that, splines have several 
+computational advantages and are widely used. 
+
+If we let $\hat{f}_i = \hat{f}(x_i)$ with $\hat{f}$ the minimizer of 
+\@ref(eq:spline-criterion), we have in vector notation that 
 $$\hat{\mathbf{f}} = \boldsymbol{\Phi}\hat{\beta}$$
-with $\boldsymbol{\Phi}_{ij} = \phi_j(x_i)$, and
+with $\boldsymbol{\Phi}_{ij} = \varphi_j(x_i)$. The minimizer 
+can be found by observing that 
 
 \begin{aligned}
- \text{RSS}(\mathbf{f}, \lambda) & = (\mathbf{Y} - \mathbf{f})^T (\mathbf{Y} - \mathbf{f}) + \lambda \int_a^b s''(t)^2 \mathrm{d} t \\
-& = ( \mathbf{Y} -  \boldsymbol{\Phi}\beta)^T (\mathbf{Y} -  \boldsymbol{\Phi}\beta) + \lambda \beta^T \mathbf{\Omega} \beta
+ L(\mathbf{f}) & = (\mathbf{y} - \mathbf{f})^T (\mathbf{y} - \mathbf{f}) + \lambda \| f'' \|_2^2 \\
+& = ( \mathbf{y} -  \boldsymbol{\Phi}\beta)^T (\mathbf{y} -  \boldsymbol{\Phi}\beta) + \lambda \beta^T \mathbf{\Omega} \beta
 \end{aligned}
 
-with 
-$$\mathbf{\Omega}_{ij} = \int \phi_i''(t) \phi_j''(t) \mathrm{d}t.$$
-
-The minimizer is 
-$$\hat{\beta} = (\boldsymbol{\Phi}^T \boldsymbol{\Phi} + \lambda \mathbf{\Omega}_N)^{-1}\boldsymbol{\Phi}^T \mathbf{Y}$$
-
-with resulting smoother
-$$\hat{\mathbf{f}} = \boldsymbol{\Phi} ((\boldsymbol{\Phi}^T \boldsymbol{\Phi} + \lambda \mathbf{\Omega})^{-1}\boldsymbol{\Phi}^T \mathbf{Y}.$$
-
-Smoothing splines are linear smoothers. The basic function in R for computing 
-a smoothing spline is `smooth.spline`. It automatically uses LOOCV (or GCV if requested) 
-for optimizing the parameter $\lambda$, but one can also manually specify the 
-degree of smoothing using the arguments `spar` or `df` (the latter being the trace of the smoother matrix).
-
-Note that `smooth.spline` "cheats" by default and uses only a subset of the $x_i$s
-as knots for $n > 50$ unless `all.knots = TRUE`. 
-
-The result is an object of class smooth.spline. The `lev` entry contains the diagonals
-of the smoother matrix. 
-
-The `gam` function from the mgcv package produces a penalized spline fit,
-where the smoothing parameter is selected by GCV by default. The function does not 
-attempt to implement smoothing splines exactly, but it provides a vastly more general framework 
-for smoothing via generalized additive models and spline basis expansions. 
-
-One hurdle is the computation of the matrix $\Omega$. 
-The slides do not explain exactly how to compute this matrix in practice using the `splineDesign`
-function. The problem is the boundaries. It is true that there is an $n$-dimensional basis 
-that spans the space of splines solving the optimization problem. It may, however, be more convenient 
-to work with a slightly larger space. If the knot sequence consists of the sequence of data points 
-with the smallest and largest point each replicated 3 times then the resulting basis is $(n+2)$-dimensional, 
-and you can use this basis.
-
-The `splineDesign` function can be used to evaluate the second derivatives of the basis 
-functions (by specifying the knots as described above) in an equidistant grid,
-which can then be used to compute a Riemann-sum approximation of the integrals. 
-This was the procedure I had in mind for the assignment. You can actually quite easily compute 
-the integral exactly using Simpson's rule. This is because the integrands are piecewise quadratic. 
+where 
+$$\mathbf{\Omega}_{ij} = \langle \varphi_i'', \varphi_j'' \rangle = 
+\int  \varphi_i''(z) \varphi_j''(z) \mathrm{d}z.$$
+The matrix $\mathbf{\Omega}$ is positive semidefinite by construction, and 
+we refer to it as the *penalty matrix*. It induces a seminorm on $\mathbb{R}^n$
+so that we can express the seminorm, $\|f''\|_2$, of $f$ in terms of the 
+parameters in the basis expansion using $\varphi_i$. 
 
 
-However, if you don't want to go into any of this, you are also welcome to install the fda package, 
-and then you can compute $\Omega$ by 
+This is a standard penalized least squares problem, whose solution is 
+$$\hat{\beta} = (\boldsymbol{\Phi}^T \boldsymbol{\Phi} + \lambda \mathbf{\Omega})^{-1}\boldsymbol{\Phi}^T  \mathbf{y}$$
+and with resulting smoother
+$$\hat{\mathbf{f}} = \underbrace{\boldsymbol{\Phi} ((\boldsymbol{\Phi}^T \boldsymbol{\Phi} + \lambda \mathbf{\Omega})^{-1}\boldsymbol{\Phi}^T}_{\mathbf{S}_{\lambda}} \mathbf{y}.$$
+This linear smoother with smoothing matrix $\mathbf{S}_{\lambda}$ based 
+on natural cubic splines gives what is known as a
+[smoothing spline](https://en.wikipedia.org/wiki/Smoothing_spline) that 
+minimizes \@ref(eq:spline-criterion). We will pursue 
+spline based smoothing by minimizing \@ref(eq:spline-criterion) but
+using various B-spline bases that may have more or less than $n$ elements. 
+For the linear algebra, it doesn't matter what basis we choose as long as
+$\boldsymbol{\Phi}_{ij} = \varphi_j(x_i)$ and $\mathbf{\Omega}$ is 
+given in terms of $\varphi''_i$ as above.
 
-```{r}
-fda::bsplinepen(fda::create.bspline.basis(c(0, 1), breaks = seq(0, 1, 0.1)))
-```
+### Splines in R
 
-```{r}
+The splines package in R implements some of the basic functions needed to work 
+with splines. In particular, the `splineDesign` function that computes evaluations
+of B-splines and their derivatives.
+
+```{r splines-package, cache=FALSE}
 library(splines)
-knots <- c(0, 0, 0, seq(0, 1, 0.1), 1, 1, 1)
-tmp <- splineDesign(knots, seq(0, 1, 0.005))
-matplot(tmp, type = "l", lty = 1)
-tmp_deriv <- splineDesign(knots, seq(0, 1, 0.00005), derivs = 2)
-matplot(tmp_deriv, type = "l", lty = 1)
-Omega0 <- crossprod(tmp_deriv) * 0.00005
-
-ab <- splineDesign(knots, seq(0, 1, 0.1), derivs = 2)
-ab_mid <- splineDesign(knots, seq(0.05, 0.95, 0.1), derivs = 2)
-Omega <- (crossprod(ab) + 4 * crossprod(ab_mid)) * 0.1 / 6 
-Omega - Omega0
-matplot(ab, type = "l", lty = 1)
-matplot(ab_mid, type = "l", lty = 1)
 ```
 
 
+```{r splines, fig.cap="B-spline basis as computed by `splineDesign`."}
+## Note the specification of repeated boundary knots
+knots <- c(0, 0, 0, seq(0, 1, 0.2), 1, 1, 1)
+xx <- seq(0, 1, 0.005)
+B_splines <- splineDesign(knots, xx)
+matplot(xx, B_splines, type = "l", lty = 1)
+```
+
+The basis shown in Figure \@ref(fig:splines) is an example of a cubic B-spline
+basis with 11 inner knots in $0, 0.1, \ldots, 0.9, 1$. The repeated 
+boundary knots control how the spline basis behaves close to the boundaries
+of the interval. This basis has 13 basis functions, not 11, and spans a 
+larger space than the space of *natural* cubic splines. It is 
+possible to compute a basis based on B-splines for the natural cubic splines
+using the function `ns`, but for all practical purposes this is not 
+important, and we will work exclusively with the B-spline basis itself. 
+
+The computation of the penalty matrix $\mathbf{\Omega}$ constitutes a 
+practical problem, but observing that $\varphi''_i$ is an affine 
+function in between knots leads to a simple way of
+computing $\mathbf{\Omega}_{ij}$. Letting $g_{ij} = \varphi''_i \varphi''_j$ 
+it holds that $g_{ij}$ is quadratic between two consecutive knots $a$ and $b$, 
+in which case 
+$$\int_a^b g_{ij}(z) \mathrm{d}z = \frac{b - a}{6}\left(g_{ij}(a) + 4 g_{ij}\left(\frac{b-a}{2}\right) + g_{ij}(b)\right).$$
+This identity is behind [Simpson's rule](https://en.wikipedia.org/wiki/Simpson%27s_rule) 
+for numerical integration, and the fact that this is an identity for quadratic 
+polynomials, and not an approximation, means that Simpson's rule 
+applied appropriately leads to exact computation of 
+$\mathbf{\Omega}_{ij}$. All we need is the ability to evaluate 
+$\varphi''_i$ at certain points, and `splineDesign` can be used for that. 
+
+```{r Omega-Simpson}
+pen_mat <- function(inner_knots) {
+  knots <- sort(c(rep(range(inner_knots), 3), inner_knots))
+  d <- diff(inner_knots)  ## the vector of knot differences; b - a 
+  g_ab <- splineDesign(knots, inner_knots, derivs = 2) 
+  knots_mid <- inner_knots[-length(inner_knots)] + d / 2
+  g_ab_mid <- splineDesign(knots, knots_mid, derivs = 2)
+  g_a <- g_ab[-nrow(g_ab), ]
+  g_b <- g_ab[-1, ]
+  (crossprod(d * g_a,  g_a) + 
+      4 * crossprod(d * g_ab_mid, g_ab_mid) + 
+      crossprod(d * g_b, g_b)) / 6 
+}
+```
+
+It is laborious to write good tests of `pen_mat`. We would have to work out a 
+set of example matrices by other means, e.g. by hand. Alternatively, we can 
+compare to a simpler numerical integration technique using Riemann sums. 
+
+```{r Omega-test1, dependson="Omega-Simpson"}
+tmp_deriv <- splineDesign(c(0, 0, 0, 0, 0.5, 1, 1, 1, 1), 
+                          seq(0, 1, 1e-5), derivs = 2)
+Omega_numeric <- crossprod(tmp_deriv[-1, ]) * 1e-5  ## Right Riemann sums
+Omega <- pen_mat(c(0, 0.5, 1))
+Omega_numeric / Omega
+range((Omega_numeric - Omega) / (Omega + 0.001))  ## Relative error
+```
+
+And we should also test an example with non-equidistant knots. 
+
+```{r Omega-test2, dependson="Omega-Simpson"}
+tmp_deriv <- splineDesign(c(0, 0, 0, 0, 0.2, 0.3, 0.5, 0.6, 0.65, 0.7, 1, 1, 1, 1), 
+                          seq(0, 1, 1e-5), derivs = 2)
+Omega_numeric <- crossprod(tmp_deriv[-1, ]) * 1e-5  ## Right Riemann sums
+Omega <- pen_mat(c(0, 0.2, 0.3, 0.5, 0.6, 0.65, 0.7, 1))
+range((Omega_numeric - Omega) / (Omega + 0.001)) ## Relative error
+```
+
+These examples indicate that `pen_mat` computes $\mathbf{\Omega}$ correctly, 
+in particular as increasing the Riemann sum precision by 
+lowering the number $10^{-5}$ will decrease the relative error (not shown). 
+Of course, correctness ultimately depends on `splineDesign` computing 
+the correct second derivatives, which hasn't been tested here.
+
+We can also test how our implementation of smoothing splines works 
+on data. We do this here by implementing the matrix-algebra directly 
+for computing $\mathbf{S}_{\lambda} \mathbf{y}$.
+
+```{r Nuuk-smooth-spline}
+inner_knots <- Nuuk_year$Year
+Phi <- splineDesign(c(rep(range(inner_knots), 3), inner_knots), inner_knots)
+Omega <- pen_mat(inner_knots)
+smoother <- function(lambda) 
+  Phi %*% solve(crossprod(Phi) + lambda * Omega, t(Phi) %*% Nuuk_year$Temperature)
+
+p_Nuuk + 
+  geom_line(aes(y = smoother(0.1)), color = "blue") +   ## Undersmooth
+  geom_line(aes(y = smoother(10)), color = "red") +     ## Smooth
+  geom_line(aes(y = smoother(1000)), color = "purple")  ## Oversmooth
+```
+
+Smoothing splines can be computed using the R function `smooth.spline` 
+from the stats package. It uses generalized cross validation (GCV) by 
+default for automatically choosing the tuning parameter $\lambda$, 
+but one can also manually specify the amount of smoothing using 
+one of the arguments `lambda`, `spar` or `df` 
+(the latter being the trace of the smoother matrix). Note, however,
+that due to internal differences from the `splineDesign` basis 
+above, the `lambda` argument to `smooth.spline` does not match the 
+$\lambda$ parameter above. To compare our results to `smooth.spline`
+we therefore optimize the GCV criterion. First we implement a function
+that computes GCV for a fixed value of $\lambda$.
+
+```{r gcv-smooth-spline}
+gcv <- function(lambda, y) {
+  S <- Phi %*% solve(crossprod(Phi) + lambda * Omega, t(Phi))
+  df <- sum(diag(S))  ## The trace of the smoother matrix
+  sum(((y - S %*% y) / (1 - df / length(y)))^2, na.rm = TRUE) 
+}
+```
+
+Then we apply this function to a grid of $\lambda$-values and 
+choose the value of $\lambda$ that minimizes GCV.
+
+```{r Nuuk-spline-gcv, fig.cap="The generalized cross-validation criterion for smoothing splines as a function of the tuning parameter $\\lambda$.", dependson=c("gcv-smooth-spline", "NuukData")}
+lambda <- seq(50, 250, 2)
+GCV <- sapply(lambda, gcv, y = Nuuk_year$Temperature)
+lambda_opt <- lambda[which.min(GCV)]
+qplot(lambda, GCV) + 
+  geom_vline(xintercept = lambda_opt, color = "red")
+```
+
+Finally, we can visualize the resulting smoothing spline. 
+
+```{r Nuuk-spline-opt, fig.cap="The smoothing spline that minimizes GCV over the tuning parameter $\\lambda$", dependson=c("Nuuk-spline-gcv", "NuukData")}
+temp_smooth_opt <- Phi %*% solve(crossprod(Phi) + lambda_opt * Omega, 
+                                 t(Phi) %*% Nuuk_year$Temperature)
+p_Nuuk + geom_line(aes(y = temp_smooth_opt), color = "blue")
+```
+
+The smoothing spline that we found by minimizing GCV can be compared to 
+the smoothing spline that `smooth.spline` computes by minimizing GCV 
+as well.
+
+```{r Nuuk-spline-opt2, fig.cap="The smoothing spline that minimizes GCV as computed by `smooth.spline`.", dependson="NuukData"}
+temp_smooth_splines <- smooth.spline(Nuuk_year$Year, Nuuk_year$Temperature, 
+                                    all.knots = TRUE)  ## Don't use fast heuristic
+range(temp_smooth_splines$y - temp_smooth_opt)
+p_Nuuk + geom_line(aes(y = temp_smooth_splines$y), color = "blue")
+```
+
+The differences between the smoothing spline computed by our implementation
+and by `smooth.spline` is hardly detectable visually, and they are at most 
+of the order $10^{-3}$ as computed above. It is possible to further 
+decrease the differences by finding the optimal value of $\lambda$ with a 
+higher precision, but we will not pursue this here. 
+
+### Efficient computation with splines
+
+Using of the full B-spline basis with knots in every observation is computationally
+heavy and from a practical viewpoint often unnecessary. Smoothing using B-splines
+is therefore often done using a knot-selection heuristic that selects much fewer 
+knots than $n$, in particular if $n$ is large. This is also what `smooth.spline` 
+does unless `all.knots = TRUE`. The heuristic for selecting 
+the number of knots is a bit complicated, but it is implemented in the function `.nknots.smspl`, 
+which can be inspected for details. Once the number of knots gets above 200 it
+grows extremely slowly with $n$. With the number of knots selected,
+a common heuristic for selecting their position is to use the quantiles of 
+the distribution of the $x$-values. That is, with 9 knots, say, the knots
+are positioned in the deciles (0.1-quantile, 0.2-quantile etc.). This is 
+effectively also what `smooth.spline` does, and this heuristic places most of 
+the knots where we have most of the data points. 
+
+Having implemented a knot-selection heuristic that results in $p$ B-spline 
+basis functions, the matrix $\Phi$ will be $n \times p$, typically with $p < n$
+and with $\Phi$ of full rank $p$. In this case we derive a way of computing the 
+smoothing spline that is computationally more efficient and numerically more 
+stable than relying on the matrix-algebraic solution above. This is particularly 
+so when we need to compute the smoother for many different $\lambda$s to optimize
+the smoother. As we will show, we are
+effectively computing a simultaneous diagonalization of the (symmetric) smoother
+matrix $\mathbf{S}_{\lambda}$ for all values of $\lambda$. 
+
+The matrix $\Phi$ has a singular value decomposition 
+$$\Phi = \mathbf{U} D \mathbf{V}^T$$
+where $D$ is diagonal with entries $d_1 \geq d_2 \geq \ldots \geq d_p > 0$, 
+$\mathbf{U}$ is $n \times p$, $\mathbf{V}$ is $p \times p$ and both are orthogonal matrices. 
+This means that 
+$$\mathbf{U}^T \mathbf{U} = \mathbf{V}^T \mathbf{V} = \mathbf{V} \mathbf{V}^T =  I$$
+is the $p \times p$ dimensional identity matrix. We find that 
+
+\begin{align}
+\mathbf{S}_{\lambda} & =  \mathbf{U}D\mathbf{V}^T(\mathbf{V}D^2\mathbf{V}^T + \lambda \mathbf{\Omega})^{-1}
+\mathbf{V}D\mathbf{U}^T \\
+& = \mathbf{U}D (D^2 + \lambda  \mathbf{V}^T \mathbf{\Omega} \mathbf{V})^{-1} D \mathbf{U}^T \\
+& = \mathbf{U} (I + \lambda D^{-1} \mathbf{V}^T \mathbf{\Omega} \mathbf{V} D^{-1})^{-1} \mathbf{U}^T \\
+& = \mathbf{U}(I + \lambda  \widetilde{\mathbf{\Omega}})^{-1} \mathbf{U}^T,
+\end{align}
+
+where 
+$\widetilde{\mathbf{\Omega}} = D^{-1} \mathbf{V}^T \mathbf{\Omega} \mathbf{V} D^{-1}$ is 
+a positive semidefinite $p \times p$ matrix. By diagonalization,
+$$\widetilde{\mathbf{\Omega}} = \mathbf{W} \Gamma \mathbf{W}^T,$$
+where $\mathbf{W}$ is orthogonal and $\Gamma$ is a diagonal matrix with nonnegative 
+values in the diagonal, we find that 
+
+\begin{align}
+\mathbf{S}_{\lambda} & = \mathbf{U} \mathbf{W} (I + \lambda  \Gamma)^{-1}  \mathbf{W}^T  \mathbf{U}^T \\
+& = \widetilde{\mathbf{U}}  (I + \lambda  \Gamma)^{-1} \widetilde{\mathbf{U}}^T
+\end{align}
+
+where $\widetilde{\mathbf{U}} = \mathbf{U} \mathbf{W}$ is an orthogonal 
+$n \times p$ matrix.
+
+The interpretation of this representation is as follows. 
+
+* First, the coefficients, $\hat{\beta} = \widetilde{\mathbf{U}}^Ty$, are computed for 
+expanding $y$ in the basis given by the columns of $\mathbf{U}$. 
+* Second, the $i$th coefficient is shrunk towards 0,
+$$\hat{\beta}_i(\lambda) = \frac{\hat{\beta}_i}{1 + \lambda \gamma_i}.$$
+* Third, the smoothed values, $\widetilde{\mathbf{U}} \hat{\beta}(\lambda)$, 
+are computed as an expansion using the shrunken coefficients. 
+
+Thus the smoother works by shrinking the coefficients in the orthonormal basis given by 
+$\widetilde{\mathbf{U}}$ toward zero. The coefficients corresponding to the 
+largest eigenvalues $\gamma_i$ are shrunk relatively more toward zero 
+than those corresponding to the small eigenvalues. 
+
+We implement the computation of the diagonalization for the Nuuk temperature 
+data using $p = 20$ basis functions (18 inner knots) equidistantly distributed
+over the range of the years for which we have data. 
+
+```{r spline-diagonalization, dependson=c("NuukData", "Omega-Simpson")}
+inner_knots <- seq(1867, 2013, length.out = 18)
+Phi <- splineDesign(c(rep(range(inner_knots), 3), inner_knots), Nuuk_year$Year)
+Omega <- pen_mat(inner_knots)
+Phi_svd <- svd(Phi)
+Omega_tilde <- t(t(crossprod(Phi_svd$v, Omega %*% Phi_svd$v)) / Phi_svd$d) / Phi_svd$d
+## It is safer to use the numerical singular value decomposition ('svd')
+## for diagonalizing a positive semidefinite matrix than to use a 
+## more general numerical diagonalization implementation such as 'eigen'. 
+Omega_tilde_svd <- svd(Omega_tilde)  
+U_tilde <- Phi_svd$u %*% Omega_tilde_svd$u
+```
+
+```{r spline-gamma, dependson="spline-diagonalization", fig.cap="The eigenvalues $\\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues untransformed, while the right plot shows the eigenvalues log-transformed.", echo=FALSE, out.width="49%", fig.show='hold', fig.height=3, fig.width=4}
+p <- qplot(1:20, Omega_tilde_svd$d) + xlab("i") + ylab("Eigenvalues") 
+p
+p + scale_y_log10() + ylab("")
+```
+
+```{r spline-basis, echo=FALSE, dependson=c("NuukData", "spline-diagonalization"), fig.cap="The columns of $\\widetilde{\\mathbf{U}}$  that consitute an orthonormal basis for computing the spline based smoother.", out.width="100%"}
+colnames(U_tilde) <- paste(rep("u", 20), 1:20, sep = "")
+bind_cols(select(Nuuk_year, Year), as.tibble(U_tilde)) %>% 
+  gather(key = "term", value = "value", -Year, factor_key = TRUE) %>% 
+  ggplot(aes(Year, value, color = term)) + 
+  geom_line() + 
+  facet_wrap(~ term) + 
+  theme(legend.position="none") + 
+  ylab("")
+```
+
+We observe from Figures \@ref(fig:spline-gamma) and \@ref(fig:spline-basis) 
+that there are two relatively large eigenvalues corresponding to the 
+two basis functions with erratic behavior close to the boundaries, and there are 
+two eigenvalues that are effectively zero corresponding to the two affine 
+basis functions. In addition, the more oscillating the basis function is,
+the larger is the corresponding eigenvalue, and the more is the corresponding
+coefficient shrunk toward zero by the spline smoother. 
+
+Observe also that 
+$$\mathrm{df}(\lambda) = \mathrm{trace}(\mathbf{S}_\lambda) 
+= \sum_{i=1}^n \frac{1}{1 + \lambda \gamma_i},$$
+which makes it possible to implement GCV without even computing the diagonal entries
+of $\mathbf{S}_{\lambda}.$
 
 ## Gaussian processes
 
