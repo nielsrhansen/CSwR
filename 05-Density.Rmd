@@ -115,7 +115,7 @@ For nonparametric estimation we can still introduce the log-likelihood
 $$\ell(f) = \sum_{i=1}^n \log f(x_i).$$
 To investigate if a nonparametric MLE is meaningful we consider how the likelihood
 behaves for the densities 
-$$f(x) = f_h(x) = \frac{1}{nh \sqrt{2 \pi}} \sum_{j=1}^n e^{- \frac{(x - x_j)^2}{2 h^2} }$$
+$$\overline{f}_h(x) = \frac{1}{nh \sqrt{2 \pi}} \sum_{j=1}^n e^{- \frac{(x - x_j)^2}{2 h^2} }$$
 for different choices of $h$. 
 
 ```{r gaus-dens}
@@ -135,7 +135,7 @@ as $h$ gets smaller the densities  become more and more wiggly. As $h \to 0$
 the densities become increasingly dominated by tall narrow peaks 
 around the individual data points. 
 
-(ref:gausKern) The densities $f_h$ for different choices of $h$. 
+(ref:gausKern) The densities $\overline{f}_h$ for different choices of $h$. 
 
 ```{r gausKern, fig.cap="(ref:gausKern)", fig.show="hold", out.width="49%", dependson=c("gaus-dens", "phipsiLoad"), fig.pos="h", echo=FALSE}
 hist(psi, prob = TRUE, main = "h = 1")
@@ -161,7 +161,7 @@ curve(f_h(x, 0.0001), add = TRUE, col = "red", n = 10001)
 The way that these densities adapt to the data points is reflected in the 
 log-likelihood as well. 
 
-```{r LogLike, dependson=c("phipsiLoad", "gausKern"), fig.cap="Log-likelihood, $\\ell(f_h)$, for the densities $f_h$ as a function of $h$. Note the log-scale on the right.", out.width="49%", fig.show='hold'}
+```{r LogLike, dependson=c("phipsiLoad", "gausKern"), fig.cap="Log-likelihood, $\\ell(\\overline{f}_h)$, for the densities $\\overline{f}_h$ as a function of $h$. Note the log-scale on the right.", out.width="49%", fig.show='hold'}
 ## To plot the log-likelihood we need to evaluate it in a grid of h-values.
 hseq <- seq(1, 0.001, -0.001)
 ## For the following computation of the log-likelihood it is necessary 
@@ -181,16 +181,16 @@ that the log-likelihood approximately behaves as $-\log(h)$ for $h \to 0$.
 We can show that that is, indeed, the case. If $x_i \neq x_j$ when $i \neq j$
 
 \begin{align*}
-\ell(f_h) & = \sum_{i} \log\left(1 + \sum_{j \neq i} e^{-(x_i - x_j)^2 / (2 h^2)} \right) - 
+\ell(\overline{f}_h) & = \sum_{i} \log\left(1 + \sum_{j \neq i} e^{-(x_i - x_j)^2 / (2 h^2)} \right) - 
 n \log(nh\sqrt{2 \pi}) \\
 & \sim - n \log(nh\sqrt{2 \pi})
 \end{align*}
 
-for $h \to 0$. Hence, $\ell(f_h) \to \infty$ for $h \to 0$. This demonstrates that the MLE 
+for $h \to 0$. Hence, $\ell(\overline{f}_h) \to \infty$ for $h \to 0$. This demonstrates that the MLE 
 of the density doesn't exist in the set of all distributions with densities.
 
 In the sense of [weak convergence](https://en.wikipedia.org/wiki/Convergence_of_measures#Weak_convergence_of_measures) it actually holds that 
-$$f_h \cdot m \overset{\mathrm{wk}}{\longrightarrow} 
+$$\overline{f}_h \cdot m \overset{\mathrm{wk}}{\longrightarrow} 
 \varepsilon_n = \frac{1}{n} \sum_{i=1}^n \delta_{x_i}$$
 for $h \to 0$. The *empirical measure* $\varepsilon_n$ can sensibly be regarded as 
 the nonparametric MLE of the distribution, but the empirical measure does not have 
@@ -200,8 +200,8 @@ density estimator as a maximum-likelihood estimator.
 ### Method of sieves {#sieves}
 
 A sieve is a family of models, $\Theta_{h}$, indexed by
-a real valued parameter, $h \in \mathbb{R}$, such that $\Theta_{h} \subseteq \Theta_{h'}$ for 
-$h \leq h'$. In this chapter $\Theta_{h}$ will denote a set of probability densities. 
+a real valued parameter, $h \in \mathbb{R}$, such that $\Theta_{h_1} \subseteq \Theta_{h_2}$ for 
+$h_1 \leq h_2$. In this chapter $\Theta_{h}$ will denote a set of probability densities. 
 If the increasing family of models is chosen in a sensible way, we 
 may be able to compute the MLE
 $$\hat{f}_h = \text{arg max}_{f \in \Theta_h} \ell(f),$$
@@ -209,15 +209,15 @@ and we may even be able to choose $h = h_n$ as a function of the sample size $n$
 such that $\hat{f}_{h_n}$ becomes a consistent estimator of $f_0$. 
 
 It is possible to take 
-$$\Theta_h = \{ f_{h'} \mid h' \leq h \}$$
-with $f_{h'}$ as defined above, in which case $\hat{f}_h = f_h$. We will 
-see in the following section that this is simply a kernel estimator. 
+$$\Theta_h = \{ \overline{f}_{h'} \mid h' \leq h \}$$
+with $\overline{f}_{h'}$ as defined above, in which case $\hat{f}_h = \overline{f}_h$. 
+We will see in the following section that this is simply a kernel estimator. 
 
 A more interesting example is obtained by letting 
 $$\Theta_h = \left\{ x \mapsto  \frac{1}{h \sqrt{2 \pi}} \int  e^{- \frac{(x - z)^2}{2 h^2} } \mathrm{d}\mu(z) \Biggm| \mu \textrm{ a probability measure}   \right\},$$
-which is known as the convolution sieve. We note that $f_h \in \Theta_h$ by 
+which is known as the convolution sieve. We note that $\overline{f}_h \in \Theta_h$ by 
 taking $\mu = \varepsilon_n$, but generally $\hat{f}_h$ will be 
-different from $f_h$. 
+different from $\overline{f}_h$. 
 
 We will not pursue the general theory of sieve estimators, but refer 
 to the paper [Nonparametric Maximum Likelihood Estimation by the Method of Sieves](https://projecteuclid.org/euclid.aos/1176345782) by Geman and Hwang. 
