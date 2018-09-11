@@ -31,8 +31,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   
   
-<link rel="prev" href="index.html">
-<link rel="next" href="intro-smooth.html">
+<link rel="prev" href="sparse-linear-algebra.html">
+<link rel="next" href="splines.html">
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
@@ -261,23 +261,104 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="intro" class="section level1">
-<h1><span class="header-section-number">Chapter 1</span> Introduction</h1>
-<p>Computational statistics is about turning theory and methods into algorithms and actual numerical computations with data. It is about solving real computational problems that arise when we visualize, analyze and model data.</p>
-<p>Computational statistics is not a single coherent topic but rather a large number of vaguely related computational techniques that we use in statistics. This short book is in no way attempting to be comprehensive. Instead, a few selected statistical topics are treated in some detail with the intention that good computational practice can be learned from these topics and transferred to other parts of statistics as needed. Though the topics are arguably fundamental, they reflect the knowledge and interests of the author, and different topics could clearly have been chosen.</p>
-<p>The demarcation line between statistical methodology and computational statistics is also blurred. Most methodology involves mathematical formulas and even algorithms for computing estimates and other statistics of interest from data, or for evaluating probabilities or integrals numerically or via simulations. The viewpoint taken in this book is that the transition from methodology to computational statistics happens when the methodology is to be implemented, that is, when formulas, algorithms and pseudo code are transformed into actual code and statistical software. It is during this transition that a number of practical challenges reveal themselves, such as actual computation time and memory usage, the limitations of finite precision arithmetic, and the practical value of suboptimal or approximate but sufficiently accurate solutions.</p>
-<p>Statistical software development also requires some basic software engineering skills and knowledge of the most common programming paradigms. Implementing a single algorithm for a specific problem is one thing, but developing a piece of statistical software for others to use is something quite different. This book is <em>not</em> an introduction to statistical software development as such, but the process of developing good software plays a prominent role. Thus solutions are not presented as code that magically manifests itself, but code is developed and analyzed in cycles that resemble how real software development takes place.</p>
-<p>There is a notable practical and experimental component to software development. However important theoretical considerations are regarding correctness and complexity of algorithms, say, the actual code has to strike a balance between generality, readability, efficiency, accuracy, ease of usage and ease of development among other things. Finding a good balance requires that one is able to reason about benefits and deficiencies of different implementations. It is a major point of this book that such reasoning should rely on experiments and empirical facts and not speculations.</p>
-<p>R and RStudio is used throughout, and the reader is expected to have some basic knowledge of R programming. While RStudio is not a requirement for most of the book, it is a recommendable IDE (integrated development environment) for R, which offers a convenient framework for developing, benchmarking, profiling, testing, documenting and experimenting with statistical software. The excellent book <a href="http://adv-r.had.co.nz">Advanced R</a> by Hadley Wickham is recommended as a companion book covering R programming in detail. In fact, direct references to that book are given whenever further explanations on e.g. functional programming or object oriented programming in R are required.</p>
-<p>This book is organized into three parts on <em>smoothing</em>, <em>Monte Carlo methods</em> and <em>optimization</em>. Each part is introduced in the following three sections to give the reader an overview of the topics covered, how they are related to each other and how they are related to some main trends and challenges in contemporary computational statistics. In this introduction, several R functions from various packages are used to illustrate how smoothing, simulation of random variables and optimization play a role in statistics. If you have no intention of moving beyond the role of a data analyst that rely on already implemented solutions, you can stop reading after the introduction. The remaining part of the book is about the development of such solutions at a deeper level and not how to use high-level interfaces to the plethora of already existing implementations.</p> 
+<div id="onb" class="section level2">
+<h2><span class="header-section-number">3.4</span> Orthogonal basis expansions</h2>
+<div id="polynomial-expansions" class="section level3">
+<h3><span class="header-section-number">3.4.1</span> Polynomial expansions</h3>
+<p>Degree 19 polynomial fitted to the temperature data.</p>
+<p><img src="CSwR_files/figure-html/Nuuk_poly_fig-1.png" width="70%" style="display: block; margin: auto;" /></p>
+<p>We can extract the model matrix from the lm-object.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">intercept &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="dv">1</span><span class="op">/</span><span class="kw">sqrt</span>(n), n)  ## To make intercept column have norm one
+polylm &lt;-<span class="st"> </span><span class="kw">lm</span>(Temperature <span class="op">~</span><span class="st"> </span>intercept <span class="op">+</span><span class="st"> </span><span class="kw">poly</span>(Year, <span class="dv">19</span>) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Nuuk_year)
+Phi &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(polylm)</code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:model-matrix-fig"></span>
+<img src="CSwR_files/figure-html/model-matrix-fig-1.png" alt="The model matrix columns as functions" width="100%" />
+<p class="caption">
+Figure 3.6: The model matrix columns as functions
+</p>
+</div>
+<p>The model matrix is (almost) orthogonal, and estimation becomes quite simple. With an orthogonal model matrix the normal equation reduces to the estimate <span class="math display">\[\hat{\beta} = \Phi^T Y\]</span> since <span class="math inline">\(\phi^T \phi = I\)</span>. The predicted (or fitted) values are <span class="math inline">\(\Phi \Phi^T Y\)</span> with smoother matrix <span class="math inline">\(\mathbf{S} = \Phi \Phi^T\)</span> being a projection.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(<span class="kw">t</span>(Phi) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, <span class="dv">1</span>]</code></pre></div>
+<pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 
+##     -17.2469646       4.9002430      -1.7968913       0.8175400 
+## poly(Year, 19)4 poly(Year, 19)5 poly(Year, 19)6 poly(Year, 19)7 
+##       5.9668689       1.4265091      -1.9258864      -0.2523581 
+## poly(Year, 19)8 poly(Year, 19)9 
+##      -2.1355117      -0.8046267</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef</span>(polylm)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>]</code></pre></div>
+<pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 
+##     -17.2469646       4.9002430      -1.7968913       0.8175400 
+## poly(Year, 19)4 poly(Year, 19)5 poly(Year, 19)6 poly(Year, 19)7 
+##       5.9668689       1.4265091      -1.9258864      -0.2523581 
+## poly(Year, 19)8 poly(Year, 19)9 
+##      -2.1355117      -0.8046267</code></pre>
+<p>With homogeneous variance <span class="math display">\[\hat{\beta}_i \overset{\text{approx}}{\sim} \mathcal{N}(\beta_i, \sigma^2),\]</span> and for <span class="math inline">\(\beta_i = 0\)</span> we have <span class="math inline">\(P(|\hat{\beta}_i| \geq 1.96\sigma) \simeq 0.05.\)</span></p>
+<p>Thresholding:</p>
+<p><img src="CSwR_files/figure-html/Nuuk_poly_threshold-1.png" width="70%" style="display: block; margin: auto;" /></p>
+<div class="figure" style="text-align: center">
+<img src="CSwR_files/figure-html/Nuuk_poly_fig2-1.png" alt="Polynomial fit using all 19 basis functions (blue) and using a degree 5 polynomial (red)." width="70%" />
+<p class="caption">
+(#fig:Nuuk_poly_fig2)Polynomial fit using all 19 basis functions (blue) and using a degree 5 polynomial (red).
+</p>
+</div>
+</div>
+<div id="fourier-expansions" class="section level3">
+<h3><span class="header-section-number">3.4.2</span> Fourier expansions</h3>
+<p>Introducing <span class="math display">\[x_{k,m} = \frac{1}{\sqrt{n}} e^{2 \pi i k m / n},\]</span> then</p>
+<p><span class="math display">\[\sum_{k=0}^{n-1} |x_{k,m}|^2 = 1\]</span></p>
+<p>and for <span class="math inline">\(m_1 \neq m_2\)</span> <span class="math display">\[\sum_{k=0}^{n-1} x_{k,m_1}\overline{x_{k,m_2}} = 0\]</span></p>
+<p>Thus <span class="math inline">\(\Phi = (x_{k,m})_{k,m}\)</span> is an <span class="math inline">\(n \times n\)</span> unitary matrix; <span class="math display">\[\Phi^*\Phi = I\]</span> where <span class="math inline">\(\Phi^*\)</span> is the conjugate transposed of <span class="math inline">\(\Phi\)</span>.</p>
+<p><span class="math inline">\(\hat{\beta} = \Phi^* y\)</span> is the <em>discrete Fourier transform</em> of <span class="math inline">\(y\)</span>. It is the basis coefficients in the orthonormal basis given by <span class="math inline">\(\Phi\)</span>; <span class="math display">\[y_k = \frac{1}{\sqrt{n}} \sum_{m=0}^{n-1} \hat{\beta}_m  e^{2 \pi i k m / n}\]</span></p>
+<p>or <span class="math inline">\(y = \Phi \hat{\beta}.\)</span></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Phi &lt;-<span class="st"> </span><span class="kw">outer</span>(<span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), <span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), 
+           <span class="cf">function</span>(k, m) <span class="kw">exp</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi <span class="op">*</span><span class="st"> </span>1i <span class="op">*</span><span class="st"> </span>(k <span class="op">*</span><span class="st"> </span>m) <span class="op">/</span><span class="st"> </span>n) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n))</code></pre></div>
+<p>The matrix <span class="math inline">\(\Phi\)</span> generates an interesting pattern.</p>
+<p><img src="CSwR_files/figure-html/Fourier_fig-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>Columns in the matrix <span class="math inline">\(\Phi\)</span>:</p>
+<p><img src="CSwR_files/figure-html/Fourier_basis_fig-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>We can estimate by matrix multiplication</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">betahat &lt;-<span class="st"> </span><span class="kw">Conj</span>(<span class="kw">t</span>(Phi)) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature <span class="co"># t(Phi) = Phi for Fourier bases</span>
+betahat[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span><span class="op">:</span><span class="dv">4</span>, <span class="dv">73</span>, n<span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">2</span>))]</code></pre></div>
+<pre><code>## [1] -17.2469646+0.0000000i  -2.4642887+2.3871189i   3.5481329+0.9099226i
+## [4]   1.6721444+0.7413580i   0.0321232+0.7089991i  -2.4642887-2.3871189i
+## [7]   3.5481329-0.9099226i   1.6721444-0.7413580i</code></pre>
+<p>For real <span class="math inline">\(y\)</span> it holds that <span class="math inline">\(\hat{\beta}_0\)</span> is real, and the symmetry <span class="math display">\[\hat{\beta}_{n-m} = \hat{\beta}_m^*\]</span> holds for <span class="math inline">\(m = 1, \ldots, n - 1\)</span>. (For <span class="math inline">\(n\)</span> even, <span class="math inline">\(\hat{\beta}_{n/2}\)</span> is real too).</p>
+<p>Modulus distribution:</p>
+<p>Note that for <span class="math inline">\(m \neq 0, n/2\)</span>, <span class="math inline">\(\beta_m = 0\)</span> and <span class="math inline">\(y \sim \mathcal{N}(\Phi\beta, \sigma^2 I_n)\)</span> then<br />
+<span class="math display">\[(\mathrm{Re}(\hat{\beta}_m), \mathrm{Im}(\hat{\beta}_m))^T \sim \mathcal{N}\left(0, \frac{\sigma^2}{2} I_2\right),\]</span></p>
+<p>hence <span class="math display">\[|\hat{\beta}_m|^2 = \mathrm{Re}(\hat{\beta}_m)^2 + \mathrm{Im}(\hat{\beta}_m)^2 \sim \frac{\sigma^2}{2} \chi^2_2,\]</span> that is, <span class="math inline">\(P(|\hat{\beta}_m| \geq 1.73 \sigma) = 0.05.\)</span> There is a clear case of multiple testing if we use this threshold at face value, and we would expect around <span class="math inline">\(0.05 \times n/2\)</span> false positive if there is no signal at all. Lowering the probability using the Bonferroni correction yields a threshold of around <span class="math inline">\(2.7 \sigma\)</span> instead.</p>
+<p>Thresholding Fourier:</p>
+<p><img src="CSwR_files/figure-html/Nuuk_Fourier_threshold-1.png" width="70%" style="display: block; margin: auto;" /></p>
+<p>The coefficients are not independent (remember the symmetry), and one can alternatively consider <span class="math display">\[\hat{\gamma}_m = \sqrt{2} \mathrm{Re}(\hat{\beta}_m) \quad \text{and} \quad 
+\hat{\gamma}_{n&#39; + m} = - \sqrt{2} \mathrm{Im}(\hat{\beta}_m)\]</span> for <span class="math inline">\(1 \leq m &lt; n / 2\)</span>. Here <span class="math inline">\(n&#39; = \lfloor n / 2 \rfloor\)</span>. Here, <span class="math inline">\(\hat{\gamma}_0 = \hat{\beta}_0\)</span>, and <span class="math inline">\(\hat{\gamma}_{n/2} = \hat{\beta}_{n/2}\)</span> for <span class="math inline">\(n\)</span> even.</p>
+<p>These coefficients are the coefficients in a real cosine, <span class="math inline">\(\sqrt{2} \cos(2\pi k m / n)\)</span>, and sine, <span class="math inline">\(\sqrt{2} \sin(2\pi k m / n)\)</span>, basis expansion, and they are i.i.d. <span class="math inline">\(\mathcal{N}(0, \sigma^2)\)</span> distributed.</p>
+<p>Thresholding Fourier:</p>
+<p><img src="CSwR_files/figure-html/Nuuk_Fourier_threshold2-1.png" width="70%" style="display: block; margin: auto;" /></p>
+<div class="figure" style="text-align: center"><span id="fig:NuukFourierthresholdfig"></span>
+<img src="CSwR_files/figure-html/NuukFourierthresholdfig-1.png" alt="Fourier based smoother by thresholding (blue) and polynomial fit of degree 5 (red)." width="70%" />
+<p class="caption">
+Figure 3.7: Fourier based smoother by thresholding (blue) and polynomial fit of degree 5 (red).
+</p>
+</div>
+<p>What is the point using the discrete Fourier transform? The point is that the discrete Fourier transform can be computed via the <em>fast Fourier transform</em> (FFT), which has an <span class="math inline">\(O(n\log(n))\)</span> time complexity. The FFT works optimally for <span class="math inline">\(n = 2^p\)</span>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">fft</span>(Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>] <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n)</code></pre></div>
+<pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i
+## [4]   1.672144+0.741358i</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">betahat[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>]</code></pre></div>
+<pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i
+## [4]   1.672144+0.741358i</code></pre>
+</div>
+<div id="wavelets" class="section level3">
+<h3><span class="header-section-number">3.4.3</span> Wavelets</h3>
+</div>
 </div>
             </section>
 
           </div>
         </div>
       </div>
-<a href="index.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="intro-smooth.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="sparse-linear-algebra.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="splines.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
