@@ -1,12 +1,9 @@
 # Monte Carlo integration {#MCI}
 
-
-The high-dimensional bogus argument. Relations to [quasi-Monte Carlo methods](https://en.wikipedia.org/wiki/Quasi-Monte_Carlo_method)
-
-A typical usage of sampling is Monte Carlo integration. 
+A typical usage of simulation is Monte Carlo integration. 
 With $X_1, \ldots, X_n$ i.i.d. with density $f$
 $$\hat{\mu}_{\textrm{MC}} := \frac{1}{n} \sum_{i=1}^n h(X_i) 
-\rightarrow \mu := \mathbb{E} h(X_1) = \int h(x) f(x) \ dx$$
+\rightarrow \mu := E(h(X_1)) = \int h(x) f(x) \ \mathrm{d}x$$
 for $n \to \infty$ by the law of large numbers (LLN). 
 
 The first question that we deal with below is the assessment of the 
@@ -23,7 +20,7 @@ The CLT gives that
 $$\hat{\mu}_{\textrm{MC}} = \frac{1}{n} \sum_{i=1}^n h(X_i) \overset{\textrm{approx}} \sim 
 \mathcal{N}(\mu, \sigma^2_{\textrm{MC}} / n)$$
 where 
-$$\sigma^2_{\textrm{MC}} = \mathbb{V} h(X_1) = \int (h(x) - \mu)^2 f(x) \ dx.$$
+$$\sigma^2_{\textrm{MC}} = V(h(X_1)) = \int (h(x) - \mu)^2 f(x) \ \mathrm{d}x.$$
 
 We can estimate $\sigma^2_{\textrm{MC}}$ using the empirical variance
 $$\hat{\sigma}^2_{\textrm{MC}} = \frac{1}{n - 1} \sum_{i=1}^n (h(X_i) - 
@@ -135,8 +132,8 @@ need to sample from the target distribution.
 
 Observe that 
 \begin{align}
-\mu = \int h(x) f(x) \ dx & = \int h(x) \frac{f(x)}{g(x)} g(x) \ dx \\
-& = \int h(x) w^*(x) g(x) \ dx
+\mu = \int h(x) f(x) \ \mathrm{d}x & = \int h(x) \frac{f(x)}{g(x)} g(x) \ \mathrm{d}x \\
+& = \int h(x) w^*(x) g(x) \ \mathrm{d}x
 \end{align}
 
 whenever $g$ is a density fulfilling that 
@@ -147,7 +144,7 @@ $$w^*(X_i) = f(X_i) / g(X_i).$$
 The *importance sampling* estimator is
 $$\hat{\mu}_{\textrm{IS}}^* := \frac{1}{n} \sum_{i=1}^n h(X_i)w^*(X_i).$$
 It has mean $\mu$. Again by the LLN 
-$$\hat{\mu}_{\textrm{IS}}^* \rightarrow \mathbb{E} h(X_1) w^*(X_1) = \mu,$$
+$$\hat{\mu}_{\textrm{IS}}^* \rightarrow E(h(X_1) w^*(X_1)) = \mu.$$
 
 To assess the precision of the importance sampling estimate via the CLT we 
 need the variance of the average as for plain Monte Carlo integration.
@@ -155,7 +152,7 @@ By the CLT
 $$\hat{\mu}_{\textrm{IS}}^* \overset{\textrm{approx}} \sim 
 \mathcal{N}(\mu, \sigma^{*2}_{\textrm{IS}} / n)$$
 where 
-$$\sigma^{*2}_{\textrm{IS}} = \mathbb{V} h(X_1)w^*(X_1) = \int (h(x) w^*(x) - \mu)^2 g(x) \ dx.$$
+$$\sigma^{*2}_{\textrm{IS}} = V (h(X_1)w^*(X_1)) = \int (h(x) w^*(x) - \mu)^2 g(x) \ \mathrm{d}x.$$
 
 We may have $\sigma^{*2}_{\textrm{IS}} > \sigma^2_{\textrm{MC}}$ or 
 $\sigma^{*2}_{\textrm{IS}} < \sigma^2_{\textrm{MC}}$ depending on $h$ and $g$. 
@@ -170,7 +167,7 @@ $$\hat{\mu}^*_{\textrm{IS}} \pm 1.96 \frac{\hat{\sigma}^*_{\textrm{IS}}}{\sqrt{n
 ### Unknown normalization constants
 
 If $f = c^{-1} q$ with $c$ unknown then 
-$$c = \int q(x) \ dx = \int \frac{q(x)}{g(x)} g(x) \ d x,$$
+$$c = \int q(x) \ \mathrm{d}x = \int \frac{q(x)}{g(x)} g(x) \ d x,$$
 and
 $$\mu = \frac{\int h(x) w^*(x) g(x) \ d x}{\int w^*(x) g(x) \ d x},$$
 where $w^*(x) = q(x) / g(x).$
@@ -194,9 +191,9 @@ $$\frac{1}{n} \sum_{i=1}^n \left(\begin{array}{c}
 \end{array} \right)\right),$$
 where 
 \begin{align}
-\sigma^{*2}_{\textrm{IS}} & = \mathbb{V} h(X_1)w^*(X_1) \\
+\sigma^{*2}_{\textrm{IS}} & = V(h(X_1)w^*(X_1)) \\
 \gamma & = \mathrm{cov}(h(X_1)w^*(X_1), w^*(X_1)) \\
-\sigma_{w^*}^2 & = \mathbb{V} w^*(X_1).
+\sigma_{w^*}^2 & = V (w^*(X_1)).
 \end{align}
 
 We can then apply the $\Delta$-method with $h(x, y) = x / y$. Note that
@@ -278,7 +275,7 @@ plot(cumsum(evaluations) / 1:B, pch = 20)
 abline(h = 1, col = "red")
 ```
 
-If we want to control the error with probability 0.95 we can use Chebychevs inequality 
+If we want to control the error with probability 0.95 we can use Chebychev's inequality 
 and solve for $\varepsilon$ using the estimated variance. 
 
 ```{r MC_cheb, dependson=c("MC_par", "MC_loop")}
@@ -293,7 +290,7 @@ lines(1:B, me - epsilon)
 
 The confidence bands provided by the 
 central limit theorem are typically much more accurate estimates of the actual uncertainty 
-than the upper bounds provided by Chebychev's inquality.
+than the upper bounds provided by Chebychev's inequality.
 
 ```{r MC_CLT, dependson=c("MC_par", "MC_loop")}
 plot(cumsum(evaluations) / 1:B, pch = 20)
@@ -343,7 +340,7 @@ A[10, c(3, 6, 7, 9)] <- 1
 A  ## Graph adjacency matrix
 ```
 
-To compute the probability that 1 and 10 become disconneted by Monte Carlo 
+To compute the probability that 1 and 10 become disconnected by Monte Carlo 
 integration, we need to sample (sub)graphs by randomly removing some of the 
 edges. This is implemented using the upper triangular part of the (symmetric)
 adjacency matrix. 
