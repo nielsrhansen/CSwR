@@ -910,18 +910,18 @@ the implementation in R does the same.
 Instead of computing $\|f_0''\|^2_2$ assuming that the distribution is Gaussian,
 we can compute the norm for a pilot estimate, $\tilde{f}$, and plug the result 
 into the formula for $h_n$. If the pilot estimate is a kernel estimate with 
-kernel $K_0$ and bandwidth $h_0$ we get 
-$$\|\tilde{f}''\|^2_2 = \frac{1}{n^2h_0^6} \sum_{i = 1}^n \sum_{j=1}^n 
-\int K_0''\left( \frac{x - x_i}{h_0} \right) K_0''\left( \frac{x - x_j}{h_0} \right) \mathrm{d} x.$$
+kernel $H$ and bandwidth $r$ we get 
+$$\|\tilde{f}''\|^2_2 = \frac{1}{n^2r^6} \sum_{i = 1}^n \sum_{j=1}^n 
+\int H''\left( \frac{x - x_i}{r} \right) H''\left( \frac{x - x_j}{r} \right) \mathrm{d} x.$$
 The problem is, of course, that now we have to choose the pilot bandwidth
-$h_0$. But doing so using a simple method like Silverman's rule of thumb at this 
+$r$. But doing so using a simple method like Silverman's rule of thumb at this 
 stage is typically not too bad an idea. Thus we arrive at the following 
 plug-in procedure using the Gaussian kernel for the pilot estimate:
 
-* Compute an estimate, $\hat{h}_0$, of the pilot bandwidth using Silverman's 
+* Compute an estimate, $\hat{r}$, of the pilot bandwidth using Silverman's 
 rule of thumb.
-* Compute $\|\tilde{f}''\|^2_2$ using the Gaussian kernel as pilot kernel and 
-using the estimated pilot bandwidth $\hat{h}_0$.
+* Compute $\|\tilde{f}''\|^2_2$ using the Gaussian kernel as pilot kernel $H$ and 
+using the estimated pilot bandwidth $\hat{r}$.
 * Plug $\|\tilde{f}''\|^2_2$ into the oracle bandwidth formula \@ref(eq:oracle)
 to compute $\hat{h}_n$ for the kernel $K$. 
 
@@ -985,14 +985,14 @@ $$\mathrm{MISE}(h) = E (\| \hat{f}_h\|_2^2) - 2 E (\hat{f}_h(X)) + E(\|f_0^2\|_2
 for $X$ a random variable independent of the data and with distribution having 
 density $f_0$. The last term does not depend upon $h$ and we can ignore it from
 the point of view of minimizing MISE. For the first term we have an unbiased 
-estimate in $\| \hat{f}_h\|_2^2$. The middle term can be estimated (almost) 
+estimate in $\| \hat{f}_h\|_2^2$. The middle term can be estimated
 without bias by 
 $$\frac{2}{n} \sum_{i=1}^n \hat{f}^{-i}_h,$$
 and this leads to the statistic
 $$\mathrm{UCV}(h) = \| \hat{f}_h\|_2^2 - \frac{2}{n} \sum_{i=1}^n \hat{f}^{-i}_h$$
 known as the unbiased cross-validation criterion. The corresponding 
 bandwidth estimator is 
-$$\hat{h}_{\mathrm{UCV}} = \textrm{arg max}_h \ \ \mathrm{UCV}(h).$$
+$$\hat{h}_{\mathrm{UCV}} = \textrm{arg min}_h \ \ \mathrm{UCV}(h).$$
 Contrary to the log-likelihood based criterion, this criterion requires 
 the computation of $\| \hat{f}_h\|_2^2$. Bandwidth selection using UCV 
 is implemented in R in the function `bw.ucv` and can be 

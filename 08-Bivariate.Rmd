@@ -84,7 +84,7 @@ where $N_i$ is the set of indices for the $k$ nearest neighbors of $x_i$.
 This simple idea is actually very general and powerful. It works as long
 as the $x$-values lie in a metric space, and by letting $k$ grow with 
 $n$ it is possible to construct consistent nonparametric estimators of 
-regression functions, $f(x) = E(Y \mid X)$, under minimal assumptions. 
+regression functions, $f(x) = E(Y \mid X = x)$, under minimal assumptions. 
 The practical problem is that $k$ must grow slowly in high dimensions, 
 and the estimator is not a panacea. 
 
@@ -175,7 +175,7 @@ p_Nuuk + geom_line(aes(y = f_hat), color = "blue")
 ### Implementing the running mean
 
 The running mean smoother fulfills the following identity
-$$s_{i+1} = s_{i} - y_{i - (k-1)/2} + y_{i + (k + 1)/2},$$
+$$\hat{f}_{i+1} = \hat{f}_{i} - y_{i - (k-1)/2} + y_{i + (k + 1)/2},$$
 which can be used for much more efficient implementation 
 than the matrix-vector multiplication. It should be emphasized 
 again that the identity above and the implementation below 
@@ -560,9 +560,8 @@ Phi <- model.matrix(polylm)
 ```{r model-matrix-fig, echo=FALSE, dependson=c("NuukData", "Nuuk_model_matrix"), fig.cap="The model matrix columns as functions", out.width="100%"}
 XX <- Phi
 colnames(XX) <- c("intercept", paste(rep("pol", 19), 1:19, sep = ""))
-bind_cols(Nuuk_year, as.tibble(XX)) %>% 
-  select(-(3:5)) %>% 
-  gather(key = "term", value = "value", -Year, -Temperature, factor_key = TRUE) %>% 
+bind_cols(select(Nuuk_year, Year), as.tibble(XX)) %>% 
+  gather(key = "term", value = "value", -Year, factor_key = TRUE) %>% 
   ggplot(aes(Year, value, color = term)) + 
   geom_line() + 
   facet_wrap(~ term) + 
@@ -597,7 +596,7 @@ qplot(x = 1:20, y = abs(coef(polylm)), geom = "blank") +
                                   parse = TRUE)
 ```
 
-```{r Nuuk_poly_fig2, echo=FALSE, dependson="Nuuk_runmeans", fig.cap="Polynomial fit using all 19 basis functions (blue) and using a degree 5 polynomial (red)."}
+```{r Nuuk-poly-fig2, echo=FALSE, dependson="Nuuk_runmeans", fig.cap="Polynomial fit using all 19 basis functions (blue) and using a degree 5 polynomial (red)."}
 p + geom_smooth(method = "lm", formula = y ~ poly(x, 19), 
                 se = FALSE, size = 1) + 
   geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
@@ -788,10 +787,10 @@ $$\hat{\mathbf{f}} = \boldsymbol{\Phi}\hat{\beta}$$
 with $\boldsymbol{\Phi}_{ij} = \varphi_j(x_i)$. The minimizer 
 can be found by observing that 
 
-\begin{aligned}
+\begin{align}
  L(\mathbf{f}) & = (\mathbf{y} - \mathbf{f})^T (\mathbf{y} - \mathbf{f}) + \lambda \| f'' \|_2^2 \\
 & = ( \mathbf{y} -  \boldsymbol{\Phi}\beta)^T (\mathbf{y} -  \boldsymbol{\Phi}\beta) + \lambda \beta^T \mathbf{\Omega} \beta
-\end{aligned}
+\end{align}
 
 where 
 $$\mathbf{\Omega}_{ij} = \langle \varphi_i'', \varphi_j'' \rangle = 
