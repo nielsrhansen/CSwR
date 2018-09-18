@@ -181,7 +181,15 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="4.2.1" data-path="transformation-techniques.html"><a href="transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
 </ul></li>
 <li class="chapter" data-level="4.3" data-path="reject-samp.html"><a href="reject-samp.html"><i class="fa fa-check"></i><b>4.3</b> Rejection sampling</a><ul>
-<li class="chapter" data-level="4.3.1" data-path="reject-samp.html"><a href="reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.1</b> Gamma distribution</a></li>
+<li class="chapter" data-level="4.3.1" data-path="reject-samp.html"><a href="reject-samp.html#vMsim"><i class="fa fa-check"></i><b>4.3.1</b> von Mises distribution</a></li>
+<li class="chapter" data-level="4.3.2" data-path="reject-samp.html"><a href="reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.2</b> Gamma distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.4" data-path="adaptive.html"><a href="adaptive.html"><i class="fa fa-check"></i><b>4.4</b> Adaptive envelopes</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="adaptive.html"><a href="adaptive.html#beta-distribution"><i class="fa fa-check"></i><b>4.4.1</b> Beta distribution</a></li>
+<li class="chapter" data-level="4.4.2" data-path="adaptive.html"><a href="adaptive.html#von-mises-distribution"><i class="fa fa-check"></i><b>4.4.2</b> von Mises distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="exercises-2.html"><a href="exercises-2.html"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="exercises-2.html"><a href="exercises-2.html#rejection-sampling-of-gaussian-random-variables"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
 </ul></li>
 </ul></li>
 <li class="chapter" data-level="5" data-path="MCI.html"><a href="MCI.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
@@ -264,15 +272,18 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="transformation-techniques" class="section level2">
 <h2><span class="header-section-number">4.2</span> Transformation techniques</h2>
 <p>If <span class="math inline">\(T : \mathcal{Z} \to \mathbb{R}\)</span> is a map and <span class="math inline">\(Z \in \mathcal{Z}\)</span> is a random variable we can sample, then we can sample <span class="math inline">\(X = T(Z).\)</span></p>
-<p><strong>Classical example:</strong> If <span class="math inline">\(F^{\leftarrow} : (0,1) \mapsto \mathbb{R}\)</span> is the (generalized) inverse of a distribution function and <span class="math inline">\(U\)</span> is uniformly distributed on <span class="math inline">\((0, 1)\)</span> then<br />
-<span class="math display">\[F^{\leftarrow}(U)\]</span> has distribution function <span class="math inline">\(F\)</span>.</p>
-<p>This is <a href="https://github.com/wch/r-source/blob/af7f52f70101960861e5d995d3a4bec010bc89e6/src/nmath/snorm.c#L265">how R</a> generates samples from <span class="math inline">\(\mathcal{N}(0,1)\)</span> using a <a href="https://github.com/wch/r-source/blob/af7f52f70101960861e5d995d3a4bec010bc89e6/src/nmath/qnorm.c#L52">technical approximation</a> of <span class="math inline">\(\Phi^{-1}\)</span> based on rational functions.</p>
+
+<div class="theorem">
+<p><span id="thm:inverse-distribution-function" class="theorem"><strong>Theorem 4.1  </strong></span>If <span class="math inline">\(F^{\leftarrow} : (0,1) \mapsto \mathbb{R}\)</span> is the (generalized) inverse of a distribution function and <span class="math inline">\(U\)</span> is uniformly distributed on <span class="math inline">\((0, 1)\)</span> then the distribution of <span class="math display">\[F^{\leftarrow}(U)\]</span> has distribution function <span class="math inline">\(F\)</span>.</p>
+</div>
+
+<p>The proof of Theorem <a href="transformation-techniques.html#thm:inverse-distribution-function">4.1</a> can be found in many textbooks and will be skipped. It is easiest to use this theorem if we have an analytic formula for the inverse distribution function. But even in cases where we don’t it might be useful for simulation anyway if we have a very accurate approximation that is fast to evaluate.</p>
+<p>They <a href="https://github.com/wch/r-source/blob/af7f52f70101960861e5d995d3a4bec010bc89e6/src/nmath/snorm.c#L265">way R</a> generates samples from <span class="math inline">\(\mathcal{N}(0,1)\)</span> is, in fact, based on Theorem <a href="transformation-techniques.html#thm:inverse-distribution-function">4.1</a> and using a <a href="https://github.com/wch/r-source/blob/af7f52f70101960861e5d995d3a4bec010bc89e6/src/nmath/qnorm.c#L52">technical approximation</a> of <span class="math inline">\(\Phi^{-1}\)</span> via rational functions.</p>
 <div id="sampling-from-a-t-distribution" class="section level3">
 <h3><span class="header-section-number">4.2.1</span> Sampling from a <span class="math inline">\(t\)</span>-distribution</h3>
 <p>Let <span class="math inline">\(Z = (Y, W) \in \mathbb{R} \times (0, \infty)\)</span> with <span class="math inline">\(Z \sim \mathcal{N}(0, 1)\)</span> and <span class="math inline">\(W \sim \chi^2_k\)</span> independent.</p>
 <p>Define <span class="math inline">\(T : \mathbb{R} \times (0, \infty) \to \mathbb{R}\)</span> by <span class="math display">\[T(z,w) = \frac{z}{\sqrt{w/k}},\]</span> then <span class="math display">\[X = T(Z, W) = \frac{Z}{\sqrt{W/k}} \sim t_k.\]</span></p>
-<p>This is how R simulates from a <span class="math inline">\(t\)</span>-distribution with <span class="math inline">\(W\)</span> generated from a<br />
-gamma distribution with shape parameter <span class="math inline">\(k / 2\)</span> and scale parameter <span class="math inline">\(2\)</span>.</p>
+<p>This is how R simulates from a <span class="math inline">\(t\)</span>-distribution with <span class="math inline">\(W\)</span> generated from a gamma distribution with shape parameter <span class="math inline">\(k / 2\)</span> and scale parameter <span class="math inline">\(2\)</span>.</p>
 </div>
 </div>
             </section>

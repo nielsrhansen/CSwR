@@ -32,7 +32,7 @@
   
   
 <link rel="prev" href="transformation-techniques.html">
-<link rel="next" href="MCI.html">
+<link rel="next" href="adaptive.html">
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
@@ -181,7 +181,15 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="4.2.1" data-path="transformation-techniques.html"><a href="transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
 </ul></li>
 <li class="chapter" data-level="4.3" data-path="reject-samp.html"><a href="reject-samp.html"><i class="fa fa-check"></i><b>4.3</b> Rejection sampling</a><ul>
-<li class="chapter" data-level="4.3.1" data-path="reject-samp.html"><a href="reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.1</b> Gamma distribution</a></li>
+<li class="chapter" data-level="4.3.1" data-path="reject-samp.html"><a href="reject-samp.html#vMsim"><i class="fa fa-check"></i><b>4.3.1</b> von Mises distribution</a></li>
+<li class="chapter" data-level="4.3.2" data-path="reject-samp.html"><a href="reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.2</b> Gamma distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.4" data-path="adaptive.html"><a href="adaptive.html"><i class="fa fa-check"></i><b>4.4</b> Adaptive envelopes</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="adaptive.html"><a href="adaptive.html#beta-distribution"><i class="fa fa-check"></i><b>4.4.1</b> Beta distribution</a></li>
+<li class="chapter" data-level="4.4.2" data-path="adaptive.html"><a href="adaptive.html#von-mises-distribution"><i class="fa fa-check"></i><b>4.4.2</b> von Mises distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="exercises-2.html"><a href="exercises-2.html"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="exercises-2.html"><a href="exercises-2.html#rejection-sampling-of-gaussian-random-variables"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
 </ul></li>
 </ul></li>
 <li class="chapter" data-level="5" data-path="MCI.html"><a href="MCI.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
@@ -263,34 +271,136 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
             <section class="normal" id="section-">
 <div id="reject-samp" class="section level2">
 <h2><span class="header-section-number">4.3</span> Rejection sampling</h2>
-<p>Let <span class="math inline">\(Y_1, Y_2, \ldots\)</span> be i.i.d. with density <span class="math inline">\(g\)</span> on <span class="math inline">\(\mathbb{R}\)</span> and <span class="math inline">\(U_1, U_2, \ldots\)</span> be i.i.d. uniformly distributed on <span class="math inline">\((0,1)\)</span> and independent of the <span class="math inline">\(Y_i\)</span>s. Define <span class="math display">\[T(\mathbf{Y}, \mathbf{U}) = Y_{\sigma}\]</span> with <span class="math display">\[\sigma = \inf\{n \geq 1 \mid U_n \leq \alpha f(Y_n) / g(Y_n)\},\]</span> for <span class="math inline">\(\alpha \in (0, 1]\)</span> and <span class="math inline">\(f\)</span> a density. Rejection sampling then consists of sampling independent pairs <span class="math inline">\((Y_n, U_n)\)</span> as long as we <em>reject</em> the proposals <span class="math inline">\(Y_n\)</span> sampled from <span class="math inline">\(g\)</span>, that is, as long as <span class="math display">\[U_n &gt; \alpha f(Y_n) / g(Y_n).\]</span> The first time we <em>accept</em> a proposal is <span class="math inline">\(\sigma\)</span>, and then we stop the sampling and return the proposal <span class="math inline">\(Y_{\sigma}\)</span>. The result is, indeed, a sample from the distribution with density <span class="math inline">\(f\)</span> as the following theorem states.</p>
+<p>This section deals with a general algorithm for simulating variables from a distribution with density <span class="math inline">\(f\)</span>. We call <span class="math inline">\(f\)</span> the target density and the corresponding distribution is called the target distribution. The idea is to simulate <em>proposals</em> from a different distribution with density <span class="math inline">\(g\)</span> (the proposal distribution) and then according to a criterion decide to accept or reject the proposals. It is assumed throughout that the proposal density <span class="math inline">\(g\)</span> is a density fulfilling that</p>
+<span class="math display" id="eq:gfnull">\[\begin{equation}
+g(x) = 0 \Rightarrow f(x) = 0.
+\tag{4.1}
+\end{equation}\]</span>
+<p>Let <span class="math inline">\(Y_1, Y_2, \ldots\)</span> be i.i.d. with density <span class="math inline">\(g\)</span> on <span class="math inline">\(\mathbb{R}\)</span> and <span class="math inline">\(U_1, U_2, \ldots\)</span> be i.i.d. uniformly distributed on <span class="math inline">\((0,1)\)</span> and independent of the <span class="math inline">\(Y_i\)</span>s. Define <span class="math display">\[T(\mathbf{Y}, \mathbf{U}) = Y_{\sigma}\]</span> with <span class="math display">\[\sigma = \inf\{n \geq 1 \mid U_n \leq \alpha f(Y_n) / g(Y_n)\},\]</span> for <span class="math inline">\(\alpha \in (0, 1]\)</span> and <span class="math inline">\(f\)</span> a density. Rejection sampling then consists of simulating independent pairs <span class="math inline">\((Y_n, U_n)\)</span> as long as we <em>reject</em> the proposals <span class="math inline">\(Y_n\)</span> sampled from <span class="math inline">\(g\)</span>, that is, as long as <span class="math display">\[U_n &gt; \alpha f(Y_n) / g(Y_n).\]</span> The first time we <em>accept</em> a proposal is <span class="math inline">\(\sigma\)</span>, and then we stop the sampling and return the proposal <span class="math inline">\(Y_{\sigma}\)</span>. The result is, indeed, a sample from the distribution with density <span class="math inline">\(f\)</span> as the following theorem states.</p>
 
 <div class="theorem">
-<span id="thm:reject" class="theorem"><strong>Theorem 4.1  </strong></span>If <span class="math inline">\(\alpha f(y) \leq g(y)\)</span> for all <span class="math inline">\(y \in \mathbb{R}\)</span> then the distribution of <span class="math inline">\(Y_{\sigma}\)</span> has density <span class="math inline">\(f\)</span>.
+<p><span id="thm:reject" class="theorem"><strong>Theorem 4.2  </strong></span>If <span class="math inline">\(\alpha f(y) \leq g(y)\)</span> for all <span class="math inline">\(y \in \mathbb{R}\)</span> and <span class="math inline">\(\alpha &gt; 0\)</span> then the distribution of <span class="math inline">\(Y_{\sigma}\)</span> has density <span class="math inline">\(f\)</span>.</p>
 </div>
 
 
 <div class="proof">
-<p> <span class="proof"><em>Proof. </em></span> The formal proof decomposes the event <span class="math inline">\((Y_{\sigma} \leq y)\)</span> according to the value of <span class="math inline">\(\sigma\)</span> to reduce the computation to the one on page 155,</p>
+<p> <span class="proof"><em>Proof. </em></span> Note that <span class="math inline">\(g\)</span> automatically fulfills <a href="reject-samp.html#eq:gfnull">(4.1)</a>. The formal proof decomposes the event <span class="math inline">\((Y_{\sigma} \leq y)\)</span> according to the value of <span class="math inline">\(\sigma\)</span> as follows</p>
 <span class="math display">\[\begin{align}
-P(Y_{\sigma} \leq y) &amp; = \sum_{n = 1}^{\infty} P(Y_{n} \leq y, \ \sigma = k) \\
+P(Y_{\sigma} \leq y) &amp; = \sum_{n = 1}^{\infty} P(Y_{n} \leq y, \ \sigma = n) \\
 &amp; = \sum_{n = 1}^{\infty} P(Y_{n} \leq y, \ U_n \leq \alpha f(Y_n) / g(Y_n)) P(\sigma &gt; n - 1) \\
-&amp; = \ldots \\
-&amp; = \int_{-\infty}^y f(z) \mathrm{d} z.
+&amp; = P(Y_{1} \leq y, \ U_1 \leq \alpha f(Y_1) / g(Y_1)) \sum_{n = 1}^{\infty} P(\sigma &gt; n - 1).
 \end{align}\]</span>
+<p>By independence of the pairs <span class="math inline">\((Y_n, U_n)\)</span> we find that <span class="math display">\[P(\sigma &gt; n - 1) = p^{(n-1)}\]</span> where <span class="math inline">\(p = P(U_1 &gt; \alpha f(Y_1) / g(Y_1))\)</span>, and <span class="math display">\[\sum_{n = 1}^{\infty} P(\sigma &gt; n - 1) = \sum_{n = 1}^{\infty} p^{(n-1)} = \frac{1}{1 - p}.\]</span></p>
+<p>We further find using Tonelli’s theorem that</p>
+<span class="math display">\[\begin{align}
+P(Y_{1} \leq y, \ U_1 \leq \alpha f(Y_1) / g(Y_1)) &amp; = \int_{-\infty}^y \alpha \frac{f(z)}{g(z)} g(z) \mathrm{d}z \\
+&amp; = \alpha \int_{-\infty}^y f(z) \mathrm{d} z.
+\end{align}\]</span>
+<p>It also follows from this, by taking <span class="math inline">\(y = \infty\)</span>, that <span class="math inline">\(1 - p = \alpha\)</span>, and we conclude that <span class="math display">\[P(Y_{\sigma} \leq y) = \int_{-\infty}^y f(z) \mathrm{d} z,\]</span> and the density for the distribution of <span class="math inline">\(Y_{\sigma}\)</span> is, indeed, <span class="math inline">\(f\)</span>.</p>
 </div>
 
 <p>Note that if <span class="math inline">\(\alpha f \leq g\)</span> for <em>densities</em> <span class="math inline">\(f\)</span> and <span class="math inline">\(g\)</span>, then <span class="math display">\[\alpha = \int \alpha f(x) \mathrm{d}x \leq \int g(x) \mathrm{d}x = 1,\]</span> whence it follows automatically that <span class="math inline">\(\alpha \leq 1\)</span> whenever <span class="math inline">\(\alpha f\)</span> is dominated by <span class="math inline">\(g\)</span>. The function <span class="math inline">\(g/\alpha\)</span> is called the <em>envelope</em> of <span class="math inline">\(f\)</span>. The tighter the envelope, the smaller is the probability of rejecting a sample from <span class="math inline">\(g\)</span>, and this is quantified explicitly by <span class="math inline">\(\alpha\)</span> as <span class="math inline">\(1 - \alpha\)</span> is the rejection probability. Thus <span class="math inline">\(\alpha\)</span> should preferably be as close to one as possible.</p>
-<p>If <span class="math inline">\(f(y) = c q(y)\)</span> and <span class="math inline">\(g(y) = d p(y)\)</span> for (unknown) normalizing constants <span class="math inline">\(c, d &gt; 0\)</span> and <span class="math inline">\(\alpha&#39; q \leq p\)</span> then <span class="math display">\[\underbrace{\left(\frac{\alpha&#39; d}{c}\right)}_{= \alpha} \ f \leq g.\]</span> The constant <span class="math inline">\(\alpha&#39;\)</span> may be larger than 1, but from the argument above we know that <span class="math inline">\(\alpha \leq 1\)</span>, and Theorem <a href="reject-samp.html#thm:reject">4.1</a> gives that <span class="math inline">\(Y_{\sigma}\)</span> has distribution with density <span class="math inline">\(f\)</span>. It appears that we need to compute the normalizing constants to implement rejection sampling. However, observe that <span class="math display">\[u \leq \frac{\alpha f(y)}{g(y)} \Leftrightarrow u \leq \frac{\alpha&#39; q(y)}{p(y)},\]</span> whence rejection sampling can actually be implemented with knowledge of the unnormalized densities and <span class="math inline">\(\alpha&#39;\)</span> only and without computing <span class="math inline">\(c\)</span> or <span class="math inline">\(d\)</span>. This is one great advantages of rejection sampling, though we should note that when we don’t know the normalizing constants, <span class="math inline">\(\alpha&#39;\)</span> does not tell us anything about how tight the envelope is, and thus how small the rejection probability is.</p>
+<p>If <span class="math inline">\(f(y) = c q(y)\)</span> and <span class="math inline">\(g(y) = d p(y)\)</span> for (unknown) normalizing constants <span class="math inline">\(c, d &gt; 0\)</span> and <span class="math inline">\(\alpha&#39; q \leq p\)</span> then <span class="math display">\[\underbrace{\left(\frac{\alpha&#39; d}{c}\right)}_{= \alpha} \ f \leq g.\]</span> The constant <span class="math inline">\(\alpha&#39;\)</span> may be larger than 1, but from the argument above we know that <span class="math inline">\(\alpha \leq 1\)</span>, and Theorem <a href="reject-samp.html#thm:reject">4.2</a> gives that <span class="math inline">\(Y_{\sigma}\)</span> has distribution with density <span class="math inline">\(f\)</span>. It appears that we need to compute the normalizing constants to implement rejection sampling. However, observe that <span class="math display">\[u \leq \frac{\alpha f(y)}{g(y)} \Leftrightarrow u \leq \frac{\alpha&#39; q(y)}{p(y)},\]</span> whence rejection sampling can actually be implemented with knowledge of the unnormalized densities and <span class="math inline">\(\alpha&#39;\)</span> only and without computing <span class="math inline">\(c\)</span> or <span class="math inline">\(d\)</span>. This is one great advantages of rejection sampling, though we should note that when we don’t know the normalizing constants, <span class="math inline">\(\alpha&#39;\)</span> does not tell us anything about how tight the envelope is, and thus how small the rejection probability is.</p>
+<div id="vMsim" class="section level3">
+<h3><span class="header-section-number">4.3.1</span> von Mises distribution</h3>
+<p>Recall the <a href="monte-carlo-methods.html#vM">von Mises distribution</a> from Section <a href="monte-carlo-methods.html#vM">1.2.1</a>. It is a distribution on <span class="math inline">\((-\pi, \pi]\)</span> with density <span class="math display">\[f(x) \propto e^{\kappa \cos(x - \mu)}\]</span> for parameters <span class="math inline">\(\kappa &gt; 0\)</span> and <span class="math inline">\(\mu \in (-\pi, \pi]\)</span>. Clearly, <span class="math inline">\(\mu\)</span> is a location parameter, and we fix <span class="math inline">\(\mu = 0\)</span> in the following. Simulating random variables with <span class="math inline">\(\mu \neq 0\)</span> can be achieved by (wrapped) translation of variables with <span class="math inline">\(\mu = 0\)</span>.</p>
+<p>Thus the target density is <span class="math inline">\(f(x) \propto e^{\kappa \cos(x)}\)</span>. In this section we will use the uniform distribution on <span class="math inline">\((-\pi, \pi)\)</span> as proposal distribution. It has constant density <span class="math inline">\(g(x) = (2\pi)^{-1}\)</span>, but all we need is, in fact, that <span class="math inline">\(g \propto 1\)</span>. Since <span class="math inline">\(x \mapsto \exp(\kappa \cos(x))\)</span> attains it maximum for <span class="math inline">\(x = 0\)</span> we find that <span class="math display">\[e^{\kappa(\cos(x) - 1)} = \alpha&#39; e^{\kappa \cos(x)} \leq 1,\]</span> where <span class="math inline">\(\alpha&#39; = \exp(-\kappa)\)</span>. The rejection test of the proposal <span class="math inline">\(Y \sim g\)</span> can therefore be carried out by testing if a uniformly distributed random variable <span class="math inline">\(U\)</span> on <span class="math inline">\((0,1)\)</span> satisfies <span class="math display">\[U &gt; e^{\kappa(\cos(Y) - 1)}.\]</span></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">vMsim &lt;-<span class="st"> </span><span class="cf">function</span>(n, kappa) {
+  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)
+  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {
+    ratio &lt;-<span class="st"> </span><span class="dv">0</span> 
+    u &lt;-<span class="st"> </span><span class="dv">1</span>
+    <span class="cf">while</span>(u <span class="op">&gt;</span><span class="st"> </span>ratio) {
+      y0 &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>, <span class="op">-</span><span class="st"> </span>pi, pi)
+      ratio &lt;-<span class="st"> </span><span class="kw">exp</span>(kappa <span class="op">*</span><span class="st"> </span>(<span class="kw">cos</span>(y0) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))
+      u &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>)
+    }
+    y[i] &lt;-<span class="st"> </span>y0
+  }
+  y
+}</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">f &lt;-<span class="st"> </span><span class="cf">function</span>(x, k) <span class="kw">exp</span>(k <span class="op">*</span><span class="st"> </span><span class="kw">cos</span>(x)) <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi <span class="op">*</span><span class="st"> </span><span class="kw">besselI</span>(k, <span class="dv">0</span>))
+x &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="fl">0.5</span>)
+<span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)
+<span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="fl">0.5</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)
+x &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="dv">2</span>)
+<span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)
+<span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="dv">2</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:vMsim"></span>
+<img src="CSwR_files/figure-html/vMsim-1.png" alt="Histograms of 100000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right). The true densities (blue) are added to the plots." width="50%" /><img src="CSwR_files/figure-html/vMsim-2.png" alt="Histograms of 100000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right). The true densities (blue) are added to the plots." width="50%" />
+<p class="caption">
+Figure 4.1: Histograms of 100000 simulated data points from von Mises distributions with parameters <span class="math inline">\(\kappa = 0.5\)</span> (left) and <span class="math inline">\(\kappa = 2\)</span> (right). The true densities (blue) are added to the plots.
+</p>
+</div>
+
+<p>Figure <a href="reject-samp.html#fig:vMsim">4.1</a> confirms that the implementation simulates from the von Mises distribution.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(<span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>))</code></pre></div>
+<pre><code>##    user  system elapsed 
+##   2.271   0.396   2.680</code></pre>
+<p>Though the implementation can easily simulate 100000 variables in a couple of seconds, it might still be possible to improve it. To investigate what most of the run time is spent on we use the line profiling tool as implemented in the profvis package.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(profvis)
+<span class="kw">profvis</span>(<span class="kw">vMsim</span>(<span class="dv">10000</span>, <span class="dv">5</span>))</code></pre></div>
+<p><img src="figures/vMsim-profile.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>The <a href="vMsim-profile.html">profiling result</a> shows that almost all the time is spent on simulating uniformly distributed random variables. It is, perhaps, expected that this should take some time, but that it takes so much more time than computing the ratio, say, used for the rejection test is a bit surprising. What might be even more surprising is the large amount of memory allocation and deallocation associated with the simulation of the variables.</p>
+<p>The culprit is <code>runif</code> that has some overhead associated with each call. The function performs much better if called once to return a vector than if called repeatedly as above to return just single numbers. We can rewrite the rejection sampler to make better use of <code>runif</code>, but it does make the function a bit more complicated because we don’t know upfront how many uniform variables we need. For later usage we add the possibility of printing out some tracing information.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">vMsim &lt;-<span class="st"> </span><span class="cf">function</span>(n, kappa, <span class="dt">trace =</span> <span class="ot">FALSE</span>) {
+  m &lt;-<span class="st"> </span>n  
+  fact &lt;-<span class="st"> </span><span class="dv">1</span>
+  count &lt;-<span class="st"> </span><span class="dv">0</span>
+  j &lt;-<span class="st"> </span><span class="dv">1</span>
+  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)
+  y0 &lt;-<span class="st"> </span><span class="kw">runif</span>(m, <span class="op">-</span><span class="st"> </span>pi, pi)
+  u &lt;-<span class="st"> </span><span class="kw">runif</span>(m)
+  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {
+    <span class="cf">repeat</span> {
+      z &lt;-<span class="st"> </span>y0[j]
+      accept &lt;-<span class="st"> </span>u[j] <span class="op">&lt;=</span><span class="st"> </span><span class="kw">exp</span>(kappa <span class="op">*</span><span class="st"> </span>(<span class="kw">cos</span>(z) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))
+      j &lt;-<span class="st"> </span>j <span class="op">+</span><span class="st"> </span><span class="dv">1</span>
+      count &lt;-<span class="st"> </span>count <span class="op">+</span><span class="st"> </span><span class="dv">1</span>
+      <span class="cf">if</span>(j <span class="op">&gt;</span><span class="st"> </span>m) {
+        <span class="cf">if</span>(fact <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) fact &lt;-<span class="st"> </span>n <span class="op">/</span><span class="st"> </span>i
+        m &lt;-<span class="st"> </span><span class="kw">floor</span>(fact <span class="op">*</span><span class="st"> </span>(n <span class="op">-</span><span class="st"> </span>i <span class="op">+</span><span class="st"> </span><span class="dv">1</span>))
+        y0 &lt;-<span class="st"> </span><span class="kw">runif</span>(m, <span class="op">-</span><span class="st"> </span>pi, pi)
+        u &lt;-<span class="st"> </span><span class="kw">runif</span>(m)
+        j &lt;-<span class="st"> </span><span class="dv">1</span>
+      }
+      <span class="cf">if</span>(accept) <span class="cf">break</span>
+    }
+    y[i] &lt;-<span class="st"> </span>z
+  }
+  <span class="cf">if</span>(trace)
+    <span class="kw">cat</span>(<span class="st">&quot;kappa =&quot;</span>, kappa, <span class="st">&quot;:&quot;</span>, (count <span class="op">-</span><span class="st"> </span>n)<span class="op">/</span><span class="st"> </span>count, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)  ## Rejection frequency
+  y
+}</code></pre></div>
+<p>The implementation above generates new vectors of uniform random variables whenever it “runs out”. The first time it needs to do so it estimates a factor of how many variables is needed per accept, and then it generates the estimated number of variables needed. This may be repeated a couple of times.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(<span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>))</code></pre></div>
+<pre><code>##    user  system elapsed 
+##   0.193   0.004   0.197</code></pre>
+<p>As we see from the time estimate above, using a vectorized call of <code>runif</code> reduces the run time by more than a factor 10.</p>
+<p>We should, of course, remember to test that the new implementation still generates variables from the von Mises distribution.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">x &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="fl">0.5</span>)
+<span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)
+<span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="fl">0.5</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)
+x &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="dv">2</span>)
+<span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)
+<span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="dv">2</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:vMsim2"></span>
+<img src="CSwR_files/figure-html/vMsim2-1.png" alt="Histograms of 100000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the fast implementation." width="50%" /><img src="CSwR_files/figure-html/vMsim2-2.png" alt="Histograms of 100000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the fast implementation." width="50%" />
+<p class="caption">
+Figure 4.2: Histograms of 100000 simulated data points from von Mises distributions with parameters <span class="math inline">\(\kappa = 0.5\)</span> (left) and <span class="math inline">\(\kappa = 2\)</span> (right), simulated using the fast implementation.
+</p>
+</div>
+
+</div>
 <div id="gamma-distribution" class="section level3">
-<h3><span class="header-section-number">4.3.1</span> Gamma distribution</h3>
+<h3><span class="header-section-number">4.3.2</span> Gamma distribution</h3>
 <p>It may be possible to find a suitable envelope of the density for the gamma distribution on <span class="math inline">\((0, \infty)\)</span>, but it turns out that there is a very efficient rejection sampler of a non-standard distribution that can be transformed it by a simple transformation.</p>
 <p>Let <span class="math inline">\(t(y) = a(1 + by)^3\)</span> for <span class="math inline">\(y \in (-b^{-1}, \infty)\)</span>, then <span class="math inline">\(t(Y) \sim \Gamma(r,1)\)</span> if <span class="math inline">\(r \geq 1\)</span> and <span class="math inline">\(Y\)</span> has density <span class="math display">\[f(y) \propto t(y)^{r-1}t&#39;(y) e^{-t(y)} = e^{(r-1)\log t(y) + \log t&#39;(y) - t(y)}.\]</span></p>
 <p>[Proof: Use univariate density transformation theorem.]</p>
 <p>The density <span class="math inline">\(f\)</span> will be the <em>target density</em> for a rejection sampler.</p>
 <p>With <span class="math display">\[f(y) \propto e^{(r-1)\log t(y) + \log t&#39;(y) - t(y)},\]</span> <span class="math inline">\(a = r - 1/3\)</span> and <span class="math inline">\(b = 1/(3 \sqrt{a})\)</span> <span class="math display">\[f(y) \propto e^{a \log t(y)/a - t(y) + a \log a} \propto \underbrace{e^{a \log t(y)/a - t(y) + a}}_{q(y)}.\]</span></p>
 <p>An analysis of <span class="math inline">\(w(y) := - y^2/2 - \log q(y)\)</span> shows that it is convex on <span class="math inline">\((-b^{-1}, \infty)\)</span> and it attains its minimum in <span class="math inline">\(0\)</span> with <span class="math inline">\(w(0) = 0\)</span>, whence <span class="math display">\[q(y) \leq e^{-y^2/2}.\]</span> This gives us an envelope expressed in terms of unnormalized densities with <span class="math inline">\(\alpha&#39; = 1\)</span>.</p>
-<p>The implementation of a rejection sampler based on this analysis is relatively straightforward. The rejection sampler will simulate from the distribution with density <span class="math inline">\(f\)</span> by simulating from the Gaussian distribution (the envelope). For the rejection step we need to implement <span class="math inline">\(q\)</span>. Finally, we also need to implement <span class="math inline">\(t\)</span> to transform the result from the rejection sampler to be gamma distributed.</p>
+<p>The implementation of a rejection sampler based on this analysis is relatively straightforward. The rejection sampler will simulate from the distribution with density <span class="math inline">\(f\)</span> by simulating from the Gaussian distribution (the envelope). For the rejection step we need to implement <span class="math inline">\(q\)</span>. Finally, we also need to implement <span class="math inline">\(t\)</span> to transform the result from the rejection sampler to be gamma distributed. The rejection sampler is otherwise implemented as for the von Mises distribution. To investigate rejection probabilities below we additionally implement the possibility of printing out some tracing information.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## r &gt;= 1 
 tfun &lt;-<span class="st"> </span><span class="cf">function</span>(y, a) {
   b &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">3</span> <span class="op">*</span><span class="st"> </span><span class="kw">sqrt</span>(a))
@@ -303,70 +413,71 @@ qfun &lt;-<span class="st"> </span><span class="cf">function</span>(y, r) {
   <span class="kw">exp</span>(a <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(tval <span class="op">/</span><span class="st"> </span>a) <span class="op">-</span><span class="st"> </span>tval <span class="op">+</span><span class="st"> </span>a)
 }
 
-gammasim &lt;-<span class="st"> </span><span class="cf">function</span>(n, r) {
-  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)
-  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {
-    ratio &lt;-<span class="st"> </span><span class="dv">0</span> 
-    u &lt;-<span class="st"> </span><span class="dv">1</span>
-    <span class="cf">while</span>(u <span class="op">&gt;</span><span class="st"> </span>ratio) {
-      y0 &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">1</span>)
-      ratio &lt;-<span class="st"> </span><span class="kw">qfun</span>(y0, r) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(y0<span class="op">^</span><span class="dv">2</span><span class="op">/</span><span class="dv">2</span>)
-      u &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>)
-    }
-    y[i] &lt;-<span class="st"> </span>y0
-  }
-  <span class="kw">tfun</span>(y, r <span class="op">-</span><span class="st"> </span><span class="dv">1</span><span class="op">/</span><span class="dv">3</span>)
-}</code></pre></div>
-<p>Even if the implementation is not optimized in any way, it can quickly simulate thousands of random variables. We test the implementation by simulating 10,000 values with parameters <span class="math inline">\(r = 8\)</span> as well as <span class="math inline">\(r = 1\)</span> and compare the resulting histograms to the respective theoretical densities.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">10000</span>, <span class="dv">8</span>))</code></pre></div>
-<pre><code>##    user  system elapsed 
-##   0.057   0.003   0.060</code></pre>
-<p><img src="CSwR_files/figure-html/gammaBench-1.png" width="70%" style="display: block; margin: auto;" /></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">10000</span>, <span class="dv">1</span>))</code></pre></div>
-<pre><code>##    user  system elapsed 
-##   0.052   0.003   0.054</code></pre>
-<p><img src="CSwR_files/figure-html/gammaBench2-1.png" width="70%" style="display: block; margin: auto;" /></p>
-<p>Though this is only a brief and informal test, it indicates that the implementation correctly simulates from the gamma distribution.</p>
-<p>Rejection sampling can be computationally expensive if many samples are rejected. A very tight envelope will lead to fewer rejections, while a loose envelope will lead to many rejections. We modify the code above to estimate the rejection probability and thus quantify how tight the envelope is.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">gammasim_trace &lt;-<span class="st"> </span><span class="cf">function</span>(n, r) {
+gammasim &lt;-<span class="st"> </span><span class="cf">function</span>(n, r, <span class="dt">trace =</span> <span class="ot">FALSE</span>) {
+  m &lt;-<span class="st"> </span>n  
+  fact &lt;-<span class="st"> </span><span class="dv">1</span>
   count &lt;-<span class="st"> </span><span class="dv">0</span>
+  j &lt;-<span class="st"> </span><span class="dv">1</span>
   y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)
+  y0 &lt;-<span class="st"> </span><span class="kw">rnorm</span>(m)
+  u &lt;-<span class="st"> </span><span class="kw">runif</span>(m)
   <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {
-    ratio &lt;-<span class="st"> </span><span class="dv">0</span> 
-    u &lt;-<span class="st"> </span><span class="dv">1</span>
-    <span class="cf">while</span>(u <span class="op">&gt;</span><span class="st"> </span>ratio) {
+    <span class="cf">repeat</span> {
+      z &lt;-<span class="st"> </span>y0[j]
+      accept &lt;-<span class="st"> </span>u[j] <span class="op">&lt;=</span><span class="st"> </span><span class="kw">qfun</span>(z, r) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(z<span class="op">^</span><span class="dv">2</span><span class="op">/</span><span class="dv">2</span>)
+      j &lt;-<span class="st"> </span>j <span class="op">+</span><span class="st"> </span><span class="dv">1</span>
       count &lt;-<span class="st"> </span>count <span class="op">+</span><span class="st"> </span><span class="dv">1</span>
-      y0 &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">1</span>)
-      ratio &lt;-<span class="st"> </span><span class="kw">qfun</span>(y0, r) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(y0<span class="op">^</span><span class="dv">2</span><span class="op">/</span><span class="dv">2</span>)
-      u &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>)
+      <span class="cf">if</span>(j <span class="op">&gt;</span><span class="st"> </span>m) {
+        <span class="cf">if</span>(fact <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) fact &lt;-<span class="st"> </span>n <span class="op">/</span><span class="st"> </span>i
+        m &lt;-<span class="st"> </span><span class="kw">floor</span>(fact <span class="op">*</span><span class="st"> </span>(n <span class="op">-</span><span class="st"> </span>i <span class="op">+</span><span class="st"> </span><span class="dv">1</span>))
+        y0 &lt;-<span class="st"> </span><span class="kw">rnorm</span>(m)
+        u &lt;-<span class="st"> </span><span class="kw">runif</span>(m)
+        j &lt;-<span class="st"> </span><span class="dv">1</span>
+      }
+      <span class="cf">if</span>(accept) <span class="cf">break</span>
     }
-    y[i] &lt;-<span class="st"> </span>y0
+    y[i] &lt;-<span class="st"> </span>z
   }
-  <span class="kw">cat</span>((count <span class="op">-</span><span class="st"> </span>n) <span class="op">/</span><span class="st"> </span>count)  ## Rejection frequency
+  <span class="cf">if</span>(trace)
+      <span class="kw">cat</span>(<span class="st">&quot;r =&quot;</span>, r, <span class="st">&quot;:&quot;</span>, (count <span class="op">-</span><span class="st"> </span>n)<span class="op">/</span><span class="st"> </span>count, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)  ## Rejection frequency
   <span class="kw">tfun</span>(y, r <span class="op">-</span><span class="st"> </span><span class="dv">1</span><span class="op">/</span><span class="dv">3</span>)
 }</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">y &lt;-<span class="st"> </span><span class="kw">gammasim_trace</span>(<span class="dv">100000</span>, <span class="dv">16</span>)</code></pre></div>
-<pre><code>## 0.001876472</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">y &lt;-<span class="st"> </span><span class="kw">gammasim_trace</span>(<span class="dv">100000</span>, <span class="dv">8</span>)</code></pre></div>
-<pre><code>## 0.003438138</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">y &lt;-<span class="st"> </span><span class="kw">gammasim_trace</span>(<span class="dv">100000</span>, <span class="dv">4</span>)</code></pre></div>
-<pre><code>## 0.007975874</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">y &lt;-<span class="st"> </span><span class="kw">gammasim_trace</span>(<span class="dv">100000</span>, <span class="dv">1</span>)</code></pre></div>
-<pre><code>## 0.04891434</code></pre>
+<p>We test the implementation by simulating 100000 values with parameters <span class="math inline">\(r = 8\)</span> as well as <span class="math inline">\(r = 1\)</span> and compare the resulting histograms to the respective theoretical densities.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">8</span>))</code></pre></div>
+<pre><code>##    user  system elapsed 
+##   0.202   0.018   0.222</code></pre>
+<p><img src="CSwR_files/figure-html/gammaBench-1.png" width="70%" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">1</span>))</code></pre></div>
+<pre><code>##    user  system elapsed 
+##   0.174   0.001   0.175</code></pre>
+<p><img src="CSwR_files/figure-html/gammaBench2-1.png" width="70%" style="display: block; margin: auto;" /></p>
+<p>Though this is only a simple and informal test, it indicates that the implementation correctly simulates from the gamma distribution.</p>
+<p>Rejection sampling can be computationally expensive if many samples are rejected. A very tight envelope will lead to fewer rejections, while a loose envelope will lead to many rejections. Using the tracing option as implemented we obtain estimates of the rejection probability and thus a quantification of how tight the envelope is.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">16</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)
+y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">8</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)
+y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">4</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)
+y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">1</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</code></pre></div>
+<pre><code>## r = 16 : 0.002105557 
+## r = 8 : 0.003507653 
+## r = 4 : 0.008133307 
+## r = 1 : 0.04815389</code></pre>
 <p>We observe that the rejection frequencies are small with <span class="math inline">\(r = 1\)</span> being the worst case with around 5% rejections. For the other cases the rejection frequencies are all below 1%, thus rejection is rare.</p>
 <p>A visual comparison of <span class="math inline">\(q\)</span> to the (unnormalized) Gaussian density also shows that the two (unnormalized) densities are very close except in the tails where there is very little probability mass.</p>
-<p><img src="CSwR_files/figure-html/densComparison-1.png" width="100%" style="display: block; margin: auto;" /></p>
-
+<div class="figure" style="text-align: center"><span id="fig:densComparison"></span>
+<img src="CSwR_files/figure-html/densComparison-1.png" alt="Comparisons of the Gaussian proposal (red) and the target density (blue) used for eventually simulating gamma distributed variables via a transformation." width="100%" />
+<p class="caption">
+Figure 4.3: Comparisons of the Gaussian proposal (red) and the target density (blue) used for eventually simulating gamma distributed variables via a transformation.
+</p>
 </div>
 </div>
-<!-- </div> -->
+</div>
             </section>
 
           </div>
         </div>
       </div>
 <a href="transformation-techniques.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="MCI.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="adaptive.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>

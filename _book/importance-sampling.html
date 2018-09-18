@@ -181,7 +181,15 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="4.2.1" data-path="transformation-techniques.html"><a href="transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
 </ul></li>
 <li class="chapter" data-level="4.3" data-path="reject-samp.html"><a href="reject-samp.html"><i class="fa fa-check"></i><b>4.3</b> Rejection sampling</a><ul>
-<li class="chapter" data-level="4.3.1" data-path="reject-samp.html"><a href="reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.1</b> Gamma distribution</a></li>
+<li class="chapter" data-level="4.3.1" data-path="reject-samp.html"><a href="reject-samp.html#vMsim"><i class="fa fa-check"></i><b>4.3.1</b> von Mises distribution</a></li>
+<li class="chapter" data-level="4.3.2" data-path="reject-samp.html"><a href="reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.2</b> Gamma distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.4" data-path="adaptive.html"><a href="adaptive.html"><i class="fa fa-check"></i><b>4.4</b> Adaptive envelopes</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="adaptive.html"><a href="adaptive.html#beta-distribution"><i class="fa fa-check"></i><b>4.4.1</b> Beta distribution</a></li>
+<li class="chapter" data-level="4.4.2" data-path="adaptive.html"><a href="adaptive.html#von-mises-distribution"><i class="fa fa-check"></i><b>4.4.2</b> von Mises distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="exercises-2.html"><a href="exercises-2.html"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="exercises-2.html"><a href="exercises-2.html#rejection-sampling-of-gaussian-random-variables"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
 </ul></li>
 </ul></li>
 <li class="chapter" data-level="5" data-path="MCI.html"><a href="MCI.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
@@ -266,18 +274,18 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>When we are only interested in Monte Carlo integration, we do not need to sample from the target distribution.</p>
 Observe that
 <span class="math display">\[\begin{align}
-\mu = \int h(x) f(x) \ dx &amp; = \int h(x) \frac{f(x)}{g(x)} g(x) \ dx \\
-&amp; = \int h(x) w^*(x) g(x) \ dx
+\mu = \int h(x) f(x) \ \mathrm{d}x &amp; = \int h(x) \frac{f(x)}{g(x)} g(x) \ \mathrm{d}x \\
+&amp; = \int h(x) w^*(x) g(x) \ \mathrm{d}x
 \end{align}\]</span>
 <p>whenever <span class="math inline">\(g\)</span> is a density fulfilling that <span class="math display">\[g(x) = 0 \Rightarrow f(x) = 0.\]</span></p>
-<p>With <span class="math inline">\(X_1, \ldots, X_n\)</span> i.i.d. with density <span class="math inline">\(g\)</span> define the <em>weights</em> <span class="math display">\[w^*(X_i) = f(X_i) / g(X_i).\]</span> The <em>importance sampling</em> estimator is <span class="math display">\[\hat{\mu}_{\textrm{IS}}^* := \frac{1}{n} \sum_{i=1}^n h(X_i)w^*(X_i).\]</span> It has mean <span class="math inline">\(\mu\)</span>. Again by the LLN <span class="math display">\[\hat{\mu}_{\textrm{IS}}^* \rightarrow \mathbb{E} h(X_1) w^*(X_1) = \mu,\]</span></p>
+<p>With <span class="math inline">\(X_1, \ldots, X_n\)</span> i.i.d. with density <span class="math inline">\(g\)</span> define the <em>weights</em> <span class="math display">\[w^*(X_i) = f(X_i) / g(X_i).\]</span> The <em>importance sampling</em> estimator is <span class="math display">\[\hat{\mu}_{\textrm{IS}}^* := \frac{1}{n} \sum_{i=1}^n h(X_i)w^*(X_i).\]</span> It has mean <span class="math inline">\(\mu\)</span>. Again by the LLN <span class="math display">\[\hat{\mu}_{\textrm{IS}}^* \rightarrow E(h(X_1) w^*(X_1)) = \mu.\]</span></p>
 <p>To assess the precision of the importance sampling estimate via the CLT we need the variance of the average as for plain Monte Carlo integration. By the CLT <span class="math display">\[\hat{\mu}_{\textrm{IS}}^* \overset{\textrm{approx}} \sim 
-\mathcal{N}(\mu, \sigma^{*2}_{\textrm{IS}} / n)\]</span> where <span class="math display">\[\sigma^{*2}_{\textrm{IS}} = \mathbb{V} h(X_1)w^*(X_1) = \int (h(x) w^*(x) - \mu)^2 g(x) \ dx.\]</span></p>
+\mathcal{N}(\mu, \sigma^{*2}_{\textrm{IS}} / n)\]</span> where <span class="math display">\[\sigma^{*2}_{\textrm{IS}} = V (h(X_1)w^*(X_1)) = \int (h(x) w^*(x) - \mu)^2 g(x) \ \mathrm{d}x.\]</span></p>
 <p>We may have <span class="math inline">\(\sigma^{*2}_{\textrm{IS}} &gt; \sigma^2_{\textrm{MC}}\)</span> or <span class="math inline">\(\sigma^{*2}_{\textrm{IS}} &lt; \sigma^2_{\textrm{MC}}\)</span> depending on <span class="math inline">\(h\)</span> and <span class="math inline">\(g\)</span>. By choosing <span class="math inline">\(g\)</span> cleverly so that <span class="math inline">\(h(x) w^*(x)\)</span> becomes as constant as possible, importance sampling can reduce the variance considerably compared to plain MC.</p>
 <p>The importance sampling variance can be estimated just as the MC variance <span class="math display">\[\hat{\sigma}^{*2}_{\textrm{IS}} = \frac{1}{n - 1} \sum_{i=1}^n (h(X_i)w^*(X_i) - \hat{\mu}_{\textrm{IS}}^*)^2,\]</span> and a 95% standard confidence interval is computed as <span class="math display">\[\hat{\mu}^*_{\textrm{IS}} \pm 1.96 \frac{\hat{\sigma}^*_{\textrm{IS}}}{\sqrt{n}}.\]</span></p>
 <div id="unknown-normalization-constants" class="section level3">
 <h3><span class="header-section-number">5.2.1</span> Unknown normalization constants</h3>
-<p>If <span class="math inline">\(f = c^{-1} q\)</span> with <span class="math inline">\(c\)</span> unknown then <span class="math display">\[c = \int q(x) \ dx = \int \frac{q(x)}{g(x)} g(x) \ d x,\]</span> and <span class="math display">\[\mu = \frac{\int h(x) w^*(x) g(x) \ d x}{\int w^*(x) g(x) \ d x},\]</span> where <span class="math inline">\(w^*(x) = q(x) / g(x).\)</span></p>
+<p>If <span class="math inline">\(f = c^{-1} q\)</span> with <span class="math inline">\(c\)</span> unknown then <span class="math display">\[c = \int q(x) \ \mathrm{d}x = \int \frac{q(x)}{g(x)} g(x) \ d x,\]</span> and <span class="math display">\[\mu = \frac{\int h(x) w^*(x) g(x) \ d x}{\int w^*(x) g(x) \ d x},\]</span> where <span class="math inline">\(w^*(x) = q(x) / g(x).\)</span></p>
 <p>An importance sampling estimate of <span class="math inline">\(\mu\)</span> is thus <span class="math display">\[\hat{\mu}_{\textrm{IS}} = \frac{\sum_{i=1}^n h(X_i) w^*(X_i)}{\sum_{i=1}^n w^*(X_i)} = \sum_{i=1}^n h(X_i) w(X_i),\]</span> where <span class="math inline">\(w^*(X_i) = q(X_i) / g(X_i)\)</span> and <span class="math display">\[w(X_i) = \frac{w^*(X_i)}{\sum_{i=1}^n w^*(X_i)}\]</span> are the <em>standardized weights</em>. This works irrespectively of the value of the normalizing constant <span class="math inline">\(c\)</span>.</p>
 The variance of the IS estimator with standardized weights is a little more complicated, because the estimator is a ratio of random variables. From the multivariate CLT <span class="math display">\[\frac{1}{n} \sum_{i=1}^n \left(\begin{array}{c}
  h(X_i) w^*(X_i) \\
@@ -287,9 +295,9 @@ The variance of the IS estimator with standardized weights is a little more comp
 \frac{1}{n} \left(\begin{array}{cc} \sigma^{*2}_{\textrm{IS}} &amp; \gamma \\ \gamma &amp; \sigma^2_{w^*}
 \end{array} \right)\right),\]</span> where
 <span class="math display">\[\begin{align}
-\sigma^{*2}_{\textrm{IS}} &amp; = \mathbb{V} h(X_1)w^*(X_1) \\
+\sigma^{*2}_{\textrm{IS}} &amp; = V(h(X_1)w^*(X_1)) \\
 \gamma &amp; = \mathrm{cov}(h(X_1)w^*(X_1), w^*(X_1)) \\
-\sigma_{w^*}^2 &amp; = \mathbb{V} w^*(X_1).
+\sigma_{w^*}^2 &amp; = V (w^*(X_1)).
 \end{align}\]</span>
 <p>We can then apply the <span class="math inline">\(\Delta\)</span>-method with <span class="math inline">\(h(x, y) = x / y\)</span>. Note that <span class="math inline">\(Dh(x, y) = (1 / y, - x / y^2)\)</span>, whence <span class="math display">\[Dh(c\mu, c)   \left(\begin{array}{cc} \hat{\sigma}^{*2}_{\textrm{IS}} &amp; \gamma \\ \gamma &amp; \sigma^2_{w^*}
 \end{array} \right) Dh(c\mu, c)^T = c^{-2} (\sigma^{*2}_{\textrm{IS}} + \mu^2 \sigma_{w^*}^2 - 2 \mu \gamma).\]</span></p>
@@ -329,7 +337,7 @@ evaluations &lt;-<span class="st"> </span><span class="kw">numeric</span>(B)</co
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(<span class="kw">cumsum</span>(evaluations) <span class="op">/</span><span class="st"> </span><span class="dv">1</span><span class="op">:</span>B, <span class="dt">pch =</span> <span class="dv">20</span>)
 <span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">1</span>, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)</code></pre></div>
 <p><img src="CSwR_files/figure-html/MC_path-1.png" width="70%" style="display: block; margin: auto;" /></p>
-<p>If we want to control the error with probability 0.95 we can use Chebychevs inequality and solve for <span class="math inline">\(\varepsilon\)</span> using the estimated variance.</p>
+<p>If we want to control the error with probability 0.95 we can use Chebychev’s inequality and solve for <span class="math inline">\(\varepsilon\)</span> using the estimated variance.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(<span class="kw">cumsum</span>(evaluations) <span class="op">/</span><span class="st"> </span><span class="dv">1</span><span class="op">:</span>B, <span class="dt">pch =</span> <span class="dv">20</span>)
 <span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">1</span>, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)
 me &lt;-<span class="st"> </span><span class="kw">cumsum</span>(evaluations) <span class="op">/</span><span class="st"> </span><span class="dv">1</span><span class="op">:</span>B
@@ -338,7 +346,7 @@ epsilon &lt;-<span class="st"> </span><span class="kw">sqrt</span>(ve <span clas
 <span class="kw">lines</span>(<span class="dv">1</span><span class="op">:</span>B, me <span class="op">+</span><span class="st"> </span>epsilon)
 <span class="kw">lines</span>(<span class="dv">1</span><span class="op">:</span>B, me <span class="op">-</span><span class="st"> </span>epsilon)</code></pre></div>
 <p><img src="CSwR_files/figure-html/MC_cheb-1.png" width="70%" style="display: block; margin: auto;" /></p>
-<p>The confidence bands provided by the central limit theorem are typically much more accurate estimates of the actual uncertainty than the upper bounds provided by Chebychev’s inquality.</p>
+<p>The confidence bands provided by the central limit theorem are typically much more accurate estimates of the actual uncertainty than the upper bounds provided by Chebychev’s inequality.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(<span class="kw">cumsum</span>(evaluations) <span class="op">/</span><span class="st"> </span><span class="dv">1</span><span class="op">:</span>B, <span class="dt">pch =</span> <span class="dv">20</span>)
 <span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">1</span>, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)
 <span class="kw">lines</span>(<span class="dv">1</span><span class="op">:</span>B, me <span class="op">+</span><span class="st"> </span><span class="dv">2</span><span class="op">*</span><span class="kw">sqrt</span>(ve<span class="op">/</span>(<span class="dv">1</span><span class="op">:</span>B)))

@@ -181,7 +181,15 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="4.2.1" data-path="transformation-techniques.html"><a href="transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
 </ul></li>
 <li class="chapter" data-level="4.3" data-path="reject-samp.html"><a href="reject-samp.html"><i class="fa fa-check"></i><b>4.3</b> Rejection sampling</a><ul>
-<li class="chapter" data-level="4.3.1" data-path="reject-samp.html"><a href="reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.1</b> Gamma distribution</a></li>
+<li class="chapter" data-level="4.3.1" data-path="reject-samp.html"><a href="reject-samp.html#vMsim"><i class="fa fa-check"></i><b>4.3.1</b> von Mises distribution</a></li>
+<li class="chapter" data-level="4.3.2" data-path="reject-samp.html"><a href="reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.2</b> Gamma distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.4" data-path="adaptive.html"><a href="adaptive.html"><i class="fa fa-check"></i><b>4.4</b> Adaptive envelopes</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="adaptive.html"><a href="adaptive.html#beta-distribution"><i class="fa fa-check"></i><b>4.4.1</b> Beta distribution</a></li>
+<li class="chapter" data-level="4.4.2" data-path="adaptive.html"><a href="adaptive.html#von-mises-distribution"><i class="fa fa-check"></i><b>4.4.2</b> von Mises distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="exercises-2.html"><a href="exercises-2.html"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="exercises-2.html"><a href="exercises-2.html#rejection-sampling-of-gaussian-random-variables"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
 </ul></li>
 </ul></li>
 <li class="chapter" data-level="5" data-path="MCI.html"><a href="MCI.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
@@ -276,10 +284,10 @@ L(f) = \sum_{i=1}^n (y_i - f(x_i))^2 + \lambda \|f&#39;&#39;\|_2^2
 <p>It is possible to show that the minimizer of <a href="splines.html#eq:spline-criterion">(3.1)</a> is a <a href="https://en.wikipedia.org/wiki/Spline_(mathematics)">natural cubic spline</a> with <em>knots</em> in the data points <span class="math inline">\(x_i\)</span>. That is, the spline is a <span class="math inline">\(C^2\)</span>-function that equals a third degree polynomial in between the knots. At the knots, the two polynomials that meet fit together up to the second derivative, but they may differ on the third derivative. That the solution is <em>natural</em> means that it has zero second and third derivative at and beyond the two boundary knots.</p>
 <p>It is not particularly difficult to show that the space of natural cubic splines is a vector space of dimension <span class="math inline">\(n\)</span> if all the <span class="math inline">\(x\)</span>-values are different. It is therefore possible to find a basis of splines, <span class="math inline">\(\varphi_1, \ldots, \varphi_n\)</span>, such that the <span class="math inline">\(f\)</span> that minimizes <a href="splines.html#eq:spline-criterion">(3.1)</a> is of the form <span class="math display">\[f = \sum_{i=1}^n \beta_i \varphi_i.\]</span> What is remarkable about this is that the basis (and the finite dimensional vector space it spans) doesn’t depend upon the <span class="math inline">\(y\)</span>-values. Though the optimization is over an infinite dimensional space, the penalization ensures that the minimizer is always in the same finite dimensional space nomatter what <span class="math inline">\(y_1, \ldots, y_n\)</span> are. Moreover, since <a href="splines.html#eq:spline-criterion">(3.1)</a> is a quite natural criterion to minimize to find a smooth function fitting the bivariate data, splines appear as good candidates for producing such smooth fits. On top of that, splines have several computational advantages and are widely used.</p>
 <p>If we let <span class="math inline">\(\hat{f}_i = \hat{f}(x_i)\)</span> with <span class="math inline">\(\hat{f}\)</span> the minimizer of <a href="splines.html#eq:spline-criterion">(3.1)</a>, we have in vector notation that <span class="math display">\[\hat{\mathbf{f}} = \boldsymbol{\Phi}\hat{\beta}\]</span> with <span class="math inline">\(\boldsymbol{\Phi}_{ij} = \varphi_j(x_i)\)</span>. The minimizer can be found by observing that</p>
-<span class="math display">\[\begin{aligned}
+<span class="math display">\[\begin{align}
  L(\mathbf{f}) &amp; = (\mathbf{y} - \mathbf{f})^T (\mathbf{y} - \mathbf{f}) + \lambda \| f&#39;&#39; \|_2^2 \\
 &amp; = ( \mathbf{y} -  \boldsymbol{\Phi}\beta)^T (\mathbf{y} -  \boldsymbol{\Phi}\beta) + \lambda \beta^T \mathbf{\Omega} \beta
-\end{aligned}\]</span>
+\end{align}\]</span>
 <p>where <span class="math display">\[\mathbf{\Omega}_{ij} = \langle \varphi_i&#39;&#39;, \varphi_j&#39;&#39; \rangle = 
 \int  \varphi_i&#39;&#39;(z) \varphi_j&#39;&#39;(z) \mathrm{d}z.\]</span> The matrix <span class="math inline">\(\mathbf{\Omega}\)</span> is positive semidefinite by construction, and we refer to it as the <em>penalty matrix</em>. It induces a seminorm on <span class="math inline">\(\mathbb{R}^n\)</span> so that we can express the seminorm, <span class="math inline">\(\|f&#39;&#39;\|_2\)</span>, of <span class="math inline">\(f\)</span> in terms of the parameters in the basis expansion using <span class="math inline">\(\varphi_i\)</span>.</p>
 <p>This is a standard penalized least squares problem, whose solution is <span class="math display">\[\hat{\beta} = (\boldsymbol{\Phi}^T \boldsymbol{\Phi} + \lambda \mathbf{\Omega})^{-1}\boldsymbol{\Phi}^T  \mathbf{y}\]</span> and with resulting smoother <span class="math display">\[\hat{\mathbf{f}} = \underbrace{\boldsymbol{\Phi} ((\boldsymbol{\Phi}^T \boldsymbol{\Phi} + \lambda \mathbf{\Omega})^{-1}\boldsymbol{\Phi}^T}_{\mathbf{S}_{\lambda}} \mathbf{y}.\]</span> This linear smoother with smoothing matrix <span class="math inline">\(\mathbf{S}_{\lambda}\)</span> based on natural cubic splines gives what is known as a <a href="https://en.wikipedia.org/wiki/Smoothing_spline">smoothing spline</a> that minimizes <a href="splines.html#eq:spline-criterion">(3.1)</a>. We will pursue spline based smoothing by minimizing <a href="splines.html#eq:spline-criterion">(3.1)</a> but using various B-spline bases that may have more or less than <span class="math inline">\(n\)</span> elements. For the linear algebra, it doesn’t matter what basis we choose as long as <span class="math inline">\(\boldsymbol{\Phi}_{ij} = \varphi_j(x_i)\)</span> and <span class="math inline">\(\mathbf{\Omega}\)</span> is given in terms of <span class="math inline">\(\varphi&#39;&#39;_i\)</span> as above.</p>
@@ -296,10 +304,10 @@ B_splines &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(kno
 <div class="figure" style="text-align: center"><span id="fig:splines"></span>
 <img src="CSwR_files/figure-html/splines-1.png" alt="B-spline basis as computed by `splineDesign`." width="70%" />
 <p class="caption">
-Figure 3.8: B-spline basis as computed by <code>splineDesign</code>.
+Figure 3.9: B-spline basis as computed by <code>splineDesign</code>.
 </p>
 </div>
-<p>The basis shown in Figure <a href="splines.html#fig:splines">3.8</a> is an example of a cubic B-spline basis with 11 inner knots in <span class="math inline">\(0, 0.1, \ldots, 0.9, 1\)</span>. The repeated boundary knots control how the spline basis behaves close to the boundaries of the interval. This basis has 13 basis functions, not 11, and spans a larger space than the space of <em>natural</em> cubic splines. It is possible to compute a basis based on B-splines for the natural cubic splines using the function <code>ns</code>, but for all practical purposes this is not important, and we will work exclusively with the B-spline basis itself.</p>
+<p>The basis shown in Figure <a href="splines.html#fig:splines">3.9</a> is an example of a cubic B-spline basis with 11 inner knots in <span class="math inline">\(0, 0.1, \ldots, 0.9, 1\)</span>. The repeated boundary knots control how the spline basis behaves close to the boundaries of the interval. This basis has 13 basis functions, not 11, and spans a larger space than the space of <em>natural</em> cubic splines. It is possible to compute a basis based on B-splines for the natural cubic splines using the function <code>ns</code>, but for all practical purposes this is not important, and we will work exclusively with the B-spline basis itself.</p>
 <p>The computation of the penalty matrix <span class="math inline">\(\mathbf{\Omega}\)</span> constitutes a practical problem, but observing that <span class="math inline">\(\varphi&#39;&#39;_i\)</span> is an affine function in between knots leads to a simple way of computing <span class="math inline">\(\mathbf{\Omega}_{ij}\)</span>. Letting <span class="math inline">\(g_{ij} = \varphi&#39;&#39;_i \varphi&#39;&#39;_j\)</span> it holds that <span class="math inline">\(g_{ij}\)</span> is quadratic between two consecutive knots <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span>, in which case <span class="math display">\[\int_a^b g_{ij}(z) \mathrm{d}z = \frac{b - a}{6}\left(g_{ij}(a) + 4 g_{ij}\left(\frac{b-a}{2}\right) + g_{ij}(b)\right).\]</span> This identity is behind <a href="https://en.wikipedia.org/wiki/Simpson%27s_rule">Simpson’s rule</a> for numerical integration, and the fact that this is an identity for quadratic polynomials, and not an approximation, means that Simpson’s rule applied appropriately leads to exact computation of <span class="math inline">\(\mathbf{\Omega}_{ij}\)</span>. All we need is the ability to evaluate <span class="math inline">\(\varphi&#39;&#39;_i\)</span> at certain points, and <code>splineDesign</code> can be used for that.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">pen_mat &lt;-<span class="st"> </span><span class="cf">function</span>(inner_knots) {
   knots &lt;-<span class="st"> </span><span class="kw">sort</span>(<span class="kw">c</span>(<span class="kw">rep</span>(<span class="kw">range</span>(inner_knots), <span class="dv">3</span>), inner_knots))
@@ -362,7 +370,7 @@ lambda_opt &lt;-<span class="st"> </span>lambda[<span class="kw">which.min</span
 <div class="figure" style="text-align: center"><span id="fig:Nuuk-spline-gcv"></span>
 <img src="CSwR_files/figure-html/Nuuk-spline-gcv-1.png" alt="The generalized cross-validation criterion for smoothing splines as a function of the tuning parameter $\lambda$." width="70%" />
 <p class="caption">
-Figure 3.9: The generalized cross-validation criterion for smoothing splines as a function of the tuning parameter <span class="math inline">\(\lambda\)</span>.
+Figure 3.10: The generalized cross-validation criterion for smoothing splines as a function of the tuning parameter <span class="math inline">\(\lambda\)</span>.
 </p>
 </div>
 <p>Finally, we can visualize the resulting smoothing spline.</p>
@@ -372,7 +380,7 @@ p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_l
 <div class="figure" style="text-align: center"><span id="fig:Nuuk-spline-opt"></span>
 <img src="CSwR_files/figure-html/Nuuk-spline-opt-1.png" alt="The smoothing spline that minimizes GCV over the tuning parameter $\lambda$" width="70%" />
 <p class="caption">
-Figure 3.10: The smoothing spline that minimizes GCV over the tuning parameter <span class="math inline">\(\lambda\)</span>
+Figure 3.11: The smoothing spline that minimizes GCV over the tuning parameter <span class="math inline">\(\lambda\)</span>
 </p>
 </div>
 <p>The smoothing spline that we found by minimizing GCV can be compared to the smoothing spline that <code>smooth.spline</code> computes by minimizing GCV as well.</p>
@@ -384,7 +392,7 @@ Figure 3.10: The smoothing spline that minimizes GCV over the tuning parameter <
 <div class="figure" style="text-align: center"><span id="fig:Nuuk-spline-opt2"></span>
 <img src="CSwR_files/figure-html/Nuuk-spline-opt2-1.png" alt="The smoothing spline that minimizes GCV as computed by `smooth.spline`." width="70%" />
 <p class="caption">
-Figure 3.11: The smoothing spline that minimizes GCV as computed by <code>smooth.spline</code>.
+Figure 3.12: The smoothing spline that minimizes GCV as computed by <code>smooth.spline</code>.
 </p>
 </div>
 <p>The differences between the smoothing spline computed by our implementation and by <code>smooth.spline</code> is hardly detectable visually, and they are at most of the order <span class="math inline">\(10^{-3}\)</span> as computed above. It is possible to further decrease the differences by finding the optimal value of <span class="math inline">\(\lambda\)</span> with a higher precision, but we will not pursue this here.</p>
@@ -428,16 +436,16 @@ U_tilde &lt;-<span class="st"> </span>Phi_svd<span class="op">$</span>u <span cl
 <div class="figure" style="text-align: center"><span id="fig:spline-gamma"></span>
 <img src="CSwR_files/figure-html/spline-gamma-1.png" alt="The eigenvalues $\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues untransformed, while the right plot shows the eigenvalues log-transformed." width="49%" /><img src="CSwR_files/figure-html/spline-gamma-2.png" alt="The eigenvalues $\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues untransformed, while the right plot shows the eigenvalues log-transformed." width="49%" />
 <p class="caption">
-Figure 3.12: The eigenvalues <span class="math inline">\(\gamma_i\)</span> that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues untransformed, while the right plot shows the eigenvalues log-transformed.
+Figure 3.13: The eigenvalues <span class="math inline">\(\gamma_i\)</span> that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues untransformed, while the right plot shows the eigenvalues log-transformed.
 </p>
 </div>
 <div class="figure" style="text-align: center"><span id="fig:spline-basis"></span>
 <img src="CSwR_files/figure-html/spline-basis-1.png" alt="The columns of $\widetilde{\mathbf{U}}$  that consitute an orthonormal basis for computing the spline based smoother." width="100%" />
 <p class="caption">
-Figure 3.13: The columns of <span class="math inline">\(\widetilde{\mathbf{U}}\)</span> that consitute an orthonormal basis for computing the spline based smoother.
+Figure 3.14: The columns of <span class="math inline">\(\widetilde{\mathbf{U}}\)</span> that consitute an orthonormal basis for computing the spline based smoother.
 </p>
 </div>
-<p>We observe from Figures <a href="splines.html#fig:spline-gamma">3.12</a> and <a href="splines.html#fig:spline-basis">3.13</a> that there are two relatively large eigenvalues corresponding to the two basis functions with erratic behavior close to the boundaries, and there are two eigenvalues that are effectively zero corresponding to the two affine basis functions. In addition, the more oscillating the basis function is, the larger is the corresponding eigenvalue, and the more is the corresponding coefficient shrunk toward zero by the spline smoother.</p>
+<p>We observe from Figures <a href="splines.html#fig:spline-gamma">3.13</a> and <a href="splines.html#fig:spline-basis">3.14</a> that there are two relatively large eigenvalues corresponding to the two basis functions with erratic behavior close to the boundaries, and there are two eigenvalues that are effectively zero corresponding to the two affine basis functions. In addition, the more oscillating the basis function is, the larger is the corresponding eigenvalue, and the more is the corresponding coefficient shrunk toward zero by the spline smoother.</p>
 <p>Observe also that <span class="math display">\[\mathrm{df}(\lambda) = \mathrm{trace}(\mathbf{S}_\lambda) 
 = \sum_{i=1}^n \frac{1}{1 + \lambda \gamma_i},\]</span> which makes it possible to implement GCV without even computing the diagonal entries of <span class="math inline">\(\mathbf{S}_{\lambda}.\)</span></p>
 </div>
