@@ -74,8 +74,7 @@ kernbin <- function(x, lo, hi, m) {
 ## This implementation assumes a symmetric kernel! 
 ## It's possible to avoid the symmetry assumption, 
 ## but it's a little more complicated.
-kernDens_bin <- function(x, h, m = 512) {
-  ## Silverman's rule if h is missing
+kernDens_bin_toep <- function(x, h, m = 512) {
   rg <- range(x) + c(- 3* h, 3 * h)
   xx <- seq(rg[1], rg[2], length.out = m)
   weights <- kernbin(x, rg[1], rg[2], m)
@@ -84,3 +83,37 @@ kernDens_bin <- function(x, h, m = 512) {
   y <- colSums(weights * kerndif)
   list(x = xx, y = y, h = h)
 }
+
+kernDens_bin <- function(x, h, m = 512) {
+  rg <- range(x) + c(- 3* h, 3 * h)
+  xx <- seq(rg[1], rg[2], length.out = m)
+  weights <- kernbin(x, rg[1], rg[2], m)
+  kerneval <- exp(- (xx - xx[1])^2 / (2 * h^2)) / (sqrt(2 * pi) * h)
+  kerndif <- toeplitz(kerneval)
+  y <- colSums(weights * kerndif)
+  list(x = xx, y = y, h = h)
+}
+
+kernDens_bin_conv <- function(x, h, m = 512) {
+    rg <- range(x) + c(- 3* h, 3 * h)
+    xx <- seq(rg[1], rg[2], length.out = m)
+    weights <- kernbin(x, rg[1], rg[2], m)
+    kerneval <- exp(- (xx - xx[1])^2 / (2 * h^2)) / (sqrt(2 * pi) * h)
+    browser()
+    y <- fft(fft(weights) * Conj(fft(c(kerneval, rev(kerneval)))), inverse = TRUE)
+    list(x = xx, y = y, h = h)
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
