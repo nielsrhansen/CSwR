@@ -1,4 +1,215 @@
-# Four Examples
+# Five Examples
+
+This chapter treats five examples of non-trivial statistical models in some 
+detail. These are all parametric models, and a central computational
+challenge is to fit the models to data via (penalized) likelihood
+maximization. The actual optimization algorithms and implementations 
+are the topics of Chapters \@ref(NumOpt), \@ref(EM), and \@ref(StochOpt).
+The focus of this chapter is on the structure of the statistical models
+themselves to provide the necessary background for the later chapters. 
+
+Statistical models come in all forms and shapes, and it is possible to 
+to take a very general and abstract mathmatical approach; statistical 
+models are parametrized families of probability distributions. To 
+say anything of interest, we need more structure such as structure 
+on the parameter set, properties of the parametrized distributions,
+and properties of the mapping from the parameter set to the 
+distributions. For any specific model we have ample of structure
+but often also an overwhelming amount of irrelevant details 
+that will be more distracting than clarifying. The intention is that 
+the five examples treated will illustrate the breath of 
+statistical models that share important 
+structures without getting lost in a wasteland of abstractions. 
+
+If one should emphasize a single abstract idea that is of 
+theoretical value as well as of practical importance, it is 
+the idea of *exponential families*. Statistical models that 
+are exponential families have so much structure that the
+general theory provides a number of results and details 
+of practical value for individual models. Exponential 
+families are exemplary statistical models, that are widely 
+used as models of data, or as central building 
+blocks of more complicated models of data. For this reason, 
+the treatment of the examples is preceded by a treatment of 
+exponential families.
+
+## Exponential families {#exp-fam}
+
+This section introduces exponential families in a concise way. The 
+crucial observation is that the log-likelihood is concave, and that 
+we can derive general formulas for derivatives. This 
+will be important for the optimization algorithms developed 
+later for computing maximum-likelihood estimates and 
+for answering standard asymptotic inference questions.
+
+The exponential families are extremely well behaved from 
+a mathematical as well as a computational viewpoint, but they may 
+be inadequate for modeling data in some cases. A 
+typical practical problem is that there is heterogeneous variation in data
+beyond what can be captured by any single exponential family. 
+A fairly common technique is then to build an exponential family 
+model of the observed variables *as well as some latent variables*.
+The latent variables then serve the purpose of modeling the 
+heterogeneity. The resulting model of the observed variables is 
+consequently the marginalization of an exponential family, which is
+generally not an exponential family and in many ways 
+less well behaved. It is nevertheless possible to exploit the exponential 
+family structure underlying the marginalized model for many 
+computations of statistical importance. The EM-algorithm as 
+treated in Chapter \@ref(EM) is one particularly good example, but 
+Bayesian computations can in similar ways exploit the structure.
+
+### Full exponential families
+
+In this section we consider statistical models on an abstract 
+product sample space 
+$$\mathcal{Z} = \mathcal{Z}_1 \times \ldots \times \mathcal{Z}_m.$$ 
+We will be interested in models of
+observations $z_1 \in \mathcal{Z}_1, \ldots, z_m \in \mathcal{Z}_m$ 
+that are independent but not necessarily identically distributed. 
+
+An exponential family is defined in terms of two ingredients: 
+
+  * maps $t_i : \mathcal{Z}_i \to \mathbb{R}^p$ for $i = 1, \ldots, m$,
+  * and non-trivial $\sigma$-finite measures $\mu_i$ on $\mathcal{Z}_i$ for $i = 1, \ldots, m$.
+
+
+The maps $t_i$ are called *sufficient statistics*, and in terms 
+of these and the *base measures* $\mu_i$ we define 
+$$\varphi_i(\theta) = \int e^{\theta^T t_i(u)} \mu_i(\mathrm{d}u).$$
+These functions are well defined as functions
+$$\varphi_i : \mathbb{R}^p \to (0,\infty].$$
+We define 
+$$\Theta_i = \mathrm{int}(\{ \theta \in \mathbb{R}^p \mid \varphi_i(\theta) < \infty \}),$$
+which by definition is an open set as. It can be shown
+that $\Theta_i$ is convex and that $\varphi_i$ is a log-concave function. 
+Defining 
+$$\Theta = \bigcap_{i=1}^m \Theta_i,$$
+then $\Theta$ is likewise open and convex, and we define the *exponential family* 
+as the distributions parametrized by $\theta \in \Theta$ that have densities 
+
+\begin{equation}
+f(\mathbf{z} \mid \theta) = \prod_{i=1}^m \frac{1}{\varphi_i(\theta)} e^{\theta^T t_i(z_i)} = e^{\theta^T \sum_{i=1}^m t_i(z_i) - \sum_{i=1}^m \log \varphi_i(\theta)}, \quad x \in \mathcal{Z},
+(\#eq:exp-dens)
+\end{equation}
+
+w.r.t. $\otimes_{i=1}^m \mu_i$. The 
+case where $\Theta = \emptyset$ is of no interest, and we will thus assume
+that the parameter set $\Theta$ is non-empty. The parameter $\theta$ is called
+the *canonical parameter* and $\Theta$ is the canonical parameter space. 
+We may also say that the exponential family is canonically parametrized by 
+$\theta$. It is important to realize that an exponential family may come 
+with a non-canonical parametrization that doesn't reveal right away that 
+it is an exponential family. Thus a bit of work is then needed to show 
+that the parametrized family of distributions can, indeed, be reparametrized
+as an exponential family. In the non-canonical parametrization, the 
+family is then an example of a *curved exponential family* as defined below.  
+
+It may seem restrictive that all the sufficient statistics, $t_i$, take values in the 
+same $p$-dimensional space, and that all marginal distributions share a common 
+parameter vector $\theta$. This is, however, not a restriction. Say we have 
+two distributions with sufficient statistics $\tilde{t}_1 : \mathcal{Z}_1 \to \mathbb{R}^{p_1}$
+and $\tilde{t}_2 : \mathcal{Z}_2 \to \mathbb{R}^{p_2}$ and corresponding 
+parameters $\theta_1$ and $\theta_2$, then we construct 
+$$t_1(z_1) = \left(\begin{array}{c} \tilde{t}_1(z_1) \\ 0 \end{array}\right) \quad 
+\text{and} \quad t_2(z_2) = \left(\begin{array}{c} 0 \\ \tilde{t}_2(z_2) \end{array}\right).$$
+Now $t_1$ and $t_2$ both map into $\mathbb{R}^{p}$ with $p = p_1 + p_2$, and 
+we can bundle the parameters together into the vector
+$$\theta = \left(\begin{array}{c} \theta_1 \\ \theta_2 \end{array}\right) \in \mathbb{R}^p.$$
+Clearly, this construction can be generalized to any number of distributions
+and allows us to always assume a common parameter space. The sufficient 
+statistics then take care of selecting 
+which of the coordinates in the parameter vector that is used for any 
+particular marginal distribution. 
+
+### Exponential family Bayesian networks
+
+An exponential family is defined above as a parametrized family of distributions 
+on $\mathcal{Z}$ of *independent* variables. That is, the joint density 
+in \@ref(eq:exp-dens) factorizes w.r.t. a product measure. Without really 
+changing the notation this assumption can be relaxed considerably. 
+
+If the sufficient statistic $t_i$, instead of being a fixed map, is 
+allowed to depend on $z_1, \ldots, z_{i-1}$, $f(\mathbf{z} \mid \theta)$ as 
+defined in \@ref(eq:exp-dens)
+is still a joint density. The only difference is that the factor 
+$$f_i(z_i \mid z_1, \ldots, z_{i-1}, \theta) = e^{\theta^T t_i(z_i) - \log \varphi_i(\theta)}$$
+is now the *conditional* density of $z_i$ given $z_1, \ldots, z_{i-1}$.
+In the notation we let the dependence of $t_i$ on $z_1, \ldots, z_{i-1}$ 
+be implicit as this will not affect the abstract theory. In any concrete 
+example though, it will be clear how $t_i$ actually depends upon all, some 
+or none of these variables. Note that $\varphi_i$ may now also depend 
+upon the data through $z_1, \ldots, z_{i-1}$.
+
+The observation above is powerful. It allows us to develop a unified 
+approach based on exponential families for a majority of all statistical 
+models that are applied in practice. The models we consider make two essential 
+assumptions 
+
+  1. the variables that we model can be ordered such that $z_i$ only 
+  depends on $z_1, \ldots, z_{i-1}$ for $i = 1, \ldots, m$,
+  2. all the conditional distributions form exponential families themselves,
+  with the conditioning variables entering through the $t_i$-maps.
+
+The first of these assumptions is equivalent to the joint distribution 
+being a Bayesian network, that is, a distribution whose density factorizes
+according to a directed acyclic graph. This includes time series models
+and hierarchical models. The second assumption is more restrictive, but 
+is a common practice in applied work. Moreover, as many standard statistical 
+models of univariate discrete and 
+continuous variables are, in fact, exponential families, building
+up a joint distribution as a Bayesian network via conditional 
+binomial, Poisson, beta, Gamma and Gaussian distributions among others 
+is a rather flexible framework, and yet it will 
+result in a model with a density that factorizes as in \@ref(eq:exp-dens). 
+
+Bayesian networks is a large and interesting subject in itself, and it is unfair 
+to gloss over all the details. One of the main points is that for many 
+computations it is possible to develop efficient algorithms by exploiting the 
+graph structure. The seminal paper by @Lauritzen:1988 demonstrated this 
+for the computation of conditional distributions. The mere fact that 
+the variables can be ordered in a way that aligns with how 
+the variables depend on each other is useful, but there can be
+many ways to do this, and just specifying an ordering ignores
+important details of the graph. It is, however, beyond the scope of 
+this book to get into the graph algorithms required for a thorough 
+general treatment of Bayesian networks. 
+
+### Likelihood computations {#exp-fam-deriv}
+
+To simplify the notation we introduce 
+$$t(\mathbf{z}) = \sum_{i=1}^m t_i(z_i),$$
+which we refer to as the sufficient statistic, and
+$$\kappa(\theta) = \sum_{i=1}^m \log \varphi_i(\theta),$$
+which is a concave $C^{\infty}$-function on $\Theta$. 
+
+Having observed $\mathbf{z} \in \mathcal{Z}$ it is evident that the log-likelihood
+for the exponential family specified by \@ref(eq:exp-dens) is 
+$$\ell(\theta) = \log f(\mathbf{z} \mid \theta) = \theta^T t(\mathbf{z}) - \kappa(\theta).$$
+From this it follows that the gradient of the log-likelihood is
+$$\nabla \ell(\theta) = t(\mathbf{z}) - \nabla \kappa(\theta)$$
+and the Hessian is
+$$D^2 \ell(\theta) = - D^r \kappa(\theta),$$
+which is always negative semidefinite. The maximum-likelihood estimator exists 
+if and only if there is a solution to the equation 
+$$t(\mathbf{z}) = \nabla \kappa(\theta),$$
+and it is unique if there is such a solution, $\hat{\theta}$, for which 
+$I(\hat{\theta}) = D^2 \kappa(\hat{\theta})$ is positive definite. We 
+call $I(\hat{\theta})$ the *observed Fisher information*. 
+
+### Curved exponential families
+
+A *curved exponential family* consists of an exponential family together with a
+$C^2$-map $\theta : \Psi \to \Theta$ from a set $\Psi \subseteq \mathbb{R}^q$.
+The set $\Psi$ provides a parametrization
+of the subset $\theta(\Psi) \subseteq \Theta$ of the full exponential family,
+and the log-likelihood in the $\psi$-parameter is 
+$$\ell(\psi) = \theta(\psi)^T t(\mathbf{z}) - \kappa(\theta(\psi)).$$
+It has gradient 
+$$\nabla \ell(\psi) = D \theta(\psi)^T t(\mathbf{z}) - \nabla \kappa(\theta(\psi)) D \theta(\psi)$$
+and Hessian
+$$D^2 \ell(\psi) =  \sum_{k=1}^p D^2\theta_k(\psi) (t(\mathbf{z})_k - \partial_k \kappa(\theta(\psi))) -   
+D \theta(\psi)^T D^2 \kappa(\theta(\psi)) D \theta(\psi).$$
 
 ## Multinomial models
 
@@ -65,10 +276,10 @@ $$X = M(Y) \sim \textrm{Mult}(M(p), n).$$
 The conditional distribution of $Y_{A_j} = (Y_i)_{i \in A_j}$, conditionally on 
 $X$, can be found too. It will be used for the EM-algorithm the subsequent 
 in Chapter \@ref(EM). It is easy to see that 
-$$Y_{A_j} \mid X = x \sim \textrm{Mult}\left( \frac{p_{A_j}}{M(p)_j}, x_j \right).$$
+$$Y_{A_j} \mid X = x \sim \textrm{Mult}\left( \frac{p_{A_j}}{M(p)_j}, z_j \right).$$
 The probability parameters are simply $p$ restricted to $A_j$ and renormalized 
 to a probability vector. Observe that this gives
-$$E (Y_k \mid X = x) = \frac{x_j p_k}{M(p)_j}$$
+$$E (Y_k \mid X = x) = \frac{z_j p_k}{M(p)_j}$$
 for $k \in A_j$. 
 
 For the Peppered Moths, $K = 6$ corresponding to the six genotypes, $K_0 = 3$ and 
@@ -90,11 +301,76 @@ The log-likelihood is
 & \ \ \ + n_I \log(p_I^2 +2p_Ip_T) + n_T \log (p_T^2).
 \end{align}
 
+## Regression models {#regression}
 
-## Mixtures
+
+
+
+## Finite mixture models
+
+A finite mixture model is a model of a pair of random variables $(Y, Z)$
+with $Z \in \{1, \ldots, K\}$, $P(Z = k) = p_k$, and the conditional distribution 
+of $Y$ given $Z = k$ having density $f_k( \cdot \mid \theta_k)$. The joint 
+density is then 
+$$(y, k) \mapsto f_k(y \mid \theta_k) p_k,$$
+and the marginal density for the distribution of $Y$ is
+$$f(y \mid \theta) =  \sum_{k=1}^K f_k(y \mid \theta_k) p_k$$
+where $\theta$ is the vector of parameters. Mixture models are applied with 
+many different sample spaces for $Y$, but for simplicity we restrict attention 
+to real valued $Y$. 
+
+The set of all probability measures on $\{1, \ldots, K\}$ is an exponential 
+family with sufficient statistic
+$$\tilde{t}_1(k) = (\delta_{1k}, \delta_{2k}, \ldots, \delta_{(K-1)k}) \in \mathbb{R}^{K-1},$$
+canonical parameter $\alpha = (\alpha_1, \ldots, \alpha_{K-1}) \in \mathbb{R}^{K-1}$
+and 
+$$p_k = \frac{e^{\alpha_k}}{1 + \sum_{l=1}^{K-1} e^{\alpha_l}}.$$
+
+When $f_k$ is an exponential family as well with sufficient statistic
+$\tilde{t}_k : \mathbb{R} \to \mathbb{R}^{p_k}$ and $\theta_k$ the 
+canonical parameter, we bundle $\alpha, \theta_1, \ldots, \theta_K$ 
+into $\theta$ and define
+$$t_1(y) = \left(\begin{array}{c}
+\tilde{t}_1 \\
+0 \\
+0 \\
+\vdots \\
+0
+\end{array}
+\right)$$
+together with 
+$$t_2(y \mid k) = \left(\begin{array}{c}
+0 \\
+\delta_{1k} \tilde{t}_1(y) \\
+\delta_{2k} \tilde{t}_2(y) \\
+\vdots \\
+\delta_{Kk} \tilde{t}_K(y)
+\end{array}
+\right)$$
+we see that we have an exponential family of the joint distribution of $(Y, Z)$
+with the $p = K-1 +  p_1 + \ldots + p_K$-dimensional canonical parameter $\theta$,
+with the sufficient statistic $t_1$ determining the marginal distribution of $Z$
+and with the sufficient statistic $t_2$ determining the *conditional* distribution
+of $Y$ given $Z$. We have here made the conditioning variable explicit.
+
+The marginal density of $Y$ in the exponential family parametrization then 
+becomes
+$$f(y \mid \theta = \sum_{k=1}^K  e^{\theta^T (t_1(k) + t_2(y \mid k)) - \log \varphi_1(\theta) - \log \varphi_2(\theta \mid k)}.$$
+For small $K$ it is usually unproblematic to implement the computation of 
+the marginal density using the formula above, and the computation of derivatives 
+can likewise be implemented based on the formulas derived in Section \@ref(exp-fam-deriv).
+
 
 ### Gaussian mixtures
 
-## Mixed effects models
+### von Mises mixtures
 
-## Gaussian state space models
+## Mixed models
+
+A mixed model is a regression model of observations that allows for 
+random variation at two different levels. 
+
+
+
+
+## State space models
