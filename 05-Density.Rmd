@@ -250,8 +250,8 @@ where
 
 \begin{align*}
 \hat{\boldsymbol{\beta}} & = 
-\text{arg max}_{\boldsymbol{\beta} \in \mathbb{R}^h} \ \sum_{i=1}^n \sum_{k=1}^h \hat{\beta}_k b_k(x_i) - \log \varphi(\boldsymbol{\beta}) \\
-& = \text{arg max}_{\boldsymbol{\beta} \in \mathbb{R}^h} \ \ \mathbf{B} \boldsymbol{\beta} - \log \varphi(\boldsymbol{\beta}).
+\text{arg max}_{\boldsymbol{\beta} \in \mathbb{R}^h} \ \sum_{i=1}^n \sum_{k=1}^h \beta_k b_k(x_i) - \log \varphi(\boldsymbol{\beta}) \\
+& = \text{arg max}_{\boldsymbol{\beta} \in \mathbb{R}^h} \ \ \mathbf{1}^T \mathbf{B} \boldsymbol{\beta} - \log \varphi(\boldsymbol{\beta}).
 \end{align*}
 
 Here $\mathbf{B}$ is the $n \times h$ matrix with $B_{ik} = b_k(x_i)$. Thus for 
@@ -306,7 +306,7 @@ f_0(x) & \simeq \frac{1}{2h}P(X \in (x-h, x+h)) \\
 & =  \underbrace{\frac{1}{2hn} \sum_{i=1}^n 1_{(-h, h)}(x - x_i)}_{\hat{f}_h(x)}
 \end{align*}
 
-for i.i.d. observations $x_1, \ldots, x_n$ having distribution $f_0 \cdot m$. 
+for i.i.d. observations $x_1, \ldots, x_n$ from the distribution $f_0 \cdot m$. 
 The function $\hat{f}_h$ defined as above is an example of a kernel 
 density estimator with a rectangular kernel. We immediately note that $h$ has 
 to be chosen appropriately. If $h$ is large, $\hat{f}_h$ will be flat and close to 
@@ -353,9 +353,14 @@ Observations falling close to $x + h$, say, should thus count less
 than observations falling close to $x$? The rectangular kernel makes a sharp 
 cut; either a data point is in or it is out. If we use a smooth weighting 
 function instead of a sharp cut, we might be able to include more
-data points and lower the variance while keeping the bias small? This is 
+data points and lower the variance while keeping the bias small. This is 
 precisely the idea of *kernel estimators*, defined generally as
-$$\hat{f}_h(x) = \frac{1}{hn} \sum_{i=1}^n K\left(\frac{x - x_i}{h}\right)$$
+
+\begin{equation}
+\hat{f}_h(x) = \frac{1}{hn} \sum_{i=1}^n K\left(\frac{x - x_i}{h}\right)
+(\#eq:kernel-def)
+\end{equation}
+
 for a kernel $K : \mathbb{R} \to \mathbb{R}$. The parameter $h > 0$ is known
 as the *bandwidth*. Examples of kernels include the *uniform* or *rectangular kernel* 
 $$K(x) = \frac{1}{2} 1_{(-1,1)}(x),$$
@@ -367,7 +372,7 @@ $\hat{f}_h$ inherits all smoothness properties from $K$. Whereas the rectangular
 kernel is not even continuous, the Gaussian kernel is $C^{\infty}$ and so is 
 the resulting kernel density estimate. 
 
-We may note that $f_h$ considered in Section \@ref(likelihood) simply is 
+We may note that $\overline{f}_h$ considered in Section \@ref(likelihood) simply is 
 the kernel density estimator with the Gaussian kernel and bandwidth $h$. 
 
 ### Implementation
@@ -431,7 +436,7 @@ we see that they are as large as $4 \times 10^{-4}$ in absolute value. This is
 way above what we should expect from rounding errors alone when using 
 double precision arithmetic. Thus the two implementations only compute 
 *approximately* the same, which is, in fact, because `density` relies 
-on certain approximations for computation time efficiency.
+on certain approximations for run time efficiency.
 
 In R we can often beneficially implement computations in a vectorized way 
 instead of using an explicit loop. It is fairly easy to change the implementation 
@@ -447,7 +452,7 @@ kernDens_vec <- function (x, h, m = 512) {
   ## outer loop over the grid points remains. 
   const <- (sqrt(2 * pi) * h * length(x))
   for (i in seq_along(xx))
-      y[i] <- sum(exp(-(xx[i] - x)^2 / (2 * h^2)) / const)
+      y[i] <- sum(exp(-(xx[i] - x)^2 / (2 * h^2))) / const
   list(x = xx, y = y)
 }
 ```
@@ -477,7 +482,7 @@ kernDens_apply <- function (x, h, m = 512) {
   rg <- range(x)
   xx <- seq(rg[1] - 3 * h, rg[2] + 3 * h, length.out = m)
   const <- sqrt(2 * pi) * h * length(x)
-  y <- sapply(xx, function(z) sum(exp(-(z - x)^2 / (2 * h^2)) / const))
+  y <- sapply(xx, function(z) sum(exp(-(z - x)^2 / (2 * h^2))) / const)
   list(x = xx, y = y)
 }
 ```
@@ -542,17 +547,22 @@ many other aspects of software that should be benchmarked in general. This
 includes user experience, energy consumption and implementation and maintenance 
 time. In this section we focus on benchmarking run time.
 
-The function `system.time` in R provides a simple way of benchmarking run time. 
+The function `system.time` in R provides a simple way of benchmarking run time
+measured in seconds.
 
-```{r kernDens-time, echo=6:9, dependson=c("phipsiLoad", "kernDens", "kernDens-vec", "kernDens-apply", "kernDens-outer")}
+```{r kernDens-time, echo=c(7, 9, 11, 13), dependson=c("phipsiLoad", "kernDens", "kernDens-vec", "kernDens-apply", "kernDens-outer"), results='hold'}
 ## Evaluations to trigger JIT compilation
 invisible(kernDens(psi, 0.2))
 invisible(kernDens_vec(psi, 0.2))
 invisible(kernDens_apply(psi, 0.2))
 invisible(kernDens_outer(psi, 0.2))
+cat("kernDens:\n")
 system.time(kernDens(psi, 0.2))
+cat("kernDens_vec:\n")
 system.time(kernDens_vec(psi, 0.2))
+cat("kernDens_apply:\n")
 system.time(kernDens_apply(psi, 0.2))
+cat("kernDens_outer:\n")
 system.time(kernDens_outer(psi, 0.2))
 ```
 
@@ -585,7 +595,7 @@ a total of 400 evaluations are done for the above benchmark, and these evaluatio
 are done in a random order by default. Measuring evaluation time on a 
 complex system like a modern computer is an empirical science, and 
 the order of evaluation can potentially affect the results as the 
-conditions for the evaluation can change over time. The purpose of the 
+conditions for the evaluation change over time. The purpose of the 
 randomization is to avoid that the ordering causes systematically 
 misleading results.  
 
@@ -617,12 +627,12 @@ slower than the three vectorized implementations, but we are now able to
 see minor differences among them. 
 
 
-In many cases when we do run time benchmarking it is of interest 
+In many cases when we benchmark run time it is of interest 
 to investigate how run time depends on various parameters. This is so 
 for kernel density estimation, where we want to understand how changes in 
 the number of data points, $n$, and the number of grid points, $m$, affect
 run time. We can still use `microbenchmark` for running the benchmark 
-experiment, but then we typically process and plot the benchmark data afterwards 
+experiment, but we will typically process and plot the benchmark data afterwards 
 in a customized way. 
 
 
@@ -672,18 +682,18 @@ for each expression was set to 40. Again we are confirmed that `kernDens`
 is substantially slower than the vectorized implementations for all combinations 
 of $n$ and $m$. However, Figure \@ref(fig:kern-bench-fig) also reveals a new 
 pattern; `kernDens_outer` appears to scale with $n$ in a slightly different way 
-than the two other vectorized implementations. It is a bit faster than 
+than the two other vectorized implementations for small $n$. It is a bit faster than 
 `kernDens_vec` and `kernDens_apply` for very small data sets, while it becomes 
 slower for the larger data sets. This is particularly pronounced with a large
 number of grid points ($m = 2048$). 
 
-Run times for many algorithms have to a good approximation a dominating 
+Run time for many algorithms have to a good approximation a dominating 
 power law behavior as a function of typical size parameters, that is, the 
-run time will scale approximately like $n \mapsto C n^a$ for constants $C$ and $a$. 
-Therefore it is 
+run time will scale approximately like $n \mapsto C n^a$ for constants $C$ and $a$
+and $n$ denoting a generic size parameter. Therefore it is 
 beneficial to plot run time using log-log scales and to design benchmark studies
 with input parameters being equidistant on a log-scale. With approximate power 
-law scaling, the log run time scales like
+law scaling, the log run time behaves like
 $$\log(C) + a \log(n),$$
 that is, on a log-log scale we see approximate straight lines. The slope 
 reveals the exponent $a$, and two different algorithms for solving the 
@@ -693,6 +703,14 @@ algorithm should have approximately the same slope
 but may differ in the constant $C$ depending upon how efficient the 
 particular implementation is in the particular programming language used.
 Differences in $C$ correspond to vertical translations on the log-log scale. 
+
+In practice, we will see some deviations from straight lines on the log-log plot
+for a number of reasons. Writing the run time as $C n^a + R(n)$, 
+the residual term $R(n)$ will often be noticeable or even dominating for small $n$,
+and we always have $R(n) \geq R_0 > 0$. It is only for large enough $n$ 
+that the power law term, $C n^a$, will dominate. In addition, run time 
+can be affected by hardware constraints such as cache and memory sizes, which 
+can cause abrupt jumps in run time.  
 
 Using `microbenchmark` over `system.time` has two main benefits. First,
 it handles the replication and randomization automatically, which is 
@@ -798,7 +816,7 @@ for AMISE, we get
 \end{align*}
 which indicates that in terms of integrated mean squared error the rate 
 at which we can nonparametrically estimate 
-$f_0$ is $n^{-4/5}$. This should be contrasted to the standard parametric
+$f_0$ is $n^{-4/5}$. This should be contrasted to the common parametric
 rate of $n^{-1}$ for mean squared error. 
 
 From a practical viewpoint there is one major problem with the optimal 
@@ -880,10 +898,10 @@ squared 2-norm of the second derivative of the density into the formula
 for the oracle bandwidth we get
 $$h_n = \left(\frac{4}{3n}\right)^{1/5} \sigma.$$
 We can now simply estimate $\sigma$, using e.g. the empirical standard 
-error $\hat{\sigma}$, and plug this estimate into the formula above to get an estimate
+deviation $\hat{\sigma}$, and plug this estimate into the formula above to get an estimate
 of the oracle bandwidth. 
 
-It is well known that the empirical standard error is sensitive to outliers,
+It is well known that the empirical standard deviation is sensitive to outliers,
 and to get a more robust bandwidth estimator, Silverman suggested using 
 the interquartile range to estimate $\sigma$. In fact, he suggested 
 estimating $\sigma$ by
@@ -895,10 +913,9 @@ as
 $$\hat{h}_n = \left(\frac{4}{3n}\right)^{1/5} \tilde{\sigma},$$
 and this estimator has become known as *Silverman's rule of thumb*. 
 Even if the derivation assumes that $f_0$ 
-is Gaussian, it could still be a reasonable bandwidth estimator, or 
-at least a good starting point -- at least if $f_0$ is unimodal.
-If $f_0$ is multimodal, Silverman's rule of thumb
-is known to oversmooth the density estimate. 
+is Gaussian, it could still be a reasonable bandwidth estimator
+-- at least if $f_0$ is unimodal. If $f_0$ is multimodal, Silverman's 
+rule of thumb is known to oversmooth the density estimate. 
 
 Silverman's rule of thumb is the default bandwidth estimator for `density`
 as implemented by the function `bw.nrd0`, though this particular implementation 
