@@ -31,8 +31,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   
   
-<link rel="prev" href="adaptive.html">
-<link rel="next" href="MCI.html">
+<link rel="prev" href="regression.html">
+<link rel="next" href="mixed-models.html">
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
@@ -277,34 +277,40 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="exercises-2" class="section level2">
-<h2><span class="header-section-number">4.5</span> Exercises</h2>
-<div id="rejection-sampling-of-gaussian-random-variables" class="section level3 unnumbered">
-<h3>Rejection sampling of Gaussian random variables</h3>
-<p>This exercise is on rejection sampling from the Gaussian distribution by using the Laplace distribution as an envelope. Recall that the Laplace distribution has density <span class="math display">\[g(x) = \frac{1}{2} e^{-|x|}\]</span> for <span class="math inline">\(x \in \mathbb{R}\)</span>.</p>
-<p>Note that if <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are independent and exponentially distributed with mean one, then <span class="math inline">\(X - Y\)</span> has a Laplace distribution. This gives a way to easily sample from the Laplace distribution.</p>
-
-<div class="exercise">
-<p><span id="exr:reject-gaussian" class="exercise"><strong>Exercise 4.1  </strong></span>Implement rejection sampling from the standard Gaussian distribution with density <span class="math display">\[f(x) = \frac{1}{\sqrt{2\pi}} e^{- x^2 / 2}\]</span> by simulating Laplace random variables as differences of exponentially distributed random variables. Test the implementation by computing the variance of the Gaussian distribution as an MC estimate and by comparing directly with the Gaussian distribution using histograms and QQ-plots.</p>
+<div id="finite-mixture-models" class="section level2">
+<h2><span class="header-section-number">7.4</span> Finite mixture models</h2>
+<p>A finite mixture model is a model of a pair of random variables <span class="math inline">\((Y, Z)\)</span> with <span class="math inline">\(Z \in \{1, \ldots, K\}\)</span>, <span class="math inline">\(P(Z = k) = p_k\)</span>, and the conditional distribution of <span class="math inline">\(Y\)</span> given <span class="math inline">\(Z = k\)</span> having density <span class="math inline">\(f_k( \cdot \mid \theta_k)\)</span>. The joint density is then <span class="math display">\[(y, k) \mapsto f_k(y \mid \theta_k) p_k,\]</span> and the marginal density for the distribution of <span class="math inline">\(Y\)</span> is <span class="math display">\[f(y \mid \theta) =  \sum_{k=1}^K f_k(y \mid \theta_k) p_k\]</span> where <span class="math inline">\(\theta\)</span> is the vector of parameters. Mixture models are applied with many different sample spaces for <span class="math inline">\(Y\)</span>, but for simplicity we restrict attention to real valued <span class="math inline">\(Y\)</span>.</p>
+<p>The set of all probability measures on <span class="math inline">\(\{1, \ldots, K\}\)</span> is an exponential family with sufficient statistic <span class="math display">\[\tilde{t}_1(k) = (\delta_{1k}, \delta_{2k}, \ldots, \delta_{(K-1)k}) \in \mathbb{R}^{K-1},\]</span> canonical parameter <span class="math inline">\(\alpha = (\alpha_1, \ldots, \alpha_{K-1}) \in \mathbb{R}^{K-1}\)</span> and <span class="math display">\[p_k = \frac{e^{\alpha_k}}{1 + \sum_{l=1}^{K-1} e^{\alpha_l}}.\]</span></p>
+<p>When <span class="math inline">\(f_k\)</span> is an exponential family as well with sufficient statistic <span class="math inline">\(\tilde{t}_k : \mathbb{R} \to \mathbb{R}^{p_k}\)</span> and <span class="math inline">\(\theta_k\)</span> the canonical parameter, we bundle <span class="math inline">\(\alpha, \theta_1, \ldots, \theta_K\)</span> into <span class="math inline">\(\theta\)</span> and define <span class="math display">\[t_1(y) = \left(\begin{array}{c}
+\tilde{t}_1 \\
+0 \\
+0 \\
+\vdots \\
+0
+\end{array}
+\right)\]</span> together with <span class="math display">\[t_2(y \mid k) = \left(\begin{array}{c}
+0 \\
+\delta_{1k} \tilde{t}_1(y) \\
+\delta_{2k} \tilde{t}_2(y) \\
+\vdots \\
+\delta_{Kk} \tilde{t}_K(y)
+\end{array}
+\right)\]</span> we see that we have an exponential family of the joint distribution of <span class="math inline">\((Y, Z)\)</span> with the <span class="math inline">\(p = K-1 + p_1 + \ldots + p_K\)</span>-dimensional canonical parameter <span class="math inline">\(\theta\)</span>, with the sufficient statistic <span class="math inline">\(t_1\)</span> determining the marginal distribution of <span class="math inline">\(Z\)</span> and with the sufficient statistic <span class="math inline">\(t_2\)</span> determining the <em>conditional</em> distribution of <span class="math inline">\(Y\)</span> given <span class="math inline">\(Z\)</span>. We have here made the conditioning variable explicit.</p>
+<p>The marginal density of <span class="math inline">\(Y\)</span> in the exponential family parametrization then becomes <span class="math display">\[f(y \mid \theta = \sum_{k=1}^K  e^{\theta^T (t_1(k) + t_2(y \mid k)) - \log \varphi_1(\theta) - \log \varphi_2(\theta \mid k)}.\]</span> For small <span class="math inline">\(K\)</span> it is usually unproblematic to implement the computation of the marginal density using the formula above, and the computation of derivatives can likewise be implemented based on the formulas derived in Section <a href="exp-fam.html#exp-fam-deriv">7.1.3</a>.</p>
+<div id="gaussian-mixtures" class="section level3">
+<h3><span class="header-section-number">7.4.1</span> Gaussian mixtures</h3>
 </div>
-
-
-<div class="exercise">
-<p><span id="exr:unnamed-chunk-5" class="exercise"><strong>Exercise 4.2  </strong></span>Implement simulation from the Laplace distribution by transforming a uniform random variable by the inverse distribution function. Use this method together with the rejection sampler you implemented in Exercise <a href="exercises-2.html#exr:reject-gaussian">4.1</a></p>
-</div>
-
-<p><strong>Note:</strong> The Laplace distribution can be seen as a simple version of the adaptive envelopes suggested in Section <a href="adaptive.html#adaptive">4.4</a>.</p>
-
+<div id="von-mises-mixtures" class="section level3">
+<h3><span class="header-section-number">7.4.2</span> von Mises mixtures</h3>
 </div>
 </div>
-<!-- </div> -->
             </section>
 
           </div>
         </div>
       </div>
-<a href="adaptive.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="MCI.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="regression.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="mixed-models.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
