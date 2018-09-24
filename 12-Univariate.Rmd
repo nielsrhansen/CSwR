@@ -152,8 +152,6 @@ and the density for the distribution of $Y_{\sigma}$ is, indeed, $f$.
 
 ```
 
-
-
 Note that if $\alpha f \leq g$ for *densities* $f$ and $g$, then 
 $$\alpha = \int \alpha f(x) \mathrm{d}x \leq \int g(x) \mathrm{d}x = 1,$$
 whence it follows automatically that $\alpha \leq 1$ whenever $\alpha f$ is 
@@ -164,7 +162,7 @@ is the rejection probability. Thus $\alpha$ should preferably be as close to
 one as possible. 
 
 If $f(y) = c q(y)$ and $g(y) = d p(y)$ for (unknown) normalizing constants 
-$c, d > 0$ and $\alpha' q \leq p$ then 
+$c, d > 0$ and $\alpha' q \leq p$ for $\alpha' > 0$ then 
 $$\underbrace{\left(\frac{\alpha' d}{c}\right)}_{= \alpha} \ f \leq g.$$
 The constant $\alpha'$ may be larger than 1, but from the argument above
 we know that $\alpha \leq 1$, and Theorem \@ref(thm:reject) gives that 
@@ -174,10 +172,22 @@ observe that
 $$u \leq \frac{\alpha f(y)}{g(y)} \Leftrightarrow u \leq \frac{\alpha' q(y)}{p(y)},$$
 whence rejection sampling can actually be implemented with knowledge 
 of the unnormalized densities and $\alpha'$ only and without computing $c$ or $d$. 
-This is one great advantages of rejection sampling, though we should 
+This is one great advantage of rejection sampling, though we should 
 note that when we don't know the normalizing constants, $\alpha'$ does not tell 
 us anything about how tight the envelope is, and thus how small the rejection 
 probability is.  
+
+Given two functions $q$ and $p$, how do we then find $\alpha'$ so that 
+$\alpha' q \leq p$? Consider the function 
+$$y \mapsto \frac{p(y)}{q(y)}$$
+for $q(y) > 0$. If this function is lower bounded by a value strictly larger than
+zero, we can take 
+$$\alpha' = \inf_{y: q(y) > 0} \frac{p(y)}{q(y)} > 0.$$
+We can in practice often find this value by minimizing $p(y)/q(y)$. If 
+the minimum is zero, there is no $\alpha'$, and $p$ cannot be 
+used to construct an envelope. If the minimum is strictly positive
+it is the best possible choice of $\alpha'$. 
+
 
 ### von Mises distribution {#vMsim}
 
@@ -192,10 +202,10 @@ with $\mu = 0$.
 Thus the target density is $f(x)  \propto e^{\kappa \cos(x)}$. In this section
 we will use the uniform distribution on $(-\pi, \pi)$ as proposal distribution.
 It has constant density $g(x) = (2\pi)^{-1}$, but all we need is, in fact, that
-$g \propto 1$. Since $x \mapsto \exp(\kappa \cos(x))$ attains it maximum for 
-$x = 0$ we find that 
-$$e^{\kappa(\cos(x) - 1)} = \alpha' e^{\kappa \cos(x)} \leq 1,$$
-where $\alpha' = \exp(-\kappa)$. The rejection test of the 
+$g(x) \propto 1$. Since $x \mapsto 1 / \exp(\kappa \cos(x)) = \exp(-\kappa \cos(x))$ attains its
+minimum $\exp(-\kappa)$ for $x = 0$, we find that 
+$$\alpha' e^{\kappa \cos(x)} = e^{\kappa(\cos(x) - 1)} \leq 1,$$
+with $\alpha' = \exp(-\kappa)$. The rejection test of the 
 proposal $Y \sim g$ can therefore be carried out 
 by testing if a uniformly distributed random variable $U$ on $(0,1)$ 
 satisfies
@@ -335,7 +345,7 @@ simulated using the fast implementation.
 It may be possible to find a suitable envelope of the density for the 
 gamma distribution on $(0, \infty)$, but it turns out that there is a 
 very efficient rejection sampler of a non-standard distribution that 
-can be transformed it by a simple transformation. 
+can be transformed into a gamma distribution by a simple transformation. 
 
 Let $t(y) = a(1 + by)^3$ for $y \in (-b^{-1}, \infty)$, then $t(Y) \sim \Gamma(r,1)$ if $r \geq 1$
 and $Y$ has density 
@@ -490,14 +500,29 @@ it should be fast to simulate from and have a density that is
 fast to evaluate. It is not obvious how to find such an envelope 
 for an arbitrary target density $f$. 
 
-This section develops first of all a method for construction of envelopes
+This section develops a general scheme for the construction of envelopes
 for all [log-concave target densities](https://en.wikipedia.org/wiki/Logarithmically_concave_function#Log-concave_distributions). This is a special class of densities,
-but it is not uncommon in practice, and it can be extended to work 
+but it is not uncommon in practice. The scheme can also be extended to work 
 for some densities that have combinations of log-concave and log-convex 
 behaviors. The same idea used for constructing 
 envelopes can be used to bound $f$ from below. The accept-reject step 
 can then avoid many evaluations of $f$, which is beneficial if $f$ is 
 computationally expensive to evaluate.
+
+The key idea of the scheme is to bound the log-density by piecewise 
+affine functions. This is particularly easy to do if the density 
+is log-concave. The scheme leads to analytically manageable
+formulas for the envelope, its corresponding distribution function and its 
+inverse, and as a result it is fast to simulate proposals and 
+compute the envelope as needed in the accept-reject step. 
+
+The scheme requires the choice of a finite number of points to determine
+the affine bounds. For any given choice of points the scheme adapts the 
+envelope to the target density automatically. It is possible to implement 
+a *fully* adaptive scheme that doesn't even require the choice of points
+but initializes and updates the points dynamically as more and more rejection
+samples are computed. In this section the focus is on the scheme with 
+a given and fixed number of points. 
 
 For a continuously differentiable, strictly positive and
 log-concave target on an open interval $I \subseteq \mathbb{R}$ 
@@ -578,7 +603,7 @@ and both different from zero. Choose different values of x_1 and x_2.")
   b2 <- lf(x2) - a2 * x2
   z1 <- (b2 - b1) / (a1 - a2)
   Q1 <- exp(b1) * (exp(a1 * z1) - 1) / a1 
-  c = Q1 + exp(b2) * (exp(a2 * 1) - exp(a2 * z1)) / a2
+  c <- Q1 + exp(b2) * (exp(a2 * 1) - exp(a2 * z1)) / a2
 
   m <- n  
   fact <- 1
@@ -716,7 +741,7 @@ vMsim_adapt <- function(n, x1, x2, kappa, trace = FALSE) {
   Q1 <- exp(b1) * (exp(a1 * z1) - exp(a1 * z0)) / a1 
   Q2 <- Q1 + exp(b2) * (exp(a2 * z2) - exp(a2 * z1)) / a2
   Q3 <- Q2 + exp(b3) * (exp(a3 * z3) - exp(a3 * z2)) / a3
-  c = Q3 + exp(b4) * (exp(a4 * z4) - exp(a4 * z3)) / a4
+  c <- Q3 + exp(b4) * (exp(a4 * z4) - exp(a4 * z3)) / a4
   
   m <- n  
   fact <- 1
