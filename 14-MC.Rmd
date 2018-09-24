@@ -213,7 +213,7 @@ to compute an estimate of the variance.
 
 To illustrate the usage and limitations of importance sampling, consider
 the following $p$-dimensional integral
-$$\mu := \int e^{-\frac{1}{2}\left(x_1^2 + \sum_{i=2}^p (x_i - \alpha x_{i-1})^2\right)}  \mathrm{d} x.$$
+$$\int e^{-\frac{1}{2}\left(x_1^2 + \sum_{i=2}^p (x_i - \alpha x_{i-1})^2\right)}  \mathrm{d} x.$$
 Now this integral is not even expressed as an expectation w.r.t. any distribution
 in the first place -- it is an integral w.r.t. Lebesgue measure in $\mathbb{R}^p$. 
 To use importance sampling it is therefore necessary to rewrite the integral 
@@ -221,24 +221,34 @@ as an expectation w.r.t. a probability distribution. There might be many ways
 to do this, and the following is just one. 
 
 Rewrite the exponent as
-$$||x||_2^2 + \sum_{i = 2}^n \alpha^2 x_{i-1}^2 - 2\alpha x_i x_{i-1}$$
+$$||x||_2^2 + \sum_{i = 2}^p \alpha^2 x_{i-1}^2 - 2\alpha x_i x_{i-1}$$
 so that 
 \begin{align*}
-\mu & =  \int e^{- \frac{1}{2} \sum_{i = 2}^n \alpha^2 
+\int e^{-\frac{1}{2}\left(x_1^2 + \sum_{i=2}^p (x_i - \alpha x_{i-1})^2\right)}  \mathrm{d} x & =  \int e^{- \frac{1}{2} \sum_{i = 2}^n \alpha^2 
 x_{i-1}^2 - 2\alpha x_i x_{i-1}}  e^{-\frac{||x||_2^2}{2}} \mathrm{d} x \\
-& = (2 \pi)^{n/2} \int e^{- \frac{1}{2} \sum_{i = 2}^n \alpha^2 
+& = (2 \pi)^{p/2} \int e^{- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
 x_{i-1}^2 - 2\alpha x_i x_{i-1}} f(x) \mathrm{d} x
 \end{align*}
 where $f$ is the density for the  $\mathcal{N}(0, I_p)$ distribution. Thus if
 $X \sim \mathcal{N}(0, I_p)$,
-$$\mu = (2 \pi)^{n/2}  E\left( e^{- \frac{1}{2} \sum_{i = 2}^n \alpha^2 
+$$\int e^{-\frac{1}{2}\left(x_1^2 + \sum_{i=2}^p (x_i - \alpha x_{i-1})^2\right)}  \mathrm{d} x = (2 \pi)^{n/2}  E\left( e^{- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
+X_{i-1}^2 - 2\alpha X_i X_{i-1}} \right).$$
+
+The Monte Carlo integration below computes 
+$$\mu = E\left( e^{- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
 X_{i-1}^2 - 2\alpha X_i X_{i-1}} \right)$$
-
-The Monte Carlo integration below computes $\mu$ 
 by generating \(p\)-dimensional random 
-variables from the \(\mathcal{N}(0, I_p)\). 
+variables from \(\mathcal{N}(0, I_p)\). It can actually be shown that $\mu = 1$,
+but we skip the proof of that. 
 
-First, the function we want to integrate.
+We can view this example as an example of plain Monte Carlo integration, but 
+it is also a variation of importance sampling. The initial integral was not 
+an expectation but an integral w.r.t. Lebesgue measure. By changing the integration
+measure to the Gaussian distribution and reweighting the integrand we represented
+the integral in terms of an expectation. This is exactly the idea of importance 
+sampling as well. 
+
+First, we implement the function we want to integrate.
 
 ```{r MC_hfun}
 h <- function(x, alpha = 0.1){ 
@@ -248,23 +258,19 @@ h <- function(x, alpha = 0.1){
 }
 ```
 
-
 Then we specify various parameters.
 
 ```{r MC_par}
 B <- 10000 ## The number of random variables to generate
 p <- 100  ## The dimension of each random variable
-alpha <- 0.2
-evaluations <- numeric(B)
 ```
 
-The actual computation is implemented as a simple loop. 
+The actual computation is implemented using the `apply` function. We 
+first look at the case with $\alpha = 0.2$. 
 
 ```{r MC_loop, dependson=c("MC_hfun", "MC_par")}
-for(i in 1:B) {
-  x <- rnorm(p)
-  evaluations[i] <- h(x, alpha = alpha)
-}
+x <- matrix(rnorm(B * p), B, p)
+evaluations <- apply(x, 1, h, alpha = 0.2)
 ```
 
 We can then plot the cumulative average and compare it to the 
@@ -299,12 +305,47 @@ lines(1:B, me + 2*sqrt(ve/(1:B)))
 lines(1:B, me - 2*sqrt(ve/(1:B)))
 ```
 
-To see the limits of (naive) Monte Carlo integration try taking \(\alpha = 0.4\).
+To illustrate the limits of Monte Carlo integration we increase $\alpha$ to
+\(\alpha = 0.4\). 
+
+```{r MC_loop2, dependson=c("MC_hfun", "MC_par")}
+set.seed(123)
+x <- matrix(rnorm(B * p), B, p)
+evaluations <- apply(x, 1, h, alpha = 0.4)
+```
+
+```{r MC_CLT2, dependson=c("MC_par", "MC_loop2"), echo=FALSE}
+plot(cumsum(evaluations) / 1:B, pch = 20, ylim = c(0, 2))
+me <- cumsum(evaluations) / 1:B
+ve <- var(evaluations)
+abline(h = 1, col = "red")
+lines(1:B, me + 2*sqrt(ve/(1:B)))
+lines(1:B, me - 2*sqrt(ve/(1:B)))
+```
+
+The sample path above is not carefully selected to be pathelogical. Due to 
+occasional large values, the typical sample path will show occasional large jumps,
+and the variance may easily be grossly underestimated. 
+
+```{r MC-CLT3, fig.cap="Four sample paths of the cumulative average for $\\alpha = 0.4$.", dependson=c("MC_par", "MC_hfun"), echo=FALSE, results="hide", out.width="100%"}
+par(mfcol = c(2, 2), mex = 0.7, cex = 0.6, font.main = 1)
+replicate(4,
+  {x <- matrix(rnorm(B * p), B, p)
+  evaluations <- apply(x, 1, h, alpha = 0.4)
+  plot(cumsum(evaluations) / 1:B, pch = 20, ylim = c(0, 2))
+  me <- cumsum(evaluations) / 1:B
+  ve <- var(evaluations)
+  abline(h = 1, col = "red")
+  lines(1:B, me + 2*sqrt(ve/(1:B)))
+  lines(1:B, me - 2*sqrt(ve/(1:B)))
+  })
+```
+
 To be fair, it is the choice of standard multivariate normal distribution as 
 the reference distribution for large \(\alpha\) that is problematic rather than
-the method as such. 
-
-
+Monte Carlo integration and importance sampling as such. However, in high 
+dimensions it an be quite difficult to choose a suitable distribution to sample 
+from. 
 
 ## Network failure
 
@@ -402,23 +443,35 @@ using that $\sigma^2 = \mu (1 - \mu)$.
 muhat + 1.96 * sqrt(muhat * (1 - muhat) / n) * c(-1, 0, 1)
 ```
 
-Importance sampling.
+To implement importance sampling we note that the point probabilities
+(density w.r.t. counting measure) for sampling 18 independent 0-1-variables 
+$x = (x_1, \ldots, x_{18})$ with $P(X_i = 0) = p$ is
+
+$$f_p(x) = p^b (1- p)^{18-b}$$
+
+where $b = 18 - \sum_{i=1}^{18} x_i$. The implementation computes
+the weights when sampling using probability $p_0$ (density $g = f_{p_0}$) 
+instead of $p$, and the weights are only computed if the graph is disconnected.
+
 
 ```{r network_impw}
-impw <- function(Aup, A0, p, p0) {
+impw <- function(Aup, A0, p0, p) {
   w <- disconAB(A0)
   if (w) {
     b <- 18 - sum(Aup[A0 == 1])
-    w <- ((1 - p0) / (1 - p))^18 * 
-      (p0 * (1 - p) / (p * (1 - p0)))^b
+    w <- ((1 - p) / (1 - p0))^18 * 
+      (p * (1 - p0) / (p0 * (1 - p)))^b
   }
   as.numeric(w)
 }
 ```
 
-This uses formula (6.48) in the book for computing the importance weights. 
-For the IS estimator they are multiplied by the indicator that A and B are 
-disconnected.
+The implementation uses the formula 
+
+$$
+w(x) = \frac{f_p(x)}{f_{p_0}(x)} = \frac{p^b (1- p)^{18-b}}{p_0^b (1- p_0)^{18-b}} = 
+\left(\frac{1- p}{1- p_0}\right)^{18} \left(\frac{p (1- p_0)}{p_0 (1- p)}\right)^b.
+$$
 
 ```{r network_sim2, dependson = c("network_sim", "network_impw", "network_simNet", "network_bench")}
 set.seed(seed)
@@ -452,7 +505,7 @@ if it is a one-off computation.
 The graph is small enough for complete enumeration and thus the computation 
 of an exact solution. There are $2^{18} = 262,144$ different networks with 
 any number of the edges failing, so complete enumeration is possible. To 
-systematically walk through each possible combination of edges failing, 
+systematically walk through each possible combinations of edges failing, 
 we use the function `intToBits` that convert an integer to its binary 
 representation for integers from 0 to 262,143. This is a quick and convenient 
 way of representing all the different fail and non-fail combinations 
@@ -552,7 +605,7 @@ failure <- function(x, ...)
   UseMethod("failure")
 ```
 
-The first method
+The first method.
 
 ```{r simnetwork}
 sim.network <- function(x) {
@@ -563,18 +616,18 @@ sim.network <- function(x) {
 }
 ```
 
-and the second method
+And the second method.
 
 ```{r failure, dependson = c("simnetwork", "network_impw", "network_connect")}
-failure.network <- function(x, n, p = NULL) {
-  if (is.null(p)) { ## Naive simulation
+failure.network <- function(x, n, p0 = NULL) {
+  if (is.null(p0)) { ## Naive simulation
     tmp <- replicate(n, disconAB(sim(x)))
     muhat <- mean(tmp)
     se <- sqrt(muhat * (1 - muhat) / n)
   } else { ## Importance sampling
-    p0 <- x$p
-    x$p <- p
-    tmp <- replicate(n, impw(x$Aup, sim(x), p, p0))
+    p <- x$p
+    x$p <- p0
+    tmp <- replicate(n, impw(x$Aup, sim(x), p0, p))
     se <- sd(tmp) / sqrt(n)
     muhat <- mean(tmp)
   } 
@@ -584,28 +637,34 @@ failure.network <- function(x, n, p = NULL) {
 }
 ```
 
-Test
+We test the implementation against the previously computed 
+results.
 
 ```{r network_object_MC, dependson = "failure"}
 set.seed(seed)  ## Resetting seed
 failure(myNet, n)
 set.seed(seed)  ## Resetting seed
-failure(myNet, n, p = 0.2)
+failure(myNet, n, p0 = 0.2)
 ```
 
-Check that the results are the same as on ??.
+We find that these are the same numbers as computed above, thus the object 
+oriented implementation concurs with the non-object oriented on this example.
 
-Benchmarking
+We benchmark the object oriented implementation.
 
-```{r network_bench2, dependson=c("network_simnet", "simnetwork", "network_bench", "network_constructor")}
-system.time(replicate(1e5, {simNet(Aup, 0.5); NULL}))
-system.time(replicate(1e5, {sim(myNet); NULL}))
+```{r network_bench2, echo=2, dependson=c("network_simnet", "simnetwork", "network_bench", "network_constructor")}
+old_options <- options(digits = 3)
+microbenchmark(
+  simNet(Aup, 0.05),
+  sim(myNet),
+  times = 1e4
+)
+options(digits = old_options$digits)
 ```
 
 One should expect a small computational overhead due to method dispatching, 
 that is, the procedure that R uses to look up the appropriate `sim` method 
-for an object of class `network`. This is done 100,000 times in the benchmark 
-example above. In this case, that overhead is almost negligible.
+for an object of class `network`. 
 
 The generic `print` function already exists. We implement a method 
 for class `network`.
@@ -680,7 +739,7 @@ plot(sim(net, 0.25), layout = net_layout, asp = 0)
 This is slower than using the matrix representation alone as in `simNet`. 
 
 ```{r network_bench3, dependson=c("network_igraph", "network_sim_igraph")}
-system.time(replicate(1e5, {sim(net, 0.5); NULL}))
+system.time(replicate(1e5, {sim(net, 0.05); NULL}))
 ```
 
 One could also implement the function for testing if nodes 1 and 10 are 
