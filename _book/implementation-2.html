@@ -31,8 +31,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   
   
-<link rel="prev" href="MCI.html">
-<link rel="next" href="importance-sampling.html">
+<link rel="prev" href="descent-direction-algorithms.html">
+<link rel="next" href="newton-type-algorithms.html">
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
@@ -242,16 +242,13 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </ul></li>
 <li class="chapter" data-level="8.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html"><i class="fa fa-check"></i><b>8.2</b> Descent direction algorithms</a><ul>
 <li class="chapter" data-level="8.2.1" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#line-search"><i class="fa fa-check"></i><b>8.2.1</b> Line search</a></li>
-<li class="chapter" data-level="8.2.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#gradient-descent"><i class="fa fa-check"></i><b>8.2.2</b> Gradient descent</a></li>
-<li class="chapter" data-level="8.2.3" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>8.2.3</b> Conjugate gradients</a></li>
-<li class="chapter" data-level="8.2.4" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#peppered-moths-1"><i class="fa fa-check"></i><b>8.2.4</b> Peppered Moths</a></li>
+<li class="chapter" data-level="8.2.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>8.2.2</b> Poisson regression</a></li>
 </ul></li>
-<li class="chapter" data-level="8.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html"><i class="fa fa-check"></i><b>8.3</b> Newton-type algorithms</a><ul>
-<li class="chapter" data-level="8.3.1" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>8.3.1</b> Poisson regression</a></li>
-<li class="chapter" data-level="8.3.2" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>8.3.2</b> Quasi-Newton algorithms</a></li>
-<li class="chapter" data-level="8.3.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>8.3.3</b> Sparsity</a></li>
+<li class="chapter" data-level="8.3" data-path="implementation-2.html"><a href="implementation-2.html"><i class="fa fa-check"></i><b>8.3</b> Implementation</a><ul>
+<li class="chapter" data-level="8.3.1" data-path="implementation-2.html"><a href="implementation-2.html#peppered-moths-1"><i class="fa fa-check"></i><b>8.3.1</b> Peppered Moths</a></li>
 </ul></li>
-<li class="chapter" data-level="8.4" data-path="misc-.html"><a href="misc-.html"><i class="fa fa-check"></i><b>8.4</b> Misc.</a></li>
+<li class="chapter" data-level="8.4" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html"><i class="fa fa-check"></i><b>8.4</b> Newton-type algorithms</a></li>
+<li class="chapter" data-level="8.5" data-path="misc-.html"><a href="misc-.html"><i class="fa fa-check"></i><b>8.5</b> Misc.</a></li>
 </ul></li>
 <li class="chapter" data-level="9" data-path="EM.html"><a href="EM.html"><i class="fa fa-check"></i><b>9</b> Expectation Maximization algorithms</a><ul>
 <li class="chapter" data-level="9.1" data-path="basic-properties.html"><a href="basic-properties.html"><i class="fa fa-check"></i><b>9.1</b> Basic properties</a><ul>
@@ -290,72 +287,119 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="assessment" class="section level2">
-<h2><span class="header-section-number">5.1</span> Assessment</h2>
-<p>Something general about precision and uncertainty assessment for MC integration.</p>
-<div id="using-the-central-limit-theorem" class="section level3">
-<h3><span class="header-section-number">5.1.1</span> Using the central limit theorem</h3>
-<p>The CLT gives that <span class="math display">\[\hat{\mu}_{\textrm{MC}} = \frac{1}{n} \sum_{i=1}^n h(X_i) \overset{\textrm{approx}} \sim 
-\mathcal{N}(\mu, \sigma^2_{\textrm{MC}} / n)\]</span> where <span class="math display">\[\sigma^2_{\textrm{MC}} = V(h(X_1)) = \int (h(x) - \mu)^2 f(x) \ \mathrm{d}x.\]</span></p>
-<p>We can estimate <span class="math inline">\(\sigma^2_{\textrm{MC}}\)</span> using the empirical variance <span class="math display">\[\hat{\sigma}^2_{\textrm{MC}} = \frac{1}{n - 1} \sum_{i=1}^n (h(X_i) - 
-\hat{\mu}_{\textrm{MC}})^2,\]</span></p>
-<p>then the variance of <span class="math inline">\(\hat{\mu}_{\textrm{MC}}\)</span> is estimated as <span class="math inline">\(\hat{\sigma}^2_{\textrm{MC}} / n\)</span> and a standard 95% confidence interval for <span class="math inline">\(\mu\)</span> is <span class="math display">\[\hat{\mu}_{\textrm{MC}} \pm 1.96 \frac{\hat{\sigma}_{\textrm{MC}}}{\sqrt{n}}.\]</span></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">x &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">1000</span>, <span class="dv">8</span>) 
-nn &lt;-<span class="st"> </span><span class="kw">seq_along</span>(x)
-muhat &lt;-<span class="st"> </span><span class="kw">cumsum</span>(x) <span class="op">/</span><span class="st"> </span>nn; sigmahat &lt;-<span class="st"> </span><span class="kw">sd</span>(x)
-<span class="kw">qplot</span>(nn, muhat) <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">geom_ribbon</span>(<span class="dt">ymin =</span> muhat <span class="op">-</span><span class="st"> </span><span class="fl">1.96</span> <span class="op">*</span><span class="st"> </span>sigmahat <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(nn), 
-              <span class="dt">ymax =</span> muhat <span class="op">+</span><span class="st"> </span><span class="fl">1.96</span> <span class="op">*</span><span class="st"> </span>sigmahat <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(nn), 
-              <span class="dt">fill =</span> <span class="st">&quot;gray&quot;</span>) <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">geom_point</span>()</code></pre></div>
-<div class="figure" style="text-align: center"><span id="fig:gammaMCCLT"></span>
-<img src="CSwR_files/figure-html/gammaMCCLT-1.png" alt="Sample path with confidence band for Monte Carlo integration of the mean of a Gamma distributed random variable." width="70%" />
-<p class="caption">
-Figure 5.1: Sample path with confidence band for Monte Carlo integration of the mean of a Gamma distributed random variable.
-</p>
-</div>
-</div>
-<div id="concentration-inequalities" class="section level3">
-<h3><span class="header-section-number">5.1.2</span> Concentration inequalities</h3>
-<p>If <span class="math inline">\(X\)</span> is a real valued random variable with finite second moment, <span class="math inline">\(\mu = E(X)\)</span> and <span class="math inline">\(\sigma^2 = V(X)\)</span>, Chebychev’s inequality holds <span class="math display">\[P(|X - \mu| &gt; \varepsilon) \leq \frac {\sigma^2}{\varepsilon^2}\]</span> for all <span class="math inline">\(\varepsilon &gt; 0\)</span>. This inequality implies, for instance, that for the simple Monte Carlo average we have the inequality <span class="math display">\[P(|\hat{\mu}_{\textrm{MC}} - \mu| &gt; \varepsilon) \leq \frac{\sigma^2_{\textrm{MC}}}{n\varepsilon^2}.\]</span> A common usage of this inequality is for the qualitative statement known as the <em>law of large numbers</em>: for any <span class="math inline">\(\varepsilon &gt; 0\)</span> <span class="math display">\[P(|\hat{\mu}_{\textrm{MC}} - \mu| &gt; \varepsilon) \rightarrow 0\]</span> for <span class="math inline">\(n \to \infty\)</span>. Or <span class="math inline">\(\hat{\mu}_{\textrm{MC}}\)</span> <em>converges in probability</em> towards <span class="math inline">\(\mu\)</span> as <span class="math inline">\(n\)</span> tends to infinity. However, the inequality actually also provides a quantitative statement about how accurate <span class="math inline">\(\hat{\mu}_{\textrm{MC}}\)</span> is as an approximation of <span class="math inline">\(\mu\)</span>.</p>
-<p>Chebyshev’s inequality is useful due to its minimal assumption of a finite second moment. However, it typically doesn’t give a very tight bound on the probability <span class="math inline">\(P(|X - \mu| &gt; \varepsilon)\)</span>. Much better inequalities can be obtained under stronger assumptions, in particular finite exponential moments.</p>
-<p>Assuming that the moment generating function of <span class="math inline">\(X\)</span> is finite, <span class="math inline">\(M(t) = E(e^{tX}) &lt; \infty\)</span>, for some suitable <span class="math inline">\(t \in \mathbb{R}\)</span>, it follows from <a href="https://en.wikipedia.org/wiki/Markov%27s_inequality">Markov’s inequality</a> that <span class="math display">\[P(X - \mu &gt; \varepsilon) = P(e^{tX} &gt; e^{t(\varepsilon + \mu)}) \leq e^{-t(\varepsilon + \mu)}M(t),\]</span> which can provide a very tight upper bound by minimizing the bound over <span class="math inline">\(t\)</span>. This requires some knowledge of the moment generating function. We illustrate the usage of this inequality below by considering the Gamma-distribution where the moment generating function is well known.</p>
-</div>
-<div id="exponential-tail-bound-for-gamma-distributed-variables" class="section level3">
-<h3><span class="header-section-number">5.1.3</span> Exponential tail bound for Gamma distributed variables</h3>
-<p>If <span class="math inline">\(X\)</span> follows a Gamma distribution with shape parameter <span class="math inline">\(\lambda &gt; 0\)</span> and <span class="math inline">\(t &lt;1\)</span>, then <span class="math display">\[M(t) = \frac{1}{\Gamma(\lambda)} \int_0^{\infty} x^{\lambda - 1} e^{-(1-t) x} \,
-\mathrm{d} x = \frac{1}{(1-t)^{\lambda}}.\]</span> Whence <span class="math display">\[P(X-\lambda &gt; \varepsilon) \leq e^{-t(\varepsilon + \lambda)}
-\frac{1}{(1-t)^{\lambda}}.\]</span> Minimization over <span class="math inline">\(t\)</span> of the right hand side gives the minimizer <span class="math inline">\(t = \varepsilon/(\varepsilon + \lambda)\)</span> and the upper bound <span class="math display">\[P(X-\lambda &gt; \varepsilon) \leq e^{-\varepsilon} \left(\frac{\varepsilon + \lambda}{\lambda
-    }\right)^{\lambda}.\]</span> Compare this to the bound <span class="math display">\[P(|X-\lambda| &gt; \varepsilon) \leq \frac{\lambda}{\varepsilon^2}\]</span> from Chebychev’s inequality.</p>
-
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lambda &lt;-<span class="st"> </span><span class="dv">10</span>
-
-<span class="kw">curve</span>(<span class="kw">pgamma</span>(x, lambda, <span class="dt">lower.tail =</span> <span class="ot">FALSE</span>), 
-      lambda, lambda <span class="op">+</span><span class="st"> </span><span class="dv">30</span>,
-      <span class="dt">ylab =</span> <span class="st">&quot;probability&quot;</span>,
-      <span class="dt">main =</span> <span class="st">&quot;Gamma tail&quot;</span>,
-      <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))
-<span class="kw">curve</span>(<span class="kw">exp</span>(lambda <span class="op">-</span><span class="st"> </span>x)<span class="op">*</span>(x<span class="op">/</span>lambda)<span class="op">^</span>lambda, lambda, lambda <span class="op">+</span><span class="st"> </span><span class="dv">30</span>,
-      <span class="dt">add =</span> <span class="ot">TRUE</span>, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)
-<span class="kw">curve</span>(lambda<span class="op">/</span>(x<span class="op">-</span>lambda)<span class="op">^</span><span class="dv">2</span>, lambda, lambda <span class="op">+</span><span class="st"> </span><span class="dv">30</span>,
-      <span class="dt">add =</span> <span class="ot">TRUE</span>, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>)
-
-<span class="kw">curve</span>(<span class="kw">pgamma</span>(x, lambda, <span class="dt">lower.tail =</span> <span class="ot">FALSE</span>, <span class="dt">log.p =</span> <span class="ot">TRUE</span>), 
-      lambda, lambda <span class="op">+</span><span class="st"> </span><span class="dv">30</span>,
-      <span class="dt">ylab =</span> <span class="st">&quot;log-probability&quot;</span>,
-      <span class="dt">main =</span> <span class="st">&quot;Logarithm of Gamma tail&quot;</span>,
-      <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="op">-</span><span class="dv">20</span>, <span class="dv">0</span>))
-<span class="kw">curve</span>(lambda <span class="op">-</span><span class="st"> </span>x <span class="op">+</span><span class="st"> </span>lambda<span class="op">*</span><span class="kw">log</span>(x<span class="op">/</span>lambda), lambda, lambda <span class="op">+</span><span class="st"> </span><span class="dv">30</span>,
-      <span class="dt">add =</span> <span class="ot">TRUE</span>, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)
-<span class="kw">curve</span>(<span class="op">-</span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(x<span class="op">-</span>lambda) <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(lambda), lambda, lambda <span class="op">+</span><span class="st"> </span><span class="dv">30</span>,
-      <span class="dt">add =</span> <span class="ot">TRUE</span>, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>)</code></pre></div>
-<div class="figure" style="text-align: center"><span id="fig:tailbounds"></span>
-<img src="CSwR_files/figure-html/tailbounds-1.png" alt="Actual tail probabilities (left) for the Gamma distribution, computed via the pgamma function, compared it to the tight bound (red) and the weaker bound from Chebychev’s inequality (blue). The differences in the tail are more clearly seen for the log-probabilities (right)" width="49%" /><img src="CSwR_files/figure-html/tailbounds-2.png" alt="Actual tail probabilities (left) for the Gamma distribution, computed via the pgamma function, compared it to the tight bound (red) and the weaker bound from Chebychev’s inequality (blue). The differences in the tail are more clearly seen for the log-probabilities (right)" width="49%" />
-<p class="caption">
-Figure 5.2: Actual tail probabilities (left) for the Gamma distribution, computed via the <code>pgamma</code> function, compared it to the tight bound (red) and the weaker bound from Chebychev’s inequality (blue). The differences in the tail are more clearly seen for the log-probabilities (right)
-</p>
-</div>
+<div id="implementation-2" class="section level2">
+<h2><span class="header-section-number">8.3</span> Implementation</h2>
+<p>Using <code>optim</code> with the BFGS method.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(
+  tmp &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length=</span><span class="kw">ncol</span>(X)), H, grad_H, 
+               <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)))</code></pre></div>
+<pre><code>##    user  system elapsed 
+##   0.002   0.000   0.003</code></pre>
+<p>–</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">range</span>(tmp<span class="op">$</span>par <span class="op">-</span><span class="st"> </span>pois_model<span class="op">$</span>coefficients)</code></pre></div>
+<pre><code>## Warning in tmp$par - pois_model$coefficients: longer object length is not a
+## multiple of shorter object length</code></pre>
+<pre><code>## [1] -4.372164  1.258972</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">tmp<span class="op">$</span>value</code></pre></div>
+<pre><code>## [1] -132617.7</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">tmp<span class="op">$</span>counts</code></pre></div>
+<pre><code>## function gradient 
+##       50       10</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(<span class="kw">glm.fit</span>(X, z, <span class="dt">family =</span> <span class="kw">poisson</span>()))</code></pre></div>
+<pre><code>##    user  system elapsed 
+##   0.004   0.000   0.004</code></pre>
+<table style="width:4%;">
+<colgroup>
+<col width="4%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td>## Using sparse matrices</td>
+</tr>
+<tr class="even">
+<td><code>r library(Matrix)</code></td>
+</tr>
+<tr class="odd">
+<td><code>r X &lt;- Matrix(X)</code></td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(
+  tmp_sparse &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length=</span><span class="kw">ncol</span>(X)), H, grad_H, 
+         <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>))
+)</code></pre></div>
+<pre><code>##    user  system elapsed 
+##    0.01    0.00    0.01</code></pre>
+<p>–</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">range</span>(tmp<span class="op">$</span>par <span class="op">-</span><span class="st"> </span>tmp_sparse<span class="op">$</span>par)</code></pre></div>
+<pre><code>## [1] -9.992007e-15  3.064216e-14</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">tmp_sparse<span class="op">$</span>counts</code></pre></div>
+<pre><code>## function gradient 
+##       50       10</code></pre>
+<div id="peppered-moths-1" class="section level3">
+<h3><span class="header-section-number">8.3.1</span> Peppered Moths</h3>
+<p>We can code a problem specific version of the negative log-likelihood and use <code>optim</code> to minimize it.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## par = c(pC, pI), pT = 1 - pC - pI
+## x is the data vector
+loglik &lt;-<span class="st"> </span><span class="cf">function</span>(par, x) {
+  pT &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>par[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>par[<span class="dv">2</span>]
+  <span class="cf">if</span> (par[<span class="dv">1</span>] <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span> <span class="op">||</span><span class="st"> </span>par[<span class="dv">1</span>] <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>par[<span class="dv">2</span>] <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span> <span class="op">||</span><span class="st"> </span>par[<span class="dv">2</span>] <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>pT <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span>)
+    <span class="kw">return</span>(<span class="ot">Inf</span>)
+  PC &lt;-<span class="st"> </span>par[<span class="dv">1</span>]<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>par[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>par[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>par[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>pT
+  PI &lt;-<span class="st"> </span>par[<span class="dv">2</span>]<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>par[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span>pT
+  PT &lt;-<span class="st"> </span>pT<span class="op">^</span><span class="dv">2</span>
+  <span class="op">-</span><span class="st"> </span>(x[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(PC) <span class="op">+</span><span class="st"> </span>x[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(PI) <span class="op">+</span><span class="st"> </span>x[<span class="dv">3</span>]<span class="op">*</span><span class="st"> </span><span class="kw">log</span>(PT))
+}</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>)</code></pre></div>
+<pre><code>## $par
+## [1] 0.07084109 0.18873718
+## 
+## $value
+## [1] 600.481
+## 
+## $counts
+## function gradient 
+##      110       15 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL</code></pre>
+<p>The computations can beneficially be implemented in greater generality.</p>
+<p>The function <code>M</code> sums the cells that are collapsed, which has to be specified by the <code>group</code> argument.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">M &lt;-<span class="st"> </span><span class="cf">function</span>(x, group)
+  <span class="kw">as.vector</span>(<span class="kw">tapply</span>(x, group, sum))</code></pre></div>
+<p>The function <code>prob</code> maps the parameters to the multinomial probability vector. This function will have to be problem specific.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">prob &lt;-<span class="st"> </span><span class="cf">function</span>(p) {
+  p[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>p[<span class="dv">2</span>]
+  <span class="kw">c</span>(p[<span class="dv">1</span>]<span class="op">^</span><span class="dv">2</span>, <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>], <span class="dv">2</span><span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>], 
+    p[<span class="dv">2</span>]<span class="op">^</span><span class="dv">2</span>, <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>], p[<span class="dv">3</span>]<span class="op">^</span><span class="dv">2</span>)
+}</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">loglik &lt;-<span class="st"> </span><span class="cf">function</span>(par, x) {
+  pT &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>par[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>par[<span class="dv">2</span>]
+  <span class="cf">if</span> (par[<span class="dv">1</span>] <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span> <span class="op">||</span><span class="st"> </span>par[<span class="dv">1</span>] <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>par[<span class="dv">2</span>] <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span> <span class="op">||</span><span class="st"> </span>par[<span class="dv">2</span>] <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>pT <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span>)
+    <span class="kw">return</span>(<span class="ot">Inf</span>)
+  <span class="op">-</span><span class="st"> </span><span class="kw">sum</span>(x <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(<span class="kw">M</span>(<span class="kw">prob</span>(par), <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))))
+}</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>)</code></pre></div>
+<pre><code>## $par
+## [1] 0.07084109 0.18873718
+## 
+## $value
+## [1] 600.481
+## 
+## $counts
+## function gradient 
+##      107       15 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL</code></pre>
+<p>The Peppered Moth example is very simple. The marginal log-likelihood can easily be computed, and we used this problem to illustrate different ways of implementing a likelihood computation in R. One was very problem specific and one was more abstract and general. We demonstrated how to use standard optimization algorithms like conjugate gradient with or without implementing the gradient. If we don’t implement a gradient, a numerical gradient is used by <code>optim</code> This can very well result in a slower algorithm than if the gradient is implemented, but more seriously, in can result in convergence problems. This is because there is a subtle tradeoff between numerical accuracy and accuracy of the finite difference approximation. We did not experience this in the example above, but one way to remedy such problems is to set the <code>parscale</code> or <code>fnscale</code> entries in the <code>control</code> list argument to <code>optim</code>.</p>
+<p>Below we will illustrate how to use Newton-type methods for optimizing the marginal likelihood, and in the following chapter this same example is used to illustrate the EM-algorithm. It is important to understand that the EM-algorithm does not rely on computations of the marginal likelihood. In many real applications computation of the marginal likelihood is computationally challenging or even impossible, thus most standard optimization algorithms will not be directly applicable, the EM-algorithm will.</p>
 </div>
 </div>
             </section>
@@ -363,8 +407,8 @@ Figure 5.2: Actual tail probabilities (left) for the Gamma distribution, compute
           </div>
         </div>
       </div>
-<a href="MCI.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="importance-sampling.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="descent-direction-algorithms.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="newton-type-algorithms.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
