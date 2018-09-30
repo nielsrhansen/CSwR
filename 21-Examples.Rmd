@@ -9,7 +9,7 @@ The focus of this chapter is on the structure of the statistical models
 themselves to provide the necessary background for the later chapters. 
 
 Statistical models come in all forms and shapes, and it is possible to 
-to take a very general and abstract mathmatical approach; statistical 
+take a very general and abstract mathematical approach; statistical 
 models are parametrized families of probability distributions. To 
 say anything of interest, we need more structure such as structure 
 on the parameter set, properties of the parametrized distributions,
@@ -59,7 +59,7 @@ computations of statistical importance. The EM-algorithm as
 treated in Chapter \@ref(EM) is one particularly good example, but 
 Bayesian computations can in similar ways exploit the structure.
 
-### Full exponential families
+### Full exponential families {#exp-fam}
 
 In this section we consider statistical models on an abstract 
 product sample space 
@@ -70,30 +70,30 @@ that are independent but not necessarily identically distributed.
 
 An exponential family is defined in terms of two ingredients: 
 
-  * maps $t_i : \mathcal{Z}_i \to \mathbb{R}^p$ for $i = 1, \ldots, m$,
-  * and non-trivial $\sigma$-finite measures $\mu_i$ on $\mathcal{Z}_i$ for $i = 1, \ldots, m$.
+  * maps $t_j : \mathcal{Z}_j \to \mathbb{R}^p$ for $j = 1, \ldots, m$,
+  * and non-trivial $\sigma$-finite measures $\mu_j$ on $\mathcal{Z}_j$ for $j = 1, \ldots, m$.
 
 
-The maps $t_i$ are called *sufficient statistics*, and in terms 
-of these and the *base measures* $\mu_i$ we define 
-$$\varphi_i(\theta) = \int e^{\theta^T t_i(u)} \mu_i(\mathrm{d}u).$$
+The maps $t_j$ are called *sufficient statistics*, and in terms 
+of these and the *base measures* $\mu_j$ we define 
+$$\varphi_j(\theta) = \int e^{\theta^T t_j(u)} \mu_j(\mathrm{d}u).$$
 These functions are well defined as functions
-$$\varphi_i : \mathbb{R}^p \to (0,\infty].$$
+$$\varphi_j : \mathbb{R}^p \to (0,\infty].$$
 We define 
-$$\Theta_i = \mathrm{int}(\{ \theta \in \mathbb{R}^p \mid \varphi_i(\theta) < \infty \}),$$
+$$\Theta_j = \mathrm{int}(\{ \theta \in \mathbb{R}^p \mid \varphi_j(\theta) < \infty \}),$$
 which by definition is an open set as. It can be shown
-that $\Theta_i$ is convex and that $\varphi_i$ is a log-concave function. 
+that $\Theta_j$ is convex and that $\varphi_j$ is a log-concave function. 
 Defining 
-$$\Theta = \bigcap_{i=1}^m \Theta_i,$$
+$$\Theta = \bigcap_{j=1}^m \Theta_j,$$
 then $\Theta$ is likewise open and convex, and we define the *exponential family* 
 as the distributions parametrized by $\theta \in \Theta$ that have densities 
 
 \begin{equation}
-f(\mathbf{z} \mid \theta) = \prod_{i=1}^m \frac{1}{\varphi_i(\theta)} e^{\theta^T t_i(z_i)} = e^{\theta^T \sum_{i=1}^m t_i(z_i) - \sum_{i=1}^m \log \varphi_i(\theta)}, \quad x \in \mathcal{Z},
+f(\mathbf{z} \mid \theta) = \prod_{j=1}^m \frac{1}{\varphi_j(\theta)} e^{\theta^T t_j(z_j)} = e^{\theta^T \sum_{i=1}^m t_j(z_j) - \sum_{i=1}^m \log \varphi_j(\theta)}, \quad \mathbf{z} \in \mathcal{Z},
 (\#eq:exp-dens)
 \end{equation}
 
-w.r.t. $\otimes_{i=1}^m \mu_i$. The 
+w.r.t. $\otimes_{j=1}^m \mu_j$. The 
 case where $\Theta = \emptyset$ is of no interest, and we will thus assume
 that the parameter set $\Theta$ is non-empty. The parameter $\theta$ is called
 the *canonical parameter* and $\Theta$ is the canonical parameter space. 
@@ -105,7 +105,79 @@ that the parametrized family of distributions can, indeed, be reparametrized
 as an exponential family. In the non-canonical parametrization, the 
 family is then an example of a *curved exponential family* as defined below.  
 
-It may seem restrictive that all the sufficient statistics, $t_i$, take values in the 
+```{example, von-Mises-exponential} 
+The von Mises distributions on $\mathcal{Z} = (-\pi, \pi]$ form an exponential family
+with $m = 1$. The sufficient statistic $t_1 : (-\pi, \pi] \mapsto \mathbb{R}^2$ 
+is 
+$$t_1(z) = \left(\begin{array}{c} \cos(z) \\ \sin(z) \end{array}\right),$$
+and 
+$$\varphi(\theta) = \int_{-\pi}^{\pi} e^{\theta_1 \cos(z) + \theta_2 \sin(z)} \mathrm{d}z < \infty$$
+for all $\theta = (\theta_1, \theta_2)^T \in \mathbb{R}^2$. Thus 
+the canonical parameter space is $\Theta = \mathbb{R}^2$. 
+
+As mentioned in Section \@ref(vM), the function $\varphi(\theta)$ can be 
+expressed in terms of a modified Bessel function, but it doesn't have 
+an expression in terms of elementary functions. Likewise in Section \@ref(vM),
+an alternative parametrization (polar coordinates) was given;
+$$(\kappa, \mu) \mapsto \theta = \kappa \left(\begin{array}{c} \cos(\mu) \\ \sin(\mu) \end{array}\right)$$
+that maps $[0,\infty) \times (-\pi, \pi]$ onto $\Theta$. The von Mises 
+distributions form a curved exponential family in the 
+$(\kappa, \mu)$-parametrization, but this parametrization has several problems.
+First, the $\mu$ parameter is not identifiable if $\kappa = 0$, which is 
+reflected by the fact that the reparametrization is not a one-to-one map. 
+Second, the parameter space is not open, which can be quite a nuisance
+for e.g. maxmimum-likelihood estimation. We could circumvent these problems by restricting 
+attention to $(\kappa, \mu) \in (0,\infty) \times (-\pi, \pi)$, but 
+we would then miss some of the distributions in the exponential family -- 
+notably the uniform distribution corresponding to $\theta = 0$. In conclusion,
+the canonical parametrization of the family of distributions as an
+exponential family is preferable for mathematical and computational reasons.
+
+```
+
+
+```{example, gaussian-exponential}
+The family of Gaussian distributions on $\mathbb{R}$ is an example of an exponential 
+family as defined above with $m = 1$ and $\mathcal{Z} = \mathbb{R}$. 
+The density of the $\mathcal{N}(\mu, \sigma^2)$ distribution is 
+$$\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(z - \mu)^2}{2\sigma^2}\right) = 
+  \frac{1}{\sqrt{2\pi}} \exp\left(\frac{\mu}{\sigma^2} z - \frac{1}{\sigma^2} \frac{z^2}{2} - \frac{\mu}{2\sigma^2} - \log \sigma^2\right).$$
+Letting the base measure $\mu_1$ be Lebesgue measure scaled by $1/\sqrt{2\pi}$,
+and $t_1 : \mathbb{R} \mapsto \mathbb{R}^2$ be 
+$$t_1(z) = \left(\begin{array}{c} z \\ -\frac{z^2}{2} \end{array}\right)$$
+we identify this family of distributions as an exponential family with canonical
+parameter 
+$$\theta = \left(\begin{array}{c} \frac{\mu}{\sigma^2} \\ \frac{1}{\sigma^2} \end{array}\right).$$
+
+We can express the mean and variance in terms of $\theta$ as 
+$$\sigma^2 = \frac{1}{\theta_2} \quad \text{and} \quad \mu = \frac{\theta_1}{\theta_2},$$
+and we find that 
+$$\log \varphi_1(\theta) = \frac{\mu}{2\sigma^2} + \log \sigma^2 = \frac{1}{2}\theta_1 - \log \theta_2.$$
+  
+We note that the reparametrization $(\mu, \sigma^2) \mapsto \theta$ maps
+$\mathbb{R} \times (0,\infty)$ bijectively onto the open set $\mathbb{R} \times (0,\infty)$,
+and that the formula above for $\log \varphi_1(\theta)$ only holds on this set.
+It is natural to ask if the canonical parameter space is actually larger for this
+exponential family. That is, is $\varphi_1(\theta) < \infty$ for $\theta_2 \leq 0$?
+To this end observe that if $\theta_2 \leq 0$
+$$\varphi_1(\theta) = \frac{1}{\sqrt{2\pi}} \int e^{\theta_1 z - \theta_2 \frac{z^2}{2}} \mathrm{d}z
+\geq \frac{1}{\sqrt{2\pi}} \int e^{\theta_1 z} \mathrm{d} z = \infty,$$
+and we conclude that 
+$$\Theta = \mathbb{R} \times (0,\infty).$$
+  
+The family of Gaussian distributions is an example of a family of distributions
+whose commonly used parametrization in terms of mean and variance differs from 
+the canonical parametrization as an exponential family. The mean and 
+variance are easy to interpret, but in terms of mean 
+and variance, the Gaussian distributions form a curved exponential family. For 
+mathematical and computational purposes the canonical parametrization is preferable.
+
+```
+
+
+
+For general exponential families it may seem restrictive that all 
+the sufficient statistics, $t_j$, take values in the 
 same $p$-dimensional space, and that all marginal distributions share a common 
 parameter vector $\theta$. This is, however, not a restriction. Say we have 
 two distributions with sufficient statistics $\tilde{t}_1 : \mathcal{Z}_1 \to \mathbb{R}^{p_1}$
@@ -129,27 +201,27 @@ on $\mathcal{Z}$ of *independent* variables. That is, the joint density
 in \@ref(eq:exp-dens) factorizes w.r.t. a product measure. Without really 
 changing the notation this assumption can be relaxed considerably. 
 
-If the sufficient statistic $t_i$, instead of being a fixed map, is 
-allowed to depend on $z_1, \ldots, z_{i-1}$, $f(\mathbf{z} \mid \theta)$ as 
+If the sufficient statistic $t_j$, instead of being a fixed map, is 
+allowed to depend on $z_1, \ldots, z_{j-1}$, $f(\mathbf{z} \mid \theta)$ as 
 defined in \@ref(eq:exp-dens)
 is still a joint density. The only difference is that the factor 
-$$f_i(z_i \mid z_1, \ldots, z_{i-1}, \theta) = e^{\theta^T t_i(z_i) - \log \varphi_i(\theta)}$$
-is now the *conditional* density of $z_i$ given $z_1, \ldots, z_{i-1}$.
-In the notation we let the dependence of $t_i$ on $z_1, \ldots, z_{i-1}$ 
+$$f_j(z_j \mid z_1, \ldots, z_{j-1}, \theta) = e^{\theta^T t_j(z_j) - \log \varphi_j(\theta)}$$
+is now the *conditional* density of $z_j$ given $z_1, \ldots, z_{j-1}$.
+In the notation we let the dependence of $t_j$ on $z_1, \ldots, z_{j-1}$ 
 be implicit as this will not affect the abstract theory. In any concrete 
-example though, it will be clear how $t_i$ actually depends upon all, some 
-or none of these variables. Note that $\varphi_i$ may now also depend 
-upon the data through $z_1, \ldots, z_{i-1}$.
+example though, it will be clear how $t_j$ actually depends upon all, some 
+or none of these variables. Note that $\varphi_j$ may now also depend 
+upon the data through $z_1, \ldots, z_{j-1}$.
 
 The observation above is powerful. It allows us to develop a unified 
 approach based on exponential families for a majority of all statistical 
 models that are applied in practice. The models we consider make two essential 
 assumptions 
 
-  1. the variables that we model can be ordered such that $z_i$ only 
-  depends on $z_1, \ldots, z_{i-1}$ for $i = 1, \ldots, m$,
+  1. the variables that we model can be ordered such that $z_j$ only 
+  depends on $z_1, \ldots, z_{j-1}$ for $j = 1, \ldots, m$,
   2. all the conditional distributions form exponential families themselves,
-  with the conditioning variables entering through the $t_i$-maps.
+  with the conditioning variables entering through the $t_j$-maps.
 
 The first of these assumptions is equivalent to the joint distribution 
 being a Bayesian network, that is, a distribution whose density factorizes
@@ -178,9 +250,9 @@ general treatment of Bayesian networks.
 ### Likelihood computations {#exp-fam-deriv}
 
 To simplify the notation we introduce 
-$$t(\mathbf{z}) = \sum_{i=1}^m t_i(z_i),$$
+$$t(\mathbf{z}) = \sum_{j=1}^m t_j(z_j),$$
 which we refer to as the sufficient statistic, and
-$$\kappa(\theta) = \sum_{i=1}^m \log \varphi_i(\theta),$$
+$$\kappa(\theta) = \sum_{j=1}^m \log \varphi_j(\theta),$$
 which is a concave $C^{\infty}$-function on $\Theta$. 
 
 Having observed $\mathbf{z} \in \mathcal{Z}$ it is evident that the log-likelihood
@@ -189,13 +261,31 @@ $$\ell(\theta) = \log f(\mathbf{z} \mid \theta) = \theta^T t(\mathbf{z}) - \kapp
 From this it follows that the gradient of the log-likelihood is
 $$\nabla \ell(\theta) = t(\mathbf{z}) - \nabla \kappa(\theta)$$
 and the Hessian is
-$$D^2 \ell(\theta) = - D^r \kappa(\theta),$$
+$$D^2 \ell(\theta) = - D^2 \kappa(\theta),$$
 which is always negative semidefinite. The maximum-likelihood estimator exists 
-if and only if there is a solution to the equation 
+if and only if there is a solution to the *score equation*
 $$t(\mathbf{z}) = \nabla \kappa(\theta),$$
 and it is unique if there is such a solution, $\hat{\theta}$, for which 
 $I(\hat{\theta}) = D^2 \kappa(\hat{\theta})$ is positive definite. We 
 call $I(\hat{\theta})$ the *observed Fisher information*. 
+
+The definition of an exponential family in Section \@ref(exp-fam) encompasses
+the situation where $z_1, \ldots, z_m$ are i.i.d. by taking $t_j$ to be 
+independent of $j$. In that case, $\kappa(\theta) = m \kappa_1(\theta)$,
+the score equation can be rewritten as 
+$$\frac{1}{m} \sum_{j=1}^m t_1(z_j) = \kappa_1(\theta),$$
+and the Fisher information becomes
+$$I(\hat{\theta}) = m D^2 \kappa_1(\hat{\theta}).$$
+
+However, the point of the general formulation is 
+that it includes regression models, and, via the Bayesian networks extension 
+above, models with dependence structures. We could, of course, then 
+have i.i.d. replications $\mathbf{z}_1, \ldots, \mathbf{z}_n$ of
+the entire $m$-dimensional vector $\mathbf{z}$, and we would get 
+the score equation 
+$$\frac{1}{n} \sum_{i=1}^n t(\mathbf{z}_i) = \kappa(\theta),$$
+and corresponding Fisher information
+$$I(\hat{\theta}) = n D^2 \kappa(\hat{\theta}).$$
 
 ### Curved exponential families
 
@@ -213,8 +303,52 @@ D \theta(\psi)^T D^2 \kappa(\theta(\psi)) D \theta(\psi).$$
 
 ## Multinomial models
 
-Will be the main example used in all sections. A short general intro to 
-multinomial models
+The multinomial model is the model of all probability distributions on 
+a finite set $\mathcal{Z} = \{1, \ldots, K\}$. The model is parametrized
+by the simplex 
+$$\Delta_K = \left\{(p_1, \ldots, p_K)^T \in \mathbb{R}^K \mid p_k \geq 0, \sum_{k=1}^K p_k = 1\right\}.$$
+The distributions parametrized by the relative interior of $\Delta_K$ form 
+an exponential family by the parametrization 
+$$p_k = \frac{e^{\theta_k}}{\sum_{l=1}^K e^{\theta_l}} \in (0,1)$$
+for $(\theta_1, \ldots, \theta_K)^T \in \mathbb{R}^K.$ That is,
+the sufficient statistic is $k \mapsto (\delta_{1k}, \ldots, \delta_{Kk})^T \in \mathbb{R}^{K-1}$
+(where $\delta_{lk} \in \{0, 1\}$ is the Kronecker delta being 1 if and only
+if $l = k$), and 
+$$\varphi(\theta_1, \ldots, \theta_K) = \sum_{l=1}^K e^{\theta_l}.$$
+We call this exponential family parametrization the *symmetric* parametrization. 
+The canonical parameter in the symmetric parametrization is not identifiable, 
+and to resolve the lack of identifiability
+there is a tradition of fixing the last parameter as $\theta_K = 0$. This 
+results in a canonical parameter $\theta = (\theta_1, \ldots, \theta_{K-1})^T \in \mathbb{R}^{K-1},$
+a sufficient statistic $t_1(k) = (\delta_{1k}, \ldots, \delta_{(K-1)k})^T \in \mathbb{R}^p$,
+a 
+$$\varphi(\theta) = 1 + \sum_{l=1}^{K-1} e^{\theta_l}$$
+and probabilities 
+$$p_k = \left\{\begin{array}{ll} \frac{e^{\theta_k}}{1 + \sum_{l=1}^{K-1} e^{\theta_l}}  & \quad \text{if } k = 1, \ldots, K-1 \\  \frac{1}{1 + \sum_{l=1}^{K-1} e^{\theta_l}} & \quad \text{if } k = K. \end{array}\right.$$
+We see that in this parametrization $p_k = e^{\theta_k}p_K$ for $k = 1, \ldots, K-1$,
+where the probability of the last element $K$ acts as a baseline or reference probability,
+and the factors $e^{\theta_k}$ act as multiplicative modifications of this 
+baseline. Moreover, 
+$$\frac{p_k}{p_l} = e^{\theta_k - \theta_l},$$
+which is independent of the chosen baseline.
+
+In the special case of $K = 2$ the two elements $\mathcal{Z}$ are often given 
+other labels than $1$ and $2$. The most common labels are $\{0, 1\}$ and $\{-1, 1\}$.
+If we use the 0-1-labels the convention is to use $p_0$ as the baseline and 
+thus 
+$$p_1 = \frac{e^{\theta}}{1 + e^{\theta}} = e^{\theta} p_0 = e^{\theta} (1 - p_0).$$
+parametrized by $\theta \in \mathbb{R}$. As this function of $\theta$ is 
+known as the *logistic function*, this parametrization of the probability 
+distributions on $\{0,1\}$ is often referred to as the logistic model. From the 
+above we see directly that 
+$$\theta = \log \frac{p_1}{1 - p_1}$$
+is the log-odds. 
+
+If we use the $\pm 1$-labels, an alternative exponential family parametrization is 
+$$p_z = \frac{e^{k\theta}}{e^\theta + e^{-\theta}}$$
+for $\theta \in \mathbb{R}$ and $k \in \{-1, 1\}$. This gives a symmetric treatment of the two 
+labels while retaining the identifiability. 
+
 
 ### Peppered Moths
 
@@ -235,9 +369,9 @@ with genotype TT are light colored. Moths with genotypes II and IT are mottled.
 
 The peppered moth provided an [early demonstration of evolution](https://en.wikipedia.org/wiki/Peppered_moth_evolution) 
 in the 19th 
-centure England, where the light colored moth was outnumered by the dark 
+century England, where the light colored moth was outnumbered by the dark 
 colored variety. The dark color became advantageous due to the increased 
-polution, where trees were darkened by soot. 
+pollution, where trees were darkened by soot. 
 
 According to the [Hardy-Weinberg principle](https://en.wikipedia.org/wiki/Hardy–Weinberg_principle),
 the genotype frequencies are 
@@ -255,7 +389,7 @@ We only observe only $(n_C, n_T, n_I)$, where
 $$n = \underbrace{n_{CC} + n_{CI} + n_{CT}}_{= n_C} + 
 \underbrace{n_{IT} + n_{II}}_{=n_I} + \underbrace{n_{TT}}_{=n_T}.$$
 
-For maksimum-likelihood estimation of the parameters in this model from 
+For maximum-likelihood estimation of the parameters in this model from 
 the observation $(n_C, n_T, n_I)$ only, we need the marginal likelihood, 
 that is, the likelihood in the marginal distribution of the observed
 variables. We will compute this in the section below by considering this
@@ -303,8 +437,127 @@ The log-likelihood is
 
 ## Regression models {#regression}
 
+Regression models are models of one variable, called the response,
+conditionally on one or more other variables, called the predictors.
+Typically we use models that assume conditional independence of the responses 
+given the predictors, and a particularly convenient class of regression 
+models are based on exponential families. 
 
+If we let $y_i \in \mathbb{R}$ denote the $i$th response and $x_i \in \mathbb{R}^p$ 
+the $i$th predictor we can consider the exponential family of models with joint density
+$$f(\mathbf{y} \mid \mathbf{X}, \beta) = \prod_{i=1}^n e^{\theta^T t_i(y_i \mid x_i) - \log \varphi_i(\theta)}$$
+for suitably chosen base measures. Here 
+$$\mathbf{X} = \left( \begin{array}{c} x_1^T \\ x_2^T \\ \vdots \\ x_{n-1}^T \\ x_n^T \end{array} \right)$$
+is called the *model matrix* and is an $n \times p$ matrix. 
 
+```{example, poisson-regression} 
+If $y_i \in \mathbb{N}_0$ are counts we often use a Poisson regression model 
+with point probabilities (density w.r.t. counting measure)
+$$p_i(y_i \mid x_i) = e^{-\mu(x_i)} \frac{\mu(x_i)^{y_i}}{y_i!}.$$
+If the mean depends on the predictors in a log-linear way, $\log(\mu(x_i)) = x_i^T \beta$,
+then 
+$$p_i(y_i \mid x_i) = e^{\beta^T x_i y_i - \exp( x_i^T \beta)} \frac{1}{y_i!}.$$
+The factor $1/y_i!$ can be absorbed into the base measure, and we recognize 
+this Poisson regression model as an exponential family with sufficient statistics
+$$t_i(y_i \mid x_i) = x_i y_i$$
+and 
+$$\log \varphi_i(\beta) =  \exp( x_i^T \beta).$$
+
+To implement numerical optimization algorithms for computing the 
+maximum-likelihood estimate we note that 
+$$t(\mathbf{y}) = \sum_{i=1}^n x_i y_i = \mathbf{X}^T \mathbf{y} \quad \text{and} \quad
+\kappa(\beta) = \sum_{i=1}^n e^{x_i^T \beta},$$
+that 
+$$\nabla \kappa(\beta) = \sum_{i=1}^n x_i e^{x_i^T \beta},$$
+and that
+$$D^2 \kappa(\beta) = \sum_{i=1}^n x_i x_i^T e^{x_i^T \beta} = \mathbf{X}^T \mathbf{W}(\beta) \mathbf{X}$$
+where $\mathbf{W}(\beta)$ is a diagonal matrix with $\mathbf{W}(\beta)_{ii} = \exp(x_i^T \beta).$ 
+All these formulas follow directly from the general formulas for exponential 
+families.
+
+```
+
+To illustrate the use of a Poisson regression model we consider 
+the following data set from a major Swedish supermarket chain. It contains
+the number of bags of frozen vegetables sold in a given week in a given store
+under a marketing campaign. A predicted number of items sold in a normal week 
+(without a campaign) based on historic sales is included. It is of interest to 
+recalibrate this number to give a good prediction of the number of items 
+actually sold.  
+
+```{r vegetables-data}
+vegetables <- read_csv("data/vegetables.csv", col_types = cols(store = "c"))
+```
+
+```{r vegetables-summary, dependson="vegetables-data"}
+summary(vegetables)
+```
+
+It is natural to model the number of sold items using a Poisson regression 
+model, and we will consider the following simple log-linear model:
+
+$$\log(E(\text{sale} \mid \text{normalSale})) = \beta_0 + \beta_1 \log(\text{normalSale}).$$
+
+This is an example of an exponential family regression model as above with 
+a Poisson response distribution. It is a standard regression model that can
+be fitted to data using the `glm` function and using the formula interface 
+to specify how the response should depend on the normal sale. The model is 
+fitted by computing the maximum-likelihood estimate of the two parameters 
+$\beta_0$ and $\beta_1$. 
+
+```{r pois-model-null, dependson="vegetables-data"}
+pois_model_null <- glm(sale ~ log(normalSale), 
+                       data = vegetables, 
+                       family = poisson)   ## Fitting a Poisson regression model
+```
+
+```{r pois-sum-null, echo=2, dependson="pois-model-null"}
+old_options = options(digits=4)
+summary(pois_model_null)
+options(digits = old_options$digits)
+```
+
+The fitted model of the expected sale as a function of the normal sale, $x$, is    
+$$x \mapsto e^{1.46 + 0.92 \times \log(x)} = (4.31 \times x^{-0.08}) \times x.$$
+This model roughly predicts a four-fold increase of the sale during a 
+campaign, though the effect decays with increasing $x$. If the normal 
+sale is 10 items the factor is $4.31 \times 10^{-0.08} = 3.58$, and if 
+the normal sale is 100 items the factor reduces to $4.31 \times 100^{-0.08} = 2.98$.
+
+We are not entirely satisfied with this model. It is fitted across all 
+stores in the data set, and it is not obvious that the same effect should 
+apply across all stores. Thus we would like to fit a model of the form
+
+$$\log(E(\text{sale})) = \beta_{\text{store}} + \beta_1 \log(\text{normalSale})$$
+
+instead. Fortunately, this is also straightforward using `glm`. 
+
+```{r pois-model, dependson="data"}
+## Note, variable store is a factor! The 'intercept' is removed 
+## in the formula to obtain a parametrization as above. 
+pois_model <- glm(sale ~ store + log(normalSale) - 1, 
+                  data = vegetables, 
+                  family = poisson)
+```
+
+We will not print all the individual store effects as there are 352
+individual stores. 
+
+```{r pois-sum, echo=2, dependson="pois-model"}
+old_options = options(digits=4)
+summary(pois_model)$coefficients[c(1, 2, 3, 4, 353), ]
+options(digits = old_options$digits)
+```
+
+We should note that the coefficient of $\log(\text{normalSale})$ has 
+changed considerably, and the model is a somewhat different model now 
+for the individual stores. 
+
+From a computational viewpoint the most important thing that has changed is
+that the number of parameters has increased a lot. In the first and simple 
+model there are two parameters. In the second model there are 353 parameters. 
+Computing the maximum-likelihood estimate is a considerably more difficult
+problem in the second case. 
 
 ## Finite mixture models
 
@@ -355,7 +608,7 @@ of $Y$ given $Z$. We have here made the conditioning variable explicit.
 
 The marginal density of $Y$ in the exponential family parametrization then 
 becomes
-$$f(y \mid \theta = \sum_{k=1}^K  e^{\theta^T (t_1(k) + t_2(y \mid k)) - \log \varphi_1(\theta) - \log \varphi_2(\theta \mid k)}.$$
+$$f(y \mid \theta) = \sum_{k=1}^K  e^{\theta^T (t_1(k) + t_2(y \mid k)) - \log \varphi_1(\theta) - \log \varphi_2(\theta \mid k)}.$$
 For small $K$ it is usually unproblematic to implement the computation of 
 the marginal density using the formula above, and the computation of derivatives 
 can likewise be implemented based on the formulas derived in Section \@ref(exp-fam-deriv).
