@@ -26,8 +26,24 @@ precision is already orders of magnitudes smaller than the statistical
 uncertainty of the parameter estimate being computed, further 
 optimization will not make a difference in any relevant way. 
 
+In fact, blindly pursuing the global maximum of the likelihood can very well 
+lead you astray if your model is not as well 
+behaved as an exponential family is. In situations where $H$ is 
+not convex, as is the case for finite mixtures, there are common examples where 
+the likelihood is unbounded, yet there will be a local maximizer that is a 
+good estimate. There are other examples where even a saddle point of $H$ 
+gives a good estimate. Though we typically phrase our algorithms 
+as optimization algorithms, what we are really pursuing
+when $H$ is not convex are stationary points; solutions to $\nabla H(\theta) = 0$. 
+And rather than being fixated on computing the global minimizer of $H$ 
+to the greatest numerical precision, we should find and explore as many 
+approximately stationary points as possible. In this respect, optimization 
+in statistics differs from certain other applications of optimization. Finding
+the optimum is not "the thing". It is a surrogate for "the thing", which is
+to fit models to data. 
+
 For the generic optimization problem considered in this chapter, the practical 
-challenge when implementing algorithms for its solution in R is typically 
+challenge when implementing algorithms in R is typically 
 to implement efficient evaluation of $H$ and its derivatives. In particular, 
 efficient evaluations of $-\ell$. Several choices of standard optimization
 algorithms are possible and some are already implemented and available in R. 
@@ -48,6 +64,17 @@ case the convergence itself is ambiguous. Second, $\theta_n$
 can in general only be shown to converge to a *local* minimizer if anything. 
 Third, $\theta_n$ may not even converge, but $H(\theta_n)$
 may still converge to a local minimum. 
+
+This section will give a brief introduction to convergence analysis 
+of optimization algorithms. We will see what kind of conditions on $H$ can be 
+used to show  convergence results and some of the basic proof techniques.
+We will only scratch the surface here with the hope that it can motivate
+the algorithms that will be introduced in subsequent chapters as well 
+as the empirical techniques introduced below for practical assessment of 
+convergence.
+
+
+### Descent algorithms
 
 ```{example, grad-descent}
 Suppose that $D^2H(\theta)$ has *numerical radius* uniformly bounded by $L$, that is,
@@ -75,32 +102,50 @@ algorithm is an example of a *gradient descent* algorithm.
 
 ```
 
-### Descent algorithms
-
-It is worthwhile to take a closer look at the general 
-class of *descent algorithms*, for which
+In general, we define a *descent algorithm* to be an algorithm for which
 $$H(\theta_0) \geq H(\theta_1) \geq H(\theta_2) \geq \ldots.$$
 If all inequalities are sharp, unless if some $\theta_i$ is a local minimizer, 
-the algorithm is called a *strict* descent algorithm. If $H$ is *level bounded*, 
+the algorithm is called a *strict* descent algorithm. The gradient descent
+algorithm in Example \@ref(exm:grad-descent) is a strict descent algorithm.
+However, even for a strict descent algorithm, $H$ may just descent in smaller 
+and smaller steps without converging toward a local minimum -- even if $H$ is 
+bounded below. 
+
+Suppose now that $H$ is *level bounded*, 
 meaning that the closed set
 $$\mathrm{lev}(\theta_0) =  \{\theta \in \Theta \mid H(\theta) \leq H(\theta_0)\}$$
-is bounded (and thereby compact), $H$ is bounded from below and 
-$H(\theta_n)$ is convergent for any descent algorithm. Moreover, by compactness, 
-$\theta_n$ has a convergent subsequence with limit $\theta_{\infty}$. If the 
-algorithm is a strict descent algorithm, $\theta_{\infty}$ is a local 
-minimizer and $H(\theta_n)$ converges toward a local minimum, but $\theta_n$ 
-need not converge. However, if $H$ has a unique minimizer in $\mathrm{lev}(\theta_0)$, 
-which is then equal to $\theta_{\infty}$, then
+is bounded (and thereby compact). Then $H$ is bounded from below and 
+$H(\theta_n)$ is convergent for any descent algorithm. 
+Restricting attention to the gradient descent algorithm, we see that 
+
+\begin{align}
+H(\theta_n) & = 
+(H(\theta_n) - H(\theta_{n-1})) + (H(\theta_{n-1}) - H(\theta_{n-2})) + ... + 
+(H(\theta_1) - H(\theta_0)) + H(\theta_0) \\
+& \leq H(\theta_0) - \frac{1}{(L + 1)^2} \sum_{k=1}^n \|\nabla H(\theta_{k-1})\|_2^2.
+\end{align}
+
+Because $H$ is bounded below, this implies that $\sum_{k=1}^{\infty} \|\nabla H(\theta_{k-1})\|_2^2 < \infty$
+and hence
+$$\|\nabla H(\theta_{n})\|_2 \rightarrow 0$$
+for $n \to \infty$. By compactness of $\mathrm{lev}(\theta_0)$,
+$\theta_n$ has a convergent subsequence with limit $\theta_{\infty}$, and 
+we conclude by continuity of $\nabla H$ that 
+$$\nabla H(\theta_{\infty}) = 0,$$
+and $\theta_{\infty}$ is a stationary point. In fact, this holds for any 
+limit point of the sequence, and this implies that if $H$ has a *unique*
+stationary point in $\mathrm{lev}(\theta_0)$, then this is, in fact, 
+$\theta_{\infty}$, it is a minimizer, and 
 $$\theta_n \rightarrow \theta_{\infty}$$
 for $n \to \infty$. 
 
-If $D^2H(\theta)$ has uniformly bounded numerical radius, and if
-$H$ is level bounded with a unique minimizer in $\mathrm{lev}(\theta_0)$, 
+To summarize, if $D^2H(\theta)$ has uniformly bounded numerical radius, and if
+$H$ is level bounded with a unique stationary point in $\mathrm{lev}(\theta_0)$, 
 then the gradient descent algorithm of Example \@ref(exm:grad-descent) is a strict descent
-algorithm that will converge toward that minimizer. A sufficient condition 
+algorithm that converges toward that minimum. A sufficient condition 
 on $H$ for this to hold is that the eigenvalues of (the symmetric) matrix 
 $D^2H(\theta)$ for all $\theta$ are contained in an interval $[l, L]$ 
-with $0 < l \leq L$. In this case, $H$ is a *strictly convex function* 
+with $0 < l \leq L$. In this case, $H$ is a *strongly convex function* 
 with a unique global minimizer. 
 
 ### Maps and fixed points
@@ -135,11 +180,13 @@ for a constant $c \in [0,1)$ (using any norm), then $\Phi$ has a unique
 fixed point and $\Phi^{\circ n}(\theta_0)$ converges to that fixed point for 
 any starting point $\theta_0 \in \Theta$. 
 
-If $\theta, \theta' \in \Theta$ then by Taylor's theorem 
+We will show that $\Phi_{\nabla}$ is a contraction under the assumption
+that the eigenvalues of $D^2H(\theta)$ for all $\theta$ are contained in an interval $[l, L]$ 
+with $0 < l \leq L$. If $\theta, \theta' \in \Theta$ we find by Taylor's theorem 
+that 
 $$\nabla H(\theta) = \nabla H(\theta') + D^2H(\tilde{\theta})(\theta - \theta')$$
 for some $\tilde{\theta}$ on the line between $\theta$ and $\theta'$. 
-When the eigenvalues of $D^2H(\theta)$ for all $\theta$ are contained in an interval $[l, L]$ 
-with $0 < l \leq L$, the gradient descent map fulfills
+For the gradient descent map this gives that
 
 \begin{align}
 \|\Phi_{\nabla}(\theta) - \Phi_{\nabla}(\theta')\|_2 & = 
@@ -152,9 +199,10 @@ with $0 < l \leq L$, the gradient descent map fulfills
 \end{align}
 since the eigenvalues of $I - \frac{1}{L+1} D^2H(\tilde{\theta})$ are all between 
 $1 - L/(L + 1)$ and $1 - l/(L+1)$. This shows that $\Phi_{\nabla}$ is a 
-contraction with $c = 1 - l/(L + 1) < 1$. This provides an alternative proof,
+contraction with $c = 1 - l/(L + 1) < 1$, and it provides an alternative proof,
 via Banach's fixed point theorem, of convergence of the gradient descent algorithm 
-in Example \@ref(exm:grad-descent) for a *strictly* convex $H$. 
+in Example \@ref(exm:grad-descent) for a *strongly* convex $H$ with uniformly 
+bounded Hessian.
 
 ### Convergence rate
 
@@ -274,7 +322,7 @@ fix one (sufficiently small) step length that will guarantee descent.
 ### Line search
 
 We consider algorithms of the form 
-$$\theta_{n+1} = \theta_n + \gamma_{n+1} \rho_n$$
+$$\theta_{n+1} = \theta_n + \gamma_{n} \rho_n$$
 for descent directions $\rho_n$ and starting in $\theta_0$. 
 The step lengths, $\gamma_n$, are chosen so as to give 
 sufficient descent in each iteration. 
@@ -338,7 +386,7 @@ and simply check the sufficient descent condition
 $$H(\theta_{n} + d^k \gamma_0 \rho_{n}) \leq H(\theta_n) + cd^k \gamma_0 \nabla H(\theta_{n})^T \rho_{n}$$
 
 for $c \in (0, 1)$. The implementation of backtracking requires the choice 
-of the three parameters $\gamma_0$, $d \in (0, 1)$ and $c \in (0, 1)$.
+of the three parameters: $\gamma_0 > 0$, $d \in (0, 1)$ and $c \in (0, 1)$.
 A good choice depends quite a lot on the algorithm used for choosing
 the descent direction, but choosing $c$ too close to 1 can make the algorithm 
 take too small steps, and taking $d$ too small can likewise 
@@ -365,9 +413,9 @@ of various parameters for the numerical optimization algorithms.
 
 ```{r implement, dependson="vegetables-data"}
 X <- model.matrix(sale ~ log(normalSale), data = vegetables)
-z <- vegetables$sale
+y <- vegetables$sale
 ## The function `drop` drops the dimensions attribute
-t_map <- drop(crossprod(X, z))  ## More efficient than drop(t(X) %*% z)
+t_map <- drop(crossprod(X, y))  ## More efficient than drop(t(X) %*% y)
 
 H <- function(beta) 
   (drop(sum(exp(X %*% beta)) - beta %*% t_map)) / nrow(X)
@@ -485,20 +533,20 @@ tracer <- function(objects = NULL, N = 1, save = TRUE, time = TRUE, ...) {
   values_save <- list()
   last_time <- proc.time()
   trace <- function() {
-  if(is.null(objects))
-    objects <- ls(parent.frame())
-  values <- mget(objects, envir = parent.frame(), ifnotfound = list(NA))
-   if(N && (n == 1 || n %% N == 0))
-    cat("n = ", n, ": ",  paste(names(values), " = ", format(values, ...), 
-                                "; ", sep = ""), "\n", sep = "")
-  if(save)
-    if(time) {
-      time_diff <- as.numeric(proc.time() - last_time)[c(1, 2)]
-      values[[".time"]] <- time_diff[1] + time_diff[2]
-      last_time <<- proc.time()
-    }
-  values_save[[n]] <<- values
-  n <<- n + 1
+    if(is.null(objects))
+      objects <- ls(parent.frame())
+    values <- mget(objects, envir = parent.frame(), ifnotfound = list(NA))
+    if(N && (n == 1 || n %% N == 0))
+      cat("n = ", n, ": ",  paste(names(values), " = ", format(values, ...), 
+                                  "; ", sep = ""), "\n", sep = "")
+    if(save)
+      if(time) {
+        time_diff <- as.numeric(proc.time() - last_time)[c(1, 2)]
+        values[[".time"]] <- time_diff[1] + time_diff[2]
+        last_time <<- proc.time()
+      }
+    values_save[[n]] <<- values
+    n <<- n + 1
   }
   get <- function(simplify = FALSE) {
     if(simplify) {
@@ -507,13 +555,15 @@ tracer <- function(objects = NULL, N = 1, save = TRUE, time = TRUE, ...) {
         col_names, 
         function(x) do.call(rbind, unlist(lapply(values_save, function(y) y[x]), 
                                           recursive = FALSE))
-        )
+      )
       names(values_save) <- col_names
       values_save <- lapply(col_names, function(x) {
         x_val <- values_save[[x]] 
         if(!is.null(ncol(x_val)) && ncol(x_val) == 1) {
           colnames(x_val) <- x
         } else {
+          if(is.null(colnames(x_val)))
+            colnames(x_val) <- 1:ncol(x_val)
           colnames(x_val) <- paste(x, ".", colnames(x_val), sep = "")
         }
         x_val
@@ -571,7 +621,7 @@ tail(summary(GD_tracer))
 
 The trace information is stored in a list. The summary method transforms 
 the trace information into a data frame with one row per iteration. We can also access 
-individual entries of the list of trace information via subscripting. 
+individual entries of the list of trace information via subsetting. 
 
 ```{r GD-trace-sub, dependson=c("tracer", "GD-trace")}
 GD_tracer[377] 
@@ -608,30 +658,36 @@ grid.arrange(p1, p2, ncol = 2)
 
 The gradient direction is typically not the best descent direction. It is too 
 local, and convergence can be quite slow. One of the better algorithms that 
-is still a "first order algorithm" (using only gradient information) is the [*conjugate
+is still a "first order algorithm" (using only gradient information) is the [*nonlinear conjugate
 gradient*](https://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method) algorithm. 
-In the Fletcher and Reeves version of the algorithm
+In the Fletcher--Reeves version of the algorithm
 the descent direction is initialized as the negative gradient
 $\rho_0 = - \nabla H(\theta_{0})$ and then updated as
 $$\rho_{n} = - \nabla H(\theta_{n}) + \frac{\|\nabla H(\theta_n)\|_2^2}{\|\nabla H(\theta_{n-1})\|_2^2} \rho_{n-1}.$$
 That is, the descent direction, $\rho_{n}$, is the negative gradient but modified according to 
-the previous descent direction. 
+the previous descent direction. There is plenty of opportunity to vary the the prefactor 
+of $\rho_{n-1}$, and the one presented here is what makes it the Fletcher--Reeves
+version. Other versions go by the names of their inventors such as Polak–Ribière
+or Hestenes--Stiefel.
 
 In fact, $\rho_{n}$ need not be a descent direction unless we put some 
-restrictions on the step lengths. If one requires the step length $\gamma_{n+1}$ 
-to satisfy the *strong* curvature condition
-$$|h'(\gamma)| = |\nabla H(\theta_n + \gamma \rho_n)^T \rho_n | \leq \tilde{c} |\nabla H(\theta_n)^T \rho_in = \tilde{c} |h'(0)|$$
-for $\tilde{c} < \frac{1}{2}$, then $\rho_{n + 1}$ can be shown to be a descent direction 
-if $\rho_n$ is. 
+restrictions on the step lengths. One possibility is to require that
+the step length $\gamma_{n}$ satisfies the *strong* curvature condition
+$$|h'(\gamma)| = |\nabla H(\theta_n + \gamma \rho_n)^T \rho_n | \leq \tilde{c} |\nabla H(\theta_n)^T \rho_n| = \tilde{c} |h'(0)|$$
+for a $\tilde{c} < \frac{1}{2}$. Then $\rho_{n + 1}$ can be shown to be a descent 
+direction if $\rho_{n}$ is. 
 
 We implement the conjugate gradient method in a slightly different way. Instead
 of introducing the more advanced curvature condition, we simply reset the 
 algorithm to use the gradient direction in any case where a non-descent direction
-has been chosen. 
+has been chosen. Resets of descent direction every $p$th iteration is recommended 
+anyway for the nonlinear conjugate gradient algorithm.
 
 ```{r CG}
 CG <- function(par, d = 0.8, c = 0.1, gamma0 = 1, epsilon = 1e-6, trace = NULL) {
-  rho0 <- numeric(length(par))
+  p <- length(par)
+  m <- 1
+  rho0 <- numeric(p)
   repeat {
     value <- H(par)
     grad <- grad_H(par)
@@ -642,10 +698,11 @@ CG <- function(par, d = 0.8, c = 0.1, gamma0 = 1, epsilon = 1e-6, trace = NULL) 
     ## Descent direction
     rho <- - grad + grad_norm_sq * rho0
     h_prime <- drop(t(grad) %*% rho)
-    ## Reset to gradient descent if rho is not a descent direction
-    if(h_prime >= 0) {
+    ## Reset to gradient descent if m > p or rho is not a descent direction
+    if(m > p || h_prime >= 0) {
       rho <- - grad
       h_prime <- - grad_norm_sq 
+      m <- 1
     }
     par1 <- par + gamma * rho
     ## Backtracking
@@ -655,13 +712,14 @@ CG <- function(par, d = 0.8, c = 0.1, gamma0 = 1, epsilon = 1e-6, trace = NULL) 
     }
     rho0 <- rho / grad_norm_sq
     par <- par1
+    m <- m + 1
   }
   par
 }
 ```
 
 
-```{r CG-test-null, echo=2:3, dependson=c("Implement", "tracer", "vegetables-data")}
+```{r CG-test-null, echo=2:3, dependson=c("Implement", "tracer", "vegetables-data", "CG")}
 old_options = options(digits = 5)
 CG_tracer <- tracer(c("value", "gamma", "grad_norm_sq"), N = 10)
 pois_CG <- CG(rep(0, ncol(X)), trace = CG_tracer$trace)
@@ -690,8 +748,8 @@ p4 <- ggplot(data = trace_CG, aes(x = 1000 * .time, y = value - value_Inf)) +
   geom_smooth(method = "lm", se = FALSE, method.args = list(subset = 11:nrow(trace_CG))) + 
   geom_text(aes(x = 60, y = 10, label = paste("rate:", round(rate4, 3), "per ms")), data = data.frame())
 
-cc1 <- coord_cartesian(xlim = c(0, 80), ylim = c(0.001, 100))
-cc2 <- coord_cartesian(xlim = c(0, 80), ylim = c(1e-8, 100))
+cc1 <- coord_cartesian(xlim = c(0, 90), ylim = c(1e-4, 100))
+cc2 <- coord_cartesian(xlim = c(0, 90), ylim = c(1e-10, 100))
 grid.arrange(p1 + cc1 + ggtitle("Gradient descent") + xlab(""), 
              p3 + cc1 + ggtitle("Conjugate gradient"), 
              p2 + cc2, p4 + cc2, nrow = 2)
@@ -702,10 +760,10 @@ This algorithm is fast enough to fit the large Poisson regression model.
 ```{r X-update, dependson=c("Implement", "vegetables-data")}
 X <- model.matrix(sale ~ store + log(normalSale) - 1, 
                   data = vegetables)
-t_map <- drop(crossprod(X, z)) 
+t_map <- drop(crossprod(X, y)) 
 ```
 
-```{r CG-test, echo=2:3, dependson=c("Implement", "X-update", "tracer", "vegetables-data")}
+```{r CG-test, echo=2:3, dependson=c("Implement", "X-update", "tracer", "vegetables-data", "CG")}
 old_options = options(digits = 5)
 CG_tracer <- tracer(c("value", "gamma", "grad_norm_sq"), N = 100)
 pois_CG <- CG(rep(0, ncol(X)), trace = CG_tracer$trace)
@@ -811,7 +869,7 @@ applicable, the EM-algorithm will.
 
 ## Newton-type algorithms
 
-The Newton algorithm is very similar to gradient descent  
+The Newton algorithm is very similar to gradient descent
 except that the gradient descent direction is replaced by
 $$\rho_n = - D^2 H(\theta_n)^{-1} \nabla H(\theta_n).$$
 
@@ -885,7 +943,7 @@ The R function `glm.fit` uses a Newton algorithm (without backtracking)
 and is about a factor five faster on this example. 
 
 ```{r pois-glm.fit, dependson=c("Implement", "Newton-test")}
-system.time(glm.fit(X, z, family = poisson()))
+system.time(glm.fit(X, y, family = poisson()))
 ```
 
 One should be careful when comparing run times for different optimization 
@@ -918,9 +976,10 @@ pois_BFGS[c("value", "counts")]
 
 One of the benefits of the implementations of $H$ and its derivatives
 as well as of the descent algorithms is that they can exploit sparsity
-of $X$ almost for free. The implementations have not done that in the 
-previous cases, because $X$ has been stored as a dense matrix. In 
-reality, $X$ is a very sparse matrix (most of the matrix consists of zeroes), 
+of $\mathbf{X}$ almost for free. The implementations have not done that in 
+previous computations, because $\mathbf{X}$ has been stored as a dense matrix. In 
+reality, $\mathbf{X}$ is a very sparse matrix (the vast majority of the matrix 
+entries are zero), 
 and if we convert it into a sparse matrix, all the matrix-vector products 
 will be more run time efficient. Sparse matrices are implemented in the 
 R package Matrix. 
@@ -948,7 +1007,7 @@ model matrix as a step toward constructing a sparse model matrix. This
 is possible by constructing the sparse model matrix directly using 
 a function from the R package MatrixModels.
 
-```{r sparse-model-matrix, dependson="data"}
+```{r sparse-model-matrix, dependson="vegetables-data"}
 library(MatrixModels)
 X <- model.Matrix(sale ~ store + log(normalSale) - 1, 
                    data = vegetables, sparse = TRUE)
@@ -968,26 +1027,37 @@ summary(Newton_tracer)
 Run time efficiency is not the only argument for using sparse matrices as they are 
 also more memory efficient. It is memory (and time) inefficient to use dense intermediates, 
 and for truly large scale problems impossible. Using sparse model matrices 
-for regression models allow us to work with larger models that have 
+for regression models allows us to work with larger models that have 
 more variables, more factor levels and more observations than if we use dense
 model matrices. For the Poisson regression model the memory used by either representation
 can be found. 
 
-```{r}
+```{r X-size, dependson="sparse-model-matrix", echo=c(2, 4), results='hold'}
+cat("Sparse matrix memory usage:\n")
 object.size(X)
+cat("Dense matrix memory usage:\n")
 object.size(as.matrix(X))
 ```
 
 We see that the dense matrix uses around a factor 30 more memory than the 
-sparse representation. In this case this is a difference from using 
-around 100 kB to using around 3 MB, which won't be a problem 
-on a contemporary computer. However, going from using a 100 Mb for
-storing a matrix to using 3 GB could be the difference between 
-running the computations with no problems on a standard laptop 
-to not being able to work with the matrix. Using `model.Matrix` it is 
-possible to construct a sparse model matrix directly and void 
+sparse representation. In this case it means using around 3 MB for storing the 
+dense matrix instead of around 100 kB, which won't be a problem 
+on a contemporary computer. However, going from using 3 GB for
+storing a matrix to using 100 Mb could be the difference between 
+not being able to work with the matrix on a standard laptop to
+running the computations with no problems. Using `model.Matrix` makes
+it possible to construct sparse model matrices directly and avoid 
 all dense intermediates. This is exploited in the `glm4` function from 
-the `MatrixModels` package for fitting regression models. 
+the MatrixModels package for fitting regression models, which can 
+thus be useful in cases where your model matrix becomes very large but sparse. 
+There are two main cases where the model matrix becomes sparse. 
+When you model the response using one or more factors, and possibly their 
+interactions, the model matrix will become particularly sparse if 
+the factors have many levels. Another case is when you model the response 
+via basis expansions of quantitative predictors and use basis functions 
+with local support. The B-splines form an important example of such a basis
+with local support that results in a sparse model matrix.  
+
 
 ## Misc.
 
