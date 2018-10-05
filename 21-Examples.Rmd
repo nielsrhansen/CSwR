@@ -63,20 +63,20 @@ Bayesian computations can in similar ways exploit the structure.
 
 In this section we consider statistical models on an abstract 
 product sample space 
-$$\mathcal{Z} = \mathcal{Z}_1 \times \ldots \times \mathcal{Z}_m.$$ 
+$$\mathcal{Y} = \mathcal{Y}_1 \times \ldots \times \mathcal{Y}_m.$$ 
 We will be interested in models of
-observations $z_1 \in \mathcal{Z}_1, \ldots, z_m \in \mathcal{Z}_m$ 
+observations $y_1 \in \mathcal{Y}_1, \ldots, y_m \in \mathcal{Y}_m$ 
 that are independent but not necessarily identically distributed. 
 
 An exponential family is defined in terms of two ingredients: 
 
-  * maps $t_j : \mathcal{Z}_j \to \mathbb{R}^p$ for $j = 1, \ldots, m$,
-  * and non-trivial $\sigma$-finite measures $\mu_j$ on $\mathcal{Z}_j$ for $j = 1, \ldots, m$.
+  * maps $t_j : \mathcal{Y}_j \to \mathbb{R}^p$ for $j = 1, \ldots, m$,
+  * and non-trivial $\sigma$-finite measures $\nu_j$ on $\mathcal{Y}_j$ for $j = 1, \ldots, m$.
 
 
 The maps $t_j$ are called *sufficient statistics*, and in terms 
-of these and the *base measures* $\mu_j$ we define 
-$$\varphi_j(\theta) = \int e^{\theta^T t_j(u)} \mu_j(\mathrm{d}u).$$
+of these and the *base measures* $\nu_j$ we define 
+$$\varphi_j(\theta) = \int e^{\theta^T t_j(u)} \nu_j(\mathrm{d}u).$$
 These functions are well defined as functions
 $$\varphi_j : \mathbb{R}^p \to (0,\infty].$$
 We define 
@@ -89,11 +89,11 @@ then $\Theta$ is likewise open and convex, and we define the *exponential family
 as the distributions parametrized by $\theta \in \Theta$ that have densities 
 
 \begin{equation}
-f(\mathbf{z} \mid \theta) = \prod_{j=1}^m \frac{1}{\varphi_j(\theta)} e^{\theta^T t_j(z_j)} = e^{\theta^T \sum_{i=1}^m t_j(z_j) - \sum_{i=1}^m \log \varphi_j(\theta)}, \quad \mathbf{z} \in \mathcal{Z},
+f(\mathbf{y} \mid \theta) = \prod_{j=1}^m \frac{1}{\varphi_j(\theta)} e^{\theta^T t_j(y_j)} = e^{\theta^T \sum_{i=1}^m t_j(y_j) - \sum_{i=1}^m \log \varphi_j(\theta)}, \quad \mathbf{y} \in \mathcal{Y},
 (\#eq:exp-dens)
 \end{equation}
 
-w.r.t. $\otimes_{j=1}^m \mu_j$. The 
+w.r.t. $\otimes_{j=1}^m \nu_j$. The 
 case where $\Theta = \emptyset$ is of no interest, and we will thus assume
 that the parameter set $\Theta$ is non-empty. The parameter $\theta$ is called
 the *canonical parameter* and $\Theta$ is the canonical parameter space. 
@@ -106,12 +106,12 @@ as an exponential family. In the non-canonical parametrization, the
 family is then an example of a *curved exponential family* as defined below.  
 
 ```{example, von-Mises-exponential} 
-The von Mises distributions on $\mathcal{Z} = (-\pi, \pi]$ form an exponential family
+The von Mises distributions on $\mathcal{Y} = (-\pi, \pi]$ form an exponential family
 with $m = 1$. The sufficient statistic $t_1 : (-\pi, \pi] \mapsto \mathbb{R}^2$ 
 is 
-$$t_1(z) = \left(\begin{array}{c} \cos(z) \\ \sin(z) \end{array}\right),$$
+$$t_1(y) = \left(\begin{array}{c} \cos(y) \\ \sin(y) \end{array}\right),$$
 and 
-$$\varphi(\theta) = \int_{-\pi}^{\pi} e^{\theta_1 \cos(z) + \theta_2 \sin(z)} \mathrm{d}z < \infty$$
+$$\varphi(\theta) = \int_{-\pi}^{\pi} e^{\theta_1 \cos(y) + \theta_2 \sin(y)} \mathrm{d}z < \infty$$
 for all $\theta = (\theta_1, \theta_2)^T \in \mathbb{R}^2$. Thus 
 the canonical parameter space is $\Theta = \mathbb{R}^2$. 
 
@@ -138,21 +138,23 @@ exponential family is preferable for mathematical and computational reasons.
 
 ```{example, gaussian-exponential}
 The family of Gaussian distributions on $\mathbb{R}$ is an example of an exponential 
-family as defined above with $m = 1$ and $\mathcal{Z} = \mathbb{R}$. 
+family as defined above with $m = 1$ and $\mathcal{Y} = \mathbb{R}$. 
 The density of the $\mathcal{N}(\mu, \sigma^2)$ distribution is 
-$$\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(z - \mu)^2}{2\sigma^2}\right) = 
-  \frac{1}{\sqrt{2\pi}} \exp\left(\frac{\mu}{\sigma^2} z - \frac{1}{\sigma^2} \frac{z^2}{2} - \frac{\mu}{2\sigma^2} - \log \sigma^2\right).$$
-Letting the base measure $\mu_1$ be Lebesgue measure scaled by $1/\sqrt{2\pi}$,
+$$\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(y - \mu)^2}{2\sigma^2}\right) = 
+  \frac{1}{\sqrt{2\pi}} \exp\left(\frac{\mu}{\sigma^2} y - \frac{1}{\sigma^2} \frac{y^2}{2} - \frac{\mu^2}{2\sigma^2} - 
+                                     \frac{1}{2}\log (2\sigma^2) \right).$$
+Letting the base measure $\nu_1$ be Lebesgue measure scaled by $1/\sqrt{\pi}$,
 and $t_1 : \mathbb{R} \mapsto \mathbb{R}^2$ be 
-$$t_1(z) = \left(\begin{array}{c} z \\ -\frac{z^2}{2} \end{array}\right)$$
+$$t_1(y) = \left(\begin{array}{c} y \\ - y^2 \end{array}\right)$$
 we identify this family of distributions as an exponential family with canonical
 parameter 
-$$\theta = \left(\begin{array}{c} \frac{\mu}{\sigma^2} \\ \frac{1}{\sigma^2} \end{array}\right).$$
+$$\theta = \left(\begin{array}{c} \frac{\mu}{\sigma^2} \\ \frac{1}{2 \sigma^2} \end{array}\right).$$
 
 We can express the mean and variance in terms of $\theta$ as 
-$$\sigma^2 = \frac{1}{\theta_2} \quad \text{and} \quad \mu = \frac{\theta_1}{\theta_2},$$
+$$\sigma^2 = \frac{1}{2\theta_2} \quad \text{and} \quad \mu = \frac{\theta_1}{2\theta_2},$$
 and we find that 
-$$\log \varphi_1(\theta) = \frac{\mu}{2\sigma^2} + \log \sigma^2 = \frac{1}{2}\theta_1 - \log \theta_2.$$
+$$\log \varphi_1(\theta) = \frac{\mu^2}{2\sigma^2} + \frac{1}{2} \log \sigma^2 = 
+  \frac{\theta_1^2}{4\theta_2} - \frac{1}{2} \log \theta_2.$$
   
 We note that the reparametrization $(\mu, \sigma^2) \mapsto \theta$ maps
 $\mathbb{R} \times (0,\infty)$ bijectively onto the open set $\mathbb{R} \times (0,\infty)$,
@@ -180,11 +182,11 @@ For general exponential families it may seem restrictive that all
 the sufficient statistics, $t_j$, take values in the 
 same $p$-dimensional space, and that all marginal distributions share a common 
 parameter vector $\theta$. This is, however, not a restriction. Say we have 
-two distributions with sufficient statistics $\tilde{t}_1 : \mathcal{Z}_1 \to \mathbb{R}^{p_1}$
-and $\tilde{t}_2 : \mathcal{Z}_2 \to \mathbb{R}^{p_2}$ and corresponding 
+two distributions with sufficient statistics $\tilde{t}_1 : \mathcal{Y}_1 \to \mathbb{R}^{p_1}$
+and $\tilde{t}_2 : \mathcal{Y}_2 \to \mathbb{R}^{p_2}$ and corresponding 
 parameters $\theta_1$ and $\theta_2$, then we construct 
-$$t_1(z_1) = \left(\begin{array}{c} \tilde{t}_1(z_1) \\ 0 \end{array}\right) \quad 
-\text{and} \quad t_2(z_2) = \left(\begin{array}{c} 0 \\ \tilde{t}_2(z_2) \end{array}\right).$$
+$$t_1(y_1) = \left(\begin{array}{c} \tilde{t}_1(y_1) \\ 0 \end{array}\right) \quad 
+\text{and} \quad t_2(y_2) = \left(\begin{array}{c} 0 \\ \tilde{t}_2(y_2) \end{array}\right).$$
 Now $t_1$ and $t_2$ both map into $\mathbb{R}^{p}$ with $p = p_1 + p_2$, and 
 we can bundle the parameters together into the vector
 $$\theta = \left(\begin{array}{c} \theta_1 \\ \theta_2 \end{array}\right) \in \mathbb{R}^p.$$
@@ -194,32 +196,32 @@ statistics then take care of selecting
 which of the coordinates in the parameter vector that is used for any 
 particular marginal distribution. 
 
-### Exponential family Bayesian networks
+### Exponential family Bayesian networks {#bayes-net}
 
 An exponential family is defined above as a parametrized family of distributions 
-on $\mathcal{Z}$ of *independent* variables. That is, the joint density 
+on $\mathcal{Y}$ of *independent* variables. That is, the joint density 
 in \@ref(eq:exp-dens) factorizes w.r.t. a product measure. Without really 
 changing the notation this assumption can be relaxed considerably. 
 
 If the sufficient statistic $t_j$, instead of being a fixed map, is 
-allowed to depend on $z_1, \ldots, z_{j-1}$, $f(\mathbf{z} \mid \theta)$ as 
+allowed to depend on $y_1, \ldots, y_{j-1}$, $f(\mathbf{y} \mid \theta)$ as 
 defined in \@ref(eq:exp-dens)
 is still a joint density. The only difference is that the factor 
-$$f_j(z_j \mid z_1, \ldots, z_{j-1}, \theta) = e^{\theta^T t_j(z_j) - \log \varphi_j(\theta)}$$
-is now the *conditional* density of $z_j$ given $z_1, \ldots, z_{j-1}$.
-In the notation we let the dependence of $t_j$ on $z_1, \ldots, z_{j-1}$ 
+$$f_j(y_j \mid y_1, \ldots, y_{j-1}, \theta) = e^{\theta^T t_j(y_j) - \log \varphi_j(\theta)}$$
+is now the *conditional* density of $y_j$ given $y_1, \ldots, y_{j-1}$.
+In the notation we let the dependence of $t_j$ on $y_1, \ldots, y_{j-1}$ 
 be implicit as this will not affect the abstract theory. In any concrete 
 example though, it will be clear how $t_j$ actually depends upon all, some 
 or none of these variables. Note that $\varphi_j$ may now also depend 
-upon the data through $z_1, \ldots, z_{j-1}$.
+upon the data through $y_1, \ldots, y_{j-1}$.
 
 The observation above is powerful. It allows us to develop a unified 
 approach based on exponential families for a majority of all statistical 
 models that are applied in practice. The models we consider make two essential 
 assumptions 
 
-  1. the variables that we model can be ordered such that $z_j$ only 
-  depends on $z_1, \ldots, z_{j-1}$ for $j = 1, \ldots, m$,
+  1. the variables that we model can be ordered such that $y_j$ only 
+  depends on $y_1, \ldots, y_{j-1}$ for $j = 1, \ldots, m$,
   2. all the conditional distributions form exponential families themselves,
   with the conditioning variables entering through the $t_j$-maps.
 
@@ -250,40 +252,50 @@ general treatment of Bayesian networks.
 ### Likelihood computations {#exp-fam-deriv}
 
 To simplify the notation we introduce 
-$$t(\mathbf{z}) = \sum_{j=1}^m t_j(z_j),$$
+$$t(\mathbf{y}) = \sum_{j=1}^m t_j(y_j),$$
 which we refer to as the sufficient statistic, and
 $$\kappa(\theta) = \sum_{j=1}^m \log \varphi_j(\theta),$$
 which is a concave $C^{\infty}$-function on $\Theta$. 
 
-Having observed $\mathbf{z} \in \mathcal{Z}$ it is evident that the log-likelihood
+Having observed $\mathbf{y} \in \mathcal{Y}$ it is evident that the log-likelihood
 for the exponential family specified by \@ref(eq:exp-dens) is 
-$$\ell(\theta) = \log f(\mathbf{z} \mid \theta) = \theta^T t(\mathbf{z}) - \kappa(\theta).$$
+$$\ell(\theta) = \log f(\mathbf{y} \mid \theta) = \theta^T t(\mathbf{y}) - \kappa(\theta).$$
 From this it follows that the gradient of the log-likelihood is
-$$\nabla \ell(\theta) = t(\mathbf{z}) - \nabla \kappa(\theta)$$
+$$\nabla \ell(\theta) = t(\mathbf{y}) - \nabla \kappa(\theta)$$
 and the Hessian is
 $$D^2 \ell(\theta) = - D^2 \kappa(\theta),$$
 which is always negative semidefinite. The maximum-likelihood estimator exists 
 if and only if there is a solution to the *score equation*
-$$t(\mathbf{z}) = \nabla \kappa(\theta),$$
+$$t(\mathbf{y}) = \nabla \kappa(\theta),$$
 and it is unique if there is such a solution, $\hat{\theta}$, for which 
 $I(\hat{\theta}) = D^2 \kappa(\hat{\theta})$ is positive definite. We 
-call $I(\hat{\theta})$ the *observed Fisher information*. 
+call $I(\hat{\theta})$ the *observed Fisher information*.
+
+Note that under the independence assumption,
+$$\nabla \log \varphi_j(\theta) = \frac{1}{\varphi_j(\theta)} \int t_j(u) e^{\theta^T t_j(u)} \nu_i(\mathrm{d} u) = E_{\theta}(t_j(Y)), $$
+which means that the score equation can be expressed as 
+$$t(\mathbf{y}) = \sum_{j=1}^m E_{\theta}(t_j(Y)).$$
+In the Bayesian network setup $\nabla \log \varphi_j(\theta) = E_{\theta}(t_j(Y) \mid Y_1, \ldots, Y_{j-1}),$
+and the score equation is 
+$$t(\mathbf{y}) = \sum_{j=1}^m E_{\theta}(t_j(Y) \mid y_1, \ldots, y_{j-1}),$$
+which is a bit more complicated as the right-hand-side depends on the 
+observations. 
 
 The definition of an exponential family in Section \@ref(exp-fam) encompasses
-the situation where $z_1, \ldots, z_m$ are i.i.d. by taking $t_j$ to be 
+the situation where $y_1, \ldots, y_m$ are i.i.d. by taking $t_j$ to be 
 independent of $j$. In that case, $\kappa(\theta) = m \kappa_1(\theta)$,
 the score equation can be rewritten as 
-$$\frac{1}{m} \sum_{j=1}^m t_1(z_j) = \kappa_1(\theta),$$
+$$\frac{1}{m} \sum_{j=1}^m t_1(y_j) = \kappa_1(\theta),$$
 and the Fisher information becomes
-$$I(\hat{\theta}) = m D^2 \kappa_1(\hat{\theta}).$$
+$$I(\hat{\theta}) = m D^2 \kappa_1(\hat{\theta}).$$ 
 
 However, the point of the general formulation is 
 that it includes regression models, and, via the Bayesian networks extension 
 above, models with dependence structures. We could, of course, then 
-have i.i.d. replications $\mathbf{z}_1, \ldots, \mathbf{z}_n$ of
-the entire $m$-dimensional vector $\mathbf{z}$, and we would get 
+have i.i.d. replications $\mathbf{y}_1, \ldots, \mathbf{y}_n$ of
+the entire $m$-dimensional vector $\mathbf{y}$, and we would get 
 the score equation 
-$$\frac{1}{n} \sum_{i=1}^n t(\mathbf{z}_i) = \kappa(\theta),$$
+$$\frac{1}{n} \sum_{i=1}^n t(\mathbf{y}_i) = \kappa(\theta),$$
 and corresponding Fisher information
 $$I(\hat{\theta}) = n D^2 \kappa(\hat{\theta}).$$
 
@@ -294,17 +306,17 @@ $C^2$-map $\theta : \Psi \to \Theta$ from a set $\Psi \subseteq \mathbb{R}^q$.
 The set $\Psi$ provides a parametrization
 of the subset $\theta(\Psi) \subseteq \Theta$ of the full exponential family,
 and the log-likelihood in the $\psi$-parameter is 
-$$\ell(\psi) = \theta(\psi)^T t(\mathbf{z}) - \kappa(\theta(\psi)).$$
+$$\ell(\psi) = \theta(\psi)^T t(\mathbf{y}) - \kappa(\theta(\psi)).$$
 It has gradient 
-$$\nabla \ell(\psi) = D \theta(\psi)^T t(\mathbf{z}) - \nabla \kappa(\theta(\psi)) D \theta(\psi)$$
+$$\nabla \ell(\psi) = D \theta(\psi)^T t(\mathbf{y}) - \nabla \kappa(\theta(\psi)) D \theta(\psi)$$
 and Hessian
-$$D^2 \ell(\psi) =  \sum_{k=1}^p D^2\theta_k(\psi) (t(\mathbf{z})_k - \partial_k \kappa(\theta(\psi))) -   
+$$D^2 \ell(\psi) =  \sum_{k=1}^p D^2\theta_k(\psi) (t(\mathbf{y})_k - \partial_k \kappa(\theta(\psi))) -   
 D \theta(\psi)^T D^2 \kappa(\theta(\psi)) D \theta(\psi).$$
 
 ## Multinomial models
 
 The multinomial model is the model of all probability distributions on 
-a finite set $\mathcal{Z} = \{1, \ldots, K\}$. The model is parametrized
+a finite set $\mathcal{Y} = \{1, \ldots, K\}$. The model is parametrized
 by the simplex 
 $$\Delta_K = \left\{(p_1, \ldots, p_K)^T \in \mathbb{R}^K \mid p_k \geq 0, \sum_{k=1}^K p_k = 1\right\}.$$
 The distributions parametrized by the relative interior of $\Delta_K$ form 
@@ -332,7 +344,7 @@ baseline. Moreover,
 $$\frac{p_k}{p_l} = e^{\theta_k - \theta_l},$$
 which is independent of the chosen baseline.
 
-In the special case of $K = 2$ the two elements $\mathcal{Z}$ are often given 
+In the special case of $K = 2$ the two elements $\mathcal{Y}$ are often given 
 other labels than $1$ and $2$. The most common labels are $\{0, 1\}$ and $\{-1, 1\}$.
 If we use the 0-1-labels the convention is to use $p_0$ as the baseline and 
 thus 
@@ -410,10 +422,10 @@ $$X = M(Y) \sim \textrm{Mult}(M(p), n).$$
 The conditional distribution of $Y_{A_j} = (Y_i)_{i \in A_j}$, conditionally on 
 $X$, can be found too. It will be used for the EM-algorithm the subsequent 
 in Chapter \@ref(em). It is easy to see that 
-$$Y_{A_j} \mid X = x \sim \textrm{Mult}\left( \frac{p_{A_j}}{M(p)_j}, z_j \right).$$
+$$Y_{A_j} \mid X = x \sim \textrm{Mult}\left( \frac{p_{A_j}}{M(p)_j}, y_j \right).$$
 The probability parameters are simply $p$ restricted to $A_j$ and renormalized 
 to a probability vector. Observe that this gives
-$$E (Y_k \mid X = x) = \frac{z_j p_k}{M(p)_j}$$
+$$E (Y_k \mid X = x) = \frac{y_j p_k}{M(p)_j}$$
 for $k \in A_j$. 
 
 For the Peppered Moths, $K = 6$ corresponding to the six genotypes, $K_0 = 3$ and 
@@ -568,9 +580,14 @@ density is then
 $$(y, k) \mapsto f_k(y \mid \theta_k) p_k,$$
 and the marginal density for the distribution of $Y$ is
 $$f(y \mid \theta) =  \sum_{k=1}^K f_k(y \mid \theta_k) p_k$$
-where $\theta$ is the vector of parameters. Mixture models are applied with 
-many different sample spaces for $Y$, but for simplicity we restrict attention 
-to real valued $Y$. 
+where $\theta$ is the vector of all parameters. We say that the 
+model as $K$ mixture components and call $f_k( \cdot \mid \theta_k)$
+the mixture distributions and $p_k$ the mixture weights. 
+
+The main usage of mixture models is to situations where $Z$ is not observed. 
+In practice, only $Y$ is observed, and parameter estimation has to be 
+based on the marginal distribution of $Y$ with density $f(\cdot \mid \theta)$,
+which is a weighted sum of the mixture distributions.
 
 The set of all probability measures on $\{1, \ldots, K\}$ is an exponential 
 family with sufficient statistic
@@ -580,7 +597,7 @@ and
 $$p_k = \frac{e^{\alpha_k}}{1 + \sum_{l=1}^{K-1} e^{\alpha_l}}.$$
 
 When $f_k$ is an exponential family as well with sufficient statistic
-$\tilde{t}_k : \mathbb{R} \to \mathbb{R}^{p_k}$ and $\theta_k$ the 
+$\tilde{t}_k : \mathcal{Y} \to \mathbb{R}^{p_k}$ and $\theta_k$ the 
 canonical parameter, we bundle $\alpha, \theta_1, \ldots, \theta_K$ 
 into $\theta$ and define
 $$t_1(y) = \left(\begin{array}{c}
@@ -616,12 +633,269 @@ can likewise be implemented based on the formulas derived in Section \@ref(exp-f
 
 ### Gaussian mixtures
 
+A Gaussian mixture model is a mixture model where all the  mixture distributions are  
+Gaussian distributions but potentially with different means and variances. In this 
+section we focus on the simplest Gaussian mixture model with $K = 2$ mixture 
+components. 
+
+When $K = 2$, the Gaussian mixture model is parametrized by the five parameters: 
+the mixture weight $p_1 \in (0, 1)$, the two means $\mu_1, \mu_2 \in \mathbb{R}$, 
+and the two variances $\sigma_1, \sigma_2 > 0$. This is *not* the parametrization 
+using canonical exponential family parameters, which we return to below. First 
+we will simply simulate random variables from this model. 
+
+```{r mixture-gaus-sim}
+sigma1 <- 1
+sigma2 <- 2
+mu1 <- 0
+mu2 <- 4
+p <- 0.5
+n <- 5000
+z <- sample(c(TRUE, FALSE), n, replace = TRUE, prob = c(p, 1 - p))
+## Conditional simulation from the mixture components
+y <- numeric(n)
+n1 <- sum(z)
+y[z] <- rnorm(n1, mu1, sigma1)
+y[!z] <- rnorm(n - n1, mu2, sigma2)
+```
+
+The simulation above generated `r n` samples from a two-component 
+Gaussian mixture model with mixture distributions $\mathcal{N}(0, 1)$
+and $\mathcal{N}(4, 4)$, and with each component having weight $0.5$. 
+This gives a bimodal distribution as illustrated by the histogram on Figure 
+\@ref(fig:mixture-gaus-histogram). 
+
+```{r mixture-gaus-histogram, dependson="mixture-gaus-sim", fig.cap="Histogram and density estimate (red) of data simulated from a two-component Gaussian mixture distribution. The true mixture distribution has "}
+yy <- seq(-3, 11, 0.1)
+dens <- p * dnorm(yy, mu1, sigma1) + (1 - p) * dnorm(yy, mu2, sigma2)
+ggplot(mapping = aes(y, ..density..)) + 
+  geom_histogram(bins = 20) + 
+  geom_line(aes(yy, dens), color = "blue", size = 1) + 
+  stat_density(bw = "SJ", geom="line", color = "red", size = 1)
+```
+
+It is possible to give a mathematically different representation of the 
+marginal distribution of $Y$ that is sometimes useful. Though it gives
+the same marginal distribution from the same components, it does provide a  
+different interpretation of what a mixture model is a model of, and it does 
+provide a different way of simulating from a mixture distribution. 
+
+If we let $Y_1 \sim \mathcal{N}(\mu_1, \sigma_1^2)$ and $Y_2 \sim \mathcal{N}(\mu_2, \sigma_2^2)$ 
+be independent, and independent of $Z$, we can define 
+
+\begin{equation}
+Y = 1(Z = 1) Y_1 + 1(Z = 2) Y_2.
+(\#eq:mixturerep)
+\end{equation}
+
+You can argue from this that the conditional distribution of $Y $given $Z = k$
+indeed is $f_k$, or you can just verify directly that $Y$ has density 
+$$f(y) = p \frac{1}{\sqrt{2 \pi \sigma_1^2}} e^{-(y - \mu_1)^2 / (2 \sigma_1^2)} + 
+(1 - p)\frac{1}{\sqrt{2 \pi \sigma_2^2}}e^{-(y - \mu_2)^2 / (2 \sigma_2^2)}.$$
+From \@ref(eq:mixturerep) it follows directly that
+$$E(Y) = P(Z = 1) E(Y_1) + P(Z = 2) E(Y_2) = p_1 \mu_1 + (1 - p_1) \mu_2$$
+and 
+
+\begin{align}
+V(Y) & = V(1(Z = 1) Y_1) + V(1(Z = 2) Y_2) \\
+& = P(Z = 1) E(Y_1^2) - P(Z = 1)^2 E(Y_1)^2 + P(Z = 2) E(Y_2^2) - P(Z = 2)^2 E(Y_2)^2 \\
+& = p(\sigma_1^2 + \mu_1^2) - p^2 \mu_1^2 +  (1-p)(\sigma_2^2 + \mu_2^2) - (1-p)^2 \mu_2^2 \\
+& = p\sigma_1^2 + (1 - p) \sigma_2^2 + p(1-p)(\mu_1^2 + \mu_2^2).
+\end{align}
+
+While it is certainly possible to derive this formula by other means, using 
+\@ref(eq:mixturerep) gives a simple argument based on 
+elementary properties of mean and variance together with the independence
+of $Y_1$, $Y_2$ and $Z$.  
+
+The construction via \@ref(eq:mixturerep) has an interpretation that differs 
+from how a mixture model was defined in the first place. Though $(Y, Z)$ has 
+the correct joint distribution, $Y$ is by \@ref(eq:mixturerep) the result of $Z$ *selecting* one 
+out of two possible observations. The difference can best be illustrated by 
+an example. Suppose that we have a population consisting of married couples entirely.
+We can draw a sample of individuals (ignoring the marriage relations 
+completely) from this population and let $Z$ denote the sex and $Y$ the 
+height of the individual. Then $Y$ follows a mixture distribution with two 
+components corresponding to males and females according to the definition. 
+At the risk of being heteronormative, suppose that all couples consist 
+of one male and one female. We could then also draw a sample
+of married couples, and for each couple flip a coin to decide whether to report
+the male's or the female's height. This corresponds to the construction 
+of $Y$ by \@ref(eq:mixturerep). We get the same marginal mixture 
+distribution of heights though. 
+
+Arguably the heights of individuals in a marriage are not 
+independent, but this is actually immaterial. Any dependence structure between
+$Y_1$ and $Y_2$ is lost in the transformation  \@ref(eq:mixturerep), and we
+can just as well assume them independent for mathematical convenience. 
+We won't be able to tell the difference from observing only $Y$ (and $Z$) anyway. 
+
+We illustrate below how \@ref(eq:mixturerep) can be used for alternative
+implementations of ways to simulate from the mixture model. 
+
+```{r sim-gaus-mix, dependson="mixture-gaus-sim"}
+## Mean
+mu <- p * mu1 + (1 - p) * mu2
+
+## Variance 
+sigmasq <- p * sigma1^2 + (1 - p) * sigma2^2 + p * (1-p)*(mu1^2 + mu2^2)
+
+## Simulation using the selection formulation via 'ifelse'
+y2 <- ifelse(z, rnorm(n, mu1, sigma1), rnorm(n, mu2, sigma2))
+
+## Yet another way of simulating from a mixture model
+## using arithmetic instead of `ifelse` for the selection 
+## and with Y_1 and Y_2 actually being dependent
+y3 <- rnorm(n)
+y3 <- z * (sigma1 * y3 + mu1) + (!z) * (sigma2 * y3 + mu2)
+
+## Returning to the definition again, this last method simulates conditionally 
+## from the mixture components via transformation of an underlying Gaussian
+## variable with mean 0 and variance 1
+y4 <- rnorm(n)
+y4[z] <- sigma1 * y4[z] + mu1
+y4[!z] <- sigma2 * y4[!z] + mu2
+
+## Comparisons
+data.frame(mean = c(mu, mean(y), mean(y2), mean(y3), mean(y4)),
+      variance = c(sigmasq, var(y), var(y2), var(y3), var(y4)), 
+      row.names = c("true", "conditional", "ifelse", "arithmetic", "conditional2" ))
+```
+
+In terms of run time there is not a big difference between three of 
+the ways of simulating from a mixture model. A benchmark study (not shown) will 
+reveal that the first and third methods are comparable in terms of run time
+and slightly faster than the fourth, while the second using `ifelse` takes more 
+than twice as much time as the others. This is 
+unsurprising as the `ifelse` method takes \@ref(eq:mixturerep) very literally 
+and generates twice the number of Gaussian variables actually needed. 
+
+
+```{r mix-sim-bench, include=FALSE}
+n <- 10000
+z <- sample(c(TRUE, FALSE), n, replace = TRUE, prob = c(p, 1 - p))
+microbenchmark({
+  x <- numeric(n)
+  n1 <- sum(z)
+  x[z] <- rnorm(n1, mu1, sigma1)
+  x[!z] <- rnorm(n - n1, mu2, sigma2)
+},
+x <- ifelse(z, rnorm(n, mu1, sigma1), rnorm(n, mu2, sigma2)),
+{
+  x <- rnorm(n)
+  x <- z * (sigma1 * x + mu1) + (!z) * (sigma2 * x + mu2)
+},
+{
+  x <- rnorm(n)
+  x[z] <- sigma1 * x[z] + mu1
+  x[!z] <- sigma2 * x[!z] + mu2
+}
+)
+```
+
+Returning to the canonical parameters we see that they are given as 
+follows: 
+$$\theta_1  = \log \frac{p}{1 - p}, \quad 
+\theta_2  = \frac{\mu_1}{2\sigma_1^2}, \quad
+\theta_3  = \frac{1}{2\sigma_1^2}, \quad
+\theta_4  = \frac{\mu_2}{\sigma_2^2}, \quad
+\theta_5  = \frac{1}{2\sigma_2^2}$$
+
+The joint density in this parametrization then becomes 
+$$(y,k) \mapsto \left\{ \begin{array}{ll} 
+\exp\left(\theta_1 + \theta_2 y - \theta_3 y^2 - \log (1 + e^{\theta_1}) - \frac{ \theta_2^2}{4\theta_3}+ \frac{1}{2} \log(\theta_3) \right) & \quad \text{if } k = 1 \\
+\exp\left(\theta_4 y - \theta_5 y^2 - \log (1 + e^{\theta_1}) - \frac{\theta_4^2}{4\theta_5} + \frac{1}{2}\log(\theta_5) \right) &  \quad \text{if } k = 2 
+\end{array} \right. $$
+and the marginal density for $Y$ is 
+
+\begin{align}
+f(y \mid \theta) & = \exp\left(\theta_1 + \theta_2 y - \theta_3 y^2 - \log (1 + e^{\theta_1}) - \frac{ \theta_2^2}{4\theta_3}+ \frac{1}{2} \log(\theta_3) \right) \\ 
+& + \exp\left(\theta_4 y - \theta_5 y^2 - \log (1 + e^{\theta_1}) - \frac{\theta_4^2}{4\theta_5} + \frac{1}{2}\log(\theta_5) \right).
+\end{align}
+
+There is no apparent benefit to the canonical parametrization when considering
+the marginal density. It is, however, of value when we need the logarithm of 
+the joint density as we will for the EM-algorithm. 
+
 ### von Mises mixtures
 
 ## Mixed models
 
 A mixed model is a regression model of observations that allows for 
-random variation at two different levels. 
+random variation at two different levels. In this section we will 
+focus on mixed models in an exponential family context. Mixed models can be 
+considered in greater generality but there will then be little shared
+structure and one have to deal with the models much more on a case-by-case
+manner.
+
+In a mixed model we have observations $y_j \in \mathcal{Y}$
+and $z \in \mathcal{Z}$ such that: 
+
+* the distribution of $z$ is an exponential family with canonical parameter
+$\theta_0$ 
+* *conditionally* on $z$ the $y_j$s are independent with a distribution from an exponential
+family with sufficient statistics $t_j( \cdot \mid z)$. 
+
+This definition emphasizes how the $y_j$s have variation at two levels. 
+There is variation in the underlying $z$, which is the first level of variation 
+(often called the *random effect*), 
+and then there is variation among the $y_j$s given the $z$, which is the 
+second level of variation. It is a special case of hierarchical models
+(Bayesian networks with tree graphs) also known as *multilevel* models, with the 
+mixed model having only two levels. When we observe data from such a model 
+we typically observe independent replications, $(y_{ij})_{j=1, \ldots, m_i}$ 
+for $i = 1, \ldots, n$, of the $y_j$s only. Note that we allow for a different
+number, $m_i$, of $y_j$s for each $i$. 
+
+The simplest class of mixed models is obtained by $t_j = t$ not 
+depending on $j$, and 
+$$t(y_j \mid z) = \left(\begin{array}{cc} t_1(y_j) \\ t_2(y_j, z) \end{array} \right)$$
+for some fixed maps $t_1 : \mathcal{Y} \mapsto \mathbb{R}^{p_1}$ and $t_2 : \mathcal{Y} \times \mathcal{Z} \mapsto \mathbb{R}^{p_2}$. 
+This is called a *random effects* model (this is a model where there are no *fixed effects* in
+the sense that $t_j$ does not depend on $j$, and given the random effect 
+$z$ the $y_j$s are i.i.d.). The canonical parameters associated with such a model
+are $\theta_0$ that enters into the distribution of the random effect, 
+$\theta_1 \in \mathbb{R}^{p_1}$ and $\theta_2 \in \mathbb{R}^{p_2}$ that enter
+into the conditional distribution of $y_j$ given $z$. 
+
+```{example, gaussian-mixed}
+The special case of a *Gaussian, linear* random effects model is the model where 
+$z$ is $\mathcal{N}(0, 1)$ distributed, $\mathcal{Y} = \mathbb{R}$ 
+  (with base measure proportional to Lebesgue measure)
+and the sufficient statistic is
+$$t(y_j \mid z) = \left(\begin{array}{cc} y_j \\ - y_j^2 \\ zy_j \end{array}\right).$$
+There are no free parameters in the distribution of $z$. 
+
+From Example \@ref(exm:gaussian-exponential)
+it follows that the conditional variance of $y$ given $z$ is 
+$$\sigma^2 = \frac{1}{2\theta_2}$$
+and the conditional mean of $y$ given $z$ is 
+$$\frac{\theta_1 + \theta_3 z}{2 \theta_2} = \sigma^2 \theta_1 + \sigma^2 \theta_3 z.$$
+Reparametrizing in terms of $\sigma^2$, $\beta_0 = \sigma^2 \theta_1$ and 
+$\nu = \sigma^2 \theta_3$ we see how the conditional distribution of $y_j$ 
+given $z$ is $\mathcal{N}(\beta_0 + \nu z, \sigma^2)$. From this it is clear
+how the mixed model of $y_j$ *conditionally on $z$* is a regression model. However,
+we do not observe $z$ in practice. 
+
+Using the above distributional result we can see that
+the Gaussian random effects model of observations $y_{ij}$ can 
+equivalently be stated as 
+
+$$Y_{ij} = \beta_0 + \nu Z_i + \varepsilon_{ij}$$
+
+for $i = 1, \ldots, n$ and $j = 1, \ldots, m_i$ where 
+$Z_1, \ldots, Z_n$ are i.i.d. $\mathcal{N}(0, 1)$-distributed
+and independent of 
+$\varepsilon_{11}, \varepsilon_{12}, \ldots, \varepsilon_{1n_1}, \ldots, \varepsilon_{mn_m}$
+that are themselves i.i.d. $\mathcal{N}(0, \sigma^2)$-distributed. 
+
+```
+
+
+
+
+
+
 
 
 
