@@ -217,7 +217,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="7" data-path="five-examples.html"><a href="five-examples.html"><i class="fa fa-check"></i><b>7</b> Five Examples</a><ul>
 <li class="chapter" data-level="7.1" data-path="exp-fam.html"><a href="exp-fam.html"><i class="fa fa-check"></i><b>7.1</b> Exponential families</a><ul>
 <li class="chapter" data-level="7.1.1" data-path="exp-fam.html"><a href="exp-fam.html#exp-fam"><i class="fa fa-check"></i><b>7.1.1</b> Full exponential families</a></li>
-<li class="chapter" data-level="7.1.2" data-path="exp-fam.html"><a href="exp-fam.html#exponential-family-bayesian-networks"><i class="fa fa-check"></i><b>7.1.2</b> Exponential family Bayesian networks</a></li>
+<li class="chapter" data-level="7.1.2" data-path="exp-fam.html"><a href="exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>7.1.2</b> Exponential family Bayesian networks</a></li>
 <li class="chapter" data-level="7.1.3" data-path="exp-fam.html"><a href="exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>7.1.3</b> Likelihood computations</a></li>
 <li class="chapter" data-level="7.1.4" data-path="exp-fam.html"><a href="exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>7.1.4</b> Curved exponential families</a></li>
 </ul></li>
@@ -292,8 +292,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
             <section class="normal" id="section-">
 <div id="newton-type-algorithms" class="section level2">
 <h2><span class="header-section-number">8.3</span> Newton-type algorithms</h2>
-<p>The Newton algorithm is very similar to gradient descent<br />
-except that the gradient descent direction is replaced by <span class="math display">\[\rho_n = - D^2 H(\theta_n)^{-1} \nabla H(\theta_n).\]</span></p>
+<p>The Newton algorithm is very similar to gradient descent except that the gradient descent direction is replaced by <span class="math display">\[\rho_n = - D^2 H(\theta_n)^{-1} \nabla H(\theta_n).\]</span></p>
 <p>The Newton algorithm is typically much more efficient than gradient descent and will converge in few iterations. However, the storage of the <span class="math inline">\(p \times p\)</span> Hessian, its computation, and the solution of the equation to compute <span class="math inline">\(\rho_n\)</span> all scale like <span class="math inline">\(p^2\)</span> and this can make the algorithm useless for very large <span class="math inline">\(p\)</span>.</p>
 <p>A variety of alternatives to the Newton algorithm exist that replace the Hessian by another matrix that can be easier to compute and update. It should be noted that if we choose a matrix <span class="math inline">\(B_n\)</span> in the <span class="math inline">\(n\)</span>th iteration, then <span class="math inline">\(- B_n \nabla H(\theta_n)\)</span> is a descent direction whenever <span class="math inline">\(B_n\)</span> is a positive definite matrix.</p>
 <div id="poisson-regression" class="section level3">
@@ -342,19 +341,19 @@ pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span c
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(Newton_tracer)</code></pre></div>
 <pre><code>##         value       h_prime    gamma .time
 ## 1     1.00000            NA       NA 0.000
-## 2   -14.83270 -4.140563e+03 0.022518 0.169
-## 3   -64.81635 -4.029847e+02 0.262144 0.340
-## 4  -111.33647 -7.636275e+01 1.000000 0.502
-## 5  -124.24937 -2.104160e+01 1.000000 0.671
-## 6  -127.71116 -5.652483e+00 1.000000 0.834
-## 7  -128.49729 -1.332600e+00 1.000000 0.995
-## 8  -128.58733 -1.647034e-01 1.000000 1.159
-## 9  -128.58945 -4.159696e-03 1.000000 1.338
-## 10 -128.58945 -3.288913e-06 1.000000 1.513</code></pre>
+## 2   -14.83270 -4.140563e+03 0.022518 0.179
+## 3   -64.81635 -4.029847e+02 0.262144 0.346
+## 4  -111.33647 -7.636275e+01 1.000000 0.510
+## 5  -124.24937 -2.104160e+01 1.000000 0.674
+## 6  -127.71116 -5.652483e+00 1.000000 0.846
+## 7  -128.49729 -1.332600e+00 1.000000 1.015
+## 8  -128.58733 -1.647034e-01 1.000000 1.171
+## 9  -128.58945 -4.159696e-03 1.000000 1.328
+## 10 -128.58945 -3.288913e-06 1.000000 1.490</code></pre>
 <p>The R function <code>glm.fit</code> uses a Newton algorithm (without backtracking) and is about a factor five faster on this example.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(<span class="kw">glm.fit</span>(X, z, <span class="dt">family =</span> <span class="kw">poisson</span>()))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(<span class="kw">glm.fit</span>(X, y, <span class="dt">family =</span> <span class="kw">poisson</span>()))</code></pre></div>
 <pre><code>##    user  system elapsed 
-##   0.419   0.018   0.464</code></pre>
+##   0.393   0.013   0.405</code></pre>
 <p>One should be careful when comparing run times for different optimization algorithms, but in this case they have achieved about the same precision with <code>glm.fit</code> even obtaining the smallest negative log-likelihood value.</p>
 </div>
 <div id="quasi-newton-algorithms" class="section level3">
@@ -365,7 +364,7 @@ pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span c
   pois_BFGS &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), H, grad_H, 
                <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)))</code></pre></div>
 <pre><code>##    user  system elapsed 
-##   0.332   0.037   0.369</code></pre>
+##   0.517   0.040   0.559</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">range</span>(pois_BFGS<span class="op">$</span>par <span class="op">-</span><span class="st"> </span><span class="kw">coefficients</span>(pois_model))</code></pre></div>
 <pre><code>## [1] -0.00954968  0.08481093</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">pois_BFGS[<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;counts&quot;</span>)]</code></pre></div>
@@ -378,7 +377,7 @@ pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span c
 </div>
 <div id="sparsity" class="section level3">
 <h3><span class="header-section-number">8.3.3</span> Sparsity</h3>
-<p>One of the benefits of the implementations of <span class="math inline">\(H\)</span> and its derivatives as well as of the descent algorithms is that they can exploit sparsity of <span class="math inline">\(X\)</span> almost for free. The implementations have not done that in the previous cases, because <span class="math inline">\(X\)</span> has been stored as a dense matrix. In reality, <span class="math inline">\(X\)</span> is a very sparse matrix (most of the matrix consists of zeroes), and if we convert it into a sparse matrix, all the matrix-vector products will be more run time efficient. Sparse matrices are implemented in the R package Matrix.</p>
+<p>One of the benefits of the implementations of <span class="math inline">\(H\)</span> and its derivatives as well as of the descent algorithms is that they can exploit sparsity of <span class="math inline">\(\mathbf{X}\)</span> almost for free. The implementations have not done that in previous computations, because <span class="math inline">\(\mathbf{X}\)</span> has been stored as a dense matrix. In reality, <span class="math inline">\(\mathbf{X}\)</span> is a very sparse matrix (the vast majority of the matrix entries are zero), and if we convert it into a sparse matrix, all the matrix-vector products will be more run time efficient. Sparse matrices are implemented in the R package Matrix.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(Matrix)</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">X &lt;-<span class="st"> </span><span class="kw">Matrix</span>(X)</code></pre></div>
 <p>Without changing any other code, we get an immediate run time improvement using e.g. <code>optim</code> and the BFGS algorithm.</p>
@@ -387,7 +386,7 @@ pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span c
                             <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>))
 )</code></pre></div>
 <pre><code>##    user  system elapsed 
-##   0.141   0.011   0.152</code></pre>
+##   0.150   0.009   0.160</code></pre>
 <p>We should in real applications avoid constructing a dense intermediate model matrix as a step toward constructing a sparse model matrix. This is possible by constructing the sparse model matrix directly using a function from the R package MatrixModels.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(MatrixModels)
 X &lt;-<span class="st"> </span><span class="kw">model.Matrix</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, 
@@ -402,21 +401,23 @@ pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span c
 <span class="kw">summary</span>(Newton_tracer)</code></pre></div>
 <pre><code>##         value       h_prime    gamma .time
 ## 1     1.00000            NA       NA 0.000
-## 2   -14.83270 -4.140563e+03 0.022518 0.005
-## 3   -64.81635 -4.029847e+02 0.262144 0.008
-## 4  -111.33647 -7.636275e+01 1.000000 0.010
-## 5  -124.24937 -2.104160e+01 1.000000 0.012
-## 6  -127.71116 -5.652483e+00 1.000000 0.014
-## 7  -128.49729 -1.332600e+00 1.000000 0.016
-## 8  -128.58733 -1.647034e-01 1.000000 0.019
-## 9  -128.58945 -4.159696e-03 1.000000 0.021
-## 10 -128.58945 -3.288913e-06 1.000000 0.024</code></pre>
-<p>Run time efficiency is not the only argument for using sparse matrices as they are also more memory efficient. It is memory (and time) inefficient to use dense intermediates, and for truly large scale problems impossible. Using sparse model matrices for regression models allow us to work with larger models that have more variables, more factor levels and more observations than if we use dense model matrices. For the Poisson regression model the memory used by either representation can be found.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">object.size</span>(X)</code></pre></div>
-<pre><code>## 123440 bytes</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">object.size</span>(<span class="kw">as.matrix</span>(X))</code></pre></div>
-<pre><code>## 3103728 bytes</code></pre>
-<p>We see that the dense matrix uses around a factor 30 more memory than the sparse representation. In this case this is a difference from using around 100 kB to using around 3 MB, which won’t be a problem on a contemporary computer. However, going from using a 100 Mb for storing a matrix to using 3 GB could be the difference between running the computations with no problems on a standard laptop to not being able to work with the matrix. Using <code>model.Matrix</code> it is possible to construct a sparse model matrix directly and void all dense intermediates. This is exploited in the <code>glm4</code> function from the <code>MatrixModels</code> package for fitting regression models.</p>
+## 2   -14.83270 -4.140563e+03 0.022518 0.006
+## 3   -64.81635 -4.029847e+02 0.262144 0.011
+## 4  -111.33647 -7.636275e+01 1.000000 0.014
+## 5  -124.24937 -2.104160e+01 1.000000 0.027
+## 6  -127.71116 -5.652483e+00 1.000000 0.030
+## 7  -128.49729 -1.332600e+00 1.000000 0.032
+## 8  -128.58733 -1.647034e-01 1.000000 0.034
+## 9  -128.58945 -4.159696e-03 1.000000 0.037
+## 10 -128.58945 -3.288913e-06 1.000000 0.050</code></pre>
+<p>Run time efficiency is not the only argument for using sparse matrices as they are also more memory efficient. It is memory (and time) inefficient to use dense intermediates, and for truly large scale problems impossible. Using sparse model matrices for regression models allows us to work with larger models that have more variables, more factor levels and more observations than if we use dense model matrices. For the Poisson regression model the memory used by either representation can be found.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">object.size</span>(X)
+<span class="kw">object.size</span>(<span class="kw">as.matrix</span>(X))</code></pre></div>
+<pre><code>## Sparse matrix memory usage:
+## 123440 bytes
+## Dense matrix memory usage:
+## 3103728 bytes</code></pre>
+<p>We see that the dense matrix uses around a factor 30 more memory than the sparse representation. In this case it means using around 3 MB for storing the dense matrix instead of around 100 kB, which won’t be a problem on a contemporary computer. However, going from using 3 GB for storing a matrix to using 100 Mb could be the difference between not being able to work with the matrix on a standard laptop to running the computations with no problems. Using <code>model.Matrix</code> makes it possible to construct sparse model matrices directly and avoid all dense intermediates. This is exploited in the <code>glm4</code> function from the MatrixModels package for fitting regression models, which can thus be useful in cases where your model matrix becomes very large but sparse. There are two main cases where the model matrix becomes sparse. When you model the response using one or more factors, and possibly their interactions, the model matrix will become particularly sparse if the factors have many levels. Another case is when you model the response via basis expansions of quantitative predictors and use basis functions with local support. The B-splines form an important example of such a basis with local support that results in a sparse model matrix.</p>
 </div>
 </div>
             </section>

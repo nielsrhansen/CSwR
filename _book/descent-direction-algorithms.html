@@ -217,7 +217,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="7" data-path="five-examples.html"><a href="five-examples.html"><i class="fa fa-check"></i><b>7</b> Five Examples</a><ul>
 <li class="chapter" data-level="7.1" data-path="exp-fam.html"><a href="exp-fam.html"><i class="fa fa-check"></i><b>7.1</b> Exponential families</a><ul>
 <li class="chapter" data-level="7.1.1" data-path="exp-fam.html"><a href="exp-fam.html#exp-fam"><i class="fa fa-check"></i><b>7.1.1</b> Full exponential families</a></li>
-<li class="chapter" data-level="7.1.2" data-path="exp-fam.html"><a href="exp-fam.html#exponential-family-bayesian-networks"><i class="fa fa-check"></i><b>7.1.2</b> Exponential family Bayesian networks</a></li>
+<li class="chapter" data-level="7.1.2" data-path="exp-fam.html"><a href="exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>7.1.2</b> Exponential family Bayesian networks</a></li>
 <li class="chapter" data-level="7.1.3" data-path="exp-fam.html"><a href="exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>7.1.3</b> Likelihood computations</a></li>
 <li class="chapter" data-level="7.1.4" data-path="exp-fam.html"><a href="exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>7.1.4</b> Curved exponential families</a></li>
 </ul></li>
@@ -298,7 +298,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>One strategy for choosing <span class="math inline">\(\gamma\)</span> is to minimize the univariate function <span class="math display">\[\gamma \mapsto H(\theta_0 + \gamma \rho_0),\]</span> which is an example of a <em>line search</em> method. Such a minimization would give the maximal possible descent in the direction <span class="math inline">\(\rho_0\)</span>, and as we have argued, if <span class="math inline">\(\rho_0\)</span> is a descent direction, a minimizer <span class="math inline">\(\gamma &gt; 0\)</span> guarantees descent of <span class="math inline">\(H\)</span>. However, unless the minimization can be done analytically it is often computationally too expensive. Less will also do, and as shown in Example <a href="algorithms-and-convergence.html#exm:grad-descent">8.1</a>, if the Hessian has uniformly bounded numerical radius it is possible to fix one (sufficiently small) step length that will guarantee descent.</p>
 <div id="line-search" class="section level3">
 <h3><span class="header-section-number">8.2.1</span> Line search</h3>
-<p>We consider algorithms of the form <span class="math display">\[\theta_{n+1} = \theta_n + \gamma_{n+1} \rho_n\]</span> for descent directions <span class="math inline">\(\rho_n\)</span> and starting in <span class="math inline">\(\theta_0\)</span>. The step lengths, <span class="math inline">\(\gamma_n\)</span>, are chosen so as to give sufficient descent in each iteration.</p>
+<p>We consider algorithms of the form <span class="math display">\[\theta_{n+1} = \theta_n + \gamma_{n} \rho_n\]</span> for descent directions <span class="math inline">\(\rho_n\)</span> and starting in <span class="math inline">\(\theta_0\)</span>. The step lengths, <span class="math inline">\(\gamma_n\)</span>, are chosen so as to give sufficient descent in each iteration.</p>
 <p>We let <span class="math inline">\(h(\gamma) = H(\theta_{n} + \gamma \rho_{n})\)</span> denote the univariate and differentiable function of <span class="math inline">\(\gamma\)</span>, <span class="math display">\[h : [0,\infty) \to \mathbb{R},\]</span> that gives the value of <span class="math inline">\(H\)</span> in the direction of the descent direction <span class="math inline">\(\rho_n\)</span>. We can observe that <span class="math display">\[h&#39;(\gamma) = \nabla H(\theta_{n} + \gamma \rho_{n})^T \rho_{n},\]</span> and maximal descent in direction <span class="math inline">\(\rho_n\)</span> can be found by solving <span class="math inline">\(h&#39;(\gamma) = 0\)</span> for <span class="math inline">\(\gamma\)</span>. As mentioned above, less will do. First note that <span class="math display">\[h&#39;(0) = \nabla H(\theta_{n})^T \rho_{n} &lt; 0,\]</span> so <span class="math inline">\(h\)</span> has a negative slope in 0. It descents in a sufficiently small interval <span class="math inline">\([0, \varepsilon)\)</span>, and it is even true that for any <span class="math inline">\(c \in (0, 1)\)</span> there is an <span class="math inline">\(\varepsilon &gt; 0\)</span> such that <span class="math display">\[h(\gamma) \leq h(0) + c \gamma h&#39;(0)\]</span> for <span class="math inline">\(\gamma \in [0, \varepsilon)\)</span>. We note that this inequality can be checked easily for any given <span class="math inline">\(\gamma &gt; 0\)</span>, and is known as the <em>sufficient descent</em> condition. Sufficient descent is not enough in itself as the step length could be arbitrarily small, and the algorithm could effectively get stuck.</p>
 <p>To prevent too small steps we can enforce another condition. Very close to 0, <span class="math inline">\(h\)</span> will have almost the same slope, <span class="math inline">\(h&#39;(0)\)</span>, as it has in 0. If we therefore require that the slope in <span class="math inline">\(\gamma\)</span> should be larger than <span class="math inline">\(\tilde{c} h&#39;(0)\)</span> for some <span class="math inline">\(\tilde{c} \in (0, 1)\)</span>, it forces <span class="math inline">\(\gamma\)</span> away from 0. This is known as the <em>curvature condition</em>.</p>
 <p>The combined conditions on <span class="math inline">\(\gamma\)</span>, <span class="math display">\[h(\gamma) \leq h(0) + c \gamma h&#39;(0)\]</span> for a <span class="math inline">\(c \in (0, 1)\)</span> and <span class="math display">\[h&#39;(\gamma) \geq \tilde{c} h&#39;(0)\]</span> for a <span class="math inline">\(\tilde{c} \in (c, 1)\)</span> are known collectively as the <em>Wolfe conditions</em>. It can be shown that if <span class="math inline">\(h\)</span> is bounded below there exists a step length satisfying the Wolfe conditions (Lemma 3.1 in <span class="citation">Nocedal and Wright (<a href="#ref-Nocedal:2006">2006</a>)</span>).</p>
@@ -306,15 +306,15 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>A practical way of searching for a step length is via <em>backtracking</em>. Choosing a <span class="math inline">\(\gamma_0\)</span> and a constant <span class="math inline">\(d \in (0, 1)\)</span> we can search through the sequence of step lengths <span class="math display">\[\gamma_0, d \gamma_0, d^2 \gamma_0, d^3 \gamma_0, \ldots\]</span> and stop the first time we find a step length satisfying the Wolfe conditions.</p>
 <p>Using backtracking, we can actually dispense of the curvature condition and simply check the sufficient descent condition</p>
 <p><span class="math display">\[H(\theta_{n} + d^k \gamma_0 \rho_{n}) \leq H(\theta_n) + cd^k \gamma_0 \nabla H(\theta_{n})^T \rho_{n}\]</span></p>
-<p>for <span class="math inline">\(c \in (0, 1)\)</span>. The implementation of backtracking requires the choice of the three parameters <span class="math inline">\(\gamma_0\)</span>, <span class="math inline">\(d \in (0, 1)\)</span> and <span class="math inline">\(c \in (0, 1)\)</span>. A good choice depends quite a lot on the algorithm used for choosing the descent direction, but choosing <span class="math inline">\(c\)</span> too close to 1 can make the algorithm take too small steps, and taking <span class="math inline">\(d\)</span> too small can likewise generate small step lengths. Thus <span class="math inline">\(d = 0.8\)</span> or <span class="math inline">\(d = 0.9\)</span> and <span class="math inline">\(c = 0.1\)</span> or even smaller are sensible choices. For some algorithms, like the Newton algorithm to be dealt with below, there is a natural choice of <span class="math inline">\(\gamma_0 = 1\)</span>. But for other algorithms a good choice depends crucially on the scale of the parameters, and there is then no general advice on choosing <span class="math inline">\(\gamma_0\)</span> that can be justified theoretically.</p>
+<p>for <span class="math inline">\(c \in (0, 1)\)</span>. The implementation of backtracking requires the choice of the three parameters: <span class="math inline">\(\gamma_0 &gt; 0\)</span>, <span class="math inline">\(d \in (0, 1)\)</span> and <span class="math inline">\(c \in (0, 1)\)</span>. A good choice depends quite a lot on the algorithm used for choosing the descent direction, but choosing <span class="math inline">\(c\)</span> too close to 1 can make the algorithm take too small steps, and taking <span class="math inline">\(d\)</span> too small can likewise generate small step lengths. Thus <span class="math inline">\(d = 0.8\)</span> or <span class="math inline">\(d = 0.9\)</span> and <span class="math inline">\(c = 0.1\)</span> or even smaller are sensible choices. For some algorithms, like the Newton algorithm to be dealt with below, there is a natural choice of <span class="math inline">\(\gamma_0 = 1\)</span>. But for other algorithms a good choice depends crucially on the scale of the parameters, and there is then no general advice on choosing <span class="math inline">\(\gamma_0\)</span> that can be justified theoretically.</p>
 </div>
 <div id="gradient-descent" class="section level3">
 <h3><span class="header-section-number">8.2.2</span> Gradient descent</h3>
 <p>We return to the Poisson regression example and implement functions in R for computing the negative log-likelihood and its gradient. We exploit the <code>model.matrix</code> function to construct the model matrix from the data via a formula. The sufficient statistic is computed upfront, and the implementations use this vector and relies on linear algebra and vectorized computations. We choose to normalize by the number of observations <span class="math inline">\(n\)</span> (the number of rows in the model matrix). This does have a small computational cost, but the resulting numerical values become less dependent upon <span class="math inline">\(n\)</span>, which makes it easier to choose sensible default values of various parameters for the numerical optimization algorithms.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">X &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(sale <span class="op">~</span><span class="st"> </span><span class="kw">log</span>(normalSale), <span class="dt">data =</span> vegetables)
-z &lt;-<span class="st"> </span>vegetables<span class="op">$</span>sale
+y &lt;-<span class="st"> </span>vegetables<span class="op">$</span>sale
 ## The function `drop` drops the dimensions attribute
-t_map &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">crossprod</span>(X, z))  ## More efficient than drop(t(X) %*% z)
+t_map &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">crossprod</span>(X, y))  ## More efficient than drop(t(X) %*% y)
 
 H &lt;-<span class="st"> </span><span class="cf">function</span>(beta) 
   (<span class="kw">drop</span>(<span class="kw">sum</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">-</span><span class="st"> </span>beta <span class="op">%*%</span><span class="st"> </span>t_map)) <span class="op">/</span><span class="st"> </span><span class="kw">nrow</span>(X)
@@ -375,20 +375,20 @@ tracer &lt;-<span class="st"> </span><span class="cf">function</span>(<span clas
   values_save &lt;-<span class="st"> </span><span class="kw">list</span>()
   last_time &lt;-<span class="st"> </span><span class="kw">proc.time</span>()
   trace &lt;-<span class="st"> </span><span class="cf">function</span>() {
-  <span class="cf">if</span>(<span class="kw">is.null</span>(objects))
-    objects &lt;-<span class="st"> </span><span class="kw">ls</span>(<span class="kw">parent.frame</span>())
-  values &lt;-<span class="st"> </span><span class="kw">mget</span>(objects, <span class="dt">envir =</span> <span class="kw">parent.frame</span>(), <span class="dt">ifnotfound =</span> <span class="kw">list</span>(<span class="ot">NA</span>))
-   <span class="cf">if</span>(N <span class="op">&amp;&amp;</span><span class="st"> </span>(n <span class="op">==</span><span class="st"> </span><span class="dv">1</span> <span class="op">||</span><span class="st"> </span>n <span class="op">%%</span><span class="st"> </span>N <span class="op">==</span><span class="st"> </span><span class="dv">0</span>))
-    <span class="kw">cat</span>(<span class="st">&quot;n = &quot;</span>, n, <span class="st">&quot;: &quot;</span>,  <span class="kw">paste</span>(<span class="kw">names</span>(values), <span class="st">&quot; = &quot;</span>, <span class="kw">format</span>(values, ...), 
-                                <span class="st">&quot;; &quot;</span>, <span class="dt">sep =</span> <span class="st">&quot;&quot;</span>), <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>, <span class="dt">sep =</span> <span class="st">&quot;&quot;</span>)
-  <span class="cf">if</span>(save)
-    <span class="cf">if</span>(time) {
-      time_diff &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">proc.time</span>() <span class="op">-</span><span class="st"> </span>last_time)[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]
-      values[[<span class="st">&quot;.time&quot;</span>]] &lt;-<span class="st"> </span>time_diff[<span class="dv">1</span>] <span class="op">+</span><span class="st"> </span>time_diff[<span class="dv">2</span>]
-      last_time &lt;&lt;-<span class="st"> </span><span class="kw">proc.time</span>()
-    }
-  values_save[[n]] &lt;&lt;-<span class="st"> </span>values
-  n &lt;&lt;-<span class="st"> </span>n <span class="op">+</span><span class="st"> </span><span class="dv">1</span>
+    <span class="cf">if</span>(<span class="kw">is.null</span>(objects))
+      objects &lt;-<span class="st"> </span><span class="kw">ls</span>(<span class="kw">parent.frame</span>())
+    values &lt;-<span class="st"> </span><span class="kw">mget</span>(objects, <span class="dt">envir =</span> <span class="kw">parent.frame</span>(), <span class="dt">ifnotfound =</span> <span class="kw">list</span>(<span class="ot">NA</span>))
+    <span class="cf">if</span>(N <span class="op">&amp;&amp;</span><span class="st"> </span>(n <span class="op">==</span><span class="st"> </span><span class="dv">1</span> <span class="op">||</span><span class="st"> </span>n <span class="op">%%</span><span class="st"> </span>N <span class="op">==</span><span class="st"> </span><span class="dv">0</span>))
+      <span class="kw">cat</span>(<span class="st">&quot;n = &quot;</span>, n, <span class="st">&quot;: &quot;</span>,  <span class="kw">paste</span>(<span class="kw">names</span>(values), <span class="st">&quot; = &quot;</span>, <span class="kw">format</span>(values, ...), 
+                                  <span class="st">&quot;; &quot;</span>, <span class="dt">sep =</span> <span class="st">&quot;&quot;</span>), <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>, <span class="dt">sep =</span> <span class="st">&quot;&quot;</span>)
+    <span class="cf">if</span>(save)
+      <span class="cf">if</span>(time) {
+        time_diff &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">proc.time</span>() <span class="op">-</span><span class="st"> </span>last_time)[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]
+        values[[<span class="st">&quot;.time&quot;</span>]] &lt;-<span class="st"> </span>time_diff[<span class="dv">1</span>] <span class="op">+</span><span class="st"> </span>time_diff[<span class="dv">2</span>]
+        last_time &lt;&lt;-<span class="st"> </span><span class="kw">proc.time</span>()
+      }
+    values_save[[n]] &lt;&lt;-<span class="st"> </span>values
+    n &lt;&lt;-<span class="st"> </span>n <span class="op">+</span><span class="st"> </span><span class="dv">1</span>
   }
   get &lt;-<span class="st"> </span><span class="cf">function</span>(<span class="dt">simplify =</span> <span class="ot">FALSE</span>) {
     <span class="cf">if</span>(simplify) {
@@ -397,13 +397,15 @@ tracer &lt;-<span class="st"> </span><span class="cf">function</span>(<span clas
         col_names, 
         <span class="cf">function</span>(x) <span class="kw">do.call</span>(rbind, <span class="kw">unlist</span>(<span class="kw">lapply</span>(values_save, <span class="cf">function</span>(y) y[x]), 
                                           <span class="dt">recursive =</span> <span class="ot">FALSE</span>))
-        )
+      )
       <span class="kw">names</span>(values_save) &lt;-<span class="st"> </span>col_names
       values_save &lt;-<span class="st"> </span><span class="kw">lapply</span>(col_names, <span class="cf">function</span>(x) {
         x_val &lt;-<span class="st"> </span>values_save[[x]] 
         <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(<span class="kw">ncol</span>(x_val)) <span class="op">&amp;&amp;</span><span class="st"> </span><span class="kw">ncol</span>(x_val) <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) {
           <span class="kw">colnames</span>(x_val) &lt;-<span class="st"> </span>x
         } <span class="cf">else</span> {
+          <span class="cf">if</span>(<span class="kw">is.null</span>(<span class="kw">colnames</span>(x_val)))
+            <span class="kw">colnames</span>(x_val) &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="kw">ncol</span>(x_val)
           <span class="kw">colnames</span>(x_val) &lt;-<span class="st"> </span><span class="kw">paste</span>(x, <span class="st">&quot;.&quot;</span>, <span class="kw">colnames</span>(x_val), <span class="dt">sep =</span> <span class="st">&quot;&quot;</span>)
         }
         x_val
@@ -441,18 +443,18 @@ summary.tracer &lt;-<span class="st"> </span><span class="cf">function</span>(x,
 ## n = 300: value = -124.4068; h_prime = 0.002375827; gamma = 0.00512; 
 ## n = 350: value = -124.4068; h_prime = 0.000216502; gamma = 0.004096;</code></pre>
 <pre><code>##    user  system elapsed 
-##   0.096   0.010   0.105</code></pre>
+##   0.099   0.014   0.121</code></pre>
 <p>We see that the gradient descent algorithm runs for a little more than 350 iterations, and we can observe how the value of the negative log-likelihood is descending. We can also see that the step length <span class="math inline">\(\gamma\)</span> bounces between <span class="math inline">\(0.004096 = 0.8^4 \times 0.01\)</span> and <span class="math inline">\(0.00512 = 0.8^3 \times 0.01\)</span>, thus the backtracking takes 3 to 4 iterations to find a step length with sufficient descent.</p>
 <p>The printed trace does not reveal the run time information. The run time information is computed and stored as differences between process timings at each iteration of the algorithm, and the precision is at best of the order of one millisecond (see <code>?proc.time</code>). Hence the run time associated to one single iteration may be fairly inaccurate for fast iterations, but the cumulative run time can still give a reasonable indication of time usage over many iterations. This information is, however, best inspected and computed after the algorithm has converged, and it is computed and returned by the summary method for tracer objects.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">tail</span>(<span class="kw">summary</span>(GD_tracer))</code></pre></div>
 <pre><code>##         value      h_prime    gamma .time
-## 372 -124.4068 1.125779e-04 0.005120 0.082
-## 373 -124.4068 1.218925e-04 0.005120 0.082
-## 374 -124.4068 1.323878e-04 0.005120 0.082
-## 375 -124.4068 1.441965e-04 0.005120 0.082
-## 376 -124.4068 1.574572e-04 0.005120 0.082
-## 377 -124.4068 7.600796e-05 0.004096 0.083</code></pre>
-<p>The trace information is stored in a list. The summary method transforms the trace information into a data frame with one row per iteration. We can also access individual entries of the list of trace information via subscripting.</p>
+## 372 -124.4068 1.125779e-04 0.005120 0.095
+## 373 -124.4068 1.218925e-04 0.005120 0.096
+## 374 -124.4068 1.323878e-04 0.005120 0.096
+## 375 -124.4068 1.441965e-04 0.005120 0.096
+## 376 -124.4068 1.574572e-04 0.005120 0.096
+## 377 -124.4068 7.600796e-05 0.004096 0.096</code></pre>
+<p>The trace information is stored in a list. The summary method transforms the trace information into a data frame with one row per iteration. We can also access individual entries of the list of trace information via subsetting.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">GD_tracer[<span class="dv">377</span>] </code></pre></div>
 <pre><code>## $value
 ## [1] -124.4068
@@ -464,7 +466,7 @@ summary.tracer &lt;-<span class="st"> </span><span class="cf">function</span>(x,
 ## [1] 0.004096
 ## 
 ## $.time
-## [1] 0.001</code></pre>
+## [1] 0</code></pre>
 <div class="figure" style="text-align: center"><span id="fig:GD-trace-plot"></span>
 <img src="CSwR_files/figure-html/GD-trace-plot-1.png" alt="Gradient norm (top) and value of the negative log-likelihood (bottom) above the limit value $H(\theta_{\infty})$. The straight line is fitted to the data points except the first ten using least squares, and the rate is computed from this estimate and reported per ms." width="100%" />
 <p class="caption">
@@ -474,11 +476,13 @@ Figure 8.1: Gradient norm (top) and value of the negative log-likelihood (bottom
 </div>
 <div id="conjugate-gradients" class="section level3">
 <h3><span class="header-section-number">8.2.3</span> Conjugate gradients</h3>
-<p>The gradient direction is typically not the best descent direction. It is too local, and convergence can be quite slow. One of the better algorithms that is still a “first order algorithm” (using only gradient information) is the <a href="https://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method"><em>conjugate gradient</em></a> algorithm. In the Fletcher and Reeves version of the algorithm the descent direction is initialized as the negative gradient <span class="math inline">\(\rho_0 = - \nabla H(\theta_{0})\)</span> and then updated as <span class="math display">\[\rho_{n} = - \nabla H(\theta_{n}) + \frac{\|\nabla H(\theta_n)\|_2^2}{\|\nabla H(\theta_{n-1})\|_2^2} \rho_{n-1}.\]</span> That is, the descent direction, <span class="math inline">\(\rho_{n}\)</span>, is the negative gradient but modified according to the previous descent direction.</p>
-<p>In fact, <span class="math inline">\(\rho_{n}\)</span> need not be a descent direction unless we put some restrictions on the step lengths. If one requires the step length <span class="math inline">\(\gamma_{n+1}\)</span> to satisfy the <em>strong</em> curvature condition <span class="math display">\[|h&#39;(\gamma)| = |\nabla H(\theta_n + \gamma \rho_n)^T \rho_n | \leq \tilde{c} |\nabla H(\theta_n)^T \rho_in = \tilde{c} |h&#39;(0)|\]</span> for <span class="math inline">\(\tilde{c} &lt; \frac{1}{2}\)</span>, then <span class="math inline">\(\rho_{n + 1}\)</span> can be shown to be a descent direction if <span class="math inline">\(\rho_n\)</span> is.</p>
-<p>We implement the conjugate gradient method in a slightly different way. Instead of introducing the more advanced curvature condition, we simply reset the algorithm to use the gradient direction in any case where a non-descent direction has been chosen.</p>
+<p>The gradient direction is typically not the best descent direction. It is too local, and convergence can be quite slow. One of the better algorithms that is still a “first order algorithm” (using only gradient information) is the <a href="https://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method"><em>nonlinear conjugate gradient</em></a> algorithm. In the Fletcher–Reeves version of the algorithm the descent direction is initialized as the negative gradient <span class="math inline">\(\rho_0 = - \nabla H(\theta_{0})\)</span> and then updated as <span class="math display">\[\rho_{n} = - \nabla H(\theta_{n}) + \frac{\|\nabla H(\theta_n)\|_2^2}{\|\nabla H(\theta_{n-1})\|_2^2} \rho_{n-1}.\]</span> That is, the descent direction, <span class="math inline">\(\rho_{n}\)</span>, is the negative gradient but modified according to the previous descent direction. There is plenty of opportunity to vary the the prefactor of <span class="math inline">\(\rho_{n-1}\)</span>, and the one presented here is what makes it the Fletcher–Reeves version. Other versions go by the names of their inventors such as Polak–Ribière or Hestenes–Stiefel.</p>
+<p>In fact, <span class="math inline">\(\rho_{n}\)</span> need not be a descent direction unless we put some restrictions on the step lengths. One possibility is to require that the step length <span class="math inline">\(\gamma_{n}\)</span> satisfies the <em>strong</em> curvature condition <span class="math display">\[|h&#39;(\gamma)| = |\nabla H(\theta_n + \gamma \rho_n)^T \rho_n | \leq \tilde{c} |\nabla H(\theta_n)^T \rho_n| = \tilde{c} |h&#39;(0)|\]</span> for a <span class="math inline">\(\tilde{c} &lt; \frac{1}{2}\)</span>. Then <span class="math inline">\(\rho_{n + 1}\)</span> can be shown to be a descent direction if <span class="math inline">\(\rho_{n}\)</span> is.</p>
+<p>We implement the conjugate gradient method in a slightly different way. Instead of introducing the more advanced curvature condition, we simply reset the algorithm to use the gradient direction in any case where a non-descent direction has been chosen. Resets of descent direction every <span class="math inline">\(p\)</span>th iteration is recommended anyway for the nonlinear conjugate gradient algorithm.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">CG &lt;-<span class="st"> </span><span class="cf">function</span>(par, <span class="dt">d =</span> <span class="fl">0.8</span>, <span class="dt">c =</span> <span class="fl">0.1</span>, <span class="dt">gamma0 =</span> <span class="dv">1</span>, <span class="dt">epsilon =</span> <span class="fl">1e-6</span>, <span class="dt">trace =</span> <span class="ot">NULL</span>) {
-  rho0 &lt;-<span class="st"> </span><span class="kw">numeric</span>(<span class="kw">length</span>(par))
+  p &lt;-<span class="st"> </span><span class="kw">length</span>(par)
+  m &lt;-<span class="st"> </span><span class="dv">1</span>
+  rho0 &lt;-<span class="st"> </span><span class="kw">numeric</span>(p)
   <span class="cf">repeat</span> {
     value &lt;-<span class="st"> </span><span class="kw">H</span>(par)
     grad &lt;-<span class="st"> </span><span class="kw">grad_H</span>(par)
@@ -489,10 +493,11 @@ Figure 8.1: Gradient norm (top) and value of the negative log-likelihood (bottom
     ## Descent direction
     rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad <span class="op">+</span><span class="st"> </span>grad_norm_sq <span class="op">*</span><span class="st"> </span>rho0
     h_prime &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">t</span>(grad) <span class="op">%*%</span><span class="st"> </span>rho)
-    ## Reset to gradient descent if rho is not a descent direction
-    <span class="cf">if</span>(h_prime <span class="op">&gt;=</span><span class="st"> </span><span class="dv">0</span>) {
+    ## Reset to gradient descent if m &gt; p or rho is not a descent direction
+    <span class="cf">if</span>(m <span class="op">&gt;</span><span class="st"> </span>p <span class="op">||</span><span class="st"> </span>h_prime <span class="op">&gt;=</span><span class="st"> </span><span class="dv">0</span>) {
       rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad
       h_prime &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad_norm_sq 
+      m &lt;-<span class="st"> </span><span class="dv">1</span>
     }
     par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho
     ## Backtracking
@@ -502,17 +507,20 @@ Figure 8.1: Gradient norm (top) and value of the negative log-likelihood (bottom
     }
     rho0 &lt;-<span class="st"> </span>rho <span class="op">/</span><span class="st"> </span>grad_norm_sq
     par &lt;-<span class="st"> </span>par1
+    m &lt;-<span class="st"> </span>m <span class="op">+</span><span class="st"> </span><span class="dv">1</span>
   }
   par
 }</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">CG_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;gamma&quot;</span>, <span class="st">&quot;grad_norm_sq&quot;</span>), <span class="dt">N =</span> <span class="dv">10</span>)
 pois_CG &lt;-<span class="st"> </span><span class="kw">CG</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> CG_tracer<span class="op">$</span>trace)</code></pre></div>
 <pre><code>## n = 1: value = 1; gamma = NA; grad_norm_sq = 14269; 
-## n = 10: value = -123.43; gamma = 0.005903; grad_norm_sq = 106.1; 
-## n = 20: value = -124.38; gamma = 0.011529; grad_norm_sq = 4.4081; 
-## n = 30: value = -124.41; gamma = 0.005903; grad_norm_sq = 0.018209; 
-## n = 40: value = -124.41; gamma = 0.005903; grad_norm_sq = 5.6554e-05; 
-## n = 50: value = -124.41; gamma = 0.0073787; grad_norm_sq = 1.7171e-06;</code></pre>
+## n = 10: value = -123.15; gamma = 0.018014; grad_norm_sq = 129.78; 
+## n = 20: value = -123.92; gamma = 0.022518; grad_norm_sq = 77.339; 
+## n = 30: value = -124.23; gamma = 0.018014; grad_norm_sq = 22.227; 
+## n = 40: value = -124.41; gamma = 0.0092234; grad_norm_sq = 0.179; 
+## n = 50: value = -124.41; gamma = 0.10737; grad_norm_sq = 0.028232; 
+## n = 60: value = -124.41; gamma = 0.0092234; grad_norm_sq = 0.00021747; 
+## n = 70: value = -124.41; gamma = 0.0092234; grad_norm_sq = 1.7488e-06;</code></pre>
 <div class="figure" style="text-align: center"><span id="fig:GD-CG-trace-plot"></span>
 <img src="CSwR_files/figure-html/GD-CG-trace-plot-1.png" alt="Gradient norms (top) and negative log-likelihoods (bottom) for gradient descent (left) and conjugate gradient (right)." width="100%" />
 <p class="caption">
@@ -522,31 +530,31 @@ Figure 8.2: Gradient norms (top) and negative log-likelihoods (bottom) for gradi
 <p>This algorithm is fast enough to fit the large Poisson regression model.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">X &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, 
                   <span class="dt">data =</span> vegetables)
-t_map &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">crossprod</span>(X, z)) </code></pre></div>
+t_map &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">crossprod</span>(X, y)) </code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">CG_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;gamma&quot;</span>, <span class="st">&quot;grad_norm_sq&quot;</span>), <span class="dt">N =</span> <span class="dv">100</span>)
 pois_CG &lt;-<span class="st"> </span><span class="kw">CG</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> CG_tracer<span class="op">$</span>trace)</code></pre></div>
 <pre><code>## n = 1: value = 1; gamma = NA; grad_norm_sq = 12737; 
 ## n = 100: value = -127.7; gamma = 0.014412; grad_norm_sq = 4.6263; 
 ## n = 200: value = -128.02; gamma = 0.014412; grad_norm_sq = 0.41723; 
 ## n = 300: value = -128.35; gamma = 0.0024179; grad_norm_sq = 0.063094; 
-## n = 400: value = -128.57; gamma = 0.10737; grad_norm_sq = 0.0083182; 
-## n = 500: value = -128.59; gamma = 0.0037779; grad_norm_sq = 0.00037643; 
-## n = 600: value = -128.59; gamma = 0.035184; grad_norm_sq = 8.357e-05; 
-## n = 700: value = -128.59; gamma = 0.011529; grad_norm_sq = 1.1652e-05; 
-## n = 800: value = -128.59; gamma = 0.0092234; grad_norm_sq = 2.9202e-06;</code></pre>
+## n = 400: value = -128.56; gamma = 0.04398; grad_norm_sq = 0.64184; 
+## n = 500: value = -128.58; gamma = 0.028147; grad_norm_sq = 0.012616; 
+## n = 600: value = -128.59; gamma = 0.0030223; grad_norm_sq = 0.00028513; 
+## n = 700: value = -128.59; gamma = 0.0030223; grad_norm_sq = 1.0811e-05; 
+## n = 800: value = -128.59; gamma = 0.0019343; grad_norm_sq = 4.2685e-06;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">tail</span>(<span class="kw">summary</span>(CG_tracer))</code></pre></div>
-<pre><code>##         value       gamma grad_norm_sq .time
-## 816 -128.5894 0.107374182 7.966112e-05 9.088
-## 817 -128.5894 0.003777893 3.155961e-06 9.099
-## 818 -128.5894 0.004722366 1.065707e-06 9.109
-## 819 -128.5894 0.068719477 2.355075e-05 9.115
-## 820 -128.5894 0.054975581 1.730998e-05 9.122
-## 821 -128.5894 0.003022315 7.042119e-07 9.133</code></pre>
+<pre><code>##         value       gamma grad_norm_sq  .time
+## 890 -128.5894 0.134217728 2.968376e-04 12.556
+## 891 -128.5894 0.003777893 2.511863e-06 12.573
+## 892 -128.5894 0.004722366 1.510951e-06 12.588
+## 893 -128.5894 1.000000000 1.835397e-04 12.590
+## 894 -128.5894 0.005902958 3.238532e-05 12.617
+## 895 -128.5894 0.003777893 6.586532e-07 12.638</code></pre>
 <p>Using <code>optim</code> with the conjugate gradient method.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(pois_optim_CG &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), H, grad_H, 
                                    <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)))</code></pre></div>
 <pre><code>##    user  system elapsed 
-##  13.499   1.438  15.002</code></pre>
+##  14.163   1.133  15.315</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">pois_optim_CG[<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;counts&quot;</span>)]</code></pre></div>
 <pre><code>## $value
 ## [1] -128.5895
