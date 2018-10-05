@@ -166,6 +166,89 @@ can become quite slow.
 
 ## Exponential families {#EM-exp}
 
+We consider in this section the special case where the model of $\mathbf{y}$ 
+is given as an exponential family Bayesian network as in Section \@ref(bayes-net)
+and $x = M(\mathbf{y})$ is the observed transformation. 
+
+The complete data log-likelihood is 
+$$\theta \mapsto \theta^T t(\mathbf{y}) - \kappa(\theta)  = \theta^T \sum_{j=1}^m t_j(y_j) -  \kappa(\theta),$$
+and we find that 
+$$Q(\theta \mid \theta') = \theta^T \sum_{j=1}^m E_{\theta'}(t_j(Y_j) \mid X = x)  - 
+E_{\theta'}( \kappa(\theta) \mid X = x).$$
+
+To maximize $Q$ we differentiate $Q$ and equate the derivative equal to zero. We
+find that the resulting equation is 
+$$\sum_{j=1}^m E_{\theta'}(t_j(Y_j) \mid X = x) = E_{\theta'}( \nabla \kappa(\theta) \mid X = x).$$
+
+Alternatively, one may also note the following general equation for finding
+the maximum of $Q(\cdot \mid \theta')$ 
+$$\sum_{j=1}^m E_{\theta'}(t_j(Y_j) \mid X = x) = \sum_{j=1}^m E_{\theta'}(E_{\theta}(t_j(Y_j) \mid y_1, \ldots, y_{j-1}) \mid X = x),$$
+since
+$$E_{\theta'}(\nabla \kappa(\theta)\mid X = x) = 
+\sum_{j=1}^m E_{\theta'}(\nabla \log \varphi_j(\theta) \mid X = x) = 
+\sum_{j=1}^m E_{\theta'}(E_{\theta}(t_j(Y_j) \mid y_1, \ldots, y_{j-1}) \mid X = x) $$
+
+
+
+```{example, gaussian-mixture-em}
+Continuing Example \@ref(exm:gaussian-mixed) with $M$ the projection map 
+$$(\mathbf{y}, \mathbf{z}) \mapsto \mathbf{y}$$
+we see that $Q$ is maximized in $\theta$ by solving 
+$$\sum_{i,j} E_{\theta'}(t(Y_{ij} \mid Z_i) \mid \mathbf{Y} = \mathbf{y}) = 
+  \sum_{i} m_i E_{\theta'}(\nabla \kappa(\theta \mid Z_i) \mid \mathbf{Y} = \mathbf{y}).$$
+
+  
+By using Example \@ref(exm:gaussian-exponential) we see that 
+$$\kappa(\theta \mid Z_i) = \frac{(\theta_1 + \theta_3 Z_i)^2}{4\theta_2} - \frac{1}{2}\log \theta_2,$$
+hence 
+
+$$\nabla \kappa(\theta \mid Z_i) = \frac{1}{2\theta_2} \left(\begin{array}{cc} \theta_1 + \theta_3 Z_i \\ 
+- \frac{(\theta_1 + \theta_3 Z_i)^2}{2\theta_2} - 1 \\ \theta_1 Z_i + \theta_3 Z_i^2 \end{array}\right)
+= \left(\begin{array}{cc} \beta_0 + \nu Z_i \\ 
+- (\beta_0 + \nu Z_i)^2 - \sigma^2 \\ \beta_0 Z_i + \nu Z_i^2 \end{array}\right).$$
+
+Therefore, $Q$ is maximized by solving the equation
+                      
+$$\sum_{i,j} \left(\begin{array}{cc}  y_{ij} \\ -  y_{ij}^2 \\ E_{\theta'}(Z_i \mid \mathbf{Y} = \mathbf{y}) y_{ij} \end{array}\right) = \sum_{i}  m_i \left(\begin{array}{cc} \beta_0 + \nu E_{\theta'}(Z_i \mid \mathbf{Y}_i = \mathbf{y}_i) \\ 
+- E_{\theta'}((\beta_0 + \nu Z_i)^2 \mid \mathbf{Y} = \mathbf{y}) - \sigma^2 \\ \beta_0 E_{\theta'}(Z_i \mid \mathbf{Y} = \mathbf{y}) + \nu E_{\theta'}(Z_i^2 \mid \mathbf{Y} = \mathbf{y}) \end{array}\right).$$
+Introducing first $\xi_i = E_{\theta'}(Z_i \mid \mathbf{Y} = \mathbf{y})$ and 
+$\zeta_i = E_{\theta'}(Z_i^2 \mid \mathbf{Y} = \mathbf{y})$ we can rewrite the 
+first and last of the three equations as the linear equation
+$$ \left(\begin{array}{cc} \sum_{i} m_i& \sum_{i} m_i\xi_i \\ \sum_{i} m_i\xi_i & \sum_{i} m_i\zeta_i \end{array}\right) 
+\left(\begin{array}{c} \beta_0 \\  \nu \end{array}\right) = \left(\begin{array}{cc}  \sum_{i,j} y_{ij} \\ \sum_{i,j} \xi_i y_{ij} \end{array}\right).$$
+Plugging the solution for $\beta_0$ and $\nu$ into the second equation we 
+find 
+$$\sigma^2 = \frac{1}{\sum_{i} m_i}\sum_{ij} y_{ij}^2 - \sum_{i} m_i(\beta_0^2 + \nu^2 \zeta_i + 2 \beta_0 \nu \xi_i).$$
+
+This solves the M-step of the EM-algorithm for the mixed effects model. What 
+remains is the E-step that amounts to the computation of $\xi_i$ and $\zeta_i$. 
+We know that the joint distribution of $\mathbf{Y}$ and $\mathbf{Z}$ is Gaussian,
+and we can easily compute the variances and covariances: 
+$$\mathrm{cov}(Z_i, Z_j) = \delta_{ij}$$
+
+$$\mathrm{cov}(Y_{ij}, Y_{kl}) = \left\{ \begin{array}{ll}  \nu^2 + \sigma^2 & \quad \text{if } i = k, j = l \\
+\nu^2 & \quad \text{if } i = k, j \neq l  \\
+0 & \quad \text{otherwise } \end{array} \right.$$
+
+$$\mathrm{cov}(Z_i, Y_{kl}) = \left\{ \begin{array}{ll}  \nu  & \quad \text{if } i = k \\
+0 & \quad \text{otherwise } \end{array} \right.$$
+
+This gives a joint Gaussian distribution 
+$$\left( \begin{array}{c} \mathbf{Z} \\ \mathbf{Y} \end{array} \right)  \sim \mathcal{N}\left(
+\left(\begin{array} \mathbf{0} \\ \beta_0 \mathbf{1}\end{array} \right), 
+\left(\begin{array}{cc}  \Sigma_{11} & \Sigma_{12} \\ \Sigma_{21} & \Sigma_{22} \end{array}\right)\right).$$
+
+From this and the general formulas for [computing conditional distributions 
+in the multivariate Gaussian distribution](https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions):
+$$\mathbf{Z} \mid \mathbf{Y} \sim \mathcal{N}\left( \Sigma_{12} \Sigma_{22}^{-1}(\mathbf{Y} - \beta_0 \mathbf{1}), 
+\Sigma_{11} - \Sigma_{12}\Sigma_{22}^{-1}\Sigma_{21} \right).$$
+The conditional means, $\xi_i$, are thus the coordinates of $\Sigma_{12} \Sigma_{22}^{-1}(\mathbf{Y} - \beta_0 \mathbf{1})$. The conditional second moments, $\zeta_i$, can be found as the diagonal
+elements of the conditional covariance matrix plus $\xi_i^2$. 
+
+
+```
+
+
 ## Fisher information
 
 ## Two examples revisited
