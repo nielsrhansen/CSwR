@@ -1,6 +1,28 @@
-# Expectation Maximization algorithms {#em}
+# Expectation maximization algorithms {#em}
+
+Somewhat surprisingly, it is possible to develop an algorithm, known as the 
+*expectation-maximization algorithm*, for computing the maximum of a likelihood 
+function in situations where computing the likelihood itself is quite 
+difficult. This is possible in situations where the model is defined in 
+terms of certain unobserved components, and where likelihood computations and 
+optimization is relatively easy had we had the complete observation. The EM algorithm 
+exploits this special structure, and is thus not a general optimization 
+algorithm, but the situation where it applies is common enough in statistics 
+that it is one of the core optimization algorithms used for computing maximum-
+likelihood estimates. 
+
+In this chapter it is shown that the algorithm is generally an descent algorithm 
+of the negative log-likelihood, and examples of its implementation are given to 
+multinomial cell collapsing and Gaussian mixtures. The theoretical results needed 
+for the EM algorithm for a special case of mixed models are given as well. Finally, 
+som theoretical results as well as practical implementations for computing 
+estimates of the Fisher information are presented. 
 
 ## Basic properties 
+
+In this section the EM algorithm is formulated and shown to be a descent algorithm
+for the negative log-likelihood. Allele frequency estimation for the peppered moth
+is considered as a simple example showing how the algorithm can be implemented. 
 
 ### Incomplete data likelihood
 
@@ -14,7 +36,7 @@ The general argument for the marginal density relies on the coarea formula.
 
 The log-likelihood for observing $X = x$ is
 $$\ell(\theta) = \log g(x \mid \theta).$$ 
-The marginal likelihood is often 
+The log-likelihood is often 
 impossible to compute analytically and difficult and expensive to compute 
 numerically. The complete log-likelihood, $\log f(y \mid \theta)$, is often easy to 
 compute, but we don't know $Y$, only that $M(Y) = x$.
@@ -27,67 +49,137 @@ Thus for fixed $\theta'$ this is a computable function of $\theta$ depending
 only on the observed data $x$. 
 
 One could get the following idea: with an initial guess of 
-$\theta' = \theta^{(0)}$ compute iteratively
-$$\theta^{(t + 1)} = \textrm{arg max} \ Q(\theta \mid \theta^{(t)})$$
- for $t = 0, 1, 2, \ldots$. This idea is the EM-algorithm:
+$\theta' = \theta_0$ compute iteratively
+$$\theta_{n + 1} = \textrm{arg max} \ Q(\theta \mid \theta_n)$$
+ for $n = 0, 1, 2, \ldots$. This idea is the EM algorithm:
 
-* **E-step**: Compute the conditional expectation $Q(\theta \mid \theta^{(t)})$. 
-* **M-step**: Maximize $\theta \mapsto Q(\theta \mid \theta^{(t)})$. 
+* **E-step**: Compute the conditional expectation $Q(\theta \mid \theta_n )$. 
+* **M-step**: Maximize $\theta \mapsto Q(\theta \mid \theta_n )$. 
 
 It is a bit weird to present the algorithm as a two-step algorithm in its abstract 
-formulation. Even though we can regard $Q(\theta \mid \theta^{(t)})$ as 
-something we can compute abstractly for each $\theta$ for a given $\theta^{(t)}$, 
+formulation. Even though we can regard $Q(\theta \mid \theta_n)$ as 
+something we can compute abstractly for each $\theta$ for a given $\theta_n$, 
 the maximization is in practice not really done using all these evaluations. It is 
-computed either by an analytic formula involving $x$ and $\theta^{(t)}$, or by a 
-numerical algorithm that computes certain evaluations of $Q( \cdot \mid \theta^{(t)})$
+computed either by an analytic formula involving $x$ and $\theta_n$, or by a 
+numerical algorithm that computes certain evaluations of $Q( \cdot \mid \theta_n)$
 and perhaps its gradient and Hessian. In computing these specific evaluations 
 there is, of course, a need for the computation of conditional expectations,
 but we would compute these as they are needed and not upfront.
 
-However, in some of the most important applications of the EM-algorithm, particularly 
+However, in some of the most important applications of the EM algorithm, particularly 
 for exponential families covered in Section \@ref(EM-exp), it makes a lot of sense to regard
 the algorithm as a two-step algorithm. This is the case whenever 
-$Q(\theta \mid \theta^{(t)}) = q(\theta, t(x, \theta^{(t)}))$ is given 
-in terms of $\theta$ and a function $t(x, \theta^{(t)})$ of $x$ and $\theta^{(t)}$ 
+$Q(\theta \mid \theta_n) = q(\theta, t(x, \theta_n))$ is given 
+in terms of $\theta$ and a function $t(x, \theta_n )$ of $x$ and $\theta_n$ 
 that doesn't depend on $\theta$. Then the E-step becomes the computation of 
-$t(x, \theta^{(t)})$, and in the M-step, $Q(\cdot \mid \theta^{(t)})$ is 
-maximized by maximizing $q(\cdot, t(x, \theta^{(t)}))$, 
-and the maximum is a function of $t(x, \theta^{(t)})$. 
+$t(x, \theta_n )$, and in the M-step, $Q(\cdot \mid \theta_n )$ is 
+maximized by maximizing $q(\cdot, t(x, \theta_n ))$, 
+and the maximum is a function of $t(x, \theta_n )$. 
 
+### Monotonicity of the EM algorithm
 
-### The EM-algorithm is ascending
+We prove below that the algorithm (weakly) increases the log-likelihood in every step,
+and thus is a descent algorithm for the negative log-likelihood $H = - \ell$. 
 
-We prove below that the algorithm is an ascent algorithm; it (weakly) increases the marginal likelihood 
-in every step.
+It holds in great generality that the conditional distribution of $Y$ given $X = x$ 
+has density 
 
-THEOREM AND PROOF
+\begin{equation}
+h(y \mid x, \theta) = \frac{f(y \mid \theta)}{g(x \mid \theta)}
+(\#eq:cond-dist)
+\end{equation}
 
-It holds in great generality that the conditional distribution of $Y$ given $X = x$ has density 
-$$h(y \mid x, \theta) = \frac{f(y \mid \theta)}{g(x \mid \theta)}$$
-w.r.t. a suitable measure $\mu_x$ that does not depend upon $\theta$. 
+w.r.t. the measure $\mu_x$ as above (that does not depend upon $\theta$), and where
+$g$ is the density for the marginal distribution. 
 
-You can verify this for discrete distributions and when 
-$Y = (Z, X)$ with joint density w.r.t. a product measure $\mu \otimes \nu$ that does not depend upon $\theta$. 
-
-In the latter case, $f(y \mid \theta) = f(z, x \mid \theta)$ and 
+This can be verified quite easily for discrete distributions and when 
+$Y = (Z, X)$ with joint density w.r.t. a product measure $\mu \otimes \nu$ that 
+does not depend upon $\theta$. In the latter case, $f(y \mid \theta) = f(z, x \mid \theta)$ and 
 $$g(x \mid \theta) = \int f(z, x \mid \theta) \ \mu(\mathrm{d} z)$$
 is the marginal density w.r.t. $\nu$. 
 
-In general 
-$$\log g(x \mid \theta) = \log f(y \mid \theta) - \log h(y \mid x, \theta),$$
-and under some integrability conditions, this decomposition is used to show
-that the EM-algorithm increases the likelihood, $\ell(\theta)$, in each iteration.
+Whenever \@ref(eq:cond-dist) holds it follows that  
+$$\ell(\theta) = \log g(x \mid \theta) = \log f(y \mid \theta) - \log h(y \mid x, \theta),$$
+where $\ell(\theta)$ is the log-likelihood. 
 
-### Multinomial cell collapsing
 
-The EM-algorithm can be implemented by two simple functions that compute
+```{theorem, EM-inequality} 
+If $\log f(Y \mid \theta)$ as well as $\log h(Y \mid x, \theta)$ have 
+finite $\theta'$-conditional expectation given $M(Y) = x$ then 
+$$Q(\theta \mid \theta') > Q(\theta' \mid \theta') \quad \Rightarrow \quad  \ell(\theta) > \ell(\theta').$$
+```
+
+```{proof}
+Since $\ell(\theta)$ depends on $y$ only through $M(y) = x$,
+
+\begin{align}
+\ell(\theta) & = E_{\theta'} ( \ell(\theta) \mid X = x) \\
+& =  \underbrace{E_{\theta'} ( \log f(Y \mid \theta) \mid X = x)}_{Q(\theta \mid \theta')} +  \underbrace{ E_{\theta'} ( - \log h(Y \mid x, \theta) \mid X = x)}_{H(\theta \mid\theta')} \\
+& = Q(\theta \mid \theta') + H(\theta \mid \theta'). 
+\end{align}
+
+Now for the second term we find, using [Jensen's inequality](https://en.wikipedia.org/wiki/Jensen%27s_inequality#Measure-theoretic_and_probabilistic_form) 
+for the convex function $-\log$, that 
+
+\begin{align}
+H(\theta \mid \theta') & = \int - \log(h(y \mid x, \theta)) h(y \mid x, \theta') \mu_x(\mathrm{d}y) \\
+& = \int - \log\left(\frac{h(y \mid x, \theta)}{ h(y \mid x, \theta')}\right) h(y \mid x, \theta') \mu_x(\mathrm{d}y) + \int - \log(h(y \mid x, \theta')) h(y \mid x, \theta') \mu_x(\mathrm{d}y) \\
+& \geq  -\log \left( \int \frac{h(y \mid x, \theta)}{ h(y \mid x, \theta')} h(y \mid x, \theta') \mu_x(\mathrm{d}y) \right) + H(\theta' \mid \theta') \\
+& = -\log\underbrace{\left( \int h(y \mid x, \theta) \mu_x(\mathrm{d}y)\right) }_{=1} + H(\theta' \mid \theta') \\
+& =  H(\theta' \mid \theta').
+\end{align}
+
+From this we see that 
+
+$$\ell(\theta) \geq  Q(\theta \mid \theta') + H(\theta' \mid \theta')$$
+
+for all $\theta$ and the right hand side is a so-called minorant for the log-likelihood.
+Observing that
+
+$$\ell(\theta') = Q(\theta' \mid \theta') + H(\theta' \mid \theta').$$
+
+completes the proof of the theorem.
+```
+
+Note that the proof above can also be given by referring to [Gibbs' inequality in information theory](https://en.wikipedia.org/wiki/Jensen%27s_inequality#Information_theory)
+stating that the Kullback-Leibler divergence is positive, or equivalently 
+that the cross-entropy $H(\theta \mid \theta')$ is smaller than the 
+entropy $H(\theta' \mid \theta')$, but the proof of this is, in itself, a 
+consequence of Jensen's inequality just as above. 
+
+It follows from Theorem \@ref(thm:EM-inequality) that if $\theta_n$ is computed
+iteratively starting from $\theta_0$ such that 
+$$Q(\theta_{n+1} \mid \theta_{n}) > Q(\theta_{n} \mid \theta_{n}),$$
+then 
+$$H(\theta_0) > H(\theta_1) > H(\theta_2) > \ldots.$$
+This proves that the EM algorithm is a strict descent algorithm for the negative 
+log-likelihood as long as it is possible in each iteration to strictly 
+increase $\theta \mapsto Q(\theta \mid \theta_{n})$ above $Q(\theta_{n} \mid \theta_{n}).$
+
+The term EM algorithm is usually reserved for the specific algorithm that maximizes
+ $Q(\cdots \mid \theta_n)$ in the M-step, but as we have seen, there is 
+absolutely no reason to insist on the M-step being a maximization. A choice 
+of descent direction of $Q(\cdot \mid \theta_n)$ and a step-length 
+guaranteeing sufficient descent will be enough to give a descent 
+algorithm. Any such variation is usually termed a generalized EM algorithm.
+
+One may imagine that the minorant could actually be a useful lower bound on the
+difficult-to-compute log-likelihood. The additive constant $H(\theta' \mid \theta')$ in the minorant 
+is, however, not going to be computable in general either, and it is not clear that there is 
+any way to use the bound quantitatively. 
+
+### Peppered moths
+
+We return in this section to the peppered moths and the implementation of 
+the EM algorithm for multinomial cell collapsing. 
+
+The EM algorithm can be implemented by two simple functions that compute
 the conditional expectations above (the E-step) and then maximization 
 of the complete observation log-likelihood.
 
 ```{r multinomial_E0, dependson=c("moth_M", "moth_prob")}
 EStep0 <- function(p, x, group) {
-  pp <- prob(p)
-  x[group] * pp / M(pp, group)[group]
+  x[group] * p / M(p, group)[group]
 }
 ```
 
@@ -102,28 +194,37 @@ MStep0 <- function(n, X)
 The `EStep0` and `MStep0` functions are abstract implementations. They require 
 specification of the arguments `group` and `X`, respectively, to become concrete. 
 
-### Peppered Moths E- and M-steps
-
-Concrete functions for the E- and M-steps are implemented for the particular 
-example.
+The M-step is only implemented in the case where the complete-data MLE is a
+*linear estimator*, that is, a linear map of the complete data vector $y$ 
+that can be expressed in terms of a matrix $\mathbf{X}$. 
 
 ```{r moth_E_M, dependson=c("multinomial_E", "multinomial_MLE")}
-EStep <- function(p, x)
-  EStep0(p, x, c(1, 1, 1, 2, 2, 3))
+EStep <- function(par, x)
+  EStep0(prob(par), x, c(1, 1, 1, 2, 2, 3))
 
 MStep <- function(n) {
   X <- matrix(
   c(2, 1, 1, 0, 0, 0,
     0, 1, 0, 2, 1, 0) / 2,
   2, 6, byrow = TRUE)
+  
   MStep0(n, X)
 }
 ```
 
+The EM algorithm is finally implemented as an iterative, alternating call 
+of `EStep` and `MStep` until convergence as measured in terms of the relative
+change from iteration to iteration being sufficiently small. 
+
 ```{r moth_EM, dependson="moth_E_M"}
-EM <- function(par, x, tmax = 10) {
-  for(i in 1:tmax) 
+EM <- function(par, x, epsilon = 1e-6, trace = NULL) {
+  repeat{
+    par0 <- par
     par <- MStep(EStep(par, x))
+    if(!is.null(trace)) trace()
+    if(sum((par - par0)^2) <= epsilon * (sum(par^2) + epsilon))
+      break
+  } 
   par  ## Remember to return the parameter estimate
 }
   
@@ -131,38 +232,40 @@ phat <- EM(c(0.3, 0.3), c(85, 196, 341))
 phat
 ```
 
+We check what is going on in each step of the EM algorithm.
 
-### Inside the EM
-
-Check what is going on in each step of the EM-algorithm.
-
-```{r moth_EM_convergence, dependson=c("moth_EM", "moth_loglikelihood")}
-conv_diag <- matrix(nrow = 10, ncol = 5)
-colnames(conv_diag) <- c("t", "pC", "pI", "R", "loglik")
-par <- c(0.3, 0.3)
-for(t in 1:10) {
-    par0 <- par
-    par <- EM(par0, c(85, 196, 341), tmax = 1)
-    R <- par - par0
-    R <- sqrt(t(R) %*% R / (t(par0) %*% par0))
-    conv_diag[t, ] <- c(t, par[1], par[2], R, 
-                        loglik(par[-3], c(85, 196, 341)))
-}
+```{r moth_EM_trace, dependson=c("moth_EM")}
+EM_tracer <- tracer("par")
+EM(c(0.3, 0.3), c(85, 196, 341), trace = EM_tracer$trace)
 ```
 
-
-```{r moth_EM_table, dependson="moth_EM_convergence", echo=FALSE}
-knitr::kable(conv_diag)
+```{r moth_EM_trace2, dependson="moth_EM"}
+EM_tracer <- tracer(c("par0", "par"), N = 0)
+phat <- EM(c(0.3, 0.3), c(85, 196, 341), epsilon = 1e-20, trace = EM_tracer$trace)
 ```
 
-
-```{r moth_EM_figure, dependson="moth_EM_convergence", echo=FALSE}
-qplot(t, log(R), data = as.data.frame(conv_diag), geom = "line")
+```{r moth_EM_figure, dependson=c("moth_EM_trace2")}
+EM_trace <- summary(EM_tracer)
+  EM_trace <- transform(
+  EM_trace, 
+  n = 1:nrow(EM_trace),
+  par_norm_diff = sqrt((par0.1 - par.1)^2 + (par0.2 - par.2)^2)
+)
+qplot(n, log(par_norm_diff), data = EM_trace)
 ```
 
-Note the log-axis. The EM-algorithm converges rapidly in this example. 
-This is not always the case. If the log-likelihood is flat, the EM-algorithm 
-can become quite slow. 
+Note the log-axis. The EM-algorithm converges linearly (this is the terminology,
+see [Algorithms and Convergence]). The log-rate of the convergence can be estimated 
+by least-squares.
+
+```{r EM-rate, dependson="moth_EM_figure"}
+log_rate_fit <- lm(log(par_norm_diff) ~ n,  data = EM_trace)
+exp(coefficients(log_rate_fit)["n"])
+```
+
+The rate is very small in this case implying fast convergence. This is not always the case. 
+If the log-likelihood is flat, the EM-algorithm can become quite slow with a 
+rate close to 1. 
 
 ## Exponential families {#EM-exp}
 
@@ -220,7 +323,7 @@ Plugging the solution for $\beta_0$ and $\nu$ into the second equation we
 find 
 $$\sigma^2 = \frac{1}{\sum_{i} m_i}\left(\sum_{ij} y_{ij}^2 - \sum_{i} m_i(\beta_0^2 + \nu^2 \zeta_i + 2 \beta_0 \nu \xi_i)\right).$$
 
-This solves the M-step of the EM-algorithm for the mixed effects model. What 
+This solves the M-step of the EM algorithm for the mixed effects model. What 
 remains is the E-step that amounts to the computation of $\xi_i$ and $\zeta_i$. 
 We know that the joint distribution of $\mathbf{Y}$ and $\mathbf{Z}$ is Gaussian,
 and we can easily compute the variances and covariances: 
@@ -251,8 +354,336 @@ elements of the conditional covariance matrix plus $\xi_i^2$.
 
 ## Fisher information
 
+
+For statistics relying on classical asymptotic theory 
+we need an estimate of the Fisher information, e.g. the observed Fisher information 
+(Hessian of the negative log-likelihood for the observed data). For numerical 
+optimization of $Q$ or variants 
+of the EM algorithm (like EM gradient or acceleration methods) the gradient and Hessian of $Q$ 
+can be useful. However, these do not directly inform us on the Fisher information. 
+In this section we show some interesting and useful relations between 
+the derivatives of the log-likelihood for the observed data and derivatives of 
+$Q$ with the primary purpose of estimating the Fisher information.
+
+First we look at the peppered moth example, where we note that with $p = p(\theta)$ 
+being some parametrization of the cell probabilities,
+$$Q(\theta \mid \theta') = \sum_{k=1}^K \frac{x_{j(k)} p_k(\theta')}{M(p(\theta'))_{j(k)}} \log p_k(\theta),$$
+where $j(k)$ is defined by $k \in A_{j(k)}$. The gradient of $Q$ w.r.t. 
+$\theta$ is therefore
+
+$$\nabla_{\theta} Q(\theta \mid \theta') = 
+\sum_{k = 1}^K \frac{x_{j(k)} p_k(\theta')}{M(p(\theta'))_{j(k)} p_k(\theta)} \nabla_{\theta} p_k(\theta').$$
+
+We recognize from previous computations in Section \@ref(pep-moth-descent) 
+that when we evaluate $\nabla_{\theta} Q(\theta \mid \theta')$ in $\theta = \theta'$
+we get
+
+$$\nabla_{\theta} Q(\theta' \mid \theta') = \sum_{i = 1}^K \frac{x_{j(i)} }{M(p(\theta'))_{j(i)}} \nabla_{\theta} p_i(\theta') = \nabla_{\theta} \ell(\theta'),$$
+
+thus the gradient of $\ell$ in $\theta'$ is actually
+identical to the gradient of $Q(\cdot \mid \theta')$ in $\theta'$. This 
+is not a coincidence, and it holds generally that 
+$$\nabla_{\theta} Q(\theta' \mid \theta') = \nabla_{\theta} \ell(\theta').$$
+This follows from the fact we derived in the proof of Theorem \@ref(thm:EM-inequality)
+that $\theta'$ minimizes
+
+$$\theta \mapsto \ell(\theta) - Q(\theta \mid \theta').$$
+
+Another way to phrase this is that the minorant of $\ell(\theta)$ touches 
+$\ell$ tangentially in $\theta'$.
+ 
+In the case where the observation $\mathbf{y}$ consists of $n$ i.i.d. observations
+from the model with parameter $\theta_0$, $\ell$ as well as $Q(\cdot \mid \theta')$ are sums of terms for which 
+the gradient identity above holds for each term. In particular,
+$$\nabla_{\theta} \ell(\theta_0) = \sum_{i=1}^n \nabla_{\theta} \ell_i(\theta_0) = \sum_{i=1}^n \nabla_{\theta} Q_i(\theta_0 \mid \theta_0),$$
+and using the second Bartlett identity 
+
+$$\mathcal{I}(\theta_0) = V_{\theta_0}(\nabla_{\theta} \ell(\theta_0))$$
+
+we see that 
+
+$$\hat{\mathcal{I}}(\theta_0) =  \sum_{i=1}^n \big(\nabla_{\theta} Q_i(\theta_0 \mid \theta_0) - n^{-1} \nabla_{\theta} \ell(\theta_0)\big)^2$$
+
+has mean $\mathcal{I}(\theta_0)$ and is thus almost an unbiased estimator of the
+Fisher information. It does have the right mean, but it is not an estimator 
+as $\theta_0$ is not known. Though if we plug in an estimator, 
+$\hat{\theta}$, of $\theta_0$ we get a real estimator
+
+$$\hat{\mathcal{I}} = \hat{\mathcal{I}}(\hat{\theta}) =  \sum_{i=1}^n \big(\nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) - n^{-1} \nabla_{\theta} \ell(\hat{\theta})\big)\big(\nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) - n^{-1} \nabla_{\theta} \ell(\hat{\theta})\big)^T.$$
+
+We refer to $\hat{\mathcal{I}}$ as the *empirical Fisher information* given by 
+the estimator $\hat{\theta}$. In most cases, $\hat{\theta}$ is the maximum-likelihood
+estimator, in which case $\nabla_{\theta} \ell(\hat{\theta}) = 0$ and the empirical 
+Fisher information in principle simplifies to 
+$$\hat{\mathcal{I}} = \sum_{i=1}^n \nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) \nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta})^T.$$
+However, $\nabla_{\theta} \ell(\hat{\theta})$ is in practice only approximately 
+equal to zero, and it is unclear if it should be dropped. 
+
+For the peppered moths, where data is collected as i.i.d. samples of $n$ 
+individual speciments and tabulated according to phenotype, we implement
+the empirical Fisher information with the optional possibility of centering
+the gradients before computing the information estimate. We note that only 
+three different observations of phenotype are possible, giving rise to
+three different possible terms in the sum. The implementation
+works directly on the tabulated data by computing all the three possible 
+terms and then forming a weighted sum according to the number of times each 
+term is present. 
+
+```{r empFisher}
+empFisher <- function(par, x, grad, center = FALSE) {
+  grad_MLE <- 0 ## is supposed to be 0 in the MLE
+  if (center) 
+     grad_MLE <-  grad(par, x) / sum(x)
+   grad1 <- grad(par, c(1, 0, 0)) - grad_MLE
+   grad2 <- grad(par, c(0, 1, 0)) - grad_MLE
+   grad3 <- grad(par, c(0, 0, 1)) - grad_MLE
+   x[1] * t(grad1) %*% grad1 + 
+     x[2] * t(grad2) %*% grad2 + 
+     x[3] * t(grad3) %*% grad3 
+}
+```
+
+We test the implementation with and without centering and compare
+the result to a numerically computed hessian using `optimHess` (it is
+possible to get `optim` to compute the Hessian numerically in the minimizer 
+as a final step, but `optimHess` does this computation separately). 
+
+```{r empFisher-pep, dependson=c("grad-loglik-pep", "moth_EM", "moth_likelihood", "moth_prob", "moth_M", "pep-jacobian")}
+## The gradient of Q (equivalently the log-likelihood) was 
+## implemented earlier as 'grad_loglik'.
+grad <- function(par, x) grad_loglik(par, x, prob, Dprob, c(1, 1, 1, 2, 2, 3))
+empFisher(phat, c(85, 196, 341), grad)
+empFisher(phat, c(85, 196, 341), grad, center = TRUE)
+optimHess(phat, loglik, grad_loglik, x = c(85, 196, 341), 
+          prob = prob, Dprob = Dprob, group = c(1, 1, 1, 2, 2, 3))
+```
+
+Note that the numerically computed Hessian (the *observed* Fisher information)
+and the empirical Fisher information are different 
+estimates of the same quantity. Thus they are *not* supposed to be identical on 
+a given data set, but they are supposed to be estimates of the same thing 
+and thus to be similar. 
+
+An alternative to the empirical Fisher information or a direct computation of 
+the observed Fisher information is supplemented EM (SEM). This is a general method 
+for computing the observed Fisher 
+information that relies only on EM steps and a numerical differentiation scheme. 
+Define the EM map $\Phi : \Theta \mapsto \Theta$ by 
+
+$$\Phi(\theta') = \textrm{arg max}_{\theta} \ Q(\theta \mid \theta').$$
+
+A global maximum of the likelihood is a fixed point of $\Phi$, and the 
+EM algorithm searches for a fixed point for $\Phi$, that is, a solution to 
+
+$$\Phi(\theta) = \theta.$$
+
+Variations of the EM-algorithm can often be seen as other ways to 
+find a fixed point for $\Phi$. From 
+$$\ell(\theta) = Q(\theta \mid \theta') + H(\theta \mid \theta')$$
+it follows that the observed Fisher information equals
+
+$$\hat{i}_X := - D^2_{\theta} \ell(\hat{\theta}) = 
+\underbrace{-D^2_{\theta} Q(\hat{\theta} \mid \theta')}_{= \hat{i}_Y(\theta')} - D
+\underbrace{^2_{\theta} H(\hat{\theta} \mid \theta')}_{= \hat{i}_{Y \mid X}(\theta')}.$$
+
+It is possible to compute $\hat{i}_Y := \hat{i}_Y(\hat{\theta})$. 
+For peppered moths (and exponential families)
+it is as difficult as computing the Fisher information for complete observations. 
+
+We want to compute $\hat{i}_X$ but $\hat{i}_{Y \mid X} := \hat{i}_{Y \mid X}(\hat{\theta})$ 
+is not computable either. It can, however, be shown that 
+
+$$D_{\theta} \Phi(\hat{\theta})^T = \hat{i}_{Y\mid X} \left(\hat{i}_Y\right)^{-1}.$$
+
+Hence
+\begin{aligned}
+\hat{i}_X & = \left(I - \hat{i}_{Y\mid X} \left(\hat{i}_Y\right)^{-1}\right) \hat{i}_Y \\
+& = \left(I - D_{\theta} \Phi(\hat{\theta})^T\right) \hat{i}_Y.
+\end{aligned}
+
+Though the EM map $\Phi$ might not have a simple analytical expression, 
+its Jacobian, $D_{\theta} \Phi(\hat{\theta})$, can be computed via numerical 
+differentiation once we have implemented $\Phi$. We also need the 
+hessian of the map $Q$, which we implement as an R function as well. 
+
+```{r Qfun}
+Q <- function(p, pp, x = c(85, 196, 341), group) {
+  p[3] <- 1 - p[1] - p[2]
+  pp[3] <- 1 - pp[1] - pp[2]
+  - (x[group] * prob(pp) / M(prob(pp), group)[group]) %*% log(prob(p))
+}
+```
+
+The R package numDeriv contains functions that compute numerical derivatives. 
+
+```{r numDeriv, cache=FALSE, message=FALSE}
+library(numDeriv)
+```
+
+The Hessian of $Q$ can be computed using this package.
+
+```{r Fisher-iY, dependson=c("Qfun", "moth_EM")}
+iY <- hessian(Q, phat, pp = phat, group = c(1, 1, 1, 2, 2, 3))
+```
+
+Supplemented EM can then be implemented by computing the Jacobian of
+$\Phi$ using numDeriv as well. 
+
+```{r SEM-pep, dependson=c("Fisher-iY", "moth_E_M", "moth_EM")}
+Phi <- function(pp) MStep(EStep(pp, x = c(85, 196, 341)))
+DPhi <- jacobian(Phi, phat)  ## Using numDeriv function 'jacobian'
+iX <- (diag(1, 2) - t(DPhi)) %*% iY
+iX
+```
+
+For statistics, we actually need the inverse Fisher information, which can 
+be computed by inverting $\hat{i}_X$, but we also have the following 
+interesting identity
+
+\begin{aligned}
+\hat{i}_X^{-1} & = \hat{i}_Y^{-1} \left(I - D_{\theta} \Phi(\hat{\theta})^T\right)^{-1} \\
+ & = \hat{i}_Y^{-1} \left(I + \sum_{n=1}^{\infty} \left(D_{\theta} \Phi(\hat{\theta})^T\right)^n \right) \\
+ & = \hat{i}_Y^{-1} + \hat{i}_Y^{-1} D_{\theta} \Phi(\hat{\theta})^T \left(I - D_{\theta} \Phi(\hat{\theta})^T\right)^{-1}
+\end{aligned}
+
+where the second identity follows by the 
+[Neumann series](https://en.wikipedia.org/wiki/Neumann_series).
+
+The last formula above explicitly gives the asymptotic variance for the incomplete 
+observation $X$ as the asymptotic variance for the complete observation $Y$ plus 
+a correction term. 
+
+
+```{r SEM-Neumann, dependson=c("Fisher-iY", "SEM-pep", "")}
+iYinv <- solve(iY)
+iYinv + iYinv %*% t(solve(diag(1, 2) - DPhi, DPhi))
+```
+
+```{r SEM-solve, dependson="SEM-pep"}
+solve(iX) ## SEM-based, but different use of inversion
+```
+
+The SEM implementation above relies on the `hessian` and `jacobian` functions from the 
+numDeriv package for numerical differentiation. 
+
+It is possible to implement the computation of the hessian of $Q$ analytically
+for the peppered moths, but to illustrate functionality of the numDeriv package 
+we implemented the computation numerically above. 
+
+Variants on the strategy for computing $D_{\theta} \Phi(\hat{\theta})$ via 
+numerical differentiation have been suggested in the literature, specifically
+using difference quotient approximations along the 
+sequence of EM steps. This is not going to work as well as standard numerical 
+differentiation since this method ignores numerical errors, and when the algorithm
+gets sufficiently close to the MLE, the numerical errors will dominate in 
+the difference quotients.
+
 ## Two examples revisited
 
 ### Gaussian mixtures
+
+In a two-component Gaussian mixture model the marginal density of the 
+distribution of $Y$ is 
+$$ f(y) = p \frac{1}{\sqrt{2 \pi \sigma_1^2}} e^{-\frac{(y - \mu_1)^2}{2 \sigma_1^2}} + 
+(1 - p)\frac{1}{\sqrt{2 \pi \sigma_2^2}}e^{-\frac{(y - \mu_2)^2}{2 \sigma_2^2}}.$$
+The following is a simulation of data from such a mixture model.
+
+```{r gaus-mix-sim}
+sigma1 <- 1
+sigma2 <- 2
+mu1 <- -0.5
+mu2 <- 4
+p <- 0.5
+n <- 1000
+z <- sample(c(TRUE, FALSE), n, replace = TRUE, prob = c(p, 1 - p))
+y <- numeric(n)
+n1 <- sum(z)
+y[z] <- rnorm(n1, mu1, sigma1)
+y[!z] <- rnorm(n - n1, mu2, sigma2)
+```
+
+We implement the log-likelihood assuming that the variances are known. Note
+that the implementation takes just one single parameter argument, which is 
+then supposed to be a vector of all parameters in the model. Internally to 
+the function one has to decide for each entry in the parameter vector what
+parameter in the model it corresponds to.
+
+```{r gaus-mix-loglik}
+loglik <- function(par, y) {
+  p <- par[1]
+  if(p < 0 || p > 1)
+    return(Inf)
+  
+  mu1 <- par[2]
+  mu2 <- par[3]
+  -sum(log(p * exp(-(y - mu1)^2 / (2 * sigma1^2)) / sigma1 + 
+             (1 - p) * exp(-(y - mu2)^2 / (2 * sigma2^2)) / sigma2))
+}
+```
+
+Without further implementations, `optim` can find the 
+maximum-likelihood estimate if we have a sensible initial parameter guess. 
+In this case we use the true parameters, which can be used when 
+algorithms are tested, but they are, of course, not available for 
+real applications. 
+
+```{r gaus-mix-example, dependson=c("gaus-mix-loglik", "gaus-mix-sim")}
+optim(c(0.5, -0.5, 4), loglik, y = y)[c(1, 2)]
+```
+
+However, if we initialize the optimization badly, it does not find the maximum 
+but a local maximum instead.
+
+```{r gaus-mix-example-bad, dependson=c("gaus-mix-loglik", "gaus-mix-sim")}
+optim(c(0.9, 3, 1), loglik, y = y)[c(1, 2)]
+```
+
+We will implement the EM algorithm for the Gaussian mixture model by 
+implementing and E-step and an M-step function. We know from Section 
+\@ref(Gaus-mix-ex) how the complete log-likelihood looks, and the E-step
+becomes a matter of computing 
+$$p_i(\mathbf{y}) = E(1(Z_i = 1) \mid \mathbf{Y} = \mathbf{y}) = P(Z_i = 1 \mid  \mathbf{Y} = \mathbf{y}).$$
+The M-step becomes identical to the MLE, which can be found explicitly,
+but where the indicators $1(Z_i = 1)$ and $1(Z_i = 2) = 1 - 1(Z_i = 1)$ are 
+replaced by the conditional probabilities $p_i(\mathbf{y})$ and 
+$1 - p_i(\mathbf{y})$, respectively.
+
+```{r gaus-mix-EM, dependson=c("gaus-mix-loglik", "gaus-mix-sim")}
+EStep <- function(par, y) {
+  p <- par[1]
+  mu1 <- par[2]
+  mu2 <- par[3]
+  a <- p * exp(- (y - mu1)^2 / (2 * sigma1^2)) / sigma1 
+  b <- (1 - p) * exp(- (y - mu2)^2 / (2 * sigma2^2)) / sigma2
+  b / (a + b)
+}
+
+MStep <- function(y, pz) {
+  n <- length(y)
+  N2 <- sum(pz)
+  N1 <- n - N2
+  c(N1 / n, sum((1 - pz) * y) / N1, sum(pz * y) / N2)
+}
+
+EM <- function(par, y, epsilon = 1e-12) {
+  repeat{
+    par0 <- par
+    par <- MStep(y, EStep(par, y))
+    if(sum((par - par0)^2) <= epsilon * (sum(par^2) + epsilon))
+      break
+  } 
+  par  ## Remember to return the parameter estimate
+}
+
+EM(c(0.5, -0.5, 4), y)
+```
+
+The EM algorithm may, just as any other optimization algorithm, 
+end up in a *local* maximum, if it is started wrongly. 
+
+```{r gauss-mix-EM-bad, dependson=c("gaus-mix-loglik", "gaus-mix-sim", "gaus-mix-EM")}
+EM(c(0.9, 3, 1), y)
+```
+
 
 ### Gaussian state space
