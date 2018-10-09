@@ -362,31 +362,32 @@ for $\theta \in \mathbb{R}$ and $k \in \{-1, 1\}$. This gives a symmetric treatm
 labels while retaining the identifiability. 
 
 
-### Peppered Moths
+### Peppered Moths {#pep-moth}
+
+This example is on the color of the peppered Moth (*Birkemåler* in Danish).
+The color of the moth is 
+primarily determined by one gene that occur in three different alleles denoted C,
+I and T. The alleles are ordered in terms of dominance as C > I > T. Moths with genotype 
+including C are dark. Moths 
+with genotype TT are light colored. Moths with genotypes II and IT are mottled. 
+Thus there a total of six different genotypes (CC, CI, CT, II, IT and TT) and
+three different phenotypes (black, mottled, light colored).
 
 ```{r moth_figure, echo = FALSE, out.width="70%", fig.align='center'}
 knitr::include_graphics("figures/peppered-moth.jpg")
 ```
 
-Three alleles, and six different genotypes (CC, CI, CT, II, IT and TT).
-
-Three different phenotypes (black, mottled, light colored).
-
-Allele frequencies: $p_C$, $p_I$, $p_T$ with $p_C + p_I + p_T = 1.$
-
-The Peppered Moth is called 'Birkemåler' in Danish. There is a nice collection 
-of these in different colors in the Zoological Museum. The alleles are ordered 
-in terms of dominance as C > I > T. Moths with genotype including C are dark. Moths 
-with genotype TT are light colored. Moths with genotypes II and IT are mottled. 
-
 The peppered moth provided an [early demonstration of evolution](https://en.wikipedia.org/wiki/Peppered_moth_evolution) 
-in the 19th 
-century England, where the light colored moth was outnumbered by the dark 
-colored variety. The dark color became advantageous due to the increased 
-pollution, where trees were darkened by soot. 
+in the 19th century England, where the light colored moth was outnumbered by the dark 
+colored variety. The dark color became dominant due to the increased 
+pollution, where trees were darkened by soot, and had for that reason a selective 
+advantage. There is a nice collection 
+of moth in different colors at the Danish Zoological Museum, and further 
+explanation of the role it played in understanding evolution. 
 
+We denote the allele frequencies $p_C$, $p_I$, $p_T$ with $p_C + p_I + p_T = 1.$
 According to the [Hardy-Weinberg principle](https://en.wikipedia.org/wiki/Hardy–Weinberg_principle),
-the genotype frequencies are 
+the genotype frequencies are then
 
 $$p_C^2, 2p_Cp_I, 2p_Cp_T, p_I^2,  2p_Ip_T, p_T^2.$$
 
@@ -397,38 +398,46 @@ The complete multinomial log-likelihood is
 & \ \ + 2 n_{II} \log(p_I) + n_{IT} \log(2p_I p_T) + 2 n_{TT} \log(p_T),
 \end{align}
 
-We only observe only $(n_C, n_T, n_I)$, where
+In terms of the probability parameters $p_C$ and $p_I$ this is a curved 
+exponential family. 
+
+Collecting moths and determining their color will only identify their phenotype, 
+not their genotype. Thus we only observe $(n_C, n_T, n_I)$, where
 $$n = \underbrace{n_{CC} + n_{CI} + n_{CT}}_{= n_C} + 
 \underbrace{n_{IT} + n_{II}}_{=n_I} + \underbrace{n_{TT}}_{=n_T}.$$
 
 For maximum-likelihood estimation of the parameters in this model from 
-the observation $(n_C, n_T, n_I)$ only, we need the marginal likelihood, 
+the observation $(n_C, n_T, n_I)$, we need the likelihood, 
 that is, the likelihood in the marginal distribution of the observed
 variables. We will compute this in the section below by considering this
 particular problem as an example of a more general problem. 
 
-### Multinomial cell collapsing
-
-The Peppered Moth example is an example of *cell collapsing* in a multinomial model.
-
+The peppered Moth example is an example of *cell collapsing* in a multinomial model.
 In general, let $A_1 \cup \ldots \cup A_{K_0} = \{1, \ldots, K\}$ be a partition and let 
 $$M : \mathbb{N}_0^K \to \mathbb{N}_0^{K_0}$$
 be the map given by
-$$M((n_1, \ldots, n_K))_j = \sum_{i \in A_j} n_i.$$
+$$M((n_1, \ldots, n_K))_j = \sum_{k \in A_j} n_k.$$
 
 If $Y \sim \textrm{Mult}(p, n)$ with $p = (p_1, \ldots, p_K)$ then 
 $$X = M(Y) \sim \textrm{Mult}(M(p), n).$$
+If $\theta \mapsto p(\theta)$ is a parametrization of the cell probabilities
+the log-likelihood under the collapsed multinomial model is generally
 
-The conditional distribution of $Y_{A_j} = (Y_i)_{i \in A_j}$, conditionally on 
-$X$, can be found too. It will be used for the EM-algorithm the subsequent 
+\begin{equation}
+\ell(\theta) = \sum_{j = 1}^{K_0} x_j \log (M(p(\theta))_j) = \sum_{j = 1}^{K_0} x_j \log \left(\sum_{k \in A_j} p_k(\theta)\right).
+(\#eq:mult-col-loglik) 
+\end{equation}
+
+The conditional distribution of $Y_{A_j} = (Y_k)_{k \in A_j}$, conditionally on 
+$X$, can be found too. It will be used for the EM algorithm 
 in Chapter \@ref(em). It is easy to see that 
 $$Y_{A_j} \mid X = x \sim \textrm{Mult}\left( \frac{p_{A_j}}{M(p)_j}, y_j \right).$$
 The probability parameters are simply $p$ restricted to $A_j$ and renormalized 
 to a probability vector. Observe that this gives
-$$E (Y_k \mid X = x) = \frac{y_j p_k}{M(p)_j}$$
+$$E (Y_k \mid X = x) = \frac{x_j p_k}{M(p)_j}$$
 for $k \in A_j$. 
 
-For the Peppered Moths, $K = 6$ corresponding to the six genotypes, $K_0 = 3$ and 
+For the peppered Moths, $K = 6$ corresponding to the six genotypes, $K_0 = 3$ and 
 the partition corresponding to the phenotypes is
 $$\{1, 2, 3\} \cup \{4, 5\} \cup \{6\} = \{1, \ldots, 6\},$$
 and
@@ -443,9 +452,98 @@ $$M(p) = (p_C^2 + 2p_Cp_I + 2p_Cp_T, p_I^2 +2p_Ip_T, p_T^2).$$
 The log-likelihood is
 
 \begin{align}
-\ell(p_C, p_I) & = n_C \log(p_C^2 + 2p_Cp_I + 2p_Cp_T) \\
-& \ \ \ + n_I \log(p_I^2 +2p_Ip_T) + n_T \log (p_T^2).
+\ell(p_C, p_I) & = n_C \log(p_C^2 + 2p_Cp_I + 2p_Cp_T) + n_I \log(p_I^2 +2p_Ip_T) + n_T \log (p_T^2).
 \end{align}
+
+We can implement the log-likelihood in a very problem specific way.
+Note how the parameter constraints are encoded via the return value $\infty$. 
+
+
+```{r moth_likelihood}
+## par = c(pC, pI), pT = 1 - pC - pI
+## x is the data vector of length 3 of counts 
+loglik <- function(par, x) {
+  pT <- 1 - par[1] - par[2]
+  
+  if (par[1] > 1 || par[1] < 0 || par[2] > 1 
+      || par[2] < 0 || pT < 0)
+    return(Inf)
+  
+  PC <- par[1]^2 + 2 * par[1] * par[2] + 2 * par[1] * pT
+  PI <- par[2]^2 + 2 * par[2] * pT
+  PT <- pT^2
+  
+  - (x[1] * log(PC) + x[2] * log(PI) + x[3]* log(PT))
+}
+```
+
+It is possible to use `optim` in R with just this implementation to 
+compute the maximum-likelihood estimate of the allele parameters. 
+
+```{r moth_optim, dependson="moth_likelihood"}
+optim(c(0.3, 0.3), loglik, x = c(85, 196, 341))
+```
+
+The `optim` functions uses an algorithm called [Nelder-Mead](https://en.wikipedia.org/wiki/Nelder–Mead_method) 
+as the default algorithm that relies on log-likelihood evaluations only. It
+is slow but fairly robust, though a bit of thought has to go into the initial 
+parameter choice.
+
+```{r  moth_optim_error, error = TRUE, dependson="moth_likelihood"}
+optim(c(0, 0), loglik, x = c(85, 196, 341)) 
+```
+
+Starting the algorithm in a boundary value where the negative log-likelihood attains
+the value $\infty$ does not work. 
+
+The computations can beneficially be implemented in greater 
+generality. The function `M` sums the cells that are collapsed, 
+which has to be specified by the `group` argument.
+
+```{r moth_M}
+M <- function(x, group)
+  as.vector(tapply(x, group, sum))
+```
+
+The log-likelihood is then implemented for multinomial cell 
+collapsing via `M` and two problem specific arguments to 
+the `loglik` function. One of these is a vector specifying 
+the grouping structure of the collapsing. The other is a function
+that determines the 
+parametrization that maps the parameter that we are optimizing over to the
+cell probabilities. In the implementation it is assumed 
+that this `prob` function in addition encodes parameter constraints 
+by returning `NULL` if parameter constraints are violated. 
+
+```{r moth_loglikelihood, dependson=c("moth_M", "moth_prob")}
+loglik <- function(par, x, prob, group, ...) {
+  p <- prob(par)
+  if(is.null(p)) return(Inf)
+  - sum(x * log(M(prob(par), group)))
+}
+```
+
+The function `prob` is implemented specifically for the peppered moths
+as follows. 
+
+```{r moth_prob}
+prob <- function(p) {
+  p[3] <- 1 - p[1] - p[2]
+  if (p[1] > 1 || p[1] < 0 || p[2] > 1 || p[2] < 0 || p[3] < 0)
+    return(NULL)
+  c(p[1]^2, 2 * p[1] * p[2], 2* p[1] * p[3], 
+    p[2]^2, 2 * p[2] * p[3], p[3]^2)
+}
+```
+
+We test that the new implementation gives the same result when 
+optimized as using the more problem specific implementation.
+
+```{r moth_optim2, dependson=c("moth_likelihood", "moth_prob", "moth_M")}
+optim(c(0.3, 0.3), loglik, x = c(85, 196, 341), 
+      prob = prob, group = c(1, 1, 1, 2, 2, 3))
+```
+
 
 ## Regression models {#regression}
 
@@ -631,7 +729,7 @@ the marginal density using the formula above, and the computation of derivatives
 can likewise be implemented based on the formulas derived in Section \@ref(exp-fam-deriv).
 
 
-### Gaussian mixtures
+### Gaussian mixtures {#Gaus-mix-ex}
 
 A Gaussian mixture model is a mixture model where all the  mixture distributions are  
 Gaussian distributions but potentially with different means and variances. In this 
@@ -639,7 +737,7 @@ section we focus on the simplest Gaussian mixture model with $K = 2$ mixture
 components. 
 
 When $K = 2$, the Gaussian mixture model is parametrized by the five parameters: 
-the mixture weight $p_1 \in (0, 1)$, the two means $\mu_1, \mu_2 \in \mathbb{R}$, 
+the mixture weight $p = P(Z = 1) \in (0, 1)$, the two means $\mu_1, \mu_2 \in \mathbb{R}$, 
 and the two variances $\sigma_1, \sigma_2 > 0$. This is *not* the parametrization 
 using canonical exponential family parameters, which we return to below. First 
 we will simply simulate random variables from this model. 
@@ -647,7 +745,7 @@ we will simply simulate random variables from this model.
 ```{r mixture-gaus-sim}
 sigma1 <- 1
 sigma2 <- 2
-mu1 <- 0
+mu1 <- -0.5
 mu2 <- 4
 p <- 0.5
 n <- 5000
@@ -659,8 +757,8 @@ y[z] <- rnorm(n1, mu1, sigma1)
 y[!z] <- rnorm(n - n1, mu2, sigma2)
 ```
 
-The simulation above generated `r n` samples from a two-component 
-Gaussian mixture model with mixture distributions $\mathcal{N}(0, 1)$
+The simulation above generated `r n` samples from a two-component
+Gaussian mixture model with mixture distributions $\mathcal{N}(-0.5, 1)$
 and $\mathcal{N}(4, 4)$, and with each component having weight $0.5$. 
 This gives a bimodal distribution as illustrated by the histogram on Figure 
 \@ref(fig:mixture-gaus-histogram). 
@@ -676,7 +774,7 @@ ggplot(mapping = aes(y, ..density..)) +
 
 It is possible to give a mathematically different representation of the 
 marginal distribution of $Y$ that is sometimes useful. Though it gives
-the same marginal distribution from the same components, it does provide a  
+the same marginal distribution from the same components, it does provide a
 different interpretation of what a mixture model is a model of, and it does 
 provide a different way of simulating from a mixture distribution. 
 
@@ -684,35 +782,38 @@ If we let $Y_1 \sim \mathcal{N}(\mu_1, \sigma_1^2)$ and $Y_2 \sim \mathcal{N}(\m
 be independent, and independent of $Z$, we can define 
 
 \begin{equation}
-Y = 1(Z = 1) Y_1 + 1(Z = 2) Y_2.
+Y = 1(Z = 1) Y_1 + 1(Z = 2) Y_2 = Y_{Z}.
 (\#eq:mixturerep)
 \end{equation}
 
-You can argue from this that the conditional distribution of $Y $given $Z = k$
+You can argue from this that the conditional distribution of $Y$ given $Z = k$
 indeed is $f_k$, or you can just verify directly that $Y$ has density 
-$$f(y) = p \frac{1}{\sqrt{2 \pi \sigma_1^2}} e^{-(y - \mu_1)^2 / (2 \sigma_1^2)} + 
-(1 - p)\frac{1}{\sqrt{2 \pi \sigma_2^2}}e^{-(y - \mu_2)^2 / (2 \sigma_2^2)}.$$
+$$f(y) = p \frac{1}{\sqrt{2 \pi \sigma_1^2}} e^{-\frac{(y - \mu_1)^2}{2 \sigma_1^2}} + 
+(1 - p)\frac{1}{\sqrt{2 \pi \sigma_2^2}}e^{-\frac{(y - \mu_2)^2}{2 \sigma_2^2}}.$$
 From \@ref(eq:mixturerep) it follows directly that
-$$E(Y) = P(Z = 1) E(Y_1) + P(Z = 2) E(Y_2) = p_1 \mu_1 + (1 - p_1) \mu_2$$
-and 
+$$E(Y^n) = P(Z = 1) E(Y_1^n) + P(Z = 2) E(Y_2^n) = p m_1(n) + (1 - p) m_2(n)$$
+where $m_k(n)$ denotes the $n$th non-central moment of the $k$th mixture
+component. In particular,
+
+$$E(Y) = p \mu_1 + (1 - p) \mu_2.$$
+
+The variance can be found from the second moment as
 
 \begin{align}
-V(Y) & = V(1(Z = 1) Y_1) + V(1(Z = 2) Y_2) \\
-& = P(Z = 1) E(Y_1^2) - P(Z = 1)^2 E(Y_1)^2 + P(Z = 2) E(Y_2^2) - P(Z = 2)^2 E(Y_2)^2 \\
-& = p(\sigma_1^2 + \mu_1^2) - p^2 \mu_1^2 +  (1-p)(\sigma_2^2 + \mu_2^2) - (1-p)^2 \mu_2^2 \\
-& = p\sigma_1^2 + (1 - p) \sigma_2^2 + p(1-p)(\mu_1^2 + \mu_2^2).
+V(Y) & = p(\mu_1^2 + \sigma_1^2) + (1-p)(\mu_2^2 + \sigma_2^2) -  (p \mu_1 + (1 - p) \mu_2)^2 \\
+& = p\sigma_1^2 + (1 - p) \sigma_2^2 + p(1-p)(\mu_1^2 + \mu_2^2 - 2 \mu_1 \mu_2).
 \end{align}
 
 While it is certainly possible to derive this formula by other means, using 
 \@ref(eq:mixturerep) gives a simple argument based on 
-elementary properties of mean and variance together with the independence
-of $Y_1$, $Y_2$ and $Z$.  
+elementary properties of expectation and independence
+of $(Y_1, Y_2)$ and $Z$.  
 
 The construction via \@ref(eq:mixturerep) has an interpretation that differs 
 from how a mixture model was defined in the first place. Though $(Y, Z)$ has 
 the correct joint distribution, $Y$ is by \@ref(eq:mixturerep) the result of $Z$ *selecting* one 
 out of two possible observations. The difference can best be illustrated by 
-an example. Suppose that we have a population consisting of married couples entirely.
+an example. Suppose that we have a large population consisting of married couples entirely.
 We can draw a sample of individuals (ignoring the marriage relations 
 completely) from this population and let $Z$ denote the sex and $Y$ the 
 height of the individual. Then $Y$ follows a mixture distribution with two 
@@ -731,20 +832,22 @@ can just as well assume them independent for mathematical convenience.
 We won't be able to tell the difference from observing only $Y$ (and $Z$) anyway. 
 
 We illustrate below how \@ref(eq:mixturerep) can be used for alternative
-implementations of ways to simulate from the mixture model. 
+implementations of ways to simulate from the mixture model. We compare empirical 
+means and variances to the theoretical values to test if all the implementations
+actually simulate from the Gaussian mixture model.
 
 ```{r sim-gaus-mix, dependson="mixture-gaus-sim"}
 ## Mean
 mu <- p * mu1 + (1 - p) * mu2
 
 ## Variance 
-sigmasq <- p * sigma1^2 + (1 - p) * sigma2^2 + p * (1-p)*(mu1^2 + mu2^2)
+sigmasq <- p * sigma1^2 + (1 - p) * sigma2^2 + p * (1-p)*(mu1^2 + mu2^2 - 2 * mu1 * mu2)
 
 ## Simulation using the selection formulation via 'ifelse'
 y2 <- ifelse(z, rnorm(n, mu1, sigma1), rnorm(n, mu2, sigma2))
 
 ## Yet another way of simulating from a mixture model
-## using arithmetic instead of `ifelse` for the selection 
+## using arithmetic instead of 'ifelse' for the selection 
 ## and with Y_1 and Y_2 actually being dependent
 y3 <- rnorm(n)
 y3 <- z * (sigma1 * y3 + mu1) + (!z) * (sigma2 * y3 + mu2)
@@ -756,7 +859,7 @@ y4 <- rnorm(n)
 y4[z] <- sigma1 * y4[z] + mu1
 y4[!z] <- sigma2 * y4[!z] + mu2
 
-## Comparisons
+## Tests
 data.frame(mean = c(mu, mean(y), mean(y2), mean(y3), mean(y4)),
       variance = c(sigmasq, var(y), var(y2), var(y3), var(y4)), 
       row.names = c("true", "conditional", "ifelse", "arithmetic", "conditional2" ))
@@ -799,7 +902,7 @@ $$\theta_1  = \log \frac{p}{1 - p}, \quad
 \theta_2  = \frac{\mu_1}{2\sigma_1^2}, \quad
 \theta_3  = \frac{1}{2\sigma_1^2}, \quad
 \theta_4  = \frac{\mu_2}{\sigma_2^2}, \quad
-\theta_5  = \frac{1}{2\sigma_2^2}$$
+\theta_5  = \frac{1}{2\sigma_2^2}.$$
 
 The joint density in this parametrization then becomes 
 $$(y,k) \mapsto \left\{ \begin{array}{ll} 
