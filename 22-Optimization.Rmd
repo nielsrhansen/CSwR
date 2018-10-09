@@ -785,87 +785,94 @@ system.time(pois_optim_CG <- optim(rep(0, length = ncol(X)), H, grad_H,
 pois_optim_CG[c("value", "counts")]
 ```
 
-### Peppered Moths 
+### Peppered Moths {#pep-moth-descent}
 
-We can code a problem specific version of the negative log-likelihood and 
-use `optim` to minimize it. 
+Returning to the peppered moth from Section \@ref(pep-moth) we implemented 
+in that section the log-likelihood for general multinomial cell collapsing
+and applied the implementation to compute the maximum-likelihood estimate. 
+In this section we implement the gradient as well. From the 
+expression for the log-likelihood in \@ref(eq:mult-col-loglik) it follows
+that the gradient equals
 
-```{r moth_likelihood}
-## par = c(pC, pI), pT = 1 - pC - pI
-## x is the data vector
-loglik <- function(par, x) {
-  pT <- 1 - par[1] - par[2]
-  if (par[1] > 1 || par[1] < 0 || par[2] > 1 || par[2] < 0 || pT < 0)
-    return(Inf)
-  PC <- par[1]^2 + 2 * par[1] * par[2] + 2 * par[1] * pT
-  PI <- par[2]^2 + 2 * par[2] * pT
-  PT <- pT^2
-  - (x[1] * log(PC) + x[2] * log(PI) + x[3]* log(PT))
+$$\nabla \ell(\theta) = \sum_{j = 1}^{K_0}  \frac{ x_j }{ M(p(\theta))_j}\nabla M(p(\theta))_j = \sum_{j = 1}^{K_0} \sum_{k \in A_j}  \frac{ x_j}{ M(p(\theta))_j} \nabla p_k(\theta).$$
+
+Letting $j(k)$ be defined by $k \in A_{j(k)}$ we see that the gradient 
+can also be written as
+ $$\nabla \ell(\theta) = \sum_{k=1}^K    \frac{x_{j(k)}}{ M(p(\theta))_{j(k)}} \nabla p_k(\theta) = \mathbf{\tilde{x}}(\theta) \mathrm{D}p(\theta),$$
+ where $\mathrm{D}p(\theta)$ is the Jacobian of the parametrization $\theta \mapsto p(\theta)$,
+ and $\mathbf{\tilde{x}}(\theta)$ is the vector with 
+ $$\mathbf{\tilde{x}}(\theta)_k = \frac{ x_{j(k)}}{M(p(\theta))_{j(k)}}.$$
+ 
+
+```{r grad-loglik-pep}
+grad_loglik <- function(par, x, prob, Dprob, group) {
+  p <- prob(par)
+  if(is.null(p)) return(rep(NA, length(par)))
+  - (x[group] / M(p, group)[group]) %*% Dprob(par)
 }
 ```
 
+The Jacobian needs to be implemented for the specific example 
+of peppered moths. 
 
-```{r moth_optim, dependson="moth_likelihood"}
-optim(c(0.3, 0.3), loglik, x = c(85, 196, 341), method = "CG")
-```
-
-The computations can beneficially be implemented in greater 
-generality. 
-
-The function `M` sums the cells that are collapsed, 
-which has to be specified by the `group` argument.
-
-```{r moth_M}
-M <- function(x, group)
-  as.vector(tapply(x, group, sum))
-```
-
-The function `prob` maps the parameters to the multinomial probability vector. 
-This function will have to be problem specific.
-
-```{r moth_prob}
-prob <- function(p) {
+```{r pep-jacobian}
+Dprob <- function(p) {
   p[3] <- 1 - p[1] - p[2]
-  c(p[1]^2, 2 * p[1] * p[2], 2* p[1] * p[3], 
-    p[2]^2, 2 * p[2] * p[3], p[3]^2)
+  matrix(
+    c(2 * p[1],             0, 
+      2 * p[2],             2 * p[1], 
+      2* p[3] - 2 * p[1],  -2 * p[1],
+      0,                    2 * p[2],         
+      -2 * p[2],            2 * p[3] - 2 * p[2], 
+      -2 * p[3],           -2 * p[3]),
+    ncol = 2, nrow = 6, byrow = TRUE)
 }
 ```
 
-```{r moth_loglikelihood, dependson=c("moth_M", "moth_prob")}
-loglik <- function(par, x) {
-  pT <- 1 - par[1] - par[2]
-  if (par[1] > 1 || par[1] < 0 || par[2] > 1 || par[2] < 0 || pT < 0)
-    return(Inf)
-  - sum(x * log(M(prob(par), c(1, 1, 1, 2, 2, 3))))
-}
+We can then use the conjugate gradient algorithm to compute the 
+maximum-likelihood estimate. 
+
+```{r pep-CG,  dependson=c("moth_likelihood", "moth_prob", "moth_M", "grad-loglik-pep", "pep-jacobian")}
+optim(c(0.3, 0.3), loglik, grad_loglik, x = c(85, 196, 341), 
+      prob = prob, Dprob = Dprob, group = c(1, 1, 1, 2, 2, 3), 
+      method = "CG")
 ```
 
-```{r moth_optim2, dependson="moth_likelihood"}
-optim(c(0.3, 0.3), loglik, x = c(85, 196, 341), method = "CG")
+The peppered Moth example is very simple. 
+The log-likelihood can easily be computed, and we used this 
+problem to illustrate ways of implementing a 
+likelihood in R and how to use `optim` to maximize it. 
+
+One of the likelihood implementations was very problem specific 
+while the other more abstract and general, and we used the same general and abstract
+approach to implement the gradient above. The gradient could then 
+be used for other optimization algorithms, still using `optim`, such as 
+conjugate gradient. In fact, you can use conjugate gradient without
+computing and implementing the gradient.
+
+```{r pep-CG-nograd, dependson=c("moth_likelihood", "moth_prob", "moth_M")}
+optim(c(0.3, 0.3), loglik, x = c(85, 196, 341), 
+      prob = prob, group = c(1, 1, 1, 2, 2, 3), 
+      method = "CG")
 ```
 
-The Peppered Moth example is very simple. 
-The marginal log-likelihood can easily be computed, and we used this 
-problem to illustrate different ways of implementing a 
-likelihood computation in R. One was very problem specific and one was more 
-abstract and general. We demonstrated how to use 
-standard optimization algorithms like conjugate gradient with or without implementing
-the gradient. If we don't implement a gradient, a numerical gradient is 
-used by `optim` This can very well result in a slower algorithm than if the 
+If we don't implement a gradient, a numerical gradient is 
+used by `optim`. This can very well result in a slower algorithm than if the 
 gradient is implemented, but more seriously, in can result in convergence 
 problems. This is because there is a subtle tradeoff between numerical 
-accuracy and accuracy of the finite difference approximation. We did not 
-experience this in the example above, but one way to remedy such problems 
+accuracy and accuracy of the finite difference approximation used to
+approximate the gradient. We didn't 
+experience convergence problems in the example above, but one way to remedy such problems 
 is to set the `parscale` or `fnscale` entries in the `control`
 list argument to `optim`. 
 
-Below we will illustrate how to use Newton-type methods for optimizing the 
-marginal likelihood, and in the following chapter this same example is used to illustrate 
-the EM-algorithm. It is important to understand that the EM-algorithm does not 
-rely on computations of the marginal likelihood. In many real applications 
-computation of the marginal likelihood is computationally challenging or even 
+In the following chapter the peppered moth example is used to illustrate 
+the EM algorithm. It is important to understand that the EM algorithm doesn't 
+rely on the ablity to compute the likelihood or the gradient of the 
+likelihood for that matter. In many real applications 
+of the EM algorithm the computation of the likelihood is challenging or even 
 impossible, thus most standard optimization algorithms will not be directly 
-applicable, the EM-algorithm will. 
+applicable. 
 
 ## Newton-type algorithms
 
