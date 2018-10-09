@@ -53,6 +53,7 @@ ggplot(Nuuk, aes(x = Month, y = Temperature)) +
   geom_line(aes(group = Year), alpha = 0.3) + 
   geom_point(alpha = 0.3) +
   geom_smooth(color = "red", se = FALSE) 
+
 ```
 
 
@@ -353,8 +354,8 @@ Using matrix multiplication
 K <- bandSparse(n, n, seq(-2, 2))
 weights <- c(1/3, 1/4, rep(1/5, n - 4), 1/4, 1/3)
 weights <- c(NA, NA, rep(1/5, n - 4), NA, NA)
-p <- ggplot(Nuuk_year, aes(Year, Temperature)) + geom_point()
-p + geom_line(aes(y = as.numeric(K %*% Nuuk_year$Temperature) * weights), color = "red")
+p_Nuuk <- ggplot(Nuuk_year, aes(Year, Temperature)) + geom_point()
+p_Nuuk + geom_line(aes(y = as.numeric(K %*% Nuuk_year$Temperature) * weights), color = "red")
 ```
 
 If the smoother matrix is *sparse*, however, matrix multiplication can be much faster.
@@ -549,7 +550,7 @@ identical(as.numeric(K %*% Nuuk_year$Temperature) * weights,
 Degree 19 polynomial fitted to the temperature data.
 
 ```{r Nuuk_poly_fig, echo=FALSE, dependson="Nuuk_runmeans"}
-p + geom_smooth(method = "lm", formula = y ~ poly(x, 19), 
+p_Nuuk + geom_smooth(method = "lm", formula = y ~ poly(x, 19), 
                 se = FALSE, size = 1)
 ```
 
@@ -602,7 +603,7 @@ qplot(x = 1:20, y = abs(coef(polylm)), geom = "blank") +
 ```
 
 ```{r Nuuk-poly-fig2, echo=FALSE, dependson="Nuuk_runmeans", fig.cap="Polynomial fit using all 19 basis functions (blue) and using a degree 5 polynomial (red)."}
-p + geom_smooth(method = "lm", formula = y ~ poly(x, 19), 
+p_Nuuk + geom_smooth(method = "lm", formula = y ~ poly(x, 19), 
                 se = FALSE, size = 1) + 
   geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
                 se = FALSE, size = 1, color = "red")
@@ -718,7 +719,7 @@ qplot(x = 1:n, y = abs(gam), geom = "blank") +
 ```{r NuukFourierthresholdfig, echo=FALSE, dependson=c("Nuuk_runmeans", "Fourier", "Fourier_estimation", "Nuuk_poly_threshold"), fig.cap="Fourier based smoother by thresholding (blue) and polynomial fit of degree 5 (red)."}
 ind <- which(abs(betahat) > 2.7 * sigmahat)
 predy <- Re(Phi[, ind] %*% betahat[ind])
-p + geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
+p_Nuuk + geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
                 se = FALSE, size = 1, color = "red") + 
   geom_line(aes(y = predy), size = 1, color = "blue")
 ```
@@ -1285,7 +1286,7 @@ Result, $\alpha = 0.95$, $\sigma^2 = 10$
 ```{r Nuuk_smooth, echo=FALSE, dependson=c("KalmanSmooth", "NuukData", "Nuuk_runmeans")}
 n <- nrow(Nuuk_year); alpha <- 0.95; sigmasq <- 10
 ySmooth <- KalmanSmooth(Nuuk_year$Temperature, alpha, sigmasq)
-p + geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
+p_Nuuk + geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
                 se = FALSE, size = 1) + 
   geom_line(aes(y = ySmooth), size = 1, color = "red")
 ```
@@ -1339,7 +1340,7 @@ Result, $\alpha = 0.95$, $\sigma^2 = 10$
 
 ```{r Nuuk_filter, echo=FALSE, dependson=c("KalmanFilt", "NuukData", "Nuuk_runmeans")}
 yFilt <- KalmanFilt(Nuuk_year$Temperature, alpha, sigmasq)
-p + geom_line(aes(y = ySmooth), size = 1, color = "red") + 
+p_Nuuk + geom_line(aes(y = ySmooth), size = 1, color = "red") + 
   geom_line(aes(y = yFilt), size = 1, color = "blue")
 ```
 
