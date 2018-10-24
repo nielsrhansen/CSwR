@@ -30,10 +30,10 @@ In fact, blindly pursuing the global maximum of the likelihood can very well
 lead you astray if your model is not as well 
 behaved as an exponential family is. In situations where $H$ is 
 not convex, as is the case for finite mixtures, there are common examples where 
-the likelihood is unbounded, yet there will be a local maximizer that is a 
+the likelihood is unbounded, yet there will be a local minimizer that is a 
 good estimate. There are other examples where even a saddle point of $H$ 
 gives a good estimate. Though we typically phrase our algorithms 
-as optimization algorithms, what we are really pursuing
+as minimization algorithms, what we are really pursuing
 when $H$ is not convex are stationary points; solutions to $\nabla H(\theta) = 0$. 
 And rather than being fixated on computing the global minimizer of $H$ 
 to the greatest numerical precision, we should find and explore as many 
@@ -42,15 +42,18 @@ in statistics differs from certain other applications of optimization. Finding
 the optimum is not "the thing". It is a surrogate for "the thing", which is
 to fit models to data. 
 
-For the generic optimization problem considered in this chapter, the practical 
+For the generic minimization problem considered in this chapter, the practical 
 challenge when implementing algorithms in R is typically 
 to implement efficient evaluation of $H$ and its derivatives. In particular, 
 efficient evaluations of $-\ell$. Several choices of standard optimization
 algorithms are possible and some are already implemented and available in R. 
-For many practical purposes the BFGS-algorithm as implemented via the `optim` 
-function works well. Though for this to be true, it is paramount that 
-$H$ and $\nabla H$ are implemented correctly and efficiently, and that 
-an appropriate parametrization is chosen. 
+For many practical purposes the BFGS-algorithms as implemented via the `optim` 
+function work well and require only the computation of gradients. It is, of course,
+paramount that $H$ and $\nabla H$ are correctly implemented, and 
+efficiency of the algorithms is largely determined by the efficiency of
+the implementation of $H$ and $\nabla H$ but also by the choice of parametrization. 
+Newton-type algorithms are available through `nlm` and `nls` but with different
+interfaces. 
 
 ## Algorithms and convergence
 
