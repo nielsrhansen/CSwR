@@ -249,7 +249,7 @@ tmp <- microbenchmark(
   stats::filter(y[1:2048], rep(1/11, 11)),
   stats::filter(y[1:4196], rep(1/11, 11))
   )
-benchTab(summary(tmp)[, c(1, 5)], digits = 1)
+summary(tmp)[, c(1, 5)]
 ```
 
 The matrix-vector computation is clearly much slower than the two alternatives,
@@ -355,7 +355,9 @@ K <- bandSparse(n, n, seq(-2, 2))
 weights <- c(1/3, 1/4, rep(1/5, n - 4), 1/4, 1/3)
 weights <- c(NA, NA, rep(1/5, n - 4), NA, NA)
 p_Nuuk <- ggplot(Nuuk_year, aes(Year, Temperature)) + geom_point()
-p_Nuuk + geom_line(aes(y = as.numeric(K %*% Nuuk_year$Temperature) * weights), color = "red")
+p_Nuuk + 
+  geom_line(aes(y = as.numeric(K %*% Nuuk_year$Temperature) * weights), 
+            color = "red")
 ```
 
 If the smoother matrix is *sparse*, however, matrix multiplication can be much faster.
@@ -894,8 +896,9 @@ range((Omega_numeric - Omega) / (Omega + 0.001))  ## Relative error
 And we should also test an example with non-equidistant knots. 
 
 ```{r Omega-test2, dependson="Omega-Simpson"}
-tmp_deriv <- splineDesign(c(0, 0, 0, 0, 0.2, 0.3, 0.5, 0.6, 0.65, 0.7, 1, 1, 1, 1), 
-                          seq(0, 1, 1e-5), derivs = 2)
+tmp_deriv <- splineDesign(
+  c(0, 0, 0, 0, 0.2, 0.3, 0.5, 0.6, 0.65, 0.7, 1, 1, 1, 1), 
+  seq(0, 1, 1e-5), derivs = 2)
 Omega_numeric <- crossprod(tmp_deriv[-1, ]) * 1e-5  ## Right Riemann sums
 Omega <- pen_mat(c(0, 0.2, 0.3, 0.5, 0.6, 0.65, 0.7, 1))
 range((Omega_numeric - Omega) / (Omega + 0.001)) ## Relative error
@@ -916,7 +919,8 @@ inner_knots <- Nuuk_year$Year
 Phi <- splineDesign(c(rep(range(inner_knots), 3), inner_knots), inner_knots)
 Omega <- pen_mat(inner_knots)
 smoother <- function(lambda) 
-  Phi %*% solve(crossprod(Phi) + lambda * Omega, t(Phi) %*% Nuuk_year$Temperature)
+  Phi %*% solve(crossprod(Phi) + lambda * Omega, 
+                t(Phi) %*% Nuuk_year$Temperature)
 
 p_Nuuk + 
   geom_line(aes(y = smoother(0.1)), color = "blue") +   ## Undersmooth
@@ -968,8 +972,9 @@ the smoothing spline that `smooth.spline` computes by minimizing GCV
 as well.
 
 ```{r Nuuk-spline-opt2, fig.cap="The smoothing spline that minimizes GCV as computed by `smooth.spline`.", dependson="NuukData"}
-temp_smooth_splines <- smooth.spline(Nuuk_year$Year, Nuuk_year$Temperature, 
-                                    all.knots = TRUE)  ## Don't use fast heuristic
+temp_smooth_splines <- smooth.spline(Nuuk_year$Year, 
+                                     Nuuk_year$Temperature, 
+                                     all.knots = TRUE)  ## Don't use heuristic
 range(temp_smooth_splines$y - temp_smooth_opt)
 p_Nuuk + geom_line(aes(y = temp_smooth_splines$y), color = "blue")
 ```
@@ -1060,7 +1065,8 @@ inner_knots <- seq(1867, 2013, length.out = 18)
 Phi <- splineDesign(c(rep(range(inner_knots), 3), inner_knots), Nuuk_year$Year)
 Omega <- pen_mat(inner_knots)
 Phi_svd <- svd(Phi)
-Omega_tilde <- t(t(crossprod(Phi_svd$v, Omega %*% Phi_svd$v)) / Phi_svd$d) / Phi_svd$d
+Omega_tilde <- t(crossprod(Phi_svd$v, Omega %*% Phi_svd$v)) / Phi_svd$d
+Omega_tilde <- t(Omega_tilde) / Phi_svd$d
 ## It is safer to use the numerical singular value decomposition ('svd')
 ## for diagonalizing a positive semidefinite matrix than to use a 
 ## more general numerical diagonalization implementation such as 'eigen'. 
