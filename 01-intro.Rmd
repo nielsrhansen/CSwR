@@ -32,7 +32,7 @@ The viewpoint taken in this book is that the transition from methodology to
 computational statistics happens when the methodology is to be implemented, 
 that is, when formulas, algorithms and pseudo code are transformed into actual 
 code and statistical software. It is during this transition that a number of 
-practical challenges reveal themselves, such as actual computation time and 
+practical challenges reveal themselves, such as actual run time and 
 memory usage, the limitations of finite precision arithmetic, and the practical 
 value of suboptimal or approximate but sufficiently accurate solutions.
 
@@ -73,8 +73,9 @@ three sections to give the reader an overview of the topics covered, how they
 are related to each other and how they are related to some main trends and 
 challenges in contemporary computational statistics. In this introduction, 
 several R functions from various packages are used to illustrate how smoothing,
-simulation of random variables and optimization play a role in statistics. If
-you have no intention of moving beyond the role of a data analyst that rely 
+simulation of random variables and optimization play roles in statistics. 
+
+If you have no intention of moving beyond the role of a data analyst that rely 
 on already implemented solutions, you can stop reading after the introduction. 
 The remaining part of the book is about
 the development of such solutions at a deeper level and not how to use 
@@ -122,8 +123,8 @@ it lets us develop fully automatized procedures that do not rely on human
 calibration. While human inspection of visualizations is always a good 
 idea, computational statistics is also about offloading humans from all 
 computational tasks that can be automatized. This is true for smoothing 
-as well, hence the need for automatic, robust and well calibrated smoothing 
-procedures that call for a minimum of human effort. 
+as well, hence the need for automatic and robust smoothing 
+procedures that produce well calibrated results with a minimum of human effort. 
 
 ### Angle distributions in proteins {#intro-angles}
 
@@ -406,9 +407,12 @@ and $\kappa = 0.5$ and $\nu = - 1.5$ (blue).
 
 ```{r vonMisesDens, fig.cap="(ref:vMdenscap)"}
 phi <- function(k) 2 * pi * besselI(k, 0)
-curve(exp(cos(x)) / phi(1), -pi, pi, lwd = 2, ylab = "density", ylim = c(0, 0.52))
-curve(exp(2 * cos(x - 1)) / phi(2), -pi, pi, col = "red", lwd = 2, add = TRUE)
-curve(exp(0.5 * cos(x + 1.5)) / phi(0.5), -pi, pi, col = "blue", lwd = 2, add = TRUE)
+curve(exp(cos(x)) / phi(1), -pi, pi, 
+      lwd = 2, ylab = "density", ylim = c(0, 0.52))
+curve(exp(2 * cos(x - 1)) / phi(2), -pi, pi,
+      col = "red", lwd = 2, add = TRUE)
+curve(exp(0.5 * cos(x + 1.5)) / phi(0.5), -pi, pi, 
+      col = "blue", lwd = 2, add = TRUE)
 ```
 
 It is not entirely obvious how we should go about simulating data points
@@ -437,7 +441,8 @@ and the true density (blue) are added to the plot.
 hist(x, breaks = seq(-pi, pi, length.out = 15), prob = TRUE)
 rug(x)
 density(x, bw = "SJ", cut = 0) %>% lines(col = "red", lwd = 2)
-curve(exp(0.5 * cos(x + 1.5)) / phi(0.5), -pi, pi, col = "blue", lwd = 2, add = TRUE)
+curve(exp(0.5 * cos(x + 1.5)) / phi(0.5), -pi, pi, 
+      col = "blue", lwd = 2, add = TRUE)
 ```
 
 ### Mixtures of von Mises distributions
@@ -493,11 +498,13 @@ of two von Mises distributions using either the explicit construction of the mix
 A smoothed density estimate (red) and the true density (blue) are added to the plot.
 
 ```{r mixvMdata, fig.cap="(ref:mixvMdatacap)",  fig.show="hold", out.width="49%", dependson=c("simmixvM", "simmixvMalt", "vMdens"), fig.pos="h"}
-hist(x, breaks = seq(-pi, pi, length.out = 15), prob = TRUE, ylim = c(0, 0.5))
+hist(x, breaks = seq(-pi, pi, length.out = 15), 
+     prob = TRUE, ylim = c(0, 0.5))
 rug(x)
 density(x, bw = "SJ", cut = 0) %>% lines(col = "red", lwd = 2)
 curve(dvM(x, theta, alpha), -pi, pi, col = "blue", lwd = 2, add = TRUE)
-hist(x_alt, breaks = seq(-pi, pi, length.out = 15), prob = TRUE, ylim = c(0, 0.5))
+hist(x_alt, breaks = seq(-pi, pi, length.out = 15), 
+     prob = TRUE, ylim = c(0, 0.5))
 rug(x_alt)
 density(x_alt, bw = "SJ", cut = 0) %>% lines(col = "red", lwd = 2)
 curve(dvM(x, theta, alpha), -pi, pi, col = "blue", lwd = 2, add = TRUE)
@@ -609,7 +616,8 @@ whence the angle data must be transformed using cos and sin.
 
 ```{r vMfit, collapse=TRUE, dependson=c("phipsiLoad")}
 psi_circle <- cbind(cos(phipsi$psi), sin(phipsi$psi))
-vM_fit <- movMF(psi_circle, 2, control = list(verbose = TRUE, maxiter = 10, start = "S"))
+vM_fit <- movMF(psi_circle, 2, 
+                control = list(verbose = TRUE, maxiter = 10, start = "S"))
 ```
 
 We can compare the fitted model to the data using the density function
@@ -620,7 +628,8 @@ hist(phipsi$psi, breaks = seq(-pi, pi, length.out = 15), prob = TRUE)
 rug(phipsi$psi)
 density(phipsi$psi, bw = "SJ", cut = 0) %>% 
   lines(col = "red", lwd = 2)
-curve(dvM(x, vM_fit$theta, vM_fit$alpha[1]), -pi, pi, add = TRUE, col = "blue", lwd = 2)
+curve(dvM(x, vM_fit$theta, vM_fit$alpha[1]), -pi, pi, 
+      add = TRUE, col = "blue", lwd = 2)
 ```
 
 ### Large scale optimization

@@ -111,8 +111,10 @@ the Gaussian if we want to fit a density to this data set.
 It is natural to ask why we don't go all-in and simply try to find the maximum
 likelihood estimate of the density among all possible densities? Why restrict 
 attention to some subset of densities in a particular parametric family? 
-For nonparametric estimation we can still introduce the log-likelihood
-$$\ell(f) = \sum_{i=1}^n \log f(x_i).$$
+The log-likelihood
+$$\ell(f) = \sum_{i=1}^n \log f(x_i)$$
+is well defined as a function of the density $f$ -- even when $f$ isn't restricted 
+to belong to a finite-dimensional parametric model. 
 To investigate if a nonparametric MLE is meaningful we consider how the likelihood
 behaves for the densities 
 $$\overline{f}_h(x) = \frac{1}{nh \sqrt{2 \pi}} \sum_{j=1}^n e^{- \frac{(x - x_j)^2}{2 h^2} }$$
@@ -426,7 +428,8 @@ f_hat <- kernDens(psi, 0.2)
 f_hat_dens <- density(psi, 0.2)
 plot(f_hat, type = "l", lwd = 4, xlab = "x", ylab = "Density")
 lines(f_hat_dens, col = "red", lwd = 2)
-plot(f_hat$x, f_hat$y - f_hat_dens$y, type = "l", lwd = 2, xlab = "x", ylab = "Difference")
+plot(f_hat$x, f_hat$y - f_hat_dens$y, 
+     type = "l", lwd = 2, xlab = "x", ylab = "Difference")
 ```
 
 Figure \@ref(fig:kernDens-fig) suggests that the estimates computed by our 
@@ -536,7 +539,7 @@ these specific implementations these differences are nuances
 and preferences may be more subjective and aesthetic than substantial. 
 
 To make a qualified choice between the implementations we should
-investigate if they differ in terms of time and memory consumption, and 
+investigate if they differ in terms of run time and memory consumption, and 
 this is precisely the topic of the next section. 
 
 ### Benchmarking
@@ -589,10 +592,18 @@ kern_bench <- microbenchmark(
 
 The result stored in `kern_bench` is a data frame with two columns. The first 
 contains the R expressions evaluated, and the second is the evaluation 
-time measured in nanoseconds. Each expression is by default evaluated 
-100 times, but this can be changed using the `times` argument. Thus 
-a total of 400 evaluations are done for the above benchmark, and these evaluations
-are done in a random order by default. Measuring evaluation time on a 
+time measured in nanoseconds. The data frame has 100 rows as each expression 
+by default is evaluated 100 times, but this can be changed using the `times` 
+argument to `microbenchmark`. It may not be immediately obvious that `kern_bench` 
+is a data frame, because when you print it the results are automatically summarized,
+but the actual data structure is revealed by the R function `str`.
+
+```{r bench-str, dependson="kern-bench"}
+str(kern_bench)
+```
+
+A total of 400 evaluations are done for the above benchmark, and these 
+evaluations are done in a random order by default. Measuring evaluation time on a 
 complex system like a modern computer is an empirical science, and 
 the order of evaluation can potentially affect the results as the 
 conditions for the evaluation change over time. The purpose of the 
@@ -616,7 +627,8 @@ based on ggplot2 and thus easy to modify.
 
 ```{r kern-bench-autoplot, dependson="kern-bench-hidden", message=FALSE}
 autoplot(kern_bench) + 
-  geom_jitter(position = position_jitter(0.2, 0), aes(color = expr), alpha = 0.4) + 
+  geom_jitter(position = position_jitter(0.2, 0), 
+              aes(color = expr), alpha = 0.4) + 
   aes(fill = I("gray")) + 
   theme(legend.position = "none")
 ```
@@ -624,7 +636,7 @@ autoplot(kern_bench) +
 This more refined benchmark study doesn't change our initial impression from 
 using `system.time` substantially. The function `kernDens` is notably
 slower than the three vectorized implementations, but we are now able to 
-see minor differences among them. 
+more clearly see the minor differences among them. 
 
 
 In many cases when we benchmark run time it is of interest 
@@ -706,8 +718,8 @@ Differences in $C$ correspond to vertical translations on the log-log scale.
 
 In practice, we will see some deviations from straight lines on the log-log plot
 for a number of reasons. Writing the run time as $C n^a + R(n)$, 
-the residual term $R(n)$ will often be noticeable or even dominating for small $n$,
-and we always have $R(n) \geq R_0 > 0$. It is only for large enough $n$ 
+the residual term $R(n)$ will often be noticeable or even dominating and positive 
+for small $n$. It is only for large enough $n$ 
 that the power law term, $C n^a$, will dominate. In addition, run time 
 can be affected by hardware constraints such as cache and memory sizes, which 
 can cause abrupt jumps in run time.  
@@ -1017,6 +1029,15 @@ used with `density` by setting the argument `bw = "ucv"`.
 
 
 ## Multivariate methods {#multivariate-smoothing}
+
+This section illustrates how to use two different implementations in R 
+for bivariate density estimation of the $(\phi, \psi)$-angle distribution. 
+A scatter plot of $\phi$ and $\psi$ angles is known as a [Ramachandran plot](https://en.wikipedia.org/wiki/Ramachandran_plot), and it provides
+a classical and important way of visualizing local structural 
+constraints of proteins in structural biochemistry. The density estimate
+can be understood as an estimate of the distribution of $(\phi, \psi)$-angles
+in naturally occuring proteins from the small sample of angles in our 
+data set. 
 
 ```{r multDensPackages, message=FALSE}
 library(MASS) ## kde2d
