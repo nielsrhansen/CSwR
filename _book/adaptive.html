@@ -400,72 +400,60 @@ This distribution has density
 which is log-concave (when the shape parameters are greater than one).
 We implement the rejection sampling algorithm for this density with the adaptive
 envelope using two points.</p>
-<div class="sourceCode" id="cb146"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb146-1" data-line-number="1">Betasim &lt;-<span class="st"> </span><span class="cf">function</span>(n, x1, x2, alpha, beta) {</a>
-<a class="sourceLine" id="cb146-2" data-line-number="2">  lf &lt;-<span class="st"> </span><span class="cf">function</span>(x) (alpha <span class="op">-</span><span class="st"> </span><span class="dv">1</span>) <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(x) <span class="op">+</span><span class="st"> </span>(beta <span class="op">-</span><span class="st"> </span><span class="dv">1</span>) <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>x) </a>
-<a class="sourceLine" id="cb146-3" data-line-number="3">  lf_deriv &lt;-<span class="st"> </span><span class="cf">function</span>(x) (alpha <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)<span class="op">/</span>x <span class="op">-</span><span class="st"> </span>(beta <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)<span class="op">/</span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>x)</a>
-<a class="sourceLine" id="cb146-4" data-line-number="4">  a1 &lt;-<span class="st"> </span><span class="kw">lf_deriv</span>(x1)</a>
-<a class="sourceLine" id="cb146-5" data-line-number="5">  a2 &lt;-<span class="st"> </span><span class="kw">lf_deriv</span>(x2)</a>
-<a class="sourceLine" id="cb146-6" data-line-number="6">  <span class="cf">if</span>(a1 <span class="op">==</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>a2 <span class="op">==</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>a1 <span class="op">-</span><span class="st"> </span>a2 <span class="op">==</span><span class="st"> </span><span class="dv">0</span>) </a>
-<a class="sourceLine" id="cb146-7" data-line-number="7">    <span class="kw">stop</span>(<span class="st">&quot;</span><span class="ch">\n</span><span class="st">The implementation requires a_1 and a_2 different </span></a>
-<a class="sourceLine" id="cb146-8" data-line-number="8"><span class="st">and both different from zero. Choose different values of x_1 and x_2.&quot;</span>)</a>
-<a class="sourceLine" id="cb146-9" data-line-number="9">  b1 &lt;-<span class="st"> </span><span class="kw">lf</span>(x1) <span class="op">-</span><span class="st"> </span>a1 <span class="op">*</span><span class="st"> </span>x1</a>
-<a class="sourceLine" id="cb146-10" data-line-number="10">  b2 &lt;-<span class="st"> </span><span class="kw">lf</span>(x2) <span class="op">-</span><span class="st"> </span>a2 <span class="op">*</span><span class="st"> </span>x2</a>
-<a class="sourceLine" id="cb146-11" data-line-number="11">  z1 &lt;-<span class="st"> </span>(b2 <span class="op">-</span><span class="st"> </span>b1) <span class="op">/</span><span class="st"> </span>(a1 <span class="op">-</span><span class="st"> </span>a2)</a>
-<a class="sourceLine" id="cb146-12" data-line-number="12">  Q1 &lt;-<span class="st"> </span><span class="kw">exp</span>(b1) <span class="op">*</span><span class="st"> </span>(<span class="kw">exp</span>(a1 <span class="op">*</span><span class="st"> </span>z1) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>) <span class="op">/</span><span class="st"> </span>a1 </a>
-<a class="sourceLine" id="cb146-13" data-line-number="13">  c &lt;-<span class="st"> </span>Q1 <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(b2) <span class="op">*</span><span class="st"> </span>(<span class="kw">exp</span>(a2 <span class="op">*</span><span class="st"> </span><span class="dv">1</span>) <span class="op">-</span><span class="st"> </span><span class="kw">exp</span>(a2 <span class="op">*</span><span class="st"> </span>z1)) <span class="op">/</span><span class="st"> </span>a2</a>
-<a class="sourceLine" id="cb146-14" data-line-number="14"></a>
-<a class="sourceLine" id="cb146-15" data-line-number="15">  m &lt;-<span class="st"> </span>n  </a>
-<a class="sourceLine" id="cb146-16" data-line-number="16">  fact &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb146-17" data-line-number="17">  j &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb146-18" data-line-number="18">  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
-<a class="sourceLine" id="cb146-19" data-line-number="19">  uy &lt;-<span class="st"> </span>c <span class="op">*</span><span class="st"> </span><span class="kw">runif</span>(m)</a>
-<a class="sourceLine" id="cb146-20" data-line-number="20">  u &lt;-<span class="st"> </span><span class="kw">runif</span>(m)</a>
-<a class="sourceLine" id="cb146-21" data-line-number="21">  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {</a>
-<a class="sourceLine" id="cb146-22" data-line-number="22">    <span class="cf">repeat</span> {</a>
-<a class="sourceLine" id="cb146-23" data-line-number="23">      u0 &lt;-<span class="st"> </span>uy[j]</a>
-<a class="sourceLine" id="cb146-24" data-line-number="24">      <span class="cf">if</span>(u0 <span class="op">&lt;</span><span class="st"> </span>Q1) {</a>
-<a class="sourceLine" id="cb146-25" data-line-number="25">        z &lt;-<span class="st"> </span><span class="kw">log</span>(a1 <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>b1) <span class="op">*</span><span class="st"> </span>u0 <span class="op">+</span><span class="st"> </span><span class="dv">1</span>) <span class="op">/</span><span class="st"> </span>a1</a>
-<a class="sourceLine" id="cb146-26" data-line-number="26">        ratio &lt;-<span class="st"> </span><span class="kw">exp</span>(<span class="kw">lf</span>(z) <span class="op">-</span><span class="st"> </span>a1 <span class="op">*</span><span class="st"> </span>z <span class="op">-</span><span class="st"> </span>b1)</a>
-<a class="sourceLine" id="cb146-27" data-line-number="27">      } <span class="cf">else</span> {</a>
-<a class="sourceLine" id="cb146-28" data-line-number="28">        z &lt;-<span class="st"> </span><span class="kw">log</span>(a2 <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>b2) <span class="op">*</span><span class="st"> </span>(u0 <span class="op">-</span><span class="st"> </span>Q1) <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(a2 <span class="op">*</span><span class="st"> </span>z1)) <span class="op">/</span><span class="st"> </span>a2</a>
-<a class="sourceLine" id="cb146-29" data-line-number="29">        ratio &lt;-<span class="st"> </span><span class="kw">exp</span>(<span class="kw">lf</span>(z) <span class="op">-</span><span class="st"> </span>a2 <span class="op">*</span><span class="st"> </span>z <span class="op">-</span><span class="st"> </span>b2)</a>
-<a class="sourceLine" id="cb146-30" data-line-number="30">      }</a>
-<a class="sourceLine" id="cb146-31" data-line-number="31">      accept &lt;-<span class="st"> </span>u[j] <span class="op">&lt;=</span><span class="st"> </span>ratio</a>
-<a class="sourceLine" id="cb146-32" data-line-number="32">      j &lt;-<span class="st"> </span>j <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb146-33" data-line-number="33">      <span class="cf">if</span>(j <span class="op">&gt;</span><span class="st"> </span>m) {</a>
-<a class="sourceLine" id="cb146-34" data-line-number="34">        <span class="cf">if</span>(fact <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) fact &lt;-<span class="st"> </span>n <span class="op">/</span><span class="st"> </span>i</a>
-<a class="sourceLine" id="cb146-35" data-line-number="35">        m &lt;-<span class="st"> </span><span class="kw">floor</span>(fact <span class="op">*</span><span class="st"> </span>(n <span class="op">-</span><span class="st"> </span>i <span class="op">+</span><span class="st"> </span><span class="dv">1</span>))</a>
-<a class="sourceLine" id="cb146-36" data-line-number="36">        uy &lt;-<span class="st"> </span>c <span class="op">*</span><span class="st"> </span><span class="kw">runif</span>(m)</a>
-<a class="sourceLine" id="cb146-37" data-line-number="37">        u &lt;-<span class="st"> </span><span class="kw">runif</span>(m)</a>
-<a class="sourceLine" id="cb146-38" data-line-number="38">        j &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb146-39" data-line-number="39">      }</a>
-<a class="sourceLine" id="cb146-40" data-line-number="40">      <span class="cf">if</span>(accept) <span class="cf">break</span></a>
-<a class="sourceLine" id="cb146-41" data-line-number="41">    }</a>
-<a class="sourceLine" id="cb146-42" data-line-number="42">    y[i] &lt;-<span class="st"> </span>z</a>
-<a class="sourceLine" id="cb146-43" data-line-number="43">  }</a>
-<a class="sourceLine" id="cb146-44" data-line-number="44">  y</a>
-<a class="sourceLine" id="cb146-45" data-line-number="45">}</a></code></pre></div>
+<div class="sourceCode" id="cb149"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb149-1" data-line-number="1">Betasim &lt;-<span class="st"> </span><span class="cf">function</span>(n, x1, x2, alpha, beta) {</a>
+<a class="sourceLine" id="cb149-2" data-line-number="2">  lf &lt;-<span class="st"> </span><span class="cf">function</span>(x) (alpha <span class="op">-</span><span class="st"> </span><span class="dv">1</span>) <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(x) <span class="op">+</span><span class="st"> </span>(beta <span class="op">-</span><span class="st"> </span><span class="dv">1</span>) <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>x) </a>
+<a class="sourceLine" id="cb149-3" data-line-number="3">  lf_deriv &lt;-<span class="st"> </span><span class="cf">function</span>(x) (alpha <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)<span class="op">/</span>x <span class="op">-</span><span class="st"> </span>(beta <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)<span class="op">/</span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>x)</a>
+<a class="sourceLine" id="cb149-4" data-line-number="4">  a1 &lt;-<span class="st"> </span><span class="kw">lf_deriv</span>(x1)</a>
+<a class="sourceLine" id="cb149-5" data-line-number="5">  a2 &lt;-<span class="st"> </span><span class="kw">lf_deriv</span>(x2)</a>
+<a class="sourceLine" id="cb149-6" data-line-number="6">  <span class="cf">if</span>(a1 <span class="op">==</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>a2 <span class="op">==</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>a1 <span class="op">-</span><span class="st"> </span>a2 <span class="op">==</span><span class="st"> </span><span class="dv">0</span>) </a>
+<a class="sourceLine" id="cb149-7" data-line-number="7">    <span class="kw">stop</span>(<span class="st">&quot;</span><span class="ch">\n</span><span class="st">The implementation requires a_1 and a_2 different </span></a>
+<a class="sourceLine" id="cb149-8" data-line-number="8"><span class="st">and both different from zero. Choose different values of x_1 and x_2.&quot;</span>)</a>
+<a class="sourceLine" id="cb149-9" data-line-number="9">  b1 &lt;-<span class="st"> </span><span class="kw">lf</span>(x1) <span class="op">-</span><span class="st"> </span>a1 <span class="op">*</span><span class="st"> </span>x1</a>
+<a class="sourceLine" id="cb149-10" data-line-number="10">  b2 &lt;-<span class="st"> </span><span class="kw">lf</span>(x2) <span class="op">-</span><span class="st"> </span>a2 <span class="op">*</span><span class="st"> </span>x2</a>
+<a class="sourceLine" id="cb149-11" data-line-number="11">  z1 &lt;-<span class="st"> </span>(b2 <span class="op">-</span><span class="st"> </span>b1) <span class="op">/</span><span class="st"> </span>(a1 <span class="op">-</span><span class="st"> </span>a2)</a>
+<a class="sourceLine" id="cb149-12" data-line-number="12">  Q1 &lt;-<span class="st"> </span><span class="kw">exp</span>(b1) <span class="op">*</span><span class="st"> </span>(<span class="kw">exp</span>(a1 <span class="op">*</span><span class="st"> </span>z1) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>) <span class="op">/</span><span class="st"> </span>a1 </a>
+<a class="sourceLine" id="cb149-13" data-line-number="13">  c &lt;-<span class="st"> </span>Q1 <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(b2) <span class="op">*</span><span class="st"> </span>(<span class="kw">exp</span>(a2 <span class="op">*</span><span class="st"> </span><span class="dv">1</span>) <span class="op">-</span><span class="st"> </span><span class="kw">exp</span>(a2 <span class="op">*</span><span class="st"> </span>z1)) <span class="op">/</span><span class="st"> </span>a2</a>
+<a class="sourceLine" id="cb149-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb149-15" data-line-number="15">  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
+<a class="sourceLine" id="cb149-16" data-line-number="16">  uy &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, runif)</a>
+<a class="sourceLine" id="cb149-17" data-line-number="17">  u &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, runif)</a>
+<a class="sourceLine" id="cb149-18" data-line-number="18">  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {</a>
+<a class="sourceLine" id="cb149-19" data-line-number="19">    reject &lt;-<span class="st"> </span><span class="ot">TRUE</span></a>
+<a class="sourceLine" id="cb149-20" data-line-number="20">    <span class="cf">while</span>(reject) {</a>
+<a class="sourceLine" id="cb149-21" data-line-number="21">      u0 &lt;-<span class="st"> </span>c <span class="op">*</span><span class="st"> </span><span class="kw">uy</span>(n <span class="op">-</span><span class="st"> </span>i)</a>
+<a class="sourceLine" id="cb149-22" data-line-number="22">      <span class="cf">if</span>(u0 <span class="op">&lt;</span><span class="st"> </span>Q1) {</a>
+<a class="sourceLine" id="cb149-23" data-line-number="23">        z &lt;-<span class="st"> </span><span class="kw">log</span>(a1 <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>b1) <span class="op">*</span><span class="st"> </span>u0 <span class="op">+</span><span class="st"> </span><span class="dv">1</span>) <span class="op">/</span><span class="st"> </span>a1</a>
+<a class="sourceLine" id="cb149-24" data-line-number="24">        reject &lt;-<span class="st"> </span><span class="kw">u</span>(n <span class="op">-</span><span class="st"> </span>i) <span class="op">&gt;</span><span class="st"> </span><span class="kw">exp</span>(<span class="kw">lf</span>(z) <span class="op">-</span><span class="st"> </span>a1 <span class="op">*</span><span class="st"> </span>z <span class="op">-</span><span class="st"> </span>b1)</a>
+<a class="sourceLine" id="cb149-25" data-line-number="25">      } <span class="cf">else</span> {</a>
+<a class="sourceLine" id="cb149-26" data-line-number="26">        z &lt;-<span class="st"> </span><span class="kw">log</span>(a2 <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>b2) <span class="op">*</span><span class="st"> </span>(u0 <span class="op">-</span><span class="st"> </span>Q1) <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(a2 <span class="op">*</span><span class="st"> </span>z1)) <span class="op">/</span><span class="st"> </span>a2</a>
+<a class="sourceLine" id="cb149-27" data-line-number="27">        reject &lt;-<span class="st"> </span><span class="kw">u</span>(n <span class="op">-</span><span class="st"> </span>i) <span class="op">&gt;</span><span class="st"> </span><span class="kw">exp</span>(<span class="kw">lf</span>(z) <span class="op">-</span><span class="st"> </span>a2 <span class="op">*</span><span class="st"> </span>z <span class="op">-</span><span class="st"> </span>b2)</a>
+<a class="sourceLine" id="cb149-28" data-line-number="28">      }</a>
+<a class="sourceLine" id="cb149-29" data-line-number="29">    }</a>
+<a class="sourceLine" id="cb149-30" data-line-number="30">    y[i] &lt;-<span class="st"> </span>z</a>
+<a class="sourceLine" id="cb149-31" data-line-number="31">  }</a>
+<a class="sourceLine" id="cb149-32" data-line-number="32">  y</a>
+<a class="sourceLine" id="cb149-33" data-line-number="33">}</a></code></pre></div>
 <p>(ref:Beta-sim) Histograms of simulated variables from Beta distributions using
 the rejection sampler with the adaptive envelope based on log-concavity. The
 true density (blue) and the envelope (red) are added to the plots.</p>
 <div class="figure" style="text-align: center"><span id="fig:Beta-sim"></span>
 <img src="CSwR_files/figure-html/Beta-sim-1.png" alt="(ref:Beta-sim)" width="100%" />
 <p class="caption">
-Figure 4.4: (ref:Beta-sim)
+Figure 4.5: (ref:Beta-sim)
 </p>
 </div>
 <p>Note that as a safeguard we implemented a test on the <span class="math inline">\(a_i\)</span>s to check that
 the formulas used are actually meaningful, specifically that there are no
 divisions by zero.</p>
-<div class="sourceCode" id="cb147"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb147-1" data-line-number="1"><span class="kw">Betasim</span>(<span class="dv">1</span>, <span class="dt">x1 =</span> <span class="fl">0.25</span>, <span class="dt">x2 =</span> <span class="fl">0.75</span>, <span class="dt">alpha =</span> <span class="dv">4</span>, <span class="dt">beta =</span> <span class="dv">2</span>)  </a></code></pre></div>
+<div class="sourceCode" id="cb150"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb150-1" data-line-number="1"><span class="kw">Betasim</span>(<span class="dv">1</span>, <span class="dt">x1 =</span> <span class="fl">0.25</span>, <span class="dt">x2 =</span> <span class="fl">0.75</span>, <span class="dt">alpha =</span> <span class="dv">4</span>, <span class="dt">beta =</span> <span class="dv">2</span>)  </a></code></pre></div>
 <pre><code>## Error in Betasim(1, x1 = 0.25, x2 = 0.75, alpha = 4, beta = 2): 
 ## This implementation requires a_1 and a_2 different 
 ## and both different from zero. Choose different values of x_1 and x_2.</code></pre>
-<div class="sourceCode" id="cb149"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb149-1" data-line-number="1"><span class="kw">Betasim</span>(<span class="dv">1</span>, <span class="dt">x1 =</span> <span class="fl">0.2</span>, <span class="dt">x2 =</span> <span class="fl">0.75</span>, <span class="dt">alpha =</span> <span class="dv">4</span>, <span class="dt">beta =</span> <span class="dv">2</span>)   </a></code></pre></div>
+<div class="sourceCode" id="cb152"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb152-1" data-line-number="1"><span class="kw">Betasim</span>(<span class="dv">1</span>, <span class="dt">x1 =</span> <span class="fl">0.2</span>, <span class="dt">x2 =</span> <span class="fl">0.75</span>, <span class="dt">alpha =</span> <span class="dv">4</span>, <span class="dt">beta =</span> <span class="dv">2</span>)   </a></code></pre></div>
 <pre><code>## Error in Betasim(1, x1 = 0.2, x2 = 0.75, alpha = 4, beta = 2): 
 ## This implementation requires a_1 and a_2 different 
 ## and both different from zero. Choose different values of x_1 and x_2.</code></pre>
-<div class="sourceCode" id="cb151"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb151-1" data-line-number="1"><span class="kw">Betasim</span>(<span class="dv">1</span>, <span class="dt">x1 =</span> <span class="fl">0.2</span>, <span class="dt">x2 =</span> <span class="fl">0.8</span>, <span class="dt">alpha =</span> <span class="dv">4</span>, <span class="dt">beta =</span> <span class="dv">2</span>)    </a></code></pre></div>
+<div class="sourceCode" id="cb154"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb154-1" data-line-number="1"><span class="kw">Betasim</span>(<span class="dv">1</span>, <span class="dt">x1 =</span> <span class="fl">0.2</span>, <span class="dt">x2 =</span> <span class="fl">0.8</span>, <span class="dt">alpha =</span> <span class="dv">4</span>, <span class="dt">beta =</span> <span class="dv">2</span>)    </a></code></pre></div>
 <pre><code>## [1] 0.7668483</code></pre>
 </div>
 <div id="von-mises-distribution" class="section level3">
@@ -474,108 +462,95 @@ divisions by zero.</p>
 uniform distribution as proposal distribution. As it turns out, the uniform
 density is not a particularly tight envelope. We illustrate this by
 studying the proportion of rejections for our previous implementation.</p>
-<div class="sourceCode" id="cb153"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb153-1" data-line-number="1">y &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">10000</span>, <span class="fl">0.1</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb153-2" data-line-number="2">y &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">10000</span>, <span class="fl">0.5</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb153-3" data-line-number="3">y &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">10000</span>, <span class="dv">2</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb153-4" data-line-number="4">y &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">10000</span>, <span class="dv">5</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
-<pre><code>## kappa = 0.1 : 0.0942029 
-## kappa = 0.5 : 0.3473011 
-## kappa = 2 : 0.6954377 
-## kappa = 5 : 0.8172481</code></pre>
+<div class="sourceCode" id="cb156"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb156-1" data-line-number="1">y &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">10000</span>, <span class="fl">0.1</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb156-2" data-line-number="2">y &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">10000</span>, <span class="fl">0.5</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb156-3" data-line-number="3">y &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">10000</span>, <span class="dv">2</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb156-4" data-line-number="4">y &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">10000</span>, <span class="dv">5</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
+<pre><code>## kappa = 0.1 : 0.09453097 
+## kappa = 0.5 : 0.3473437 
+## kappa = 2 : 0.6954562 
+## kappa = 5 : 0.8169939</code></pre>
 <p>The rejection frequency is high and increases with <span class="math inline">\(\kappa\)</span>. For <span class="math inline">\(\kappa = 5\)</span>
-more than 80% of the proposals are rejected, and simulating <span class="math inline">\(n = 10000\)</span>
-von Mises distributed variables thus requires the simulation of around <span class="math inline">\(50000\)</span>
+more than 80% of the proposals are rejected, and simulating <span class="math inline">\(n = 10,000\)</span>
+von Mises distributed variables thus requires the simulation of around <span class="math inline">\(50,000\)</span>
 variables from the proposal.</p>
 <p>The von Mises density is, unfortunately, not log-concave on <span class="math inline">\((-\pi, \pi)\)</span>,
 but it is on <span class="math inline">\((-\pi/2, \pi/2)\)</span>. It is, furthermore, log-convex on <span class="math inline">\((-\pi, -\pi/2)\)</span>
 as well as <span class="math inline">\((\pi/2, \pi)\)</span>, which implies that on these two intervals the
 log-density is below the corresponding chords. These chords can be
 pieced together with tangents to give an envelope.</p>
-<div class="sourceCode" id="cb155"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb155-1" data-line-number="1">vMsim_adapt &lt;-<span class="st"> </span><span class="cf">function</span>(n, x1, x2, kappa, <span class="dt">trace =</span> <span class="ot">FALSE</span>) {</a>
-<a class="sourceLine" id="cb155-2" data-line-number="2">  lf &lt;-<span class="st"> </span><span class="cf">function</span>(x) kappa <span class="op">*</span><span class="st"> </span><span class="kw">cos</span>(x) </a>
-<a class="sourceLine" id="cb155-3" data-line-number="3">  lf_deriv &lt;-<span class="st"> </span><span class="cf">function</span>(x) <span class="op">-</span><span class="st"> </span>kappa <span class="op">*</span><span class="st"> </span><span class="kw">sin</span>(x)</a>
-<a class="sourceLine" id="cb155-4" data-line-number="4">  a1 &lt;-<span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>kappa <span class="op">/</span><span class="st"> </span>pi</a>
-<a class="sourceLine" id="cb155-5" data-line-number="5">  a2 &lt;-<span class="st"> </span><span class="kw">lf_deriv</span>(x1)</a>
-<a class="sourceLine" id="cb155-6" data-line-number="6">  a3 &lt;-<span class="st"> </span><span class="kw">lf_deriv</span>(x2)</a>
-<a class="sourceLine" id="cb155-7" data-line-number="7">  a4 &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>a1</a>
-<a class="sourceLine" id="cb155-8" data-line-number="8">  </a>
-<a class="sourceLine" id="cb155-9" data-line-number="9">  b1 &lt;-<span class="st"> </span>kappa</a>
-<a class="sourceLine" id="cb155-10" data-line-number="10">  b2 &lt;-<span class="st"> </span><span class="kw">lf</span>(x1) <span class="op">-</span><span class="st"> </span>a2 <span class="op">*</span><span class="st"> </span>x1</a>
-<a class="sourceLine" id="cb155-11" data-line-number="11">  b3 &lt;-<span class="st"> </span><span class="kw">lf</span>(x2) <span class="op">-</span><span class="st"> </span>a3 <span class="op">*</span><span class="st"> </span>x2</a>
-<a class="sourceLine" id="cb155-12" data-line-number="12">  b4 &lt;-<span class="st"> </span>kappa</a>
-<a class="sourceLine" id="cb155-13" data-line-number="13">  </a>
-<a class="sourceLine" id="cb155-14" data-line-number="14">  z0 &lt;-<span class="st"> </span><span class="op">-</span>pi</a>
-<a class="sourceLine" id="cb155-15" data-line-number="15">  z1 &lt;-<span class="st"> </span><span class="op">-</span>pi<span class="op">/</span><span class="dv">2</span></a>
-<a class="sourceLine" id="cb155-16" data-line-number="16">  z2 &lt;-<span class="st"> </span>(b3 <span class="op">-</span><span class="st"> </span>b2) <span class="op">/</span><span class="st"> </span>(a2 <span class="op">-</span><span class="st"> </span>a3)</a>
-<a class="sourceLine" id="cb155-17" data-line-number="17">  z3 &lt;-<span class="st"> </span>pi<span class="op">/</span><span class="dv">2</span></a>
-<a class="sourceLine" id="cb155-18" data-line-number="18">  z4 &lt;-<span class="st"> </span>pi</a>
-<a class="sourceLine" id="cb155-19" data-line-number="19">  </a>
-<a class="sourceLine" id="cb155-20" data-line-number="20">  Q1 &lt;-<span class="st"> </span><span class="kw">exp</span>(b1) <span class="op">*</span><span class="st"> </span>(<span class="kw">exp</span>(a1 <span class="op">*</span><span class="st"> </span>z1) <span class="op">-</span><span class="st"> </span><span class="kw">exp</span>(a1 <span class="op">*</span><span class="st"> </span>z0)) <span class="op">/</span><span class="st"> </span>a1 </a>
-<a class="sourceLine" id="cb155-21" data-line-number="21">  Q2 &lt;-<span class="st"> </span>Q1 <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(b2) <span class="op">*</span><span class="st"> </span>(<span class="kw">exp</span>(a2 <span class="op">*</span><span class="st"> </span>z2) <span class="op">-</span><span class="st"> </span><span class="kw">exp</span>(a2 <span class="op">*</span><span class="st"> </span>z1)) <span class="op">/</span><span class="st"> </span>a2</a>
-<a class="sourceLine" id="cb155-22" data-line-number="22">  Q3 &lt;-<span class="st"> </span>Q2 <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(b3) <span class="op">*</span><span class="st"> </span>(<span class="kw">exp</span>(a3 <span class="op">*</span><span class="st"> </span>z3) <span class="op">-</span><span class="st"> </span><span class="kw">exp</span>(a3 <span class="op">*</span><span class="st"> </span>z2)) <span class="op">/</span><span class="st"> </span>a3</a>
-<a class="sourceLine" id="cb155-23" data-line-number="23">  c &lt;-<span class="st"> </span>Q3 <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(b4) <span class="op">*</span><span class="st"> </span>(<span class="kw">exp</span>(a4 <span class="op">*</span><span class="st"> </span>z4) <span class="op">-</span><span class="st"> </span><span class="kw">exp</span>(a4 <span class="op">*</span><span class="st"> </span>z3)) <span class="op">/</span><span class="st"> </span>a4</a>
-<a class="sourceLine" id="cb155-24" data-line-number="24">  </a>
-<a class="sourceLine" id="cb155-25" data-line-number="25">  m &lt;-<span class="st"> </span>n  </a>
-<a class="sourceLine" id="cb155-26" data-line-number="26">  fact &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb155-27" data-line-number="27">  j &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb155-28" data-line-number="28">  count &lt;-<span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb155-29" data-line-number="29">  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
-<a class="sourceLine" id="cb155-30" data-line-number="30">  uy &lt;-<span class="st"> </span>c <span class="op">*</span><span class="st"> </span><span class="kw">runif</span>(m)</a>
-<a class="sourceLine" id="cb155-31" data-line-number="31">  u &lt;-<span class="st"> </span><span class="kw">runif</span>(m)</a>
-<a class="sourceLine" id="cb155-32" data-line-number="32">  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {</a>
-<a class="sourceLine" id="cb155-33" data-line-number="33">    <span class="cf">repeat</span> {</a>
-<a class="sourceLine" id="cb155-34" data-line-number="34">      u0 &lt;-<span class="st"> </span>uy[j]</a>
-<a class="sourceLine" id="cb155-35" data-line-number="35">      <span class="cf">if</span>(u0 <span class="op">&lt;</span><span class="st"> </span>Q1) {</a>
-<a class="sourceLine" id="cb155-36" data-line-number="36">        z &lt;-<span class="st"> </span><span class="kw">log</span>(a1 <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>b1) <span class="op">*</span><span class="st"> </span>u0 <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(a1 <span class="op">*</span><span class="st"> </span>z0)) <span class="op">/</span><span class="st"> </span>a1</a>
-<a class="sourceLine" id="cb155-37" data-line-number="37">        ratio &lt;-<span class="st"> </span><span class="kw">exp</span>(<span class="kw">lf</span>(z) <span class="op">-</span><span class="st"> </span>a1 <span class="op">*</span><span class="st"> </span>z <span class="op">-</span><span class="st"> </span>b1)</a>
-<a class="sourceLine" id="cb155-38" data-line-number="38">      } <span class="cf">else</span> <span class="cf">if</span>(u0 <span class="op">&lt;</span><span class="st"> </span>Q2) {</a>
-<a class="sourceLine" id="cb155-39" data-line-number="39">        z &lt;-<span class="st"> </span><span class="kw">log</span>(a2 <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>b2) <span class="op">*</span><span class="st"> </span>(u0 <span class="op">-</span><span class="st"> </span>Q1) <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(a2 <span class="op">*</span><span class="st"> </span>z1)) <span class="op">/</span><span class="st"> </span>a2</a>
-<a class="sourceLine" id="cb155-40" data-line-number="40">        ratio &lt;-<span class="st"> </span><span class="kw">exp</span>(<span class="kw">lf</span>(z) <span class="op">-</span><span class="st"> </span>a2 <span class="op">*</span><span class="st"> </span>z <span class="op">-</span><span class="st"> </span>b2)</a>
-<a class="sourceLine" id="cb155-41" data-line-number="41">      } <span class="cf">else</span> <span class="cf">if</span>(u0 <span class="op">&lt;</span><span class="st"> </span>Q3) {</a>
-<a class="sourceLine" id="cb155-42" data-line-number="42">        z &lt;-<span class="st"> </span><span class="kw">log</span>(a3 <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>b3) <span class="op">*</span><span class="st"> </span>(u0 <span class="op">-</span><span class="st"> </span>Q2) <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(a3 <span class="op">*</span><span class="st"> </span>z2)) <span class="op">/</span><span class="st"> </span>a3</a>
-<a class="sourceLine" id="cb155-43" data-line-number="43">        ratio &lt;-<span class="st"> </span><span class="kw">exp</span>(<span class="kw">lf</span>(z) <span class="op">-</span><span class="st"> </span>a3 <span class="op">*</span><span class="st"> </span>z <span class="op">-</span><span class="st"> </span>b3)</a>
-<a class="sourceLine" id="cb155-44" data-line-number="44">      } <span class="cf">else</span> {</a>
-<a class="sourceLine" id="cb155-45" data-line-number="45">        z &lt;-<span class="st"> </span><span class="kw">log</span>(a4 <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>b4) <span class="op">*</span><span class="st"> </span>(u0 <span class="op">-</span><span class="st"> </span>Q3) <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(a4 <span class="op">*</span><span class="st"> </span>z3)) <span class="op">/</span><span class="st"> </span>a4</a>
-<a class="sourceLine" id="cb155-46" data-line-number="46">        ratio &lt;-<span class="st"> </span><span class="kw">exp</span>(<span class="kw">lf</span>(z) <span class="op">-</span><span class="st"> </span>a4 <span class="op">*</span><span class="st"> </span>z <span class="op">-</span><span class="st"> </span>b4)</a>
-<a class="sourceLine" id="cb155-47" data-line-number="47">      }</a>
-<a class="sourceLine" id="cb155-48" data-line-number="48">      accept &lt;-<span class="st"> </span>u[j] <span class="op">&lt;=</span><span class="st"> </span>ratio</a>
-<a class="sourceLine" id="cb155-49" data-line-number="49">      j &lt;-<span class="st"> </span>j <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb155-50" data-line-number="50">      count &lt;-<span class="st"> </span>count <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb155-51" data-line-number="51">      <span class="cf">if</span>(j <span class="op">&gt;</span><span class="st"> </span>m) {</a>
-<a class="sourceLine" id="cb155-52" data-line-number="52">        <span class="cf">if</span>(fact <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) fact &lt;-<span class="st"> </span>n <span class="op">/</span><span class="st"> </span>i</a>
-<a class="sourceLine" id="cb155-53" data-line-number="53">        m &lt;-<span class="st"> </span><span class="kw">floor</span>(fact <span class="op">*</span><span class="st"> </span>(n <span class="op">-</span><span class="st"> </span>i <span class="op">+</span><span class="st"> </span><span class="dv">1</span>))</a>
-<a class="sourceLine" id="cb155-54" data-line-number="54">        uy &lt;-<span class="st"> </span>c <span class="op">*</span><span class="st"> </span><span class="kw">runif</span>(m)</a>
-<a class="sourceLine" id="cb155-55" data-line-number="55">        u &lt;-<span class="st"> </span><span class="kw">runif</span>(m)</a>
-<a class="sourceLine" id="cb155-56" data-line-number="56">        j &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb155-57" data-line-number="57">      }</a>
-<a class="sourceLine" id="cb155-58" data-line-number="58">      <span class="cf">if</span>(accept) <span class="cf">break</span></a>
-<a class="sourceLine" id="cb155-59" data-line-number="59">    }</a>
-<a class="sourceLine" id="cb155-60" data-line-number="60">    y[i] &lt;-<span class="st"> </span>z</a>
-<a class="sourceLine" id="cb155-61" data-line-number="61">  }</a>
-<a class="sourceLine" id="cb155-62" data-line-number="62">  <span class="cf">if</span>(trace)</a>
-<a class="sourceLine" id="cb155-63" data-line-number="63">    <span class="kw">cat</span>(<span class="st">&quot;kappa =&quot;</span>, kappa, <span class="st">&quot;, x1 =&quot;</span>, x1, <span class="st">&quot;, </span></a>
-<a class="sourceLine" id="cb155-64" data-line-number="64"><span class="st">        x2 =&quot;</span>, x2, <span class="st">&quot;:&quot;</span>, (count <span class="op">-</span><span class="st"> </span>n) <span class="op">/</span><span class="st"> </span>count, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)  </a>
-<a class="sourceLine" id="cb155-65" data-line-number="65">  y</a>
-<a class="sourceLine" id="cb155-66" data-line-number="66">}</a></code></pre></div>
-
+<div class="sourceCode" id="cb158"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb158-1" data-line-number="1">vMsim_adapt &lt;-<span class="st"> </span><span class="cf">function</span>(n, x1, x2, kappa, <span class="dt">trace =</span> <span class="ot">FALSE</span>) {</a>
+<a class="sourceLine" id="cb158-2" data-line-number="2">  lf &lt;-<span class="st"> </span><span class="cf">function</span>(x) kappa <span class="op">*</span><span class="st"> </span><span class="kw">cos</span>(x) </a>
+<a class="sourceLine" id="cb158-3" data-line-number="3">  lf_deriv &lt;-<span class="st"> </span><span class="cf">function</span>(x) <span class="op">-</span><span class="st"> </span>kappa <span class="op">*</span><span class="st"> </span><span class="kw">sin</span>(x)</a>
+<a class="sourceLine" id="cb158-4" data-line-number="4">  a1 &lt;-<span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>kappa <span class="op">/</span><span class="st"> </span>pi</a>
+<a class="sourceLine" id="cb158-5" data-line-number="5">  a2 &lt;-<span class="st"> </span><span class="kw">lf_deriv</span>(x1)</a>
+<a class="sourceLine" id="cb158-6" data-line-number="6">  a3 &lt;-<span class="st"> </span><span class="kw">lf_deriv</span>(x2)</a>
+<a class="sourceLine" id="cb158-7" data-line-number="7">  a4 &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>a1</a>
+<a class="sourceLine" id="cb158-8" data-line-number="8">  </a>
+<a class="sourceLine" id="cb158-9" data-line-number="9">  b1 &lt;-<span class="st"> </span>kappa</a>
+<a class="sourceLine" id="cb158-10" data-line-number="10">  b2 &lt;-<span class="st"> </span><span class="kw">lf</span>(x1) <span class="op">-</span><span class="st"> </span>a2 <span class="op">*</span><span class="st"> </span>x1</a>
+<a class="sourceLine" id="cb158-11" data-line-number="11">  b3 &lt;-<span class="st"> </span><span class="kw">lf</span>(x2) <span class="op">-</span><span class="st"> </span>a3 <span class="op">*</span><span class="st"> </span>x2</a>
+<a class="sourceLine" id="cb158-12" data-line-number="12">  b4 &lt;-<span class="st"> </span>kappa</a>
+<a class="sourceLine" id="cb158-13" data-line-number="13">  </a>
+<a class="sourceLine" id="cb158-14" data-line-number="14">  z0 &lt;-<span class="st"> </span><span class="op">-</span>pi</a>
+<a class="sourceLine" id="cb158-15" data-line-number="15">  z1 &lt;-<span class="st"> </span><span class="op">-</span>pi<span class="op">/</span><span class="dv">2</span></a>
+<a class="sourceLine" id="cb158-16" data-line-number="16">  z2 &lt;-<span class="st"> </span>(b3 <span class="op">-</span><span class="st"> </span>b2) <span class="op">/</span><span class="st"> </span>(a2 <span class="op">-</span><span class="st"> </span>a3)</a>
+<a class="sourceLine" id="cb158-17" data-line-number="17">  z3 &lt;-<span class="st"> </span>pi<span class="op">/</span><span class="dv">2</span></a>
+<a class="sourceLine" id="cb158-18" data-line-number="18">  z4 &lt;-<span class="st"> </span>pi</a>
+<a class="sourceLine" id="cb158-19" data-line-number="19">  </a>
+<a class="sourceLine" id="cb158-20" data-line-number="20">  Q1 &lt;-<span class="st"> </span><span class="kw">exp</span>(b1) <span class="op">*</span><span class="st"> </span>(<span class="kw">exp</span>(a1 <span class="op">*</span><span class="st"> </span>z1) <span class="op">-</span><span class="st"> </span><span class="kw">exp</span>(a1 <span class="op">*</span><span class="st"> </span>z0)) <span class="op">/</span><span class="st"> </span>a1 </a>
+<a class="sourceLine" id="cb158-21" data-line-number="21">  Q2 &lt;-<span class="st"> </span>Q1 <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(b2) <span class="op">*</span><span class="st"> </span>(<span class="kw">exp</span>(a2 <span class="op">*</span><span class="st"> </span>z2) <span class="op">-</span><span class="st"> </span><span class="kw">exp</span>(a2 <span class="op">*</span><span class="st"> </span>z1)) <span class="op">/</span><span class="st"> </span>a2</a>
+<a class="sourceLine" id="cb158-22" data-line-number="22">  Q3 &lt;-<span class="st"> </span>Q2 <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(b3) <span class="op">*</span><span class="st"> </span>(<span class="kw">exp</span>(a3 <span class="op">*</span><span class="st"> </span>z3) <span class="op">-</span><span class="st"> </span><span class="kw">exp</span>(a3 <span class="op">*</span><span class="st"> </span>z2)) <span class="op">/</span><span class="st"> </span>a3</a>
+<a class="sourceLine" id="cb158-23" data-line-number="23">  c &lt;-<span class="st"> </span>Q3 <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(b4) <span class="op">*</span><span class="st"> </span>(<span class="kw">exp</span>(a4 <span class="op">*</span><span class="st"> </span>z4) <span class="op">-</span><span class="st"> </span><span class="kw">exp</span>(a4 <span class="op">*</span><span class="st"> </span>z3)) <span class="op">/</span><span class="st"> </span>a4</a>
+<a class="sourceLine" id="cb158-24" data-line-number="24">  </a>
+<a class="sourceLine" id="cb158-25" data-line-number="25">  count &lt;-<span class="st"> </span><span class="dv">0</span></a>
+<a class="sourceLine" id="cb158-26" data-line-number="26">  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
+<a class="sourceLine" id="cb158-27" data-line-number="27">  uy &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, runif)</a>
+<a class="sourceLine" id="cb158-28" data-line-number="28">  u &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, runif)</a>
+<a class="sourceLine" id="cb158-29" data-line-number="29">  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {</a>
+<a class="sourceLine" id="cb158-30" data-line-number="30">    reject &lt;-<span class="st"> </span><span class="ot">TRUE</span></a>
+<a class="sourceLine" id="cb158-31" data-line-number="31">    <span class="cf">while</span>(reject) {</a>
+<a class="sourceLine" id="cb158-32" data-line-number="32">      count &lt;-<span class="st"> </span>count <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb158-33" data-line-number="33">      u0 &lt;-<span class="st"> </span>c <span class="op">*</span><span class="st"> </span><span class="kw">uy</span>(n <span class="op">-</span><span class="st"> </span>i)</a>
+<a class="sourceLine" id="cb158-34" data-line-number="34">      <span class="cf">if</span>(u0 <span class="op">&lt;</span><span class="st"> </span>Q1) {</a>
+<a class="sourceLine" id="cb158-35" data-line-number="35">        z &lt;-<span class="st"> </span><span class="kw">log</span>(a1 <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>b1) <span class="op">*</span><span class="st"> </span>u0 <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(a1 <span class="op">*</span><span class="st"> </span>z0)) <span class="op">/</span><span class="st"> </span>a1</a>
+<a class="sourceLine" id="cb158-36" data-line-number="36">        reject &lt;-<span class="st"> </span><span class="kw">u</span>(n <span class="op">-</span><span class="st"> </span>i) <span class="op">&gt;</span><span class="st"> </span><span class="kw">exp</span>(<span class="kw">lf</span>(z) <span class="op">-</span><span class="st"> </span>a1 <span class="op">*</span><span class="st"> </span>z <span class="op">-</span><span class="st"> </span>b1)</a>
+<a class="sourceLine" id="cb158-37" data-line-number="37">      } <span class="cf">else</span> <span class="cf">if</span>(u0 <span class="op">&lt;</span><span class="st"> </span>Q2) {</a>
+<a class="sourceLine" id="cb158-38" data-line-number="38">        z &lt;-<span class="st"> </span><span class="kw">log</span>(a2 <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>b2) <span class="op">*</span><span class="st"> </span>(u0 <span class="op">-</span><span class="st"> </span>Q1) <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(a2 <span class="op">*</span><span class="st"> </span>z1)) <span class="op">/</span><span class="st"> </span>a2</a>
+<a class="sourceLine" id="cb158-39" data-line-number="39">        reject &lt;-<span class="st"> </span><span class="kw">u</span>(n <span class="op">-</span><span class="st"> </span>i) <span class="op">&gt;</span><span class="st"> </span><span class="kw">exp</span>(<span class="kw">lf</span>(z) <span class="op">-</span><span class="st"> </span>a2 <span class="op">*</span><span class="st"> </span>z <span class="op">-</span><span class="st"> </span>b2)</a>
+<a class="sourceLine" id="cb158-40" data-line-number="40">      } <span class="cf">else</span> <span class="cf">if</span>(u0 <span class="op">&lt;</span><span class="st"> </span>Q3) {</a>
+<a class="sourceLine" id="cb158-41" data-line-number="41">        z &lt;-<span class="st"> </span><span class="kw">log</span>(a3 <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>b3) <span class="op">*</span><span class="st"> </span>(u0 <span class="op">-</span><span class="st"> </span>Q2) <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(a3 <span class="op">*</span><span class="st"> </span>z2)) <span class="op">/</span><span class="st"> </span>a3</a>
+<a class="sourceLine" id="cb158-42" data-line-number="42">        reject &lt;-<span class="st"> </span><span class="kw">u</span>(n <span class="op">-</span><span class="st"> </span>i) <span class="op">&gt;</span><span class="st"> </span><span class="kw">exp</span>(<span class="kw">lf</span>(z) <span class="op">-</span><span class="st"> </span>a3 <span class="op">*</span><span class="st"> </span>z <span class="op">-</span><span class="st"> </span>b3)</a>
+<a class="sourceLine" id="cb158-43" data-line-number="43">      } <span class="cf">else</span> {</a>
+<a class="sourceLine" id="cb158-44" data-line-number="44">        z &lt;-<span class="st"> </span><span class="kw">log</span>(a4 <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>b4) <span class="op">*</span><span class="st"> </span>(u0 <span class="op">-</span><span class="st"> </span>Q3) <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(a4 <span class="op">*</span><span class="st"> </span>z3)) <span class="op">/</span><span class="st"> </span>a4</a>
+<a class="sourceLine" id="cb158-45" data-line-number="45">        reject &lt;-<span class="st"> </span><span class="kw">u</span>(n <span class="op">-</span><span class="st"> </span>i) <span class="op">&gt;</span><span class="st"> </span><span class="kw">exp</span>(<span class="kw">lf</span>(z) <span class="op">-</span><span class="st"> </span>a4 <span class="op">*</span><span class="st"> </span>z <span class="op">-</span><span class="st"> </span>b4)</a>
+<a class="sourceLine" id="cb158-46" data-line-number="46">      }</a>
+<a class="sourceLine" id="cb158-47" data-line-number="47">    }</a>
+<a class="sourceLine" id="cb158-48" data-line-number="48">    y[i] &lt;-<span class="st"> </span>z</a>
+<a class="sourceLine" id="cb158-49" data-line-number="49">  }</a>
+<a class="sourceLine" id="cb158-50" data-line-number="50">  <span class="cf">if</span>(trace)</a>
+<a class="sourceLine" id="cb158-51" data-line-number="51">    <span class="kw">cat</span>(<span class="st">&quot;kappa =&quot;</span>, kappa, <span class="st">&quot;, x1 =&quot;</span>, x1, </a>
+<a class="sourceLine" id="cb158-52" data-line-number="52">        <span class="st">&quot;, x2 =&quot;</span>, x2, <span class="st">&quot;:&quot;</span>, (count <span class="op">-</span><span class="st"> </span>n) <span class="op">/</span><span class="st"> </span>count, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)  </a>
+<a class="sourceLine" id="cb158-53" data-line-number="53">  y</a>
+<a class="sourceLine" id="cb158-54" data-line-number="54">}</a></code></pre></div>
+<p>(ref:vM-adaptive) Histograms of simulated variables from von Mises distributions
+using the rejection sampler with the adaptive envelope based on a combination
+of log-concavity and log-convexity. The true density (blue) and the envelope (red)
+are added to the plots.</p>
 <div class="figure" style="text-align: center"><span id="fig:vM-adaptive-test"></span>
-<img src="CSwR_files/figure-html/vM-adaptive-test-1.png" alt="Something." width="100%" />
+<img src="CSwR_files/figure-html/vM-adaptive-test-1.png" alt="(ref:vM-adaptive)" width="100%" />
 <p class="caption">
-Figure 4.5: Something.
+Figure 4.6: (ref:vM-adaptive)
 </p>
 </div>
-<div class="sourceCode" id="cb156"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb156-1" data-line-number="1">y &lt;-<span class="st"> </span><span class="kw">vMsim_adapt</span>(<span class="dv">100000</span>, <span class="fl">-0.4</span>, <span class="fl">0.4</span>, <span class="dv">5</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb156-2" data-line-number="2">y &lt;-<span class="st"> </span><span class="kw">vMsim_adapt</span>(<span class="dv">100000</span>, <span class="dv">-1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb156-3" data-line-number="3">y &lt;-<span class="st"> </span><span class="kw">vMsim_adapt</span>(<span class="dv">100000</span>, <span class="fl">-0.1</span>, <span class="fl">0.1</span>, <span class="dv">5</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb156-4" data-line-number="4">y &lt;-<span class="st"> </span><span class="kw">vMsim_adapt</span>(<span class="dv">100000</span>, <span class="fl">-0.4</span>, <span class="fl">0.4</span>, <span class="dv">2</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
-<pre><code>## kappa = 5 , x1 = -0.4 , 
-##         x2 = 0.4 : 0.2027489 
-## kappa = 2 , x1 = -1 , 
-##         x2 = 1 : 0.2420568 
-## kappa = 5 , x1 = -0.1 , 
-##         x2 = 0.1 : 0.4843022 
-## kappa = 2 , x1 = -0.4 , 
-##         x2 = 0.4 : 0.1559472</code></pre>
+<div class="sourceCode" id="cb159"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb159-1" data-line-number="1">y &lt;-<span class="st"> </span><span class="kw">vMsim_adapt</span>(<span class="dv">100000</span>, <span class="fl">-0.4</span>, <span class="fl">0.4</span>, <span class="dv">5</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb159-2" data-line-number="2">y &lt;-<span class="st"> </span><span class="kw">vMsim_adapt</span>(<span class="dv">100000</span>, <span class="dv">-1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb159-3" data-line-number="3">y &lt;-<span class="st"> </span><span class="kw">vMsim_adapt</span>(<span class="dv">100000</span>, <span class="fl">-0.1</span>, <span class="fl">0.1</span>, <span class="dv">5</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb159-4" data-line-number="4">y &lt;-<span class="st"> </span><span class="kw">vMsim_adapt</span>(<span class="dv">100000</span>, <span class="fl">-0.4</span>, <span class="fl">0.4</span>, <span class="dv">2</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
+<pre><code>## kappa = 5 , x1 = -0.4 , x2 = 0.4 : 0.2027743 
+## kappa = 2 , x1 = -1 , x2 = 1 : 0.2416889 
+## kappa = 5 , x1 = -0.1 , x2 = 0.1 : 0.4845547 
+## kappa = 2 , x1 = -0.4 , x2 = 0.4 : 0.1554981</code></pre>
 <p>We see that compared to using the uniform density as envelope, these adaptive
 envelopes are generally tighter and leads to fewer rejections. Even tighter
 envelopes are possible by using more than four intervals, but it is, of course,
@@ -583,26 +558,34 @@ always a good question how the added complexity and bookkeeping induced by
 using more advanced and adaptive envelopes affect run time. It is even a good question
 if our current adaptive implementation will outperform our first, and
 much simpler, implementation that used the uniform envelope.</p>
-<div class="sourceCode" id="cb158"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb158-1" data-line-number="1"><span class="kw">microbenchmark</span>(<span class="kw">vMsim_adapt</span>(<span class="dv">100</span>, <span class="dv">-1</span>, <span class="dv">1</span>, <span class="dv">5</span>),</a>
-<a class="sourceLine" id="cb158-2" data-line-number="2">               <span class="kw">vMsim_adapt</span>(<span class="dv">100</span>, <span class="fl">-0.4</span>, <span class="fl">0.4</span>, <span class="dv">5</span>),</a>
-<a class="sourceLine" id="cb158-3" data-line-number="3">               <span class="kw">vMsim_adapt</span>(<span class="dv">100</span>, <span class="fl">-0.2</span>, <span class="fl">0.2</span>, <span class="dv">5</span>),</a>
-<a class="sourceLine" id="cb158-4" data-line-number="4">               <span class="kw">vMsim_adapt</span>(<span class="dv">100</span>, <span class="fl">-0.1</span>, <span class="fl">0.1</span>, <span class="dv">5</span>),</a>
-<a class="sourceLine" id="cb158-5" data-line-number="5">               <span class="kw">vMsim</span>(<span class="dv">100</span>, <span class="dv">5</span>)</a>
-<a class="sourceLine" id="cb158-6" data-line-number="6">               )</a></code></pre></div>
+<div class="sourceCode" id="cb161"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb161-1" data-line-number="1"><span class="kw">microbenchmark</span>(<span class="kw">vMsim_adapt</span>(<span class="dv">100</span>, <span class="dv">-1</span>, <span class="dv">1</span>, <span class="dv">5</span>),</a>
+<a class="sourceLine" id="cb161-2" data-line-number="2">               <span class="kw">vMsim_adapt</span>(<span class="dv">100</span>, <span class="fl">-0.4</span>, <span class="fl">0.4</span>, <span class="dv">5</span>),</a>
+<a class="sourceLine" id="cb161-3" data-line-number="3">               <span class="kw">vMsim_adapt</span>(<span class="dv">100</span>, <span class="fl">-0.2</span>, <span class="fl">0.2</span>, <span class="dv">5</span>),</a>
+<a class="sourceLine" id="cb161-4" data-line-number="4">               <span class="kw">vMsim_adapt</span>(<span class="dv">100</span>, <span class="fl">-0.1</span>, <span class="fl">0.1</span>, <span class="dv">5</span>),</a>
+<a class="sourceLine" id="cb161-5" data-line-number="5">               <span class="kw">vMsim</span>(<span class="dv">100</span>, <span class="dv">5</span>),</a>
+<a class="sourceLine" id="cb161-6" data-line-number="6">               <span class="kw">vMsim_vec</span>(<span class="dv">100</span>, <span class="dv">5</span>)</a>
+<a class="sourceLine" id="cb161-7" data-line-number="7">               )</a></code></pre></div>
 <pre><code>## Unit: microseconds
-##                            expr min  lq mean median  uq   max neval
-##      vMsim_adapt(100, -1, 1, 5) 298 352  384    380 403   631   100
-##  vMsim_adapt(100, -0.4, 0.4, 5) 158 175  188    181 191   320   100
-##  vMsim_adapt(100, -0.2, 0.2, 5) 193 211  229    221 239   368   100
-##  vMsim_adapt(100, -0.1, 0.1, 5) 218 256  277    270 287   446   100
-##                   vMsim(100, 5) 139 177  427    189 208 23131   100</code></pre>
+##                            expr min  lq mean median  uq max neval
+##      vMsim_adapt(100, -1, 1, 5) 470 542  602    587 650 901   100
+##  vMsim_adapt(100, -0.4, 0.4, 5) 236 262  295    279 323 475   100
+##  vMsim_adapt(100, -0.2, 0.2, 5) 264 314  348    329 371 714   100
+##  vMsim_adapt(100, -0.1, 0.1, 5) 314 379  422    403 462 591   100
+##                   vMsim(100, 5) 468 551  614    596 662 840   100
+##               vMsim_vec(100, 5)  56  67   80     74  89 182   100</code></pre>
 <p>The results from the benchmark show that the adaptive implementation has
 run time comparable to using the uniform proposal.
 With <span class="math inline">\(x_1 = -0.4\)</span> and <span class="math inline">\(x_2 = 0.4\)</span> and <span class="math inline">\(\kappa = 5\)</span>
 we found above that the rejection frequency was about 20% with
 the adaptive envelope, while it was about 80% when using the uniform
 envelope. A naive computation would thus suggest a speedup of a
-factor 4, but there is no actual speedup.</p>
+factor 4, but using the adaptive envelope there is actually only
+a speedup of a factor 2. And the vectorized solution is still
+considerably faster. A completely vectorized solution using
+the adaptive envelope is possible, but it is not entirely
+straightforward how to implement the more complicated envelope
+efficiently, and it may be a better option in this case to implement
+it using Rcpp.</p>
 <p>Even if either implementation can be improved further in terms of run time,
 it is an important point when comparing algorithms that we don’t get too
 focused on surrogate performance quantities. The probability of rejection

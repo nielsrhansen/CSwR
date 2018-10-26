@@ -426,16 +426,16 @@ of rows in the model matrix). This does have a small computational
 cost, but the resulting numerical values become less dependent
 upon <span class="math inline">\(n\)</span>, which makes it easier to choose sensible default values
 of various parameters for the numerical optimization algorithms.</p>
-<div class="sourceCode" id="cb237"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb237-1" data-line-number="1">X &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(sale <span class="op">~</span><span class="st"> </span><span class="kw">log</span>(normalSale), <span class="dt">data =</span> vegetables)</a>
-<a class="sourceLine" id="cb237-2" data-line-number="2">y &lt;-<span class="st"> </span>vegetables<span class="op">$</span>sale</a>
-<a class="sourceLine" id="cb237-3" data-line-number="3"><span class="co">## The function `drop` drops the dimensions attribute</span></a>
-<a class="sourceLine" id="cb237-4" data-line-number="4">t_map &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">crossprod</span>(X, y))  <span class="co">## More efficient than drop(t(X) %*% y)</span></a>
-<a class="sourceLine" id="cb237-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb237-6" data-line-number="6">H &lt;-<span class="st"> </span><span class="cf">function</span>(beta) </a>
-<a class="sourceLine" id="cb237-7" data-line-number="7">  (<span class="kw">drop</span>(<span class="kw">sum</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">-</span><span class="st"> </span>beta <span class="op">%*%</span><span class="st"> </span>t_map)) <span class="op">/</span><span class="st"> </span><span class="kw">nrow</span>(X)</a>
-<a class="sourceLine" id="cb237-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb237-9" data-line-number="9">grad_H &lt;-<span class="st"> </span><span class="cf">function</span>(beta) </a>
-<a class="sourceLine" id="cb237-10" data-line-number="10">  (<span class="kw">colSums</span>(<span class="kw">drop</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">*</span><span class="st"> </span>X) <span class="op">-</span><span class="st"> </span>t_map) <span class="op">/</span><span class="st"> </span><span class="kw">nrow</span>(X)</a></code></pre></div>
+<div class="sourceCode" id="cb240"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb240-1" data-line-number="1">X &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(sale <span class="op">~</span><span class="st"> </span><span class="kw">log</span>(normalSale), <span class="dt">data =</span> vegetables)</a>
+<a class="sourceLine" id="cb240-2" data-line-number="2">y &lt;-<span class="st"> </span>vegetables<span class="op">$</span>sale</a>
+<a class="sourceLine" id="cb240-3" data-line-number="3"><span class="co">## The function `drop` drops the dimensions attribute</span></a>
+<a class="sourceLine" id="cb240-4" data-line-number="4">t_map &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">crossprod</span>(X, y))  <span class="co">## More efficient than drop(t(X) %*% y)</span></a>
+<a class="sourceLine" id="cb240-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb240-6" data-line-number="6">H &lt;-<span class="st"> </span><span class="cf">function</span>(beta) </a>
+<a class="sourceLine" id="cb240-7" data-line-number="7">  (<span class="kw">drop</span>(<span class="kw">sum</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">-</span><span class="st"> </span>beta <span class="op">%*%</span><span class="st"> </span>t_map)) <span class="op">/</span><span class="st"> </span><span class="kw">nrow</span>(X)</a>
+<a class="sourceLine" id="cb240-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb240-9" data-line-number="9">grad_H &lt;-<span class="st"> </span><span class="cf">function</span>(beta) </a>
+<a class="sourceLine" id="cb240-10" data-line-number="10">  (<span class="kw">colSums</span>(<span class="kw">drop</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">*</span><span class="st"> </span>X) <span class="op">-</span><span class="st"> </span>t_map) <span class="op">/</span><span class="st"> </span><span class="kw">nrow</span>(X)</a></code></pre></div>
 <p>We implement a gradient descent algorithm with backtracking
 that uses the <em>squared</em> norm of the gradient as a stopping criterion.
 For gradient descent, the sufficient descent condition amounts to
@@ -447,38 +447,38 @@ printing values of variables during evaluation, which can be highly useful
 for understanding the inner workings of the algorithm. The actual implementation
 of the a trace function is given below, and can be adapted as we like to provide
 the information we want.</p>
-<div class="sourceCode" id="cb238"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb238-1" data-line-number="1">GD &lt;-<span class="st"> </span><span class="cf">function</span>(par, </a>
-<a class="sourceLine" id="cb238-2" data-line-number="2">               <span class="dt">d =</span> <span class="fl">0.8</span>, </a>
-<a class="sourceLine" id="cb238-3" data-line-number="3">               <span class="dt">c =</span> <span class="fl">0.1</span>, </a>
-<a class="sourceLine" id="cb238-4" data-line-number="4">               <span class="dt">gamma0 =</span> <span class="fl">0.01</span>, </a>
-<a class="sourceLine" id="cb238-5" data-line-number="5">               <span class="dt">epsilon =</span> <span class="fl">1e-4</span>, </a>
-<a class="sourceLine" id="cb238-6" data-line-number="6">               <span class="dt">trace =</span> <span class="ot">NULL</span>) {</a>
-<a class="sourceLine" id="cb238-7" data-line-number="7">  <span class="cf">repeat</span> {</a>
-<a class="sourceLine" id="cb238-8" data-line-number="8">    value &lt;-<span class="st"> </span><span class="kw">H</span>(par)</a>
-<a class="sourceLine" id="cb238-9" data-line-number="9">    grad &lt;-<span class="st"> </span><span class="kw">grad_H</span>(par)</a>
-<a class="sourceLine" id="cb238-10" data-line-number="10">    h_prime &lt;-<span class="st"> </span><span class="kw">sum</span>(grad<span class="op">^</span><span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb238-11" data-line-number="11">    <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(trace)) <span class="kw">trace</span>()</a>
-<a class="sourceLine" id="cb238-12" data-line-number="12">    <span class="co">## Convergence criterion based on gradient norm</span></a>
-<a class="sourceLine" id="cb238-13" data-line-number="13">    <span class="cf">if</span>(h_prime <span class="op">&lt;=</span><span class="st"> </span>epsilon) <span class="cf">break</span></a>
-<a class="sourceLine" id="cb238-14" data-line-number="14">    gamma &lt;-<span class="st"> </span>gamma0</a>
-<a class="sourceLine" id="cb238-15" data-line-number="15">    <span class="co">## First proposed descent step</span></a>
-<a class="sourceLine" id="cb238-16" data-line-number="16">    par1 &lt;-<span class="st"> </span>par <span class="op">-</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>grad</a>
-<a class="sourceLine" id="cb238-17" data-line-number="17">    <span class="co">## Backtracking while descent is insufficient</span></a>
-<a class="sourceLine" id="cb238-18" data-line-number="18">    <span class="cf">while</span>(<span class="kw">H</span>(par1) <span class="op">&gt;</span><span class="st"> </span>value <span class="op">-</span><span class="st"> </span>c <span class="op">*</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>h_prime) {</a>
-<a class="sourceLine" id="cb238-19" data-line-number="19">      gamma &lt;-<span class="st"> </span>d <span class="op">*</span><span class="st"> </span>gamma</a>
-<a class="sourceLine" id="cb238-20" data-line-number="20">      par1 &lt;-<span class="st"> </span>par <span class="op">-</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>grad</a>
-<a class="sourceLine" id="cb238-21" data-line-number="21">    }</a>
-<a class="sourceLine" id="cb238-22" data-line-number="22">    par &lt;-<span class="st"> </span>par1</a>
-<a class="sourceLine" id="cb238-23" data-line-number="23">  }</a>
-<a class="sourceLine" id="cb238-24" data-line-number="24">  par</a>
-<a class="sourceLine" id="cb238-25" data-line-number="25">}</a></code></pre></div>
+<div class="sourceCode" id="cb241"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb241-1" data-line-number="1">GD &lt;-<span class="st"> </span><span class="cf">function</span>(par, </a>
+<a class="sourceLine" id="cb241-2" data-line-number="2">               <span class="dt">d =</span> <span class="fl">0.8</span>, </a>
+<a class="sourceLine" id="cb241-3" data-line-number="3">               <span class="dt">c =</span> <span class="fl">0.1</span>, </a>
+<a class="sourceLine" id="cb241-4" data-line-number="4">               <span class="dt">gamma0 =</span> <span class="fl">0.01</span>, </a>
+<a class="sourceLine" id="cb241-5" data-line-number="5">               <span class="dt">epsilon =</span> <span class="fl">1e-4</span>, </a>
+<a class="sourceLine" id="cb241-6" data-line-number="6">               <span class="dt">trace =</span> <span class="ot">NULL</span>) {</a>
+<a class="sourceLine" id="cb241-7" data-line-number="7">  <span class="cf">repeat</span> {</a>
+<a class="sourceLine" id="cb241-8" data-line-number="8">    value &lt;-<span class="st"> </span><span class="kw">H</span>(par)</a>
+<a class="sourceLine" id="cb241-9" data-line-number="9">    grad &lt;-<span class="st"> </span><span class="kw">grad_H</span>(par)</a>
+<a class="sourceLine" id="cb241-10" data-line-number="10">    h_prime &lt;-<span class="st"> </span><span class="kw">sum</span>(grad<span class="op">^</span><span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb241-11" data-line-number="11">    <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(trace)) <span class="kw">trace</span>()</a>
+<a class="sourceLine" id="cb241-12" data-line-number="12">    <span class="co">## Convergence criterion based on gradient norm</span></a>
+<a class="sourceLine" id="cb241-13" data-line-number="13">    <span class="cf">if</span>(h_prime <span class="op">&lt;=</span><span class="st"> </span>epsilon) <span class="cf">break</span></a>
+<a class="sourceLine" id="cb241-14" data-line-number="14">    gamma &lt;-<span class="st"> </span>gamma0</a>
+<a class="sourceLine" id="cb241-15" data-line-number="15">    <span class="co">## First proposed descent step</span></a>
+<a class="sourceLine" id="cb241-16" data-line-number="16">    par1 &lt;-<span class="st"> </span>par <span class="op">-</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>grad</a>
+<a class="sourceLine" id="cb241-17" data-line-number="17">    <span class="co">## Backtracking while descent is insufficient</span></a>
+<a class="sourceLine" id="cb241-18" data-line-number="18">    <span class="cf">while</span>(<span class="kw">H</span>(par1) <span class="op">&gt;</span><span class="st"> </span>value <span class="op">-</span><span class="st"> </span>c <span class="op">*</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>h_prime) {</a>
+<a class="sourceLine" id="cb241-19" data-line-number="19">      gamma &lt;-<span class="st"> </span>d <span class="op">*</span><span class="st"> </span>gamma</a>
+<a class="sourceLine" id="cb241-20" data-line-number="20">      par1 &lt;-<span class="st"> </span>par <span class="op">-</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>grad</a>
+<a class="sourceLine" id="cb241-21" data-line-number="21">    }</a>
+<a class="sourceLine" id="cb241-22" data-line-number="22">    par &lt;-<span class="st"> </span>par1</a>
+<a class="sourceLine" id="cb241-23" data-line-number="23">  }</a>
+<a class="sourceLine" id="cb241-24" data-line-number="24">  par</a>
+<a class="sourceLine" id="cb241-25" data-line-number="25">}</a></code></pre></div>
 <p>Gradient descent is very slow for the large Poisson model with individual
 store effects, so we consider only the simple model with two parameters.</p>
-<div class="sourceCode" id="cb239"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb239-1" data-line-number="1">pois_GD &lt;-<span class="st"> </span><span class="kw">GD</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)))</a></code></pre></div>
+<div class="sourceCode" id="cb242"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb242-1" data-line-number="1">pois_GD &lt;-<span class="st"> </span><span class="kw">GD</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)))</a></code></pre></div>
 <p>The gradient descent implementation is tested by comparing the minimizer to
 the estimated parameters as computed by <code>glm</code>.</p>
-<div class="sourceCode" id="cb240"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb240-1" data-line-number="1"><span class="kw">as.numeric</span>(<span class="kw">coefficients</span>(pois_model_null))  <span class="co">## as.numeric just to strip names</span></a>
-<a class="sourceLine" id="cb240-2" data-line-number="2"><span class="kw">as.numeric</span>(pois_GD)</a></code></pre></div>
+<div class="sourceCode" id="cb243"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb243-1" data-line-number="1"><span class="kw">as.numeric</span>(<span class="kw">coefficients</span>(pois_model_null))  <span class="co">## as.numeric just to strip names</span></a>
+<a class="sourceLine" id="cb243-2" data-line-number="2"><span class="kw">as.numeric</span>(pois_GD)</a></code></pre></div>
 <pre><code>## [1] 1.4614403396 0.9215698864
 ## [1] 1.4603520741 0.9219357553</code></pre>
 <p>We get the same result up to the first two decimals. The convergence
@@ -490,8 +490,8 @@ are at most of norm <span class="math inline">\(10^{-4}\)</span>.</p>
 <p>Comparing the resulting values of the negative log-likelihood shows agreement
 up to the first five decimals, but we notice that the value for the
 parameters fitted using <code>glm</code> is just slightly smaller.</p>
-<div class="sourceCode" id="cb242"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb242-1" data-line-number="1"><span class="kw">H</span>(<span class="kw">coefficients</span>(pois_model_null))</a>
-<a class="sourceLine" id="cb242-2" data-line-number="2"><span class="kw">H</span>(pois_GD)</a></code></pre></div>
+<div class="sourceCode" id="cb245"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb245-1" data-line-number="1"><span class="kw">H</span>(<span class="kw">coefficients</span>(pois_model_null))</a>
+<a class="sourceLine" id="cb245-2" data-line-number="2"><span class="kw">H</span>(pois_GD)</a></code></pre></div>
 <pre><code>## [1] -124.406827879897
 ## [1] -124.406825325047</code></pre>
 <p>To investigate what actually went on inside the gradient descent
@@ -512,84 +512,84 @@ with any function and is used for debugging. The tracer object as implemented
 here can be used with functions such as <code>GD</code> above that explicitly support calling
 a trace function, and it monitors the internal state during evaluation
 of the function without interrupting evaluation.</p>
-<div class="sourceCode" id="cb244"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb244-1" data-line-number="1"><span class="co">## Function `tracer` constructs a tracer object containing a `trace` function</span></a>
-<a class="sourceLine" id="cb244-2" data-line-number="2"><span class="co">## that can be passed as an argument to other functions that support a trace</span></a>
-<a class="sourceLine" id="cb244-3" data-line-number="3"><span class="co">## function. Arguments are</span></a>
-<a class="sourceLine" id="cb244-4" data-line-number="4"><span class="co">##</span></a>
-<a class="sourceLine" id="cb244-5" data-line-number="5"><span class="co">## object: a character vector of names of the objects in the evaluation </span></a>
-<a class="sourceLine" id="cb244-6" data-line-number="6"><span class="co">##         environment that are traced.</span></a>
-<a class="sourceLine" id="cb244-7" data-line-number="7"><span class="co">## N:      a numeric specifying if and how often trace information is printed. </span></a>
-<a class="sourceLine" id="cb244-8" data-line-number="8"><span class="co">##         N = 1 (default) means every iteration. N = 0 means never.</span></a>
-<a class="sourceLine" id="cb244-9" data-line-number="9"><span class="co">## save:   a logical value. Should the trace information be saved or just </span></a>
-<a class="sourceLine" id="cb244-10" data-line-number="10"><span class="co">##         printed.</span></a>
-<a class="sourceLine" id="cb244-11" data-line-number="11"><span class="co">## time:   a logical value. Should run time information be save.</span></a>
-<a class="sourceLine" id="cb244-12" data-line-number="12"><span class="co">## ...:    other arguments passed to `format` for printing.</span></a>
-<a class="sourceLine" id="cb244-13" data-line-number="13"></a>
-<a class="sourceLine" id="cb244-14" data-line-number="14">tracer &lt;-<span class="st"> </span><span class="cf">function</span>(<span class="dt">objects =</span> <span class="ot">NULL</span>, <span class="dt">N =</span> <span class="dv">1</span>, <span class="dt">save =</span> <span class="ot">TRUE</span>, <span class="dt">time =</span> <span class="ot">TRUE</span>, ...) {</a>
-<a class="sourceLine" id="cb244-15" data-line-number="15">  n &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb244-16" data-line-number="16">  values_save &lt;-<span class="st"> </span><span class="kw">list</span>()</a>
-<a class="sourceLine" id="cb244-17" data-line-number="17">  last_time &lt;-<span class="st"> </span><span class="kw">proc.time</span>()</a>
-<a class="sourceLine" id="cb244-18" data-line-number="18">  trace &lt;-<span class="st"> </span><span class="cf">function</span>() {</a>
-<a class="sourceLine" id="cb244-19" data-line-number="19">    <span class="cf">if</span>(<span class="kw">is.null</span>(objects))</a>
-<a class="sourceLine" id="cb244-20" data-line-number="20">      objects &lt;-<span class="st"> </span><span class="kw">ls</span>(<span class="kw">parent.frame</span>())</a>
-<a class="sourceLine" id="cb244-21" data-line-number="21">    values &lt;-<span class="st"> </span><span class="kw">mget</span>(objects, <span class="dt">envir =</span> <span class="kw">parent.frame</span>(), <span class="dt">ifnotfound =</span> <span class="kw">list</span>(<span class="ot">NA</span>))</a>
-<a class="sourceLine" id="cb244-22" data-line-number="22">    <span class="cf">if</span>(N <span class="op">&amp;&amp;</span><span class="st"> </span>(n <span class="op">==</span><span class="st"> </span><span class="dv">1</span> <span class="op">||</span><span class="st"> </span>n <span class="op">%%</span><span class="st"> </span>N <span class="op">==</span><span class="st"> </span><span class="dv">0</span>))</a>
-<a class="sourceLine" id="cb244-23" data-line-number="23">      <span class="kw">cat</span>(<span class="st">&quot;n = &quot;</span>, n, <span class="st">&quot;: &quot;</span>,  <span class="kw">paste</span>(<span class="kw">names</span>(values), <span class="st">&quot; = &quot;</span>, <span class="kw">format</span>(values, ...), </a>
-<a class="sourceLine" id="cb244-24" data-line-number="24">                                  <span class="st">&quot;; &quot;</span>, <span class="dt">sep =</span> <span class="st">&quot;&quot;</span>), <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>, <span class="dt">sep =</span> <span class="st">&quot;&quot;</span>)</a>
-<a class="sourceLine" id="cb244-25" data-line-number="25">    <span class="cf">if</span>(save)</a>
-<a class="sourceLine" id="cb244-26" data-line-number="26">      <span class="cf">if</span>(time) {</a>
-<a class="sourceLine" id="cb244-27" data-line-number="27">        time_diff &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">proc.time</span>() <span class="op">-</span><span class="st"> </span>last_time)[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]</a>
-<a class="sourceLine" id="cb244-28" data-line-number="28">        values[[<span class="st">&quot;.time&quot;</span>]] &lt;-<span class="st"> </span>time_diff[<span class="dv">1</span>] <span class="op">+</span><span class="st"> </span>time_diff[<span class="dv">2</span>]</a>
-<a class="sourceLine" id="cb244-29" data-line-number="29">        last_time &lt;&lt;-<span class="st"> </span><span class="kw">proc.time</span>()</a>
-<a class="sourceLine" id="cb244-30" data-line-number="30">      }</a>
-<a class="sourceLine" id="cb244-31" data-line-number="31">    values_save[[n]] &lt;&lt;-<span class="st"> </span>values</a>
-<a class="sourceLine" id="cb244-32" data-line-number="32">    n &lt;&lt;-<span class="st"> </span>n <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb244-33" data-line-number="33">  }</a>
-<a class="sourceLine" id="cb244-34" data-line-number="34">  get &lt;-<span class="st"> </span><span class="cf">function</span>(<span class="dt">simplify =</span> <span class="ot">FALSE</span>) {</a>
-<a class="sourceLine" id="cb244-35" data-line-number="35">    <span class="cf">if</span>(simplify) {</a>
-<a class="sourceLine" id="cb244-36" data-line-number="36">      col_names &lt;-<span class="st"> </span><span class="kw">unique</span>(<span class="kw">unlist</span>(<span class="kw">lapply</span>(values_save, names)))</a>
-<a class="sourceLine" id="cb244-37" data-line-number="37">      values_save &lt;-<span class="st"> </span><span class="kw">lapply</span>(</a>
-<a class="sourceLine" id="cb244-38" data-line-number="38">        col_names, </a>
-<a class="sourceLine" id="cb244-39" data-line-number="39">        <span class="cf">function</span>(x) <span class="kw">do.call</span>(rbind, <span class="kw">unlist</span>(<span class="kw">lapply</span>(values_save, <span class="cf">function</span>(y) y[x]), </a>
-<a class="sourceLine" id="cb244-40" data-line-number="40">                                          <span class="dt">recursive =</span> <span class="ot">FALSE</span>))</a>
-<a class="sourceLine" id="cb244-41" data-line-number="41">      )</a>
-<a class="sourceLine" id="cb244-42" data-line-number="42">      <span class="kw">names</span>(values_save) &lt;-<span class="st"> </span>col_names</a>
-<a class="sourceLine" id="cb244-43" data-line-number="43">      values_save &lt;-<span class="st"> </span><span class="kw">lapply</span>(col_names, <span class="cf">function</span>(x) {</a>
-<a class="sourceLine" id="cb244-44" data-line-number="44">        x_val &lt;-<span class="st"> </span>values_save[[x]] </a>
-<a class="sourceLine" id="cb244-45" data-line-number="45">        <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(<span class="kw">ncol</span>(x_val)) <span class="op">&amp;&amp;</span><span class="st"> </span><span class="kw">ncol</span>(x_val) <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) {</a>
-<a class="sourceLine" id="cb244-46" data-line-number="46">          <span class="kw">colnames</span>(x_val) &lt;-<span class="st"> </span>x</a>
-<a class="sourceLine" id="cb244-47" data-line-number="47">        } <span class="cf">else</span> {</a>
-<a class="sourceLine" id="cb244-48" data-line-number="48">          <span class="cf">if</span>(<span class="kw">is.null</span>(<span class="kw">colnames</span>(x_val)))</a>
-<a class="sourceLine" id="cb244-49" data-line-number="49">            <span class="kw">colnames</span>(x_val) &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="kw">ncol</span>(x_val)</a>
-<a class="sourceLine" id="cb244-50" data-line-number="50">          <span class="kw">colnames</span>(x_val) &lt;-<span class="st"> </span><span class="kw">paste</span>(x, <span class="st">&quot;.&quot;</span>, <span class="kw">colnames</span>(x_val), <span class="dt">sep =</span> <span class="st">&quot;&quot;</span>)</a>
-<a class="sourceLine" id="cb244-51" data-line-number="51">        }</a>
-<a class="sourceLine" id="cb244-52" data-line-number="52">        x_val</a>
-<a class="sourceLine" id="cb244-53" data-line-number="53">      })</a>
-<a class="sourceLine" id="cb244-54" data-line-number="54">      values_save &lt;-<span class="st"> </span><span class="kw">do.call</span>(cbind, values_save)</a>
-<a class="sourceLine" id="cb244-55" data-line-number="55">      <span class="kw">row.names</span>(values_save) &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(values_save)</a>
-<a class="sourceLine" id="cb244-56" data-line-number="56">    }</a>
-<a class="sourceLine" id="cb244-57" data-line-number="57">    values_save</a>
-<a class="sourceLine" id="cb244-58" data-line-number="58">  }</a>
-<a class="sourceLine" id="cb244-59" data-line-number="59">  <span class="kw">structure</span>(<span class="kw">list</span>(<span class="dt">trace =</span> trace, <span class="dt">get =</span> get), <span class="dt">class =</span> <span class="st">&quot;tracer&quot;</span>)</a>
-<a class="sourceLine" id="cb244-60" data-line-number="60">}</a>
-<a class="sourceLine" id="cb244-61" data-line-number="61"></a>
-<a class="sourceLine" id="cb244-62" data-line-number="62"><span class="co">## Methods for subsetting, printing and summarizing tracer objects</span></a>
-<a class="sourceLine" id="cb244-63" data-line-number="63"><span class="st">&#39;[.tracer&#39;</span> &lt;-<span class="st"> </span><span class="cf">function</span>(x, i, j, ..., <span class="dt">drop =</span> <span class="ot">TRUE</span>) {</a>
-<a class="sourceLine" id="cb244-64" data-line-number="64">  values &lt;-<span class="st"> </span>x<span class="op">$</span><span class="kw">get</span>(...)[i] </a>
-<a class="sourceLine" id="cb244-65" data-line-number="65">  <span class="cf">if</span> (drop <span class="op">&amp;&amp;</span><span class="st"> </span><span class="kw">length</span>(i) <span class="op">==</span><span class="st"> </span><span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb244-66" data-line-number="66">    values &lt;-<span class="st"> </span>values[[<span class="dv">1</span>]]</a>
-<a class="sourceLine" id="cb244-67" data-line-number="67">  values</a>
-<a class="sourceLine" id="cb244-68" data-line-number="68">}</a>
-<a class="sourceLine" id="cb244-69" data-line-number="69">print.tracer &lt;-<span class="st"> </span><span class="cf">function</span>(x, ...) <span class="kw">print</span>(x<span class="op">$</span><span class="kw">get</span>(...))</a>
-<a class="sourceLine" id="cb244-70" data-line-number="70">summary.tracer &lt;-<span class="st"> </span><span class="cf">function</span>(x, ...) {</a>
-<a class="sourceLine" id="cb244-71" data-line-number="71">  x &lt;-<span class="st"> </span><span class="kw">suppressWarnings</span>(x<span class="op">$</span><span class="kw">get</span>(<span class="dt">simplify =</span> <span class="ot">TRUE</span>))</a>
-<a class="sourceLine" id="cb244-72" data-line-number="72">  x[, <span class="st">&quot;.time&quot;</span>] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">0</span>, <span class="kw">cumsum</span>(x[<span class="op">-</span><span class="dv">1</span>, <span class="st">&quot;.time&quot;</span>]))</a>
-<a class="sourceLine" id="cb244-73" data-line-number="73">  <span class="kw">as.data.frame</span>(x)</a>
-<a class="sourceLine" id="cb244-74" data-line-number="74">}</a></code></pre></div>
+<div class="sourceCode" id="cb247"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb247-1" data-line-number="1"><span class="co">## Function `tracer` constructs a tracer object containing a `trace` function</span></a>
+<a class="sourceLine" id="cb247-2" data-line-number="2"><span class="co">## that can be passed as an argument to other functions that support a trace</span></a>
+<a class="sourceLine" id="cb247-3" data-line-number="3"><span class="co">## function. Arguments are</span></a>
+<a class="sourceLine" id="cb247-4" data-line-number="4"><span class="co">##</span></a>
+<a class="sourceLine" id="cb247-5" data-line-number="5"><span class="co">## object: a character vector of names of the objects in the evaluation </span></a>
+<a class="sourceLine" id="cb247-6" data-line-number="6"><span class="co">##         environment that are traced.</span></a>
+<a class="sourceLine" id="cb247-7" data-line-number="7"><span class="co">## N:      a numeric specifying if and how often trace information is printed. </span></a>
+<a class="sourceLine" id="cb247-8" data-line-number="8"><span class="co">##         N = 1 (default) means every iteration. N = 0 means never.</span></a>
+<a class="sourceLine" id="cb247-9" data-line-number="9"><span class="co">## save:   a logical value. Should the trace information be saved or just </span></a>
+<a class="sourceLine" id="cb247-10" data-line-number="10"><span class="co">##         printed.</span></a>
+<a class="sourceLine" id="cb247-11" data-line-number="11"><span class="co">## time:   a logical value. Should run time information be save.</span></a>
+<a class="sourceLine" id="cb247-12" data-line-number="12"><span class="co">## ...:    other arguments passed to `format` for printing.</span></a>
+<a class="sourceLine" id="cb247-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb247-14" data-line-number="14">tracer &lt;-<span class="st"> </span><span class="cf">function</span>(<span class="dt">objects =</span> <span class="ot">NULL</span>, <span class="dt">N =</span> <span class="dv">1</span>, <span class="dt">save =</span> <span class="ot">TRUE</span>, <span class="dt">time =</span> <span class="ot">TRUE</span>, ...) {</a>
+<a class="sourceLine" id="cb247-15" data-line-number="15">  n &lt;-<span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb247-16" data-line-number="16">  values_save &lt;-<span class="st"> </span><span class="kw">list</span>()</a>
+<a class="sourceLine" id="cb247-17" data-line-number="17">  last_time &lt;-<span class="st"> </span><span class="kw">proc.time</span>()</a>
+<a class="sourceLine" id="cb247-18" data-line-number="18">  trace &lt;-<span class="st"> </span><span class="cf">function</span>() {</a>
+<a class="sourceLine" id="cb247-19" data-line-number="19">    <span class="cf">if</span>(<span class="kw">is.null</span>(objects))</a>
+<a class="sourceLine" id="cb247-20" data-line-number="20">      objects &lt;-<span class="st"> </span><span class="kw">ls</span>(<span class="kw">parent.frame</span>())</a>
+<a class="sourceLine" id="cb247-21" data-line-number="21">    values &lt;-<span class="st"> </span><span class="kw">mget</span>(objects, <span class="dt">envir =</span> <span class="kw">parent.frame</span>(), <span class="dt">ifnotfound =</span> <span class="kw">list</span>(<span class="ot">NA</span>))</a>
+<a class="sourceLine" id="cb247-22" data-line-number="22">    <span class="cf">if</span>(N <span class="op">&amp;&amp;</span><span class="st"> </span>(n <span class="op">==</span><span class="st"> </span><span class="dv">1</span> <span class="op">||</span><span class="st"> </span>n <span class="op">%%</span><span class="st"> </span>N <span class="op">==</span><span class="st"> </span><span class="dv">0</span>))</a>
+<a class="sourceLine" id="cb247-23" data-line-number="23">      <span class="kw">cat</span>(<span class="st">&quot;n = &quot;</span>, n, <span class="st">&quot;: &quot;</span>,  <span class="kw">paste</span>(<span class="kw">names</span>(values), <span class="st">&quot; = &quot;</span>, <span class="kw">format</span>(values, ...), </a>
+<a class="sourceLine" id="cb247-24" data-line-number="24">                                  <span class="st">&quot;; &quot;</span>, <span class="dt">sep =</span> <span class="st">&quot;&quot;</span>), <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>, <span class="dt">sep =</span> <span class="st">&quot;&quot;</span>)</a>
+<a class="sourceLine" id="cb247-25" data-line-number="25">    <span class="cf">if</span>(save)</a>
+<a class="sourceLine" id="cb247-26" data-line-number="26">      <span class="cf">if</span>(time) {</a>
+<a class="sourceLine" id="cb247-27" data-line-number="27">        time_diff &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">proc.time</span>() <span class="op">-</span><span class="st"> </span>last_time)[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]</a>
+<a class="sourceLine" id="cb247-28" data-line-number="28">        values[[<span class="st">&quot;.time&quot;</span>]] &lt;-<span class="st"> </span>time_diff[<span class="dv">1</span>] <span class="op">+</span><span class="st"> </span>time_diff[<span class="dv">2</span>]</a>
+<a class="sourceLine" id="cb247-29" data-line-number="29">        last_time &lt;&lt;-<span class="st"> </span><span class="kw">proc.time</span>()</a>
+<a class="sourceLine" id="cb247-30" data-line-number="30">      }</a>
+<a class="sourceLine" id="cb247-31" data-line-number="31">    values_save[[n]] &lt;&lt;-<span class="st"> </span>values</a>
+<a class="sourceLine" id="cb247-32" data-line-number="32">    n &lt;&lt;-<span class="st"> </span>n <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb247-33" data-line-number="33">  }</a>
+<a class="sourceLine" id="cb247-34" data-line-number="34">  get &lt;-<span class="st"> </span><span class="cf">function</span>(<span class="dt">simplify =</span> <span class="ot">FALSE</span>) {</a>
+<a class="sourceLine" id="cb247-35" data-line-number="35">    <span class="cf">if</span>(simplify) {</a>
+<a class="sourceLine" id="cb247-36" data-line-number="36">      col_names &lt;-<span class="st"> </span><span class="kw">unique</span>(<span class="kw">unlist</span>(<span class="kw">lapply</span>(values_save, names)))</a>
+<a class="sourceLine" id="cb247-37" data-line-number="37">      values_save &lt;-<span class="st"> </span><span class="kw">lapply</span>(</a>
+<a class="sourceLine" id="cb247-38" data-line-number="38">        col_names, </a>
+<a class="sourceLine" id="cb247-39" data-line-number="39">        <span class="cf">function</span>(x) <span class="kw">do.call</span>(rbind, <span class="kw">unlist</span>(<span class="kw">lapply</span>(values_save, <span class="cf">function</span>(y) y[x]), </a>
+<a class="sourceLine" id="cb247-40" data-line-number="40">                                          <span class="dt">recursive =</span> <span class="ot">FALSE</span>))</a>
+<a class="sourceLine" id="cb247-41" data-line-number="41">      )</a>
+<a class="sourceLine" id="cb247-42" data-line-number="42">      <span class="kw">names</span>(values_save) &lt;-<span class="st"> </span>col_names</a>
+<a class="sourceLine" id="cb247-43" data-line-number="43">      values_save &lt;-<span class="st"> </span><span class="kw">lapply</span>(col_names, <span class="cf">function</span>(x) {</a>
+<a class="sourceLine" id="cb247-44" data-line-number="44">        x_val &lt;-<span class="st"> </span>values_save[[x]] </a>
+<a class="sourceLine" id="cb247-45" data-line-number="45">        <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(<span class="kw">ncol</span>(x_val)) <span class="op">&amp;&amp;</span><span class="st"> </span><span class="kw">ncol</span>(x_val) <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) {</a>
+<a class="sourceLine" id="cb247-46" data-line-number="46">          <span class="kw">colnames</span>(x_val) &lt;-<span class="st"> </span>x</a>
+<a class="sourceLine" id="cb247-47" data-line-number="47">        } <span class="cf">else</span> {</a>
+<a class="sourceLine" id="cb247-48" data-line-number="48">          <span class="cf">if</span>(<span class="kw">is.null</span>(<span class="kw">colnames</span>(x_val)))</a>
+<a class="sourceLine" id="cb247-49" data-line-number="49">            <span class="kw">colnames</span>(x_val) &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="kw">ncol</span>(x_val)</a>
+<a class="sourceLine" id="cb247-50" data-line-number="50">          <span class="kw">colnames</span>(x_val) &lt;-<span class="st"> </span><span class="kw">paste</span>(x, <span class="st">&quot;.&quot;</span>, <span class="kw">colnames</span>(x_val), <span class="dt">sep =</span> <span class="st">&quot;&quot;</span>)</a>
+<a class="sourceLine" id="cb247-51" data-line-number="51">        }</a>
+<a class="sourceLine" id="cb247-52" data-line-number="52">        x_val</a>
+<a class="sourceLine" id="cb247-53" data-line-number="53">      })</a>
+<a class="sourceLine" id="cb247-54" data-line-number="54">      values_save &lt;-<span class="st"> </span><span class="kw">do.call</span>(cbind, values_save)</a>
+<a class="sourceLine" id="cb247-55" data-line-number="55">      <span class="kw">row.names</span>(values_save) &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(values_save)</a>
+<a class="sourceLine" id="cb247-56" data-line-number="56">    }</a>
+<a class="sourceLine" id="cb247-57" data-line-number="57">    values_save</a>
+<a class="sourceLine" id="cb247-58" data-line-number="58">  }</a>
+<a class="sourceLine" id="cb247-59" data-line-number="59">  <span class="kw">structure</span>(<span class="kw">list</span>(<span class="dt">trace =</span> trace, <span class="dt">get =</span> get), <span class="dt">class =</span> <span class="st">&quot;tracer&quot;</span>)</a>
+<a class="sourceLine" id="cb247-60" data-line-number="60">}</a>
+<a class="sourceLine" id="cb247-61" data-line-number="61"></a>
+<a class="sourceLine" id="cb247-62" data-line-number="62"><span class="co">## Methods for subsetting, printing and summarizing tracer objects</span></a>
+<a class="sourceLine" id="cb247-63" data-line-number="63"><span class="st">&#39;[.tracer&#39;</span> &lt;-<span class="st"> </span><span class="cf">function</span>(x, i, j, ..., <span class="dt">drop =</span> <span class="ot">TRUE</span>) {</a>
+<a class="sourceLine" id="cb247-64" data-line-number="64">  values &lt;-<span class="st"> </span>x<span class="op">$</span><span class="kw">get</span>(...)[i] </a>
+<a class="sourceLine" id="cb247-65" data-line-number="65">  <span class="cf">if</span> (drop <span class="op">&amp;&amp;</span><span class="st"> </span><span class="kw">length</span>(i) <span class="op">==</span><span class="st"> </span><span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb247-66" data-line-number="66">    values &lt;-<span class="st"> </span>values[[<span class="dv">1</span>]]</a>
+<a class="sourceLine" id="cb247-67" data-line-number="67">  values</a>
+<a class="sourceLine" id="cb247-68" data-line-number="68">}</a>
+<a class="sourceLine" id="cb247-69" data-line-number="69">print.tracer &lt;-<span class="st"> </span><span class="cf">function</span>(x, ...) <span class="kw">print</span>(x<span class="op">$</span><span class="kw">get</span>(...))</a>
+<a class="sourceLine" id="cb247-70" data-line-number="70">summary.tracer &lt;-<span class="st"> </span><span class="cf">function</span>(x, ...) {</a>
+<a class="sourceLine" id="cb247-71" data-line-number="71">  x &lt;-<span class="st"> </span><span class="kw">suppressWarnings</span>(x<span class="op">$</span><span class="kw">get</span>(<span class="dt">simplify =</span> <span class="ot">TRUE</span>))</a>
+<a class="sourceLine" id="cb247-72" data-line-number="72">  x[, <span class="st">&quot;.time&quot;</span>] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">0</span>, <span class="kw">cumsum</span>(x[<span class="op">-</span><span class="dv">1</span>, <span class="st">&quot;.time&quot;</span>]))</a>
+<a class="sourceLine" id="cb247-73" data-line-number="73">  <span class="kw">as.data.frame</span>(x)</a>
+<a class="sourceLine" id="cb247-74" data-line-number="74">}</a></code></pre></div>
 <p>We use the tracer object with the our gradient descent implementation
 and print trace information every 50th iteration.</p>
-<div class="sourceCode" id="cb245"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb245-1" data-line-number="1">GD_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">50</span>)</a>
-<a class="sourceLine" id="cb245-2" data-line-number="2"><span class="kw">system.time</span>(pois_GD &lt;-<span class="st"> </span><span class="kw">GD</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> GD_tracer<span class="op">$</span>trace))</a></code></pre></div>
+<div class="sourceCode" id="cb248"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb248-1" data-line-number="1">GD_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">50</span>)</a>
+<a class="sourceLine" id="cb248-2" data-line-number="2"><span class="kw">system.time</span>(pois_GD &lt;-<span class="st"> </span><span class="kw">GD</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> GD_tracer<span class="op">$</span>trace))</a></code></pre></div>
 <pre><code>## n = 1: value = 1; h_prime = 14268.59; gamma = NA; 
 ## n = 50: value = -123.9395; h_prime = 15.45722; gamma = 0.004096; 
 ## n = 100: value = -124.3243; h_prime = 3.133931; gamma = 0.00512; 
@@ -614,7 +614,7 @@ fairly inaccurate for fast iterations, but the cumulative run time can still
 give a reasonable indication of time usage over many iterations. This information
 is, however, best inspected and computed after the algorithm has converged,
 and it is computed and returned by the summary method for tracer objects.</p>
-<div class="sourceCode" id="cb248"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb248-1" data-line-number="1"><span class="kw">tail</span>(<span class="kw">summary</span>(GD_tracer))</a></code></pre></div>
+<div class="sourceCode" id="cb251"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb251-1" data-line-number="1"><span class="kw">tail</span>(<span class="kw">summary</span>(GD_tracer))</a></code></pre></div>
 <pre><code>##         value      h_prime    gamma .time
 ## 372 -124.4068 1.125779e-04 0.005120 0.064
 ## 373 -124.4068 1.218925e-04 0.005120 0.065
@@ -625,7 +625,7 @@ and it is computed and returned by the summary method for tracer objects.</p>
 <p>The trace information is stored in a list. The summary method transforms
 the trace information into a data frame with one row per iteration. We can also access
 individual entries of the list of trace information via subsetting.</p>
-<div class="sourceCode" id="cb250"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb250-1" data-line-number="1">GD_tracer[<span class="dv">377</span>] </a></code></pre></div>
+<div class="sourceCode" id="cb253"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb253-1" data-line-number="1">GD_tracer[<span class="dv">377</span>] </a></code></pre></div>
 <pre><code>## $value
 ## [1] -124.4068
 ## 
@@ -670,45 +670,45 @@ of introducing the more advanced curvature condition, we simply reset the
 algorithm to use the gradient direction in any case where a non-descent direction
 has been chosen. Resets of descent direction every <span class="math inline">\(p\)</span>th iteration is recommended
 anyway for the nonlinear conjugate gradient algorithm.</p>
-<div class="sourceCode" id="cb252"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb252-1" data-line-number="1">CG &lt;-<span class="st"> </span><span class="cf">function</span>(par, </a>
-<a class="sourceLine" id="cb252-2" data-line-number="2">               <span class="dt">d =</span> <span class="fl">0.8</span>, </a>
-<a class="sourceLine" id="cb252-3" data-line-number="3">               <span class="dt">c =</span> <span class="fl">0.1</span>, </a>
-<a class="sourceLine" id="cb252-4" data-line-number="4">               <span class="dt">gamma0 =</span> <span class="dv">1</span>, </a>
-<a class="sourceLine" id="cb252-5" data-line-number="5">               <span class="dt">epsilon =</span> <span class="fl">1e-6</span>, </a>
-<a class="sourceLine" id="cb252-6" data-line-number="6">               <span class="dt">trace =</span> <span class="ot">NULL</span>) {</a>
-<a class="sourceLine" id="cb252-7" data-line-number="7">  p &lt;-<span class="st"> </span><span class="kw">length</span>(par)</a>
-<a class="sourceLine" id="cb252-8" data-line-number="8">  m &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb252-9" data-line-number="9">  rho0 &lt;-<span class="st"> </span><span class="kw">numeric</span>(p)</a>
-<a class="sourceLine" id="cb252-10" data-line-number="10">  <span class="cf">repeat</span> {</a>
-<a class="sourceLine" id="cb252-11" data-line-number="11">    value &lt;-<span class="st"> </span><span class="kw">H</span>(par)</a>
-<a class="sourceLine" id="cb252-12" data-line-number="12">    grad &lt;-<span class="st"> </span><span class="kw">grad_H</span>(par)</a>
-<a class="sourceLine" id="cb252-13" data-line-number="13">    grad_norm_sq &lt;-<span class="st"> </span><span class="kw">sum</span>(grad<span class="op">^</span><span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb252-14" data-line-number="14">    <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(trace)) <span class="kw">trace</span>()</a>
-<a class="sourceLine" id="cb252-15" data-line-number="15">    <span class="cf">if</span>(grad_norm_sq <span class="op">&lt;=</span><span class="st"> </span>epsilon) <span class="cf">break</span></a>
-<a class="sourceLine" id="cb252-16" data-line-number="16">    gamma &lt;-<span class="st"> </span>gamma0</a>
-<a class="sourceLine" id="cb252-17" data-line-number="17">    <span class="co">## Descent direction</span></a>
-<a class="sourceLine" id="cb252-18" data-line-number="18">    rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad <span class="op">+</span><span class="st"> </span>grad_norm_sq <span class="op">*</span><span class="st"> </span>rho0</a>
-<a class="sourceLine" id="cb252-19" data-line-number="19">    h_prime &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">t</span>(grad) <span class="op">%*%</span><span class="st"> </span>rho)</a>
-<a class="sourceLine" id="cb252-20" data-line-number="20">    <span class="co">## Reset to gradient descent if m &gt; p or rho is not a descent direction</span></a>
-<a class="sourceLine" id="cb252-21" data-line-number="21">    <span class="cf">if</span>(m <span class="op">&gt;</span><span class="st"> </span>p <span class="op">||</span><span class="st"> </span>h_prime <span class="op">&gt;=</span><span class="st"> </span><span class="dv">0</span>) {</a>
-<a class="sourceLine" id="cb252-22" data-line-number="22">      rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad</a>
-<a class="sourceLine" id="cb252-23" data-line-number="23">      h_prime &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad_norm_sq </a>
-<a class="sourceLine" id="cb252-24" data-line-number="24">      m &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb252-25" data-line-number="25">    }</a>
-<a class="sourceLine" id="cb252-26" data-line-number="26">    par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</a>
-<a class="sourceLine" id="cb252-27" data-line-number="27">    <span class="co">## Backtracking</span></a>
-<a class="sourceLine" id="cb252-28" data-line-number="28">    <span class="cf">while</span>(<span class="kw">H</span>(par1) <span class="op">&gt;</span><span class="st"> </span>value <span class="op">+</span><span class="st"> </span>c <span class="op">*</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>h_prime) {</a>
-<a class="sourceLine" id="cb252-29" data-line-number="29">      gamma &lt;-<span class="st"> </span>d <span class="op">*</span><span class="st"> </span>gamma</a>
-<a class="sourceLine" id="cb252-30" data-line-number="30">      par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</a>
-<a class="sourceLine" id="cb252-31" data-line-number="31">    }</a>
-<a class="sourceLine" id="cb252-32" data-line-number="32">    rho0 &lt;-<span class="st"> </span>rho <span class="op">/</span><span class="st"> </span>grad_norm_sq</a>
-<a class="sourceLine" id="cb252-33" data-line-number="33">    par &lt;-<span class="st"> </span>par1</a>
-<a class="sourceLine" id="cb252-34" data-line-number="34">    m &lt;-<span class="st"> </span>m <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb252-35" data-line-number="35">  }</a>
-<a class="sourceLine" id="cb252-36" data-line-number="36">  par</a>
-<a class="sourceLine" id="cb252-37" data-line-number="37">}</a></code></pre></div>
-<div class="sourceCode" id="cb253"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb253-1" data-line-number="1">CG_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;gamma&quot;</span>, <span class="st">&quot;grad_norm_sq&quot;</span>), <span class="dt">N =</span> <span class="dv">10</span>)</a>
-<a class="sourceLine" id="cb253-2" data-line-number="2">pois_CG &lt;-<span class="st"> </span><span class="kw">CG</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> CG_tracer<span class="op">$</span>trace)</a></code></pre></div>
+<div class="sourceCode" id="cb255"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb255-1" data-line-number="1">CG &lt;-<span class="st"> </span><span class="cf">function</span>(par, </a>
+<a class="sourceLine" id="cb255-2" data-line-number="2">               <span class="dt">d =</span> <span class="fl">0.8</span>, </a>
+<a class="sourceLine" id="cb255-3" data-line-number="3">               <span class="dt">c =</span> <span class="fl">0.1</span>, </a>
+<a class="sourceLine" id="cb255-4" data-line-number="4">               <span class="dt">gamma0 =</span> <span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb255-5" data-line-number="5">               <span class="dt">epsilon =</span> <span class="fl">1e-6</span>, </a>
+<a class="sourceLine" id="cb255-6" data-line-number="6">               <span class="dt">trace =</span> <span class="ot">NULL</span>) {</a>
+<a class="sourceLine" id="cb255-7" data-line-number="7">  p &lt;-<span class="st"> </span><span class="kw">length</span>(par)</a>
+<a class="sourceLine" id="cb255-8" data-line-number="8">  m &lt;-<span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb255-9" data-line-number="9">  rho0 &lt;-<span class="st"> </span><span class="kw">numeric</span>(p)</a>
+<a class="sourceLine" id="cb255-10" data-line-number="10">  <span class="cf">repeat</span> {</a>
+<a class="sourceLine" id="cb255-11" data-line-number="11">    value &lt;-<span class="st"> </span><span class="kw">H</span>(par)</a>
+<a class="sourceLine" id="cb255-12" data-line-number="12">    grad &lt;-<span class="st"> </span><span class="kw">grad_H</span>(par)</a>
+<a class="sourceLine" id="cb255-13" data-line-number="13">    grad_norm_sq &lt;-<span class="st"> </span><span class="kw">sum</span>(grad<span class="op">^</span><span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb255-14" data-line-number="14">    <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(trace)) <span class="kw">trace</span>()</a>
+<a class="sourceLine" id="cb255-15" data-line-number="15">    <span class="cf">if</span>(grad_norm_sq <span class="op">&lt;=</span><span class="st"> </span>epsilon) <span class="cf">break</span></a>
+<a class="sourceLine" id="cb255-16" data-line-number="16">    gamma &lt;-<span class="st"> </span>gamma0</a>
+<a class="sourceLine" id="cb255-17" data-line-number="17">    <span class="co">## Descent direction</span></a>
+<a class="sourceLine" id="cb255-18" data-line-number="18">    rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad <span class="op">+</span><span class="st"> </span>grad_norm_sq <span class="op">*</span><span class="st"> </span>rho0</a>
+<a class="sourceLine" id="cb255-19" data-line-number="19">    h_prime &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">t</span>(grad) <span class="op">%*%</span><span class="st"> </span>rho)</a>
+<a class="sourceLine" id="cb255-20" data-line-number="20">    <span class="co">## Reset to gradient descent if m &gt; p or rho is not a descent direction</span></a>
+<a class="sourceLine" id="cb255-21" data-line-number="21">    <span class="cf">if</span>(m <span class="op">&gt;</span><span class="st"> </span>p <span class="op">||</span><span class="st"> </span>h_prime <span class="op">&gt;=</span><span class="st"> </span><span class="dv">0</span>) {</a>
+<a class="sourceLine" id="cb255-22" data-line-number="22">      rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad</a>
+<a class="sourceLine" id="cb255-23" data-line-number="23">      h_prime &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad_norm_sq </a>
+<a class="sourceLine" id="cb255-24" data-line-number="24">      m &lt;-<span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb255-25" data-line-number="25">    }</a>
+<a class="sourceLine" id="cb255-26" data-line-number="26">    par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</a>
+<a class="sourceLine" id="cb255-27" data-line-number="27">    <span class="co">## Backtracking</span></a>
+<a class="sourceLine" id="cb255-28" data-line-number="28">    <span class="cf">while</span>(<span class="kw">H</span>(par1) <span class="op">&gt;</span><span class="st"> </span>value <span class="op">+</span><span class="st"> </span>c <span class="op">*</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>h_prime) {</a>
+<a class="sourceLine" id="cb255-29" data-line-number="29">      gamma &lt;-<span class="st"> </span>d <span class="op">*</span><span class="st"> </span>gamma</a>
+<a class="sourceLine" id="cb255-30" data-line-number="30">      par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</a>
+<a class="sourceLine" id="cb255-31" data-line-number="31">    }</a>
+<a class="sourceLine" id="cb255-32" data-line-number="32">    rho0 &lt;-<span class="st"> </span>rho <span class="op">/</span><span class="st"> </span>grad_norm_sq</a>
+<a class="sourceLine" id="cb255-33" data-line-number="33">    par &lt;-<span class="st"> </span>par1</a>
+<a class="sourceLine" id="cb255-34" data-line-number="34">    m &lt;-<span class="st"> </span>m <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb255-35" data-line-number="35">  }</a>
+<a class="sourceLine" id="cb255-36" data-line-number="36">  par</a>
+<a class="sourceLine" id="cb255-37" data-line-number="37">}</a></code></pre></div>
+<div class="sourceCode" id="cb256"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb256-1" data-line-number="1">CG_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;gamma&quot;</span>, <span class="st">&quot;grad_norm_sq&quot;</span>), <span class="dt">N =</span> <span class="dv">10</span>)</a>
+<a class="sourceLine" id="cb256-2" data-line-number="2">pois_CG &lt;-<span class="st"> </span><span class="kw">CG</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> CG_tracer<span class="op">$</span>trace)</a></code></pre></div>
 <pre><code>## n = 1: value = 1; gamma = NA; grad_norm_sq = 14269; 
 ## n = 10: value = -123.15; gamma = 0.018014; grad_norm_sq = 129.78; 
 ## n = 20: value = -123.92; gamma = 0.022518; grad_norm_sq = 77.339; 
@@ -724,11 +724,11 @@ Figure 8.2: Gradient norms (top) and negative log-likelihoods (bottom) for gradi
 </p>
 </div>
 <p>This algorithm is fast enough to fit the large Poisson regression model.</p>
-<div class="sourceCode" id="cb255"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb255-1" data-line-number="1">X &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, </a>
-<a class="sourceLine" id="cb255-2" data-line-number="2">                  <span class="dt">data =</span> vegetables)</a>
-<a class="sourceLine" id="cb255-3" data-line-number="3">t_map &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">crossprod</span>(X, y)) </a></code></pre></div>
-<div class="sourceCode" id="cb256"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb256-1" data-line-number="1">CG_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;gamma&quot;</span>, <span class="st">&quot;grad_norm_sq&quot;</span>), <span class="dt">N =</span> <span class="dv">100</span>)</a>
-<a class="sourceLine" id="cb256-2" data-line-number="2">pois_CG &lt;-<span class="st"> </span><span class="kw">CG</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> CG_tracer<span class="op">$</span>trace)</a></code></pre></div>
+<div class="sourceCode" id="cb258"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb258-1" data-line-number="1">X &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb258-2" data-line-number="2">                  <span class="dt">data =</span> vegetables)</a>
+<a class="sourceLine" id="cb258-3" data-line-number="3">t_map &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">crossprod</span>(X, y)) </a></code></pre></div>
+<div class="sourceCode" id="cb259"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb259-1" data-line-number="1">CG_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;gamma&quot;</span>, <span class="st">&quot;grad_norm_sq&quot;</span>), <span class="dt">N =</span> <span class="dv">100</span>)</a>
+<a class="sourceLine" id="cb259-2" data-line-number="2">pois_CG &lt;-<span class="st"> </span><span class="kw">CG</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> CG_tracer<span class="op">$</span>trace)</a></code></pre></div>
 <pre><code>## n = 1: value = 1; gamma = NA; grad_norm_sq = 12737; 
 ## n = 100: value = -127.7; gamma = 0.014412; grad_norm_sq = 4.6263; 
 ## n = 200: value = -128.02; gamma = 0.014412; grad_norm_sq = 0.41723; 
@@ -738,7 +738,7 @@ Figure 8.2: Gradient norms (top) and negative log-likelihoods (bottom) for gradi
 ## n = 600: value = -128.59; gamma = 0.0030223; grad_norm_sq = 0.00028513; 
 ## n = 700: value = -128.59; gamma = 0.0030223; grad_norm_sq = 1.0811e-05; 
 ## n = 800: value = -128.59; gamma = 0.0019343; grad_norm_sq = 4.2685e-06;</code></pre>
-<div class="sourceCode" id="cb258"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb258-1" data-line-number="1"><span class="kw">tail</span>(<span class="kw">summary</span>(CG_tracer))</a></code></pre></div>
+<div class="sourceCode" id="cb261"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb261-1" data-line-number="1"><span class="kw">tail</span>(<span class="kw">summary</span>(CG_tracer))</a></code></pre></div>
 <pre><code>##         value       gamma grad_norm_sq  .time
 ## 890 -128.5894 0.134217728 2.968376e-04 10.820
 ## 891 -128.5894 0.003777893 2.511863e-06 10.832
@@ -747,11 +747,11 @@ Figure 8.2: Gradient norms (top) and negative log-likelihoods (bottom) for gradi
 ## 894 -128.5894 0.005902958 3.238532e-05 10.858
 ## 895 -128.5894 0.003777893 6.586532e-07 10.871</code></pre>
 <p>Using <code>optim</code> with the conjugate gradient method.</p>
-<div class="sourceCode" id="cb260"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb260-1" data-line-number="1"><span class="kw">system.time</span>(pois_optim_CG &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), H, grad_H, </a>
-<a class="sourceLine" id="cb260-2" data-line-number="2">                                   <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)))</a></code></pre></div>
+<div class="sourceCode" id="cb263"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb263-1" data-line-number="1"><span class="kw">system.time</span>(pois_optim_CG &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), H, grad_H, </a>
+<a class="sourceLine" id="cb263-2" data-line-number="2">                                   <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)))</a></code></pre></div>
 <pre><code>##    user  system elapsed 
 ##  14.163   1.133  15.315</code></pre>
-<div class="sourceCode" id="cb262"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb262-1" data-line-number="1">pois_optim_CG[<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;counts&quot;</span>)]</a></code></pre></div>
+<div class="sourceCode" id="cb265"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb265-1" data-line-number="1">pois_optim_CG[<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;counts&quot;</span>)]</a></code></pre></div>
 <pre><code>## $value
 ## [1] -128.5895
 ## 
@@ -774,29 +774,29 @@ can also be written as
 where <span class="math inline">\(\mathrm{D}p(\theta)\)</span> is the Jacobian of the parametrization <span class="math inline">\(\theta \mapsto p(\theta)\)</span>,
 and <span class="math inline">\(\mathbf{\tilde{x}}(\theta)\)</span> is the vector with
 <span class="math display">\[\mathbf{\tilde{x}}(\theta)_k = \frac{ x_{j(k)}}{M(p(\theta))_{j(k)}}.\]</span></p>
-<div class="sourceCode" id="cb264"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb264-1" data-line-number="1">grad_loglik &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, prob, Dprob, group) {</a>
-<a class="sourceLine" id="cb264-2" data-line-number="2">  p &lt;-<span class="st"> </span><span class="kw">prob</span>(par)</a>
-<a class="sourceLine" id="cb264-3" data-line-number="3">  <span class="cf">if</span>(<span class="kw">is.null</span>(p)) <span class="kw">return</span>(<span class="kw">rep</span>(<span class="ot">NA</span>, <span class="kw">length</span>(par)))</a>
-<a class="sourceLine" id="cb264-4" data-line-number="4">  <span class="op">-</span><span class="st"> </span>(x[group] <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(p, group)[group]) <span class="op">%*%</span><span class="st"> </span><span class="kw">Dprob</span>(par)</a>
-<a class="sourceLine" id="cb264-5" data-line-number="5">}</a></code></pre></div>
+<div class="sourceCode" id="cb267"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb267-1" data-line-number="1">grad_loglik &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, prob, Dprob, group) {</a>
+<a class="sourceLine" id="cb267-2" data-line-number="2">  p &lt;-<span class="st"> </span><span class="kw">prob</span>(par)</a>
+<a class="sourceLine" id="cb267-3" data-line-number="3">  <span class="cf">if</span>(<span class="kw">is.null</span>(p)) <span class="kw">return</span>(<span class="kw">rep</span>(<span class="ot">NA</span>, <span class="kw">length</span>(par)))</a>
+<a class="sourceLine" id="cb267-4" data-line-number="4">  <span class="op">-</span><span class="st"> </span>(x[group] <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(p, group)[group]) <span class="op">%*%</span><span class="st"> </span><span class="kw">Dprob</span>(par)</a>
+<a class="sourceLine" id="cb267-5" data-line-number="5">}</a></code></pre></div>
 <p>The Jacobian needs to be implemented for the specific example
 of peppered moths.</p>
-<div class="sourceCode" id="cb265"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb265-1" data-line-number="1">Dprob &lt;-<span class="st"> </span><span class="cf">function</span>(p) {</a>
-<a class="sourceLine" id="cb265-2" data-line-number="2">  p[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>p[<span class="dv">2</span>]</a>
-<a class="sourceLine" id="cb265-3" data-line-number="3">  <span class="kw">matrix</span>(</a>
-<a class="sourceLine" id="cb265-4" data-line-number="4">    <span class="kw">c</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>],             <span class="dv">0</span>, </a>
-<a class="sourceLine" id="cb265-5" data-line-number="5">      <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>],             <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>], </a>
-<a class="sourceLine" id="cb265-6" data-line-number="6">      <span class="dv">2</span><span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>] <span class="op">-</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>],  <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>],</a>
-<a class="sourceLine" id="cb265-7" data-line-number="7">      <span class="dv">0</span>,                    <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>],         </a>
-<a class="sourceLine" id="cb265-8" data-line-number="8">      <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>],            <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>] <span class="op">-</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>], </a>
-<a class="sourceLine" id="cb265-9" data-line-number="9">      <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>],           <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>]),</a>
-<a class="sourceLine" id="cb265-10" data-line-number="10">    <span class="dt">ncol =</span> <span class="dv">2</span>, <span class="dt">nrow =</span> <span class="dv">6</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb265-11" data-line-number="11">}</a></code></pre></div>
+<div class="sourceCode" id="cb268"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb268-1" data-line-number="1">Dprob &lt;-<span class="st"> </span><span class="cf">function</span>(p) {</a>
+<a class="sourceLine" id="cb268-2" data-line-number="2">  p[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>p[<span class="dv">2</span>]</a>
+<a class="sourceLine" id="cb268-3" data-line-number="3">  <span class="kw">matrix</span>(</a>
+<a class="sourceLine" id="cb268-4" data-line-number="4">    <span class="kw">c</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>],             <span class="dv">0</span>, </a>
+<a class="sourceLine" id="cb268-5" data-line-number="5">      <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>],             <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>], </a>
+<a class="sourceLine" id="cb268-6" data-line-number="6">      <span class="dv">2</span><span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>] <span class="op">-</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>],  <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>],</a>
+<a class="sourceLine" id="cb268-7" data-line-number="7">      <span class="dv">0</span>,                    <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>],         </a>
+<a class="sourceLine" id="cb268-8" data-line-number="8">      <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>],            <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>] <span class="op">-</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>], </a>
+<a class="sourceLine" id="cb268-9" data-line-number="9">      <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>],           <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>]),</a>
+<a class="sourceLine" id="cb268-10" data-line-number="10">    <span class="dt">ncol =</span> <span class="dv">2</span>, <span class="dt">nrow =</span> <span class="dv">6</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb268-11" data-line-number="11">}</a></code></pre></div>
 <p>We can then use the conjugate gradient algorithm to compute the
 maximum-likelihood estimate.</p>
-<div class="sourceCode" id="cb266"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb266-1" data-line-number="1"><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), loglik, grad_loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </a>
-<a class="sourceLine" id="cb266-2" data-line-number="2">      <span class="dt">prob =</span> prob, <span class="dt">Dprob =</span> Dprob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>), </a>
-<a class="sourceLine" id="cb266-3" data-line-number="3">      <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb269"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb269-1" data-line-number="1"><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), loglik, grad_loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </a>
+<a class="sourceLine" id="cb269-2" data-line-number="2">      <span class="dt">prob =</span> prob, <span class="dt">Dprob =</span> Dprob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>), </a>
+<a class="sourceLine" id="cb269-3" data-line-number="3">      <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>)</a></code></pre></div>
 <pre><code>## $par
 ## [1] 0.07083691 0.18873652
 ## 
@@ -822,9 +822,9 @@ approach to implement the gradient above. The gradient could then
 be used for other optimization algorithms, still using <code>optim</code>, such as
 conjugate gradient. In fact, you can use conjugate gradient without
 computing and implementing the gradient.</p>
-<div class="sourceCode" id="cb268"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb268-1" data-line-number="1"><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </a>
-<a class="sourceLine" id="cb268-2" data-line-number="2">      <span class="dt">prob =</span> prob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>), </a>
-<a class="sourceLine" id="cb268-3" data-line-number="3">      <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb271"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb271-1" data-line-number="1"><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </a>
+<a class="sourceLine" id="cb271-2" data-line-number="2">      <span class="dt">prob =</span> prob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>), </a>
+<a class="sourceLine" id="cb271-3" data-line-number="3">      <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>)</a></code></pre></div>
 <pre><code>## $par
 ## [1] 0.07084109 0.18873718
 ## 
