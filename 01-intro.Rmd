@@ -10,6 +10,15 @@ knitr::opts_chunk$set(cache = TRUE, dev.args = list(bg = 'transparent'),
 theme_replace(plot.background = element_rect(fill = NA, color = NA))
 ```
 
+```{r error_hook, cache=FALSE}
+library(knitr)
+hook_error = knit_hooks$get('error')
+knit_hooks$set(error = function(x, options) {
+  x <- strwrap(x)
+  hook_error(x, options)
+})
+```
+
 Computational statistics is about turning theory and methods into algorithms and 
 actual numerical computations with data. It is about solving real computational
 problems that arise when we visualize, analyze and model data. 
@@ -74,7 +83,6 @@ are related to each other and how they are related to some main trends and
 challenges in contemporary computational statistics. In this introduction, 
 several R functions from various packages are used to illustrate how smoothing,
 simulation of random variables and optimization play roles in statistics. 
-
 If you have no intention of moving beyond the role of a data analyst that rely 
 on already implemented solutions, you can stop reading after the introduction. 
 The remaining part of the book is about
@@ -301,6 +309,63 @@ default for bandwidth selection, where Sheather-Jones is suggested as a
 better default than the current, but for compatibility reasons Silverman's 
 rule-of-thumb is the default and is likely to remain being so. 
 
+### Multivariate methods {#multivariate-smoothing}
+
+This section provides a single illustration of how to use the 
+bivariate kernel smoother `kde2d` from the MASS package
+for bivariate density estimation of the $(\phi, \psi)$-angle distribution. 
+A scatter plot of $\phi$ and $\psi$ angles is known as a [Ramachandran plot](https://en.wikipedia.org/wiki/Ramachandran_plot), and it provides
+a classical and important way of visualizing local structural 
+constraints of proteins in structural biochemistry. The density estimate
+can be understood as an estimate of the distribution of $(\phi, \psi)$-angles
+in naturally occuring proteins from the small sample of angles in our 
+data set. 
+
+```{r multDensPackages, message=FALSE}
+library(MASS) ## kde2d
+```
+
+We compute the density estimate in a grid of size 100 by 100 using a bandwidth 
+of 2 and using the `kde2d` function that uses a bivariate normal kernel. 
+
+```{r denshat, dependson="phipsiload"}
+denshat <- kde2d(phi, psi, h = 2, n = 100)
+```
+
+```{r manip, dependson="denshat"}
+denshat <- data.frame(
+  cbind(denshat$x, 
+        rep(denshat$y, each = length(denshat$x)), 
+        as.vector(denshat$z))
+)
+```
+
+```{r bidens, dependson=c("manip", "phipsiload")}
+colnames(denshat) <- c("phi", "psi", "dens")
+p <- ggplot(denshat, aes(phi, psi)) +
+  geom_tile(aes(fill = dens), alpha = 0.5) +
+  geom_contour(aes(z = sqrt(dens))) + 
+  geom_point(data = phipsi, aes(fill = NULL)) +
+  scale_fill_gradient(low = "white", high = "darkblue", trans = "sqrt")
+```
+
+We then recompute the density estimate in the same grid of size using 
+the smaller bandwidth of 0.5.
+
+```{r denshat2, dependson="phipsiload"}
+denshat <- kde2d(phi, psi, h = 0.5, n = 100)
+```
+
+```{r bidens2, echo = FALSE, fig.cap="Bivariate density estimates of protein backbone angles using a bivariate Gaussian kernel with bandwiths $2$ (left) and $0.5$ (right).", dependson=c("denshat2", "phipsiload"), dev='png', dpi=144, out.width="49%", fig.show='hold'}
+p 
+<<manip>>
+<<bidens>>  
+p
+```
+
+The Ramachandran plot in Figure \@ref(fig:bidens2) shows how structural constraints
+of a protein, such as steric effects, induces a non-standard bivariate distribution
+of $(\phi, \psi)$-angles. 
 
 ### Large scale smoothing
 
@@ -512,8 +577,8 @@ curve(dvM(x, theta, alpha), -pi, pi, col = "blue", lwd = 2, add = TRUE)
 
 Simulation of data from a distribution finds many applications. The technique 
 is widely used whenever we want to investigate a statistical methodology in 
-terms of its frequentistic performance under various data sampling models. As 
-is discussed in the next section, simulation is a tool of fundamental importance for 
+terms of its frequentistic performance under various data sampling models, and
+simulation is a tool of fundamental importance for 
 the practical application of Bayesian statistical methods. Another important 
 application is as a tool for computing approximations of integrals. This 
 is usually called Monte Carlo integration and is a form of numerical 
