@@ -312,11 +312,7 @@ for i.i.d. observations $x_1, \ldots, x_n$ from the distribution $f_0 \cdot m$.
 The function $\hat{f}_h$ defined as above is an example of a kernel 
 density estimator with a rectangular kernel. We immediately note that $h$ has 
 to be chosen appropriately. If $h$ is large, $\hat{f}_h$ will be flat and close to 
-a constant, and for $h \to \infty$ the estimated distribution will eventually 
-turn into uniform distributions over larger and larger intervals. If $h$ is small,
-$\hat{f}_h$ will make large jumps close to the observations, and for $h \to 0$
-the estimated distribution will tend to the empirical distribution with 
-point masses in the observations just as in Section \@ref(likelihood). 
+a constant. If $h$ is small, $\hat{f}_h$ will make large jumps close to the observations.
 
 What do we then mean by an "appropriate" choice of $h$ above? Just as for the
 methods of sieves we must have some prior assumptions about what we expect
@@ -581,7 +577,8 @@ time, the R package microbenchmark is useful.
 library(microbenchmark)
 ```
 
-```{r kern-bench, dependson=c("phipsiLoad", "kernDens", "kernDens-vec", "kernDens-apply", "kernDens-outer")}
+```{r kern-bench, echo=-1, dependson=c("phipsiLoad", "kernDens", "kernDens-vec", "kernDens-apply", "kernDens-outer")}
+set.seed(2345)
 kern_bench <- microbenchmark(
   kernDens(psi, 0.2),
   kernDens_vec(psi, 0.2),
@@ -636,8 +633,10 @@ autoplot(kern_bench) +
 This more refined benchmark study doesn't change our initial impression from 
 using `system.time` substantially. The function `kernDens` is notably
 slower than the three vectorized implementations, but we are now able to 
-more clearly see the minor differences among them. 
-
+more clearly see the minor differences among them. For instance, `kernDens_vec`
+and `kernDens_apply` have very similar run time distributions, while 
+`kernDens_outer` clearly has a larger median run time and also a
+run time distribution that is more spread out to the right. 
 
 In many cases when we benchmark run time it is of interest 
 to investigate how run time depends on various parameters. This is so 
@@ -694,10 +693,10 @@ for each expression was set to 40. Again we are confirmed that `kernDens`
 is substantially slower than the vectorized implementations for all combinations 
 of $n$ and $m$. However, Figure \@ref(fig:kern-bench-fig) also reveals a new 
 pattern; `kernDens_outer` appears to scale with $n$ in a slightly different way 
-than the two other vectorized implementations for small $n$. It is a bit faster than 
+than the two other vectorized implementations for small $n$. It is comparable to
+or even a bit faster than
 `kernDens_vec` and `kernDens_apply` for very small data sets, while it becomes 
-slower for the larger data sets. This is particularly pronounced with a large
-number of grid points ($m = 2048$). 
+slower for the larger data sets. 
 
 Run time for many algorithms have to a good approximation a dominating 
 power law behavior as a function of typical size parameters, that is, the 
@@ -1026,87 +1025,6 @@ Contrary to the log-likelihood based criterion, this criterion requires
 the computation of $\| \hat{f}_h\|_2^2$. Bandwidth selection using UCV 
 is implemented in R in the function `bw.ucv` and can be 
 used with `density` by setting the argument `bw = "ucv"`. 
-
-
-## Multivariate methods {#multivariate-smoothing}
-
-This section illustrates how to use two different implementations in R 
-for bivariate density estimation of the $(\phi, \psi)$-angle distribution. 
-A scatter plot of $\phi$ and $\psi$ angles is known as a [Ramachandran plot](https://en.wikipedia.org/wiki/Ramachandran_plot), and it provides
-a classical and important way of visualizing local structural 
-constraints of proteins in structural biochemistry. The density estimate
-can be understood as an estimate of the distribution of $(\phi, \psi)$-angles
-in naturally occuring proteins from the small sample of angles in our 
-data set. 
-
-```{r multDensPackages, message=FALSE}
-library(MASS) ## kde2d
-library(KernSmooth) ## bkde2D
-```
-
-We compute the density estimate in a grid of size 100 by 100 using a bandwidth 
-of 2 and using the `kde2d` function that uses a bivariate normal kernel. 
-
-```{r denshat, dependson="phipsiload"}
-denshat <- kde2d(phi, psi, h = 2, n = 100)
-```
-
-```{r manip, dependson="denshat"}
-denshat <- data.frame(
-  cbind(denshat$x, 
-        rep(denshat$y, each = length(denshat$x)), 
-        as.vector(denshat$z))
-)
-```
-
-```{r bidens, dependson=c("manip", "phipsiload")}
-colnames(denshat) <- c("phi", "psi", "dens")
-ggplot(denshat, aes(phi, psi)) +
-  geom_tile(aes(fill = dens), alpha = 0.5) +
-  geom_contour(aes(z = sqrt(dens))) + 
-  geom_point(data = phipsi, aes(fill = NULL)) +
-  scale_fill_gradient(low = "white", high = "darkblue", trans = "sqrt")
-```
-
-We then recompute the density estimate in the same grid of size using 
-the smaller bandwidth of 0.5.
-
-```{r denshat2, dependson="phipsiload"}
-denshat <- kde2d(phi, psi, h = 0.5, n = 100)
-```
-
-```{r bidens2, echo = FALSE, dependson=c("denshat2", "phipsiload")}
-<<manip>>
-<<bidens>>  
-```
-
-To illustrate the use of `bkde2D` we load a larger data set of angles for 100 
-proteins. 
-
-```{r bkde2D}
-load("data/top100dih.RData")
-phipsi2 <- na.omit(dataset)
-denshat <- bkde2D(phipsi2[, c("phi", "psi")], bandwidth = 0.3, 
-                  gridsize = c(100, 100), 
-                  range.x = list(c(-pi, pi), c(-pi, pi)))
-
-denshat <- data.frame(
-  cbind(denshat$x1, 
-        rep(denshat$x2, each = length(denshat$x1)), 
-        as.vector(denshat$fhat))
-)
-```
-
-
-```{r bidens3, dependson="bkde2D"}
-colnames(denshat) <- c("phi", "psi", "dens")
-ggplot(denshat, aes(phi, psi)) +
-  geom_tile(aes(fill = dens), alpha = 0.5) +
-  geom_contour(aes(z = sqrt(dens)), bins = 20) + 
-  geom_point(data = phipsi2, aes(fill = NULL), alpha = 0.2) +
-  scale_fill_gradient(low = "white", high = "darkblue", trans = "sqrt")
-
-```
 
 ## Exercises
 

@@ -12,7 +12,42 @@ average as an approximation of the integral.
 
 ## Assessment
 
-Something general about precision and uncertainty assessment for MC integration.
+The error analysis of Monte Carlo integration differs from that of 
+ordinary (deterministic) numerical integration methods. For the latter, 
+error analysis provides bounds on the error of the computable 
+approximation in terms of properties of the function to be integrated. Such
+bounds provide a guarantee on what the error at most can be. It 
+is generally impossible to provide such a guarantee when using Monte 
+Carlo integration because the computed approximation is by construction 
+random. Thus the error analysis and assessment of the accuracy of $\hat{\mu}_{\textrm{MC}}$
+as an approximation of $\mu$ has to be probabilistic. 
+
+There are two main approaches. We can use approximations of the distribution
+of $\hat{\mu}_{\textrm{MC}}$ to assess the accuracy by computing a confidence 
+interval, say. Or we can provide finite sample upper bounds, known as 
+concentration inequalities, on the probability
+that the error of $\hat{\mu}_{\textrm{MC}}$ is larger than a given $\varepsilon$. 
+A concentration inequality can be turned into a confidence interval, if needed, or it can be used directly 
+to answer a question such as: if I want the approximation to have an error 
+smaller than $\varepsilon = 10^{-3}$, how large does $n$ need to be 
+to guarantee this error bound with probability at least $99.99$%. 
+
+Confidence intervals are typically computed using the central limit theorem and 
+an estimated value of the asymptotic variance. The most notable practical 
+problem is the estimation of that asymptotic variance, but otherwise the 
+method is straightforward to use. A major deficit of this method is 
+that the central limit theorem does not provide bounds -- only approximations
+of unknown precision for a finite $n$. Thus without further analysis, we 
+cannot really be certain that the results from the central limit theorem 
+reflect the accuracy of $\hat{\mu}_{\textrm{MC}}$. Concentration inequalities
+provide actual guarantees, albeit probabilistic. They are, however, typically 
+problem specific and much harder to derive, they involve constants that 
+are difficult to compute or estimate, and they tend to be somewhat pessimistic
+in real applications. The focus in this chapter is therefore on using the 
+central limit theorem, but we do emphasize the example in Section \@ref(hd-int)
+that shows how potentially misleading the confidence intervals can be 
+when the convergence is slow. 
+
 
 ### Using the central limit theorem
 
@@ -31,7 +66,7 @@ $\hat{\sigma}^2_{\textrm{MC}} / n$ and a standard 95%
 confidence interval for $\mu$ is 
 $$\hat{\mu}_{\textrm{MC}} \pm 1.96 \frac{\hat{\sigma}_{\textrm{MC}}}{\sqrt{n}}.$$
 
-```{r gammaMCCLT, fig.cap="Sample path with confidence band for Monte Carlo integration of the mean of a Gamma distributed random variable.", dependson="gammasim"}
+```{r gammaMCCLT, fig.cap="Sample path with confidence band for Monte Carlo integration of the mean of a gamma distributed random variable.", dependson="gammasim"}
 x <- gammasim(1000, 8) 
 nn <- seq_along(x)
 muhat <- cumsum(x) / nn; sigmahat <- sd(x)
@@ -73,7 +108,7 @@ that
 $$P(X - \mu > \varepsilon) = P(e^{tX} > e^{t(\varepsilon + \mu)}) \leq e^{-t(\varepsilon + \mu)}M(t),$$
 which can provide a very tight upper bound by minimizing the bound over $t$. This 
 requires some knowledge of the moment generating function. We illustrate the 
-usage of this inequality below by considering the Gamma-distribution where the 
+usage of this inequality below by considering the gamma distribution where the 
 moment generating function is well known. 
 
 ### Exponential tail bound for Gamma distributed variables
@@ -93,7 +128,7 @@ Compare this to the bound
 $$P(|X-\lambda| > \varepsilon) \leq \frac{\lambda}{\varepsilon^2}$$
 from Chebychev's inequality.
 
-(ref:tail) Actual tail probabilities (left) for the Gamma distribution, computed via 
+(ref:tail) Actual tail probabilities (left) for the gamma distribution, computed via 
 the `pgamma` function, compared it to the tight bound (red) and the weaker bound 
 from Chebychev's inequality (blue). The differences in the tail are more clearly 
 seen for the log-probabilities (right)
@@ -209,7 +244,7 @@ $\hat{c} = \frac{1}{n} \sum_{i=1}^n w^*(X_i)$
 to compute an estimate of the variance. 
 
 
-### Computing a high-dimensional integral
+### Computing a high-dimensional integral {#hd-int}
 
 To illustrate the usage and limitations of importance sampling, consider
 the following $p$-dimensional integral
@@ -277,7 +312,7 @@ We can then plot the cumulative average and compare it to the
 actual value of the integral that we know is 1.
 
 ```{r MC_path, dependson=c("MC_par", "MC_loop")}
-plot(cumsum(evaluations) / 1:B, pch = 20)
+plot(cumsum(evaluations) / 1:B, pch = 20, xlab = "n")
 abline(h = 1, col = "red")
 ```
 
@@ -285,7 +320,7 @@ If we want to control the error with probability 0.95 we can use Chebychev's ine
 and solve for $\varepsilon$ using the estimated variance. 
 
 ```{r MC_cheb, dependson=c("MC_par", "MC_loop")}
-plot(cumsum(evaluations) / 1:B, pch = 20)
+plot(cumsum(evaluations) / 1:B, pch = 20, xlab = "n")
 abline(h = 1, col = "red")
 me <- cumsum(evaluations) / 1:B
 ve <- var(evaluations)
@@ -299,7 +334,7 @@ central limit theorem are typically much more accurate estimates of the actual u
 than the upper bounds provided by Chebychev's inequality.
 
 ```{r MC_CLT, dependson=c("MC_par", "MC_loop")}
-plot(cumsum(evaluations) / 1:B, pch = 20)
+plot(cumsum(evaluations) / 1:B, pch = 20, xlab = "n")
 abline(h = 1, col = "red")
 lines(1:B, me + 2*sqrt(ve/(1:B)))
 lines(1:B, me - 2*sqrt(ve/(1:B)))
@@ -315,7 +350,7 @@ evaluations <- apply(x, 1, h, alpha = 0.4)
 ```
 
 ```{r MC_CLT2, dependson=c("MC_par", "MC_loop2"), echo=FALSE}
-plot(cumsum(evaluations) / 1:B, pch = 20, ylim = c(0, 2))
+plot(cumsum(evaluations) / 1:B, pch = 20, ylim = c(0, 2), xlab = "n")
 me <- cumsum(evaluations) / 1:B
 ve <- var(evaluations)
 abline(h = 1, col = "red")
@@ -332,12 +367,13 @@ par(mfcol = c(2, 2), mex = 0.7, cex = 0.6, font.main = 1)
 replicate(4,
   {x <- matrix(rnorm(B * p), B, p)
   evaluations <- apply(x, 1, h, alpha = 0.4)
-  plot(cumsum(evaluations) / 1:B, pch = 20, ylim = c(0, 2))
+  plot(seq(1, B, 10), (cumsum(evaluations) / 1:B)[seq(1, B, 10)], 
+       pch = 20, ylim = c(0, 2), xlab = "n")
   me <- cumsum(evaluations) / 1:B
   ve <- var(evaluations)
   abline(h = 1, col = "red")
-  lines(1:B, me + 2*sqrt(ve/(1:B)))
-  lines(1:B, me - 2*sqrt(ve/(1:B)))
+  lines((1:B)[seq(1, B, 10)], (me + 2*sqrt(ve/(1:B)))[seq(1, B, 10)])
+  lines((1:B)[seq(1, B, 10)], (me - 2*sqrt(ve/(1:B)))[seq(1, B, 10)])
   })
 ```
 
@@ -353,7 +389,7 @@ from.
 Consider the following network consisting of ten nodes and with some of 
 the nodes connected. 
 
-```{r network_fig, echo = FALSE}
+```{r network_fig, echo = FALSE, out.width="85%"}
 knitr::include_graphics("figures/networkfig.png")
 ```
 

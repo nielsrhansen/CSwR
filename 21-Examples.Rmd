@@ -82,14 +82,14 @@ $$\varphi_j : \mathbb{R}^p \to (0,\infty].$$
 We define 
 $$\Theta_j = \mathrm{int}(\{ \theta \in \mathbb{R}^p \mid \varphi_j(\theta) < \infty \}),$$
 which by definition is an open set as. It can be shown
-that $\Theta_j$ is convex and that $\varphi_j$ is a log-concave function. 
+that $\Theta_j$ is convex and that $\varphi_j$ is a log-convex function. 
 Defining 
 $$\Theta = \bigcap_{j=1}^m \Theta_j,$$
 then $\Theta$ is likewise open and convex, and we define the *exponential family* 
 as the distributions parametrized by $\theta \in \Theta$ that have densities 
 
 \begin{equation}
-f(\mathbf{y} \mid \theta) = \prod_{j=1}^m \frac{1}{\varphi_j(\theta)} e^{\theta^T t_j(y_j)} = e^{\theta^T \sum_{i=1}^m t_j(y_j) - \sum_{i=1}^m \log \varphi_j(\theta)}, \quad \mathbf{y} \in \mathcal{Y},
+f(\mathbf{y} \mid \theta) = \prod_{j=1}^m \frac{1}{\varphi_j(\theta)} e^{\theta^T t_j(y_j)} = e^{\theta^T \sum_{j=1}^m t_j(y_j) - \sum_{j=1}^m \log \varphi_j(\theta)}, \quad \mathbf{y} \in \mathcal{Y},
 (\#eq:exp-dens)
 \end{equation}
 
@@ -111,7 +111,7 @@ with $m = 1$. The sufficient statistic $t_1 : (-\pi, \pi] \mapsto \mathbb{R}^2$
 is 
 $$t_1(y) = \left(\begin{array}{c} \cos(y) \\ \sin(y) \end{array}\right),$$
 and 
-$$\varphi(\theta) = \int_{-\pi}^{\pi} e^{\theta_1 \cos(y) + \theta_2 \sin(y)} \mathrm{d}z < \infty$$
+$$\varphi(\theta) = \int_{-\pi}^{\pi} e^{\theta_1 \cos(u) + \theta_2 \sin(u)} \mathrm{d}u < \infty$$
 for all $\theta = (\theta_1, \theta_2)^T \in \mathbb{R}^2$. Thus 
 the canonical parameter space is $\Theta = \mathbb{R}^2$. 
 
@@ -141,7 +141,7 @@ The family of Gaussian distributions on $\mathbb{R}$ is an example of an exponen
 family as defined above with $m = 1$ and $\mathcal{Y} = \mathbb{R}$. 
 The density of the $\mathcal{N}(\mu, \sigma^2)$ distribution is 
 $$\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(y - \mu)^2}{2\sigma^2}\right) = 
-  \frac{1}{\sqrt{2\pi}} \exp\left(\frac{\mu}{\sigma^2} y - \frac{1}{\sigma^2} \frac{y^2}{2} - \frac{\mu^2}{2\sigma^2} - 
+  \frac{1}{\sqrt{\pi}} \exp\left(\frac{\mu}{\sigma^2} y - \frac{1}{2\sigma^2} y^2 - \frac{\mu^2}{2\sigma^2} - 
                                      \frac{1}{2}\log (2\sigma^2) \right).$$
 Letting the base measure $\nu_1$ be Lebesgue measure scaled by $1/\sqrt{\pi}$,
 and $t_1 : \mathbb{R} \mapsto \mathbb{R}^2$ be 
@@ -153,7 +153,7 @@ $$\theta = \left(\begin{array}{c} \frac{\mu}{\sigma^2} \\ \frac{1}{2 \sigma^2} \
 We can express the mean and variance in terms of $\theta$ as 
 $$\sigma^2 = \frac{1}{2\theta_2} \quad \text{and} \quad \mu = \frac{\theta_1}{2\theta_2},$$
 and we find that 
-$$\log \varphi_1(\theta) = \frac{\mu^2}{2\sigma^2} + \frac{1}{2} \log \sigma^2 = 
+$$\log \varphi_1(\theta) = \frac{\mu^2}{2\sigma^2} + \frac{1}{2} \log(2 \sigma^2) = 
   \frac{\theta_1^2}{4\theta_2} - \frac{1}{2} \log \theta_2.$$
   
 We note that the reparametrization $(\mu, \sigma^2) \mapsto \theta$ maps
@@ -162,8 +162,8 @@ and that the formula above for $\log \varphi_1(\theta)$ only holds on this set.
 It is natural to ask if the canonical parameter space is actually larger for this
 exponential family. That is, is $\varphi_1(\theta) < \infty$ for $\theta_2 \leq 0$?
 To this end observe that if $\theta_2 \leq 0$
-$$\varphi_1(\theta) = \frac{1}{\sqrt{2\pi}} \int e^{\theta_1 z - \theta_2 \frac{z^2}{2}} \mathrm{d}z
-\geq \frac{1}{\sqrt{2\pi}} \int e^{\theta_1 z} \mathrm{d} z = \infty,$$
+$$\varphi_1(\theta) = \frac{1}{\sqrt{2\pi}} \int e^{\theta_1 u - \theta_2 \frac{u^2}{2}} \mathrm{d}u
+\geq \frac{1}{\sqrt{2\pi}} \int e^{\theta_1 u} \mathrm{d} u = \infty,$$
 and we conclude that 
 $$\Theta = \mathbb{R} \times (0,\infty).$$
   
@@ -255,7 +255,7 @@ To simplify the notation we introduce
 $$t(\mathbf{y}) = \sum_{j=1}^m t_j(y_j),$$
 which we refer to as the sufficient statistic, and
 $$\kappa(\theta) = \sum_{j=1}^m \log \varphi_j(\theta),$$
-which is a concave $C^{\infty}$-function on $\Theta$. 
+which is a convex $C^{\infty}$-function on $\Theta$. 
 
 Having observed $\mathbf{y} \in \mathcal{Y}$ it is evident that the log-likelihood
 for the exponential family specified by \@ref(eq:exp-dens) is 
@@ -333,10 +333,13 @@ and to resolve the lack of identifiability
 there is a tradition of fixing the last parameter as $\theta_K = 0$. This 
 results in a canonical parameter $\theta = (\theta_1, \ldots, \theta_{K-1})^T \in \mathbb{R}^{K-1},$
 a sufficient statistic $t_1(k) = (\delta_{1k}, \ldots, \delta_{(K-1)k})^T \in \mathbb{R}^p$,
-a 
+
 $$\varphi(\theta) = 1 + \sum_{l=1}^{K-1} e^{\theta_l}$$
+
 and probabilities 
+
 $$p_k = \left\{\begin{array}{ll} \frac{e^{\theta_k}}{1 + \sum_{l=1}^{K-1} e^{\theta_l}}  & \quad \text{if } k = 1, \ldots, K-1 \\  \frac{1}{1 + \sum_{l=1}^{K-1} e^{\theta_l}} & \quad \text{if } k = K. \end{array}\right.$$
+
 We see that in this parametrization $p_k = e^{\theta_k}p_K$ for $k = 1, \ldots, K-1$,
 where the probability of the last element $K$ acts as a baseline or reference probability,
 and the factors $e^{\theta_k}$ act as multiplicative modifications of this 
@@ -346,9 +349,9 @@ which is independent of the chosen baseline.
 
 In the special case of $K = 2$ the two elements $\mathcal{Y}$ are often given 
 other labels than $1$ and $2$. The most common labels are $\{0, 1\}$ and $\{-1, 1\}$.
-If we use the 0-1-labels the convention is to use $p_0$ as the baseline and 
+If we use the $0$-$1$-labels the convention is to use $p_0$ as the baseline and 
 thus 
-$$p_1 = \frac{e^{\theta}}{1 + e^{\theta}} = e^{\theta} p_0 = e^{\theta} (1 - p_0).$$
+$$p_1 = \frac{e^{\theta}}{1 + e^{\theta}} = e^{\theta} p_0 = e^{\theta} (1 - p_1).$$
 parametrized by $\theta \in \mathbb{R}$. As this function of $\theta$ is 
 known as the *logistic function*, this parametrization of the probability 
 distributions on $\{0,1\}$ is often referred to as the logistic model. From the 
@@ -357,10 +360,22 @@ $$\theta = \log \frac{p_1}{1 - p_1}$$
 is the log-odds. 
 
 If we use the $\pm 1$-labels, an alternative exponential family parametrization is 
-$$p_z = \frac{e^{k\theta}}{e^\theta + e^{-\theta}}$$
+$$p_k = \frac{e^{k\theta}}{e^\theta + e^{-\theta}}$$
 for $\theta \in \mathbb{R}$ and $k \in \{-1, 1\}$. This gives a symmetric treatment of the two 
 labels while retaining the identifiability. 
 
+With i.i.d. observations from a multinomial distribution we find 
+that the log-likelihood is 
+
+\begin{align*}
+\ell(\theta) & = \sum_{i=1}^n \sum_{k=1}^K \delta_{k y_i} \log(p_k(\theta)) \\
+& = \sum_{k=1}^K \underbrace{\sum_{i=1}^n \delta_{k y_i}}_{= n_k} \log(p_k(\theta)) \\ 
+& = \theta^T  \mathbf{n} - n \log \left(1 + \sum_{l=1}^{K-1} e^{\theta_l} \right).
+\end{align*}
+
+where $\mathbf{n} = (n_1, \ldots, n_K)^T = \sum_{i=1}^n t(y_i)$ is the sufficient 
+statistic, which is simply a tabulation of the times the different elements in 
+$\{1, \ldots, K\}$ were observed. 
 
 ### Peppered Moths {#pep-moth}
 
@@ -391,26 +406,28 @@ the genotype frequencies are then
 
 $$p_C^2, 2p_Cp_I, 2p_Cp_T, p_I^2,  2p_Ip_T, p_T^2.$$
 
-The complete multinomial log-likelihood is 
+If we could observe the genotypes, the complete multinomial log-likelihood would be 
 
-\begin{align}
+\begin{align*}
  & 2n_{CC} \log(p_C) + n_{CI} \log (2 p_C p_I) + n_{CT} \log(2 p_C p_I) \\
-& \ \ + 2 n_{II} \log(p_I) + n_{IT} \log(2p_I p_T) + 2 n_{TT} \log(p_T),
-\end{align}
+& \ \ + 2 n_{II} \log(p_I) + n_{IT} \log(2p_I p_T) + 2 n_{TT} \log(p_T) \\
+= 2n_{CC} \log(p_C) + n_{CI} \log (2 p_C p_I) + n_{CT} \log(2 p_C p_I) \\
+& \ \ + 2 n_{II} \log(p_I) + n_{IT} \log(2p_I (1 - p_C - P_I)) + 2 n_{TT} \log(1 - p_C - P_I). 
+\end{align*}
 
-In terms of the probability parameters $p_C$ and $p_I$ this is a curved 
-exponential family. 
+The log-likelihood is given in terms of the genotype counts and the two probability parameters
+$p_C, p_I \geq 0$ with $p_C + P_I \leq 1$, and on the interior of this 
+parameter set the model is a curved exponential family. 
 
-Collecting moths and determining their color will only identify their phenotype, 
-not their genotype. Thus we only observe $(n_C, n_T, n_I)$, where
+Collecting moths and determining their color will, however, only identify their phenotype, 
+not their genotype. Thus we observe $(n_C, n_T, n_I)$, where
 $$n = \underbrace{n_{CC} + n_{CI} + n_{CT}}_{= n_C} + 
 \underbrace{n_{IT} + n_{II}}_{=n_I} + \underbrace{n_{TT}}_{=n_T}.$$
 
 For maximum-likelihood estimation of the parameters in this model from 
 the observation $(n_C, n_T, n_I)$, we need the likelihood, 
 that is, the likelihood in the marginal distribution of the observed
-variables. We will compute this in the section below by considering this
-particular problem as an example of a more general problem. 
+variables. 
 
 The peppered Moth example is an example of *cell collapsing* in a multinomial model.
 In general, let $A_1 \cup \ldots \cup A_{K_0} = \{1, \ldots, K\}$ be a partition and let 
@@ -427,15 +444,6 @@ the log-likelihood under the collapsed multinomial model is generally
 \ell(\theta) = \sum_{j = 1}^{K_0} x_j \log (M(p(\theta))_j) = \sum_{j = 1}^{K_0} x_j \log \left(\sum_{k \in A_j} p_k(\theta)\right).
 (\#eq:mult-col-loglik) 
 \end{equation}
-
-The conditional distribution of $Y_{A_j} = (Y_k)_{k \in A_j}$, conditionally on 
-$X$, can be found too. It will be used for the EM algorithm 
-in Chapter \@ref(em). It is easy to see that 
-$$Y_{A_j} \mid X = x \sim \textrm{Mult}\left( \frac{p_{A_j}}{M(p)_j}, y_j \right).$$
-The probability parameters are simply $p$ restricted to $A_j$ and renormalized 
-to a probability vector. Observe that this gives
-$$E (Y_k \mid X = x) = \frac{x_j p_k}{M(p)_j}$$
-for $k \in A_j$. 
 
 For the peppered Moths, $K = 6$ corresponding to the six genotypes, $K_0 = 3$ and 
 the partition corresponding to the phenotypes is
@@ -472,7 +480,7 @@ loglik <- function(par, x) {
   PC <- par[1]^2 + 2 * par[1] * par[2] + 2 * par[1] * pT
   PI <- par[2]^2 + 2 * par[2] * pT
   PT <- pT^2
-  
+  ## The function returns the negative log-likelihood 
   - (x[1] * log(PC) + x[2] * log(PI) + x[3]* log(PT))
 }
 ```
@@ -484,13 +492,13 @@ compute the maximum-likelihood estimate of the allele parameters.
 optim(c(0.3, 0.3), loglik, x = c(85, 196, 341))
 ```
 
-The `optim` functions uses an algorithm called [Nelder-Mead](https://en.wikipedia.org/wiki/Nelder–Mead_method) 
+The `optim` function uses an algorithm called [Nelder-Mead](https://en.wikipedia.org/wiki/Nelder–Mead_method) 
 as the default algorithm that relies on log-likelihood evaluations only. It
 is slow but fairly robust, though a bit of thought has to go into the initial 
 parameter choice.
 
 ```{r  moth_optim_error, error = TRUE, dependson="moth_likelihood"}
-optim(c(0, 0), loglik, x = c(85, 196, 341)) 
+optim(c(0, 0), loglik, x = c(85, 196, 341))
 ```
 
 Starting the algorithm in a boundary value where the negative log-likelihood attains
@@ -544,6 +552,27 @@ optim(c(0.3, 0.3), loglik, x = c(85, 196, 341),
       prob = prob, group = c(1, 1, 1, 2, 2, 3))
 ```
 
+Once we have found an estimate of the parameters, we can compute a prediction 
+of the unobserved genotype counts from the phenotype counts using 
+the conditional distribution of the genotypes given the phenotypes. 
+This is straightforward as the conditional distribution of $Y_{A_j} = (Y_k)_{k \in A_j}$, 
+conditionally on $X$ is also a multinomial distribution;
+$$Y_{A_j} \mid X = x \sim \textrm{Mult}\left( \frac{p_{A_j}}{M(p)_j}, x_j \right).$$
+The probability parameters are simply $p$ restricted to $A_j$ and renormalized 
+to a probability vector. Observe that this gives
+$$E (Y_k \mid X = x) = \frac{x_j p_k}{M(p)_j}$$
+for $k \in A_j$. Using the estimated parameters and the `M` function implemented
+above, we can compute a prediction of the genotype counts as follows.
+
+```{r moth_predict, dependson=c("moth_M", "moth_prob")}
+x <- c(85, 196, 341)
+group <- c(1, 1, 1, 2, 2, 3)
+p <- prob(c(0.07084643, 0.18871900))
+x[group] * p / M(p, group)[group]
+```
+
+This is of interest in itself, but computing these conditional expectations
+will also be central for the EM algorithm in Chapter \@ref(em). 
 
 ## Regression models {#regression}
 
@@ -569,7 +598,7 @@ then
 $$p_i(y_i \mid x_i) = e^{\beta^T x_i y_i - \exp( x_i^T \beta)} \frac{1}{y_i!}.$$
 The factor $1/y_i!$ can be absorbed into the base measure, and we recognize 
 this Poisson regression model as an exponential family with sufficient statistics
-$$t_i(y_i \mid x_i) = x_i y_i$$
+$$t_i(y_i) = x_i y_i$$
 and 
 $$\log \varphi_i(\beta) =  \exp( x_i^T \beta).$$
 
@@ -618,7 +647,7 @@ $\beta_0$ and $\beta_1$.
 ```{r pois-model-null, dependson="vegetables-data"}
 pois_model_null <- glm(sale ~ log(normalSale), 
                        data = vegetables, 
-                       family = poisson)   ## Fitting a Poisson regression model
+                       family = poisson)   ## A Poisson regression model
 ```
 
 ```{r pois-sum-null, echo=2, dependson="pois-model-null"}
@@ -679,7 +708,7 @@ $$(y, k) \mapsto f_k(y \mid \theta_k) p_k,$$
 and the marginal density for the distribution of $Y$ is
 $$f(y \mid \theta) =  \sum_{k=1}^K f_k(y \mid \theta_k) p_k$$
 where $\theta$ is the vector of all parameters. We say that the 
-model as $K$ mixture components and call $f_k( \cdot \mid \theta_k)$
+model has $K$ mixture components and call $f_k( \cdot \mid \theta_k)$
 the mixture distributions and $p_k$ the mixture weights. 
 
 The main usage of mixture models is to situations where $Z$ is not observed. 
@@ -689,7 +718,7 @@ which is a weighted sum of the mixture distributions.
 
 The set of all probability measures on $\{1, \ldots, K\}$ is an exponential 
 family with sufficient statistic
-$$\tilde{t}_1(k) = (\delta_{1k}, \delta_{2k}, \ldots, \delta_{(K-1)k}) \in \mathbb{R}^{K-1},$$
+$$\tilde{t}_0(k) = (\delta_{1k}, \delta_{2k}, \ldots, \delta_{(K-1)k}) \in \mathbb{R}^{K-1},$$
 canonical parameter $\alpha = (\alpha_1, \ldots, \alpha_{K-1}) \in \mathbb{R}^{K-1}$
 and 
 $$p_k = \frac{e^{\alpha_k}}{1 + \sum_{l=1}^{K-1} e^{\alpha_l}}.$$
@@ -699,7 +728,7 @@ $\tilde{t}_k : \mathcal{Y} \to \mathbb{R}^{p_k}$ and $\theta_k$ the
 canonical parameter, we bundle $\alpha, \theta_1, \ldots, \theta_K$ 
 into $\theta$ and define
 $$t_1(y) = \left(\begin{array}{c}
-\tilde{t}_1 \\
+\tilde{t}_0 \\
 0 \\
 0 \\
 \vdots \\
@@ -934,7 +963,7 @@ A mixed model is a regression model of observations that allows for
 random variation at two different levels. In this section we will 
 focus on mixed models in an exponential family context. Mixed models can be 
 considered in greater generality but there will then be little shared
-structure and one have to deal with the models much more on a case-by-case
+structure and one has to deal with the models much more on a case-by-case
 manner.
 
 In a mixed model we have observations $y_j \in \mathcal{Y}$

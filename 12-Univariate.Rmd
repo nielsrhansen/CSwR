@@ -20,23 +20,35 @@ variables uniformly distributed on $(0, 1)$.
 
 Most simulation algorithms are based on algorithms for generating 
 *pseudo random* uniformly distributed variables on $(0, 1)$. They arise from 
-deterministic integer sequences initiated by a *seed*.
+deterministic integer sequences initiated by a *seed*. A classical, but now 
+largely obsolete, class of pseudo random integer generators are known as 
+linear congruential generators given by the recursion
+$$x_{n+1} = (a x_n + c)  \text{ mod m}.$$
+The seed is a value of $x_1$ between $0$ and $m - 1$. The ANSI C standard specifies 
+the choices $m = 2^{31}$, $a = 1,103,515,245$ and $c = 12,345$. However, 
+the linear congruential generators have been superseded by better but 
+more complicated generators. 
 
-In R you can get the same sequence by setting the seed.
+In R you can set the seed and get the same sequence using `set.seed` that
+takes and integer argument. The argument will not necessarily be the 
+actual seed, but it will generate a seed from which the sequence of 
+pseudo random numbers will be generated. 
+
 ```{r seed}
-set.seed(27112015)
-oldseed <- head(.Random.seed, 10)
+set.seed(27112015)        ## Computes a new seed from an integer
+oldseed <- .Random.seed   ## The actual seed
 tmp <- runif(1)
 tmp
 ```
 
 ```{r newseed, dependson="seed"}
-oldseed
+head(oldseed, 10)
 head(.Random.seed, 10)
 c(tmp, runif(1))
 set.seed(27112015)
 head(.Random.seed, 10)
-oldseed  ## Same as current .Random.seed
+head(oldseed, 10)  ## Same as current .Random.seed
+identical(oldseed, .Random.seed)
 runif(1) ## Same as tmp
 ```
 
@@ -54,7 +66,9 @@ with $2^{32}$ and a fix to prevent the algorithm from returning 0.
 ## Transformation techniques
 
 If $T : \mathcal{Z} \to \mathbb{R}$ is a map and $Z \in \mathcal{Z}$ is a random 
-variable we can sample, then we can sample $X = T(Z).$
+variable we can simulate, then we can simulate $X = T(Z).$
+
+\vskip 5mm
 
 ```{theorem, inverse-distribution-function}
 If $F^{\leftarrow} : (0,1) \mapsto \mathbb{R}$
@@ -71,8 +85,8 @@ we have an analytic formula for the inverse distribution function. But even
 in cases where we don't it might be useful for simulation anyway if we have
 a very accurate approximation that is fast to evaluate. 
 
-They [way R](https://github.com/wch/r-source/blob/af7f52f70101960861e5d995d3a4bec010bc89e6/src/nmath/snorm.c#L265) generates samples from $\mathcal{N}(0,1)$ is, in fact, based on 
-Theorem \@ref(thm:inverse-distribution-function) and using a
+The default [way R](https://github.com/wch/r-source/blob/af7f52f70101960861e5d995d3a4bec010bc89e6/src/nmath/snorm.c#L265) generates samples from $\mathcal{N}(0,1)$ is, in fact, based on 
+Theorem \@ref(thm:inverse-distribution-function) using a
 [technical approximation](https://github.com/wch/r-source/blob/af7f52f70101960861e5d995d3a4bec010bc89e6/src/nmath/qnorm.c#L52) of $\Phi^{-1}$ via rational functions. 
 
 ### Sampling from a $t$-distribution 
@@ -117,9 +131,9 @@ The first time we *accept* a proposal is $\sigma$, and then we stop the
 sampling and return the proposal $Y_{\sigma}$. The result is, indeed, 
 a sample from the distribution with density $f$ as the following theorem states. 
 
+\vskip 5mm
 
 ```{theorem, label="reject"}
-
 If $\alpha f(y) \leq g(y)$ for all $y \in \mathbb{R}$ and $\alpha > 0$
 then the distribution of $Y_{\sigma}$ has density $f$. 
 
@@ -174,8 +188,8 @@ observe that
 $$u \leq \frac{\alpha f(y)}{g(y)} \Leftrightarrow u \leq \frac{\alpha' q(y)}{p(y)},$$
 whence rejection sampling can actually be implemented with knowledge 
 of the unnormalized densities and $\alpha'$ only and without computing $c$ or $d$. 
-This is one great advantage of rejection sampling, though we should 
-note that when we don't know the normalizing constants, $\alpha'$ does not tell 
+This is one great advantage of rejection sampling. We should 
+note, though, that when we don't know the normalizing constants, $\alpha'$ does not tell 
 us anything about how tight the envelope is, and thus how small the rejection 
 probability is.  
 
@@ -354,7 +368,8 @@ curve(f(x, 2), -pi, pi, col = "blue", lwd = 2, add = TRUE)
 
 (ref:vMsim2) Histograms of `r format(length(x), big.mark = ",")` simulated data 
 points from von Mises distributions with parameters $\kappa = 0.5$ (left) 
-and $\kappa = 2$ (right), simulated using the fast implementation.
+and $\kappa = 2$ (right), simulated using vectorized generation of random 
+variables.
 
 Then we can compare the run time of this new implementation to the 
 run time of the first implementation. 
@@ -450,7 +465,7 @@ curve(f(x, 2), -pi, pi, col = "blue", lwd = 2, add = TRUE)
 (ref:vMsim3) Histograms of `r format(length(x), big.mark = ",")` simulated data 
 points from von Mises distributions with parameters $\kappa = 0.5$ (left) 
 and $\kappa = 2$ (right), simulated using the Rcpp implementation (top) and 
-the vectorized R implementation (bottom).
+the fully vectorized R implementation (bottom).
 
 Figure \@ref(fig:vMsim3) shows the results from testing the C++ implementation
 and the fast R implementation,
@@ -464,8 +479,8 @@ old_options <- options(digits = 3)
 microbenchmark(
   vMsim_slow(1000, kappa = 5),
   vMsim(1000, kappa = 5),
-  vMsim_cpp(1000, kappa = 5),
-  vMsim_vec(1000, kappa = 5)
+  vMsim_vec(1000, kappa = 5),
+  vMsim_cpp(1000, kappa = 5)
 )
 options(digits = old_options$digits)
 ```
@@ -489,9 +504,10 @@ Let $t(y) = a(1 + by)^3$ for $y \in (-b^{-1}, \infty)$, then $t(Y) \sim \Gamma(r
 and $Y$ has density 
 $$f(y) \propto t(y)^{r-1}t'(y) e^{-t(y)} = e^{(r-1)\log t(y) + \log t'(y) - t(y)}.$$
 
-[Proof: Use univariate density transformation theorem.]
-
-The density $f$ will be the *target density* for a rejection sampler. 
+The proof of this follows from a simple univariate density transformation theorem,
+but see also the original paper @Marsaglia:2000 that proposed the rejection
+sampler discussed in this section. The density $f$ will be the *target density* 
+for a rejection sampler. 
 
 With 
 $$f(y) \propto e^{(r-1)\log t(y) + \log t'(y) - t(y)},$$
@@ -510,7 +526,7 @@ with density $f$ by simulating from the Gaussian distribution (the envelope).
 For the rejection step we need to implement $q$. Finally, we also need 
 to implement $t$ to transform the result from the rejection sampler to be 
 gamma distributed. The rejection sampler is otherwise implemented as for 
-the von Mises distribution. To investigate rejection probabilities below
+the non-vectorized von Mises distribution. To investigate rejection probabilities below
 we additionally implement the possibility of printing out some tracing 
 information. 
 
@@ -547,20 +563,18 @@ gammasim <- function(n, r, trace = FALSE) {
 }
 ```
 
-We test the implementation by simulating 100000 values 
+We test the implementation by simulating $100,000$ values 
 with parameters $r = 8$ as well as $r = 1$ and compare the resulting histograms 
 to the respective theoretical densities. 
 
-```{r gammaBench, echo=FALSE, dependson="gammasim", fig.pos="h", fig.show='hold', out.width="49%"}
+```{r gammaBench, fig.cap="Histograms of simulated gamma distributed variables with shape parameters $r = 8$ (left) and $r = 1$ (right) with corresponding theoretical densities (blue).", echo=FALSE, dependson="gammasim", fig.pos="h", fig.show='hold', out.width="49%"}
 y <- gammasim(1, 8)
 y <- gammasim(100000, 8)
-hist(y, freq = FALSE, ylim = c(0, 0.18), 
-     main = "Simulated gamma distribution",
+hist(y, freq = FALSE, ylim = c(0, 0.18), main = "",
      xlab = "y")
 curve(dgamma(x, 8), col = "blue", lwd = 2, add = TRUE)
 y <- gammasim(100000, 1)
-hist(y, freq = FALSE, ylim = c(0, 0.9), 
-     main = "Simulated gamma distribution",
+hist(y, freq = FALSE, ylim = c(0, 0.9), main = "",
      xlab = "y")
 curve(dgamma(x, 1), col = "blue", lwd = 2, add = TRUE)
 ```

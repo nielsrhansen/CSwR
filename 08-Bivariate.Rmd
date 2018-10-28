@@ -5,8 +5,10 @@ related to another, $X$. Thus we are directly aiming for an estimate of
 (aspects of) the conditional distribution of $Y$ given $X$. If both variables
 are real valued, we can get a pretty good idea of their relation by simply 
 looking at a scatter plot, and what we are aiming for is also often referred to 
-as *scatter plot smoothing*. 
-
+as *scatter plot smoothing*. In some cases $X$ represents a random variable,
+while in other cases, as the temperature example below, $X$ represents a 
+deterministic variable. In the example below $X$ is time, and in other applications
+$X$ could be fixed by an experimental design. 
 
 ```{r packages, echo=FALSE, warning=FALSE, message=FALSE, cache.extra=file.info("data/bivar.txt")$mtime}
 library("tidyverse")
@@ -46,8 +48,10 @@ smoothed using loess (black), a degree 10 polynomial (red) and a smooth spline
 ```{r NuukSmooth, dependson="NuukData", message=FALSE, fig.cap="(ref:NuukSmooth)", fig.show="hold", out.width="49%"}
 p_Nuuk <- ggplot(Nuuk_year, aes(x = Year, y = Temperature)) + geom_point()
 p_Nuuk + geom_smooth(se = FALSE) + 
-  geom_smooth(method = "lm", formula = y ~ poly(x, 10), color = "red", se = FALSE) + 
-  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cr"), color = "purple", se = FALSE)
+  geom_smooth(method = "lm", formula = y ~ poly(x, 10), 
+              color = "red", se = FALSE) + 
+  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cr"), 
+              color = "purple", se = FALSE)
 
 ggplot(Nuuk, aes(x = Month, y = Temperature)) + 
   geom_line(aes(group = Year), alpha = 0.3) + 
@@ -90,13 +94,13 @@ The practical problem is that $k$ must grow slowly in high dimensions,
 and the estimator is not a panacea. 
 
 In this chapter we focus exclusively on $x$ being real valued with the 
-ordinary metric used to define the nearest neighbors, but even in 
-this case the total ordering of the real line adds a couple of extra 
-possibilities. When $k$ is odd, the *symmetric* 
-nearest neighbor smoother uses $x_i$, the $(k-1)/2$ smaller $x_j$ closest to
-$x_i$ together with the $(k-1)/2$ larger $x_j$ closest to $x_i$. It is 
+ordinary metric used to define the nearest neighbors. The total ordering of the 
+real line adds a couple of extra possibilities to the definition of $N_i$. 
+When $k$ is odd, the *symmetric* nearest neighbor smoother takes $N_i$ to consist
+of $x_i$ together with the $(k-1)/2$ smaller $x_j$s closest to
+$x_i$ and the $(k-1)/2$ larger $x_j$s closest to $x_i$. It is 
 also possible to choose a one-sided smoother with $N_i$ corresponding 
-to the $k$ smaller $x_j$ closest to $x_i$, in which case the smoother would 
+to the $k$ smaller $x_j$s closest to $x_i$, in which case the smoother would 
 be known as a causal filter. 
 
 The symmetric definition of neighbors makes it very easy 
@@ -148,7 +152,7 @@ S <- matrix(w, 147 - 10, 147, byrow = TRUE)
 ```
 
 The construction above relies on vector recycling of `w` in the construction of `S` 
-and `w` having length $147 + 1$, which will effectively cause `w` to be 
+and the fact that `w` has length $147 + 1$, which will effectively cause `w` to be 
 translated by one to the right every time it is recycled for a new row. As seen, 
 the code triggers a warning by R, but in this case we get what we want. 
 
@@ -220,7 +224,7 @@ range(f_hat_filter - f_hat, na.rm = TRUE)
 range(f_hat_filter - runMean(Nuuk_year$Temperature, 11), na.rm = TRUE)
 ```
 
-Note that `filter` uses the same boundary convention as used in our implementations.
+Note that `filter` uses the same boundary convention as used in `runMean`. 
 
 A benchmark comparison between matrix-vector multiplication, `runMean` and `filter` 
 gives the following table with median run times in microseconds. 
@@ -348,8 +352,6 @@ library(Matrix)
 bandSparse(15, 15, seq(-2, 2))
 ```
 
-Using matrix multiplication
-
 ```{r Nuuk_runmeans, warning=FALSE, dependson="NuukData"}
 K <- bandSparse(n, n, seq(-2, 2))
 weights <- c(1/3, 1/4, rep(1/5, n - 4), 1/4, 1/3)
@@ -360,13 +362,13 @@ p_Nuuk +
             color = "red")
 ```
 
-If the smoother matrix is *sparse*, however, matrix multiplication can be much faster.
+When the smoother matrix is *sparse*, matrix multiplication can be much faster.
 
-We will present some benchmark comparisons below. First we compare the runtime 
+We will present some benchmark comparisons below. First we compare the run time 
 for the matrix multiplication `as.numeric(K %*% Nuuk_year$Temperature) * weights` 
-using a sparse matrix (as above) with the runtime 
+using a sparse matrix (as above) with the run time 
 using a dense matrix. The dense matrix is given as `Kdense = as.matrix(K)`. These
-runtimes are compared to using `filter`. In all computations, $k = 5$. 
+run times are compared to using `filter`. In all computations, $k = 5$. 
 
 ```{r runmean_bench, echo =FALSE}
 y <- rnorm(4196)
@@ -410,19 +412,14 @@ qplot(n, median, data = sumbench, color = method, size = I(4)) +
 ```
 
 The difference in slopes between dense and sparse matrix multiplication should be 
-noted. This is the difference between $O(n^2)$ and $O(n)$ runtime. 
-
-The runtime for the dense matrix multiplication will not change with $k$. For the 
+noted. This is the difference between $O(n^2)$ and $O(n)$ run time. The run time for 
+the dense matrix multiplication will not change with $k$. For the 
 other two it will increase (linearly) with increasing $k$. 
 
 For smoothing only once with a given smoother matrix the time to construct the matrix 
-should also be taken into account for fair comparison with `filter`. We do this 
-next, where we also compare with `runMean`. 
-
-The function `bandSparse` is not optimized for the specific running mean banded matrix, and 
-I have written a faster C++ function for this job.
-
-Fast band pattern matrix:
+should also be taken into account for fair comparison with `filter`. It turns out
+that the function `bandSparse` is not optimized for the specific running mean 
+banded matrix, and a faster C++ function for this job is given below.
 
 ```{Rcpp, fastBand}
 #include <Rcpp.h>
@@ -436,7 +433,7 @@ List fastBand(int n, int k) {
     p[col] = iter;
     for(int r = std::max(col - k, 0); r < std::min(col + k + 1, n); ++r) {
       i[iter] = r;
-      iter++;
+      ++iter;
     }
   }
   p[n] = N;
@@ -444,7 +441,7 @@ List fastBand(int n, int k) {
 }
 ```
 
-And the R function
+And then R function.
 
 ```{r fastBand_R, dependson="fastBand"}
 bandSparseFast <- function(n, k) {
@@ -459,9 +456,7 @@ bandSparseFast <- function(n, k) {
 ```
 
 
-Benchmark
-
-```{r fast_runmean_bench, echo=FALSE, dependson="fastBand_R"}
+```{r fast_runmean_bench, fig.cap="Benchmarking the different running mean implementations", echo=FALSE, dependson="fastBand_R"}
 weights4 <- c(rep(NA, 5), rep(1/11, 4196 - 10), rep(NA, 5))
 
 tmp <- microbenchmark(
@@ -494,38 +489,25 @@ qplot(n, median, data = sumbench, color = method, size = I(4)) +
   geom_line(size = I(2))
 ```
 
-Benchmark, comments:
-
 The construction of the sparse matrix turns out to take up much more time than the 
-matrix-vector multiplication. The runtime is still $O(n)$, but the constant is of 
-the order of a factor 16 larger than for `filter`.
-
-With the faster construction of the sparse matrix, the constant is reduced to being
-of the order 5 larger than for `filter`. 
-
-For small $n$ there is some overhead 
+matrix-vector multiplication. The run time is still $O(n)$, but the constant is of 
+the order of a factor 16 larger than for `filter`. With the faster construction of 
+the sparse matrix, the constant is reduced to being
+of the order 5 larger than for `filter`. For small $n$ there is some overhead 
 from the constructor of the sparse matrix object even for the faster algorithm.
-
-Take-home points for sparse matrices:
 
 If you implement an algorithm (like a smoother) using linear algebra (e.g. a 
 matrix-vector product) then sparse matrix numerical methods can be useful 
-compared to dense matrix numerical methods. 
+compared to dense matrix numerical methods. The Matrix package for R implements 
+sparse matrices, and you should always attempt to use methods for constructing 
+the sparse matrix that avoid dense intermediates. But even with a special 
+purpose constructor of a sparse band matrix, sparse linear algebra cannot 
+compete with optimized special purpose algorithms like `filter` or a 
+C++ implementation of `runMean`. The `filter` function even works more 
+generally for kernels (weights) with *equidistant* data. 
 
-The Matrix package for R implements sparse matrices. 
-
-Always use methods for constructing the sparse matrix that avoid dense 
-intermediates (if possible). 
-
-Even sparse linear algebra cannot compete with optimized special purpose 
-algorithms like `filter` or a C++ implementation of `runMean`.
-
-The `filter` function works for kernels (weights) with *equidistant* data. 
-
-For non-equidistant data the sparse matrix approach could be a good solution if 
-the kernel has local support. 
-
-Comparing output
+We conclude this section by verifying that `filter` actually computes
+the running mean up to numerical errors. 
 
 ```{r runmean_accuracy_fig, warning=FALSE, dependson=c("NuukData", "Nuuk_runmeans")}
 qplot(1:n, 
@@ -533,8 +515,6 @@ qplot(1:n,
         c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5)))) +
   scale_y_continuous("Difference")
 ```
-
-Comparing output
 
 ```{r runmean_accuracy, dependson="NuukData"}
 all(as.numeric(K %*% Nuuk_year$Temperature) * weights == 
@@ -579,7 +559,7 @@ bind_cols(select(Nuuk_year, Year), as.tibble(XX)) %>%
 The model matrix is (almost) orthogonal, and estimation becomes quite simple. 
 With an orthogonal model matrix the normal equation reduces to the estimate
 $$\hat{\beta} = \Phi^T Y$$
-since $\phi^T \phi = I$. The predicted (or fitted) values are $\Phi \Phi^T Y$
+since $\Phi^T \Phi = I$. The predicted (or fitted) values are $\Phi \Phi^T Y$
 with smoother matrix $\mathbf{S} = \Phi \Phi^T$ being a projection. 
 
 ```{r orthogonal_estimation, dependson=c("Nuuk_model_matrix", "NuukData")}
@@ -923,9 +903,9 @@ smoother <- function(lambda)
                 t(Phi) %*% Nuuk_year$Temperature)
 
 p_Nuuk + 
-  geom_line(aes(y = smoother(0.1)), color = "blue") +   ## Undersmooth
-  geom_line(aes(y = smoother(10)), color = "red") +     ## Smooth
-  geom_line(aes(y = smoother(1000)), color = "purple")  ## Oversmooth
+  geom_line(aes(y = smoother(10)), color = "blue") +      ## Undersmooth
+  geom_line(aes(y = smoother(1000)), color = "red") +     ## Smooth
+  geom_line(aes(y = smoother(100000)), color = "purple")  ## Oversmooth
 ```
 
 Smoothing splines can be computed using the R function `smooth.spline` 
@@ -971,7 +951,10 @@ The smoothing spline that we found by minimizing GCV can be compared to
 the smoothing spline that `smooth.spline` computes by minimizing GCV 
 as well.
 
-```{r Nuuk-spline-opt2, fig.cap="The smoothing spline that minimizes GCV as computed by `smooth.spline`.", dependson="NuukData"}
+(ref:smoothspline) The smoothing spline that minimizes GCV as computed 
+by `smooth.spline`.
+
+```{r Nuuk-spline-opt2, fig.cap="(ref:smoothspline)", dependson="NuukData"}
 temp_smooth_splines <- smooth.spline(Nuuk_year$Year, 
                                      Nuuk_year$Temperature, 
                                      all.knots = TRUE)  ## Don't use heuristic
@@ -987,8 +970,8 @@ higher precision, but we will not pursue this here.
 
 ### Efficient computation with splines
 
-Using of the full B-spline basis with knots in every observation is computationally
-heavy and from a practical viewpoint often unnecessary. Smoothing using B-splines
+Using the full B-spline basis with knots in every observation is computationally
+heavy and from a practical viewpoint unnecessary. Smoothing using B-splines
 is therefore often done using a knot-selection heuristic that selects much fewer 
 knots than $n$, in particular if $n$ is large. This is also what `smooth.spline` 
 does unless `all.knots = TRUE`. The heuristic for selecting 
@@ -1137,7 +1120,7 @@ $$\Sigma_x (\Sigma_x + \sigma^2 I)^{-1} = (I + \sigma^2 \Sigma_x^{-1})^{-1}.$$
 
 Suppose that $|\alpha| < 1$, $X_1 = \epsilon_1 / \sqrt{1 - \alpha^2}$ and 
 $$X_i = \alpha X_{i-1} + \epsilon_i$$
-for $i = 2, \ldots, n$ with $\epsilon = \epsilon_{1:n} \sim \mathcal{N}(0, I)$.
+for $i = 2, \ldots, n$ with $\epsilon = \epsilon_{1:n} \sim \mathcal{N}(0, \sigma^2 I)$.
 
 We have $\mathrm{cov}(X_i, X_j) = \alpha^{|i-j|} / (1 - \alpha^2)$, thus we can find $\Sigma_x$ and compute
 $$E(X_n \mid Y) = ((I + \sigma^2 \Sigma_x^{-1})^{-1} Y)_n$$
