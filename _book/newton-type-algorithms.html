@@ -292,11 +292,6 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>The Newton algorithm is very similar to gradient descent except that the gradient descent direction is replaced by <span class="math display">\[\rho_n = - D^2 H(\theta_n)^{-1} \nabla H(\theta_n).\]</span></p>
 <p>The Newton algorithm is typically much more efficient than gradient descent and will converge in few iterations. However, the storage of the <span class="math inline">\(p \times p\)</span> Hessian, its computation, and the solution of the equation to compute <span class="math inline">\(\rho_n\)</span> all scale like <span class="math inline">\(p^2\)</span> and this can make the algorithm useless for very large <span class="math inline">\(p\)</span>.</p>
 <p>A variety of alternatives to the Newton algorithm exist that replace the Hessian by another matrix that can be easier to compute and update. It should be noted that if we choose a matrix <span class="math inline">\(B_n\)</span> in the <span class="math inline">\(n\)</span>th iteration, then <span class="math inline">\(- B_n \nabla H(\theta_n)\)</span> is a descent direction whenever <span class="math inline">\(B_n\)</span> is a positive definite matrix.</p>
-<div id="poisson-regression" class="section level3">
-<h3><span class="header-section-number">8.3.1</span> Poisson regression</h3>
-<p>It requires the implementation of the Hessian matrix.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Hessian_H &lt;-<span class="st"> </span><span class="cf">function</span>(beta)
-  (<span class="kw">crossprod</span>(X, <span class="kw">drop</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">*</span><span class="st"> </span>X)) <span class="op">/</span><span class="st"> </span><span class="kw">nrow</span>(X)</code></pre></div>
 <p>Newton implementation (with trace).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Newton &lt;-<span class="st"> </span><span class="cf">function</span>(par, 
                    <span class="dt">d =</span> <span class="fl">0.8</span>, 
@@ -322,6 +317,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
     }
   par
 }</code></pre></div>
+<div id="poisson-regression" class="section level3">
+<h3><span class="header-section-number">8.3.1</span> Poisson regression</h3>
+<p>It requires the implementation of the Hessian matrix.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Hessian_H &lt;-<span class="st"> </span><span class="cf">function</span>(beta)
+  (<span class="kw">crossprod</span>(X, <span class="kw">drop</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">*</span><span class="st"> </span>X)) <span class="op">/</span><span class="st"> </span><span class="kw">nrow</span>(X)</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Newton_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">1</span>)
 pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> Newton_tracer<span class="op">$</span>trace)</code></pre></div>
 <pre><code>## n = 1: value = 1; h_prime = NA; gamma = NA; 

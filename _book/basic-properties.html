@@ -317,26 +317,27 @@ h(y \mid x, \theta) = \frac{f(y \mid \theta)}{g(x \mid \theta)}
 <p>Whenever <a href="basic-properties.html#eq:cond-dist">(9.1)</a> holds it follows that<br />
 <span class="math display">\[\ell(\theta) = \log g(x \mid \theta) = \log f(y \mid \theta) - \log h(y \mid x, \theta),\]</span> where <span class="math inline">\(\ell(\theta)\)</span> is the log-likelihood.</p>
 
+
 <div class="theorem">
-<span id="thm:EM-inequality" class="theorem"><strong>Theorem 9.1  </strong></span>If <span class="math inline">\(\log f(Y \mid \theta)\)</span> as well as <span class="math inline">\(\log h(Y \mid x, \theta)\)</span> have finite <span class="math inline">\(\theta&#39;\)</span>-conditional expectation given <span class="math inline">\(M(Y) = x\)</span> then <span class="math display">\[Q(\theta \mid \theta&#39;) &gt; Q(\theta&#39; \mid \theta&#39;) \quad \Rightarrow \quad  \ell(\theta) &gt; \ell(\theta&#39;).\]</span>
+<p><span id="thm:EM-inequality" class="theorem"><strong>Theorem 9.1  </strong></span>If <span class="math inline">\(\log f(Y \mid \theta)\)</span> as well as <span class="math inline">\(\log h(Y \mid x, \theta)\)</span> have finite <span class="math inline">\(\theta&#39;\)</span>-conditional expectation given <span class="math inline">\(M(Y) = x\)</span> then <span class="math display">\[Q(\theta \mid \theta&#39;) &gt; Q(\theta&#39; \mid \theta&#39;) \quad \Rightarrow \quad  \ell(\theta) &gt; \ell(\theta&#39;).\]</span></p>
 </div>
 
 
 <div class="proof">
 <p> <span class="proof"><em>Proof. </em></span> Since <span class="math inline">\(\ell(\theta)\)</span> depends on <span class="math inline">\(y\)</span> only through <span class="math inline">\(M(y) = x\)</span>,</p>
-<span class="math display">\[\begin{align}
+<span class="math display">\[\begin{align*}
 \ell(\theta) &amp; = E_{\theta&#39;} ( \ell(\theta) \mid X = x) \\
-&amp; =  \underbrace{E_{\theta&#39;} ( \log f(Y \mid \theta) \mid X = x)}_{Q(\theta \mid \theta&#39;)} +  \underbrace{ E_{\theta&#39;} ( - \log h(Y \mid x, \theta) \mid X = x)}_{H(\theta \mid\theta&#39;)} \\
+&amp; =  \underbrace{E_{\theta&#39;} ( \log f(Y \mid \theta) \mid X = x)}_{Q(\theta \mid \theta&#39;)} +  \underbrace{ E_{\theta&#39;} ( - \log h(Y \mid x, \theta) \mid X = x)}_{H(\theta \mid \theta&#39;)} \\
 &amp; = Q(\theta \mid \theta&#39;) + H(\theta \mid \theta&#39;). 
-\end{align}\]</span>
+\end{align*}\]</span>
 <p>Now for the second term we find, using <a href="https://en.wikipedia.org/wiki/Jensen%27s_inequality#Measure-theoretic_and_probabilistic_form">Jensen’s inequality</a> for the convex function <span class="math inline">\(-\log\)</span>, that</p>
-<span class="math display">\[\begin{align}
+<span class="math display">\[\begin{align*}
 H(\theta \mid \theta&#39;) &amp; = \int - \log(h(y \mid x, \theta)) h(y \mid x, \theta&#39;) \mu_x(\mathrm{d}y) \\
 &amp; = \int - \log\left(\frac{h(y \mid x, \theta)}{ h(y \mid x, \theta&#39;)}\right) h(y \mid x, \theta&#39;) \mu_x(\mathrm{d}y) + \int - \log(h(y \mid x, \theta&#39;)) h(y \mid x, \theta&#39;) \mu_x(\mathrm{d}y) \\
 &amp; \geq  -\log \left( \int \frac{h(y \mid x, \theta)}{ h(y \mid x, \theta&#39;)} h(y \mid x, \theta&#39;) \mu_x(\mathrm{d}y) \right) + H(\theta&#39; \mid \theta&#39;) \\
 &amp; = -\log\underbrace{\left( \int h(y \mid x, \theta) \mu_x(\mathrm{d}y)\right) }_{=1} + H(\theta&#39; \mid \theta&#39;) \\
 &amp; =  H(\theta&#39; \mid \theta&#39;).
-\end{align}\]</span>
+\end{align*}\]</span>
 <p>From this we see that</p>
 <p><span class="math display">\[\ell(\theta) \geq  Q(\theta \mid \theta&#39;) + H(\theta&#39; \mid \theta&#39;)\]</span></p>
 <p>for all <span class="math inline">\(\theta\)</span> and the right hand side is a so-called minorant for the log-likelihood. Observing that</p>
@@ -346,7 +347,7 @@ completes the proof of the theorem.
 
 <p>Note that the proof above can also be given by referring to <a href="https://en.wikipedia.org/wiki/Jensen%27s_inequality#Information_theory">Gibbs’ inequality in information theory</a> stating that the Kullback-Leibler divergence is positive, or equivalently that the cross-entropy <span class="math inline">\(H(\theta \mid \theta&#39;)\)</span> is smaller than the entropy <span class="math inline">\(H(\theta&#39; \mid \theta&#39;)\)</span>, but the proof of this is, in itself, a consequence of Jensen’s inequality just as above.</p>
 <p>It follows from Theorem <a href="basic-properties.html#thm:EM-inequality">9.1</a> that if <span class="math inline">\(\theta_n\)</span> is computed iteratively starting from <span class="math inline">\(\theta_0\)</span> such that <span class="math display">\[Q(\theta_{n+1} \mid \theta_{n}) &gt; Q(\theta_{n} \mid \theta_{n}),\]</span> then <span class="math display">\[H(\theta_0) &gt; H(\theta_1) &gt; H(\theta_2) &gt; \ldots.\]</span> This proves that the EM algorithm is a strict descent algorithm for the negative log-likelihood as long as it is possible in each iteration to strictly increase <span class="math inline">\(\theta \mapsto Q(\theta \mid \theta_{n})\)</span> above <span class="math inline">\(Q(\theta_{n} \mid \theta_{n}).\)</span></p>
-<p>The term <em>EM algorithm</em> is usually reserved for the specific algorithm that maximizes <span class="math inline">\(Q(\cdot \mid \theta_n)\)</span> in the M-step, but as we have seen, there is no reason to insist on the M-step being a maximization. A choice of descent direction of <span class="math inline">\(Q(\cdot \mid \theta_n)\)</span> and a step-length guaranteeing sufficient descent will be enough to give a descent algorithm. Any such variation is usually termed a generalized EM algorithm.</p>
+<p>The term <em>EM algorithm</em> is usually reserved for the specific algorithm that maximizes <span class="math inline">\(Q(\cdot \mid \theta_n)\)</span> in the M-step, but as we have seen, there is no reason to insist on the M-step being a maximization. A choice of descent direction of <span class="math inline">\(Q(\cdot \mid \theta_n)\)</span> and a step-length guaranteeing sufficient descent of <span class="math inline">\(H\)</span> (sufficient ascent of <span class="math inline">\(Q(\cdot \mid \theta_n)\)</span>) will be enough to give a descent algorithm. Any such variation is usually termed a generalized EM algorithm.</p>
 <p>One may imagine that the minorant could actually be a useful lower bound on the difficult-to-compute log-likelihood. The additive constant <span class="math inline">\(H(\theta&#39; \mid \theta&#39;)\)</span> in the minorant is, however, not going to be computable in general either, and it is not clear that there is any way to use the bound quantitatively.</p>
 </div>
 <div id="peppered-moths" class="section level3">

@@ -8,14 +8,14 @@ terms of certain unobserved components, and where likelihood computations and
 optimization is relatively easy had we had the complete observation. The EM algorithm 
 exploits this special structure, and is thus not a general optimization 
 algorithm, but the situation where it applies is common enough in statistics 
-that it is one of the core optimization algorithms used for computing maximum-
-likelihood estimates. 
+that it is one of the core optimization algorithms used for computing 
+maximum-likelihood estimates. 
 
 In this chapter it is shown that the algorithm is generally an descent algorithm 
 of the negative log-likelihood, and examples of its implementation are given to 
 multinomial cell collapsing and Gaussian mixtures. The theoretical results needed 
 for the EM algorithm for a special case of mixed models are given as well. Finally, 
-som theoretical results as well as practical implementations for computing 
+some theoretical results as well as practical implementations for computing 
 estimates of the Fisher information are presented. 
 
 ## Basic properties 
@@ -102,32 +102,34 @@ Whenever \@ref(eq:cond-dist) holds it follows that
 $$\ell(\theta) = \log g(x \mid \theta) = \log f(y \mid \theta) - \log h(y \mid x, \theta),$$
 where $\ell(\theta)$ is the log-likelihood. 
 
+\vskip 5mm
 
 ```{theorem, EM-inequality} 
 If $\log f(Y \mid \theta)$ as well as $\log h(Y \mid x, \theta)$ have 
 finite $\theta'$-conditional expectation given $M(Y) = x$ then 
 $$Q(\theta \mid \theta') > Q(\theta' \mid \theta') \quad \Rightarrow \quad  \ell(\theta) > \ell(\theta').$$
+
 ```
 
 ```{proof}
 Since $\ell(\theta)$ depends on $y$ only through $M(y) = x$,
 
-\begin{align}
+\begin{align*}
 \ell(\theta) & = E_{\theta'} ( \ell(\theta) \mid X = x) \\
-& =  \underbrace{E_{\theta'} ( \log f(Y \mid \theta) \mid X = x)}_{Q(\theta \mid \theta')} +  \underbrace{ E_{\theta'} ( - \log h(Y \mid x, \theta) \mid X = x)}_{H(\theta \mid\theta')} \\
+& =  \underbrace{E_{\theta'} ( \log f(Y \mid \theta) \mid X = x)}_{Q(\theta \mid \theta')} +  \underbrace{ E_{\theta'} ( - \log h(Y \mid x, \theta) \mid X = x)}_{H(\theta \mid \theta')} \\
 & = Q(\theta \mid \theta') + H(\theta \mid \theta'). 
-\end{align}
+\end{align*}
 
 Now for the second term we find, using [Jensen's inequality](https://en.wikipedia.org/wiki/Jensen%27s_inequality#Measure-theoretic_and_probabilistic_form) 
 for the convex function $-\log$, that 
 
-\begin{align}
+\begin{align*}
 H(\theta \mid \theta') & = \int - \log(h(y \mid x, \theta)) h(y \mid x, \theta') \mu_x(\mathrm{d}y) \\
 & = \int - \log\left(\frac{h(y \mid x, \theta)}{ h(y \mid x, \theta')}\right) h(y \mid x, \theta') \mu_x(\mathrm{d}y) + \int - \log(h(y \mid x, \theta')) h(y \mid x, \theta') \mu_x(\mathrm{d}y) \\
 & \geq  -\log \left( \int \frac{h(y \mid x, \theta)}{ h(y \mid x, \theta')} h(y \mid x, \theta') \mu_x(\mathrm{d}y) \right) + H(\theta' \mid \theta') \\
 & = -\log\underbrace{\left( \int h(y \mid x, \theta) \mu_x(\mathrm{d}y)\right) }_{=1} + H(\theta' \mid \theta') \\
 & =  H(\theta' \mid \theta').
-\end{align}
+\end{align*}
 
 From this we see that 
 
@@ -160,7 +162,8 @@ The term *EM algorithm* is usually reserved for the specific algorithm that maxi
  $Q(\cdot \mid \theta_n)$ in the M-step, but as we have seen, there is 
 no reason to insist on the M-step being a maximization. A choice 
 of descent direction of $Q(\cdot \mid \theta_n)$ and a step-length 
-guaranteeing sufficient descent will be enough to give a descent 
+guaranteeing sufficient descent of $H$ (sufficient ascent of $Q(\cdot \mid \theta_n)$) 
+will be enough to give a descent 
 algorithm. Any such variation is usually termed a generalized EM algorithm.
 
 One may imagine that the minorant could actually be a useful lower bound on the
@@ -403,25 +406,27 @@ $$\mathcal{I}(\theta_0) = V_{\theta_0}(\nabla_{\theta} \ell(\theta_0))$$
 
 we see that 
 
-$$\hat{\mathcal{I}}(\theta_0) =  \sum_{i=1}^n \big(\nabla_{\theta} Q_i(\theta_0 \mid \theta_0) - n^{-1} \nabla_{\theta} \ell(\theta_0)\big)^2$$
+$$\hat{\mathcal{I}}(\theta_0) =  \sum_{i=1}^n \big(\nabla_{\theta} Q_i(\theta_0 \mid \theta_0) - n^{-1} \nabla_{\theta} \ell(\theta_0)\big)\big(\nabla_{\theta} Q_i(\theta_0 \mid \theta_0) - n^{-1} \nabla_{\theta} \ell(\theta_0)\big)^T$$
 
-has mean $\mathcal{I}(\theta_0)$ and is thus almost an unbiased estimator of the
-Fisher information. It does have the right mean, but it is not an estimator 
-as $\theta_0$ is not known. Though if we plug in an estimator, 
+is almost an unbiased estimator of the
+Fisher information. It does have mean $\mathcal{I}(\theta_0)$, but it is not an 
+estimator as $\theta_0$ is not known. Using a plug-in-estimator, 
 $\hat{\theta}$, of $\theta_0$ we get a real estimator
 
-$$\hat{\mathcal{I}} = \hat{\mathcal{I}}(\hat{\theta}) =  \sum_{i=1}^n \big(\nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) - n^{-1} \nabla_{\theta} \ell(\hat{\theta})\big)\big(\nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) - n^{-1} \nabla_{\theta} \ell(\hat{\theta})\big)^T.$$
+$$\hat{\mathcal{I}} = \hat{\mathcal{I}}(\hat{\theta}) =  \sum_{i=1}^n \big(\nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) - n^{-1} \nabla_{\theta} \ell(\hat{\theta})\big)\big(\nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) - n^{-1} \nabla_{\theta} \ell(\hat{\theta})\big)^T,$$
+
+though $\hat{\mathcal{I}}$ will no longer necessarily be unbiased. 
 
 We refer to $\hat{\mathcal{I}}$ as the *empirical Fisher information* given by 
 the estimator $\hat{\theta}$. In most cases, $\hat{\theta}$ is the maximum-likelihood
 estimator, in which case $\nabla_{\theta} \ell(\hat{\theta}) = 0$ and the empirical 
-Fisher information in principle simplifies to 
+Fisher information simplifies to 
 $$\hat{\mathcal{I}} = \sum_{i=1}^n \nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) \nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta})^T.$$
 However, $\nabla_{\theta} \ell(\hat{\theta})$ is in practice only approximately 
 equal to zero, and it is unclear if it should be dropped. 
 
 For the peppered moths, where data is collected as i.i.d. samples of $n$ 
-individual speciments and tabulated according to phenotype, we implement
+individual specimens and tabulated according to phenotype, we implement
 the empirical Fisher information with the optional possibility of centering
 the gradients before computing the information estimate. We note that only 
 three different observations of phenotype are possible, giving rise to
@@ -502,7 +507,7 @@ Hence
 & = \left(I - D_{\theta} \Phi(\hat{\theta})^T\right) \hat{i}_Y.
 \end{align}
 
-Though the EM map $\Phi$ might not have a simple analytical expression, 
+Though the EM map $\Phi$ might not have a simple analytic expression, 
 its Jacobian, $D_{\theta} \Phi(\hat{\theta})$, can be computed via numerical 
 differentiation once we have implemented $\Phi$. We also need the 
 hessian of the map $Q$, which we implement as an R function as well. 
