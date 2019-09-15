@@ -1,15 +1,14 @@
 <!DOCTYPE html>
-<html >
-
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
 <head>
 
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Computational Statistics with R</title>
-  <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language.">
-  <meta name="generator" content="bookdown 0.7 and GitBook 2.6.7">
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>7.1 Algorithms and convergence | Computational Statistics with R</title>
+  <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  <meta name="generator" content="bookdown 0.13 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Computational Statistics with R" />
+  <meta property="og:title" content="7.1 Algorithms and convergence | Computational Statistics with R" />
   <meta property="og:type" content="book" />
   
   
@@ -17,24 +16,25 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Computational Statistics with R" />
+  <meta name="twitter:title" content="7.1 Algorithms and convergence | Computational Statistics with R" />
   
   <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   
 
-<meta name="author" content="Niels Richard Hansen">
+<meta name="author" content="Niels Richard Hansen" />
 
 
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="numopt.html">
-<link rel="next" href="descent-direction-algorithms.html">
+<link rel="prev" href="numopt.html"/>
+<link rel="next" href="descent-direction-algorithms.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
@@ -49,41 +49,66 @@
 
 
 <style type="text/css">
-div.sourceCode { overflow-x: auto; }
-table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
-  margin: 0; padding: 0; vertical-align: baseline; border: none; }
-table.sourceCode { width: 100%; line-height: 100%; }
-td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
-td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code > span.dt { color: #902000; } /* DataType */
-code > span.dv { color: #40a070; } /* DecVal */
-code > span.bn { color: #40a070; } /* BaseN */
-code > span.fl { color: #40a070; } /* Float */
-code > span.ch { color: #4070a0; } /* Char */
-code > span.st { color: #4070a0; } /* String */
-code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code > span.ot { color: #007020; } /* Other */
-code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code > span.fu { color: #06287e; } /* Function */
-code > span.er { color: #ff0000; font-weight: bold; } /* Error */
-code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-code > span.cn { color: #880000; } /* Constant */
-code > span.sc { color: #4070a0; } /* SpecialChar */
-code > span.vs { color: #4070a0; } /* VerbatimString */
-code > span.ss { color: #bb6688; } /* SpecialString */
-code > span.im { } /* Import */
-code > span.va { color: #19177c; } /* Variable */
-code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code > span.op { color: #666666; } /* Operator */
-code > span.bu { } /* BuiltIn */
-code > span.ex { } /* Extension */
-code > span.pp { color: #bc7a00; } /* Preprocessor */
-code > span.at { color: #7d9029; } /* Attribute */
-code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 </style>
 
 <link rel="stylesheet" href="style.css" type="text/css" />
@@ -114,11 +139,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="1.2" data-path="monte-carlo-methods.html"><a href="monte-carlo-methods.html"><i class="fa fa-check"></i><b>1.2</b> Monte Carlo Methods</a><ul>
 <li class="chapter" data-level="1.2.1" data-path="monte-carlo-methods.html"><a href="monte-carlo-methods.html#vM"><i class="fa fa-check"></i><b>1.2.1</b> Univariate von Mises distributions</a></li>
 <li class="chapter" data-level="1.2.2" data-path="monte-carlo-methods.html"><a href="monte-carlo-methods.html#mixtures-of-von-mises-distributions"><i class="fa fa-check"></i><b>1.2.2</b> Mixtures of von Mises distributions</a></li>
-<li class="chapter" data-level="1.2.3" data-path="monte-carlo-methods.html"><a href="monte-carlo-methods.html#large-scale-simulation"><i class="fa fa-check"></i><b>1.2.3</b> Large scale simulation</a></li>
 </ul></li>
 <li class="chapter" data-level="1.3" data-path="optimization.html"><a href="optimization.html"><i class="fa fa-check"></i><b>1.3</b> Optimization</a><ul>
 <li class="chapter" data-level="1.3.1" data-path="optimization.html"><a href="optimization.html#the-em-algorithm"><i class="fa fa-check"></i><b>1.3.1</b> The EM-algorithm</a></li>
-<li class="chapter" data-level="1.3.2" data-path="optimization.html"><a href="optimization.html#large-scale-optimization"><i class="fa fa-check"></i><b>1.3.2</b> Large scale optimization</a></li>
 </ul></li>
 <li class="chapter" data-level="1.4" data-path="exercises.html"><a href="exercises.html"><i class="fa fa-check"></i><b>1.4</b> Exercises</a><ul>
 <li class="chapter" data-level="" data-path="exercises.html"><a href="exercises.html#r-training-exercises"><i class="fa fa-check"></i>R training exercises</a></li>
@@ -154,17 +177,19 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="3.1.2" data-path="nearest-neighbor-smoothers.html"><a href="nearest-neighbor-smoothers.html#implementing-the-running-mean"><i class="fa fa-check"></i><b>3.1.2</b> Implementing the running mean</a></li>
 <li class="chapter" data-level="3.1.3" data-path="nearest-neighbor-smoothers.html"><a href="nearest-neighbor-smoothers.html#choose-k-by-cross-validation"><i class="fa fa-check"></i><b>3.1.3</b> Choose <span class="math inline">\(k\)</span> by cross-validation</a></li>
 </ul></li>
-<li class="chapter" data-level="3.2" data-path="kernel-methods.html"><a href="kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a></li>
+<li class="chapter" data-level="3.2" data-path="kernel-methods.html"><a href="kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="kernel-methods.html"><a href="kernel-methods.html#nadarayawatson-kernel-smoothing"><i class="fa fa-check"></i><b>3.2.1</b> Nadaraya–Watson kernel smoothing</a></li>
+<li class="chapter" data-level="3.2.2" data-path="kernel-methods.html"><a href="kernel-methods.html#local-regression-smoothers"><i class="fa fa-check"></i><b>3.2.2</b> Local regression smoothers</a></li>
+</ul></li>
 <li class="chapter" data-level="3.3" data-path="sparse-linear-algebra.html"><a href="sparse-linear-algebra.html"><i class="fa fa-check"></i><b>3.3</b> Sparse linear algebra</a></li>
 <li class="chapter" data-level="3.4" data-path="onb.html"><a href="onb.html"><i class="fa fa-check"></i><b>3.4</b> Orthogonal basis expansions</a><ul>
 <li class="chapter" data-level="3.4.1" data-path="onb.html"><a href="onb.html#polynomial-expansions"><i class="fa fa-check"></i><b>3.4.1</b> Polynomial expansions</a></li>
 <li class="chapter" data-level="3.4.2" data-path="onb.html"><a href="onb.html#fourier-expansions"><i class="fa fa-check"></i><b>3.4.2</b> Fourier expansions</a></li>
-<li class="chapter" data-level="3.4.3" data-path="onb.html"><a href="onb.html#wavelets"><i class="fa fa-check"></i><b>3.4.3</b> Wavelets</a></li>
 </ul></li>
 <li class="chapter" data-level="3.5" data-path="splines.html"><a href="splines.html"><i class="fa fa-check"></i><b>3.5</b> Splines</a><ul>
 <li class="chapter" data-level="3.5.1" data-path="splines.html"><a href="splines.html#smoothing-splines"><i class="fa fa-check"></i><b>3.5.1</b> Smoothing splines</a></li>
 <li class="chapter" data-level="3.5.2" data-path="splines.html"><a href="splines.html#splines-in-r"><i class="fa fa-check"></i><b>3.5.2</b> Splines in R</a></li>
-<li class="chapter" data-level="3.5.3" data-path="splines.html"><a href="splines.html#efficient-computation-with-splines"><i class="fa fa-check"></i><b>3.5.3</b> Efficient computation with splines</a></li>
+<li class="chapter" data-level="3.5.3" data-path="splines.html"><a href="splines.html#efficient-splines"><i class="fa fa-check"></i><b>3.5.3</b> Efficient computation with splines</a></li>
 </ul></li>
 <li class="chapter" data-level="3.6" data-path="gaussian-processes.html"><a href="gaussian-processes.html"><i class="fa fa-check"></i><b>3.6</b> Gaussian processes</a></li>
 <li class="chapter" data-level="3.7" data-path="the-kalman-filter.html"><a href="the-kalman-filter.html"><i class="fa fa-check"></i><b>3.7</b> The Kalman filter</a><ul>
@@ -172,6 +197,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="3.7.2" data-path="the-kalman-filter.html"><a href="the-kalman-filter.html#the-kalman-smoother"><i class="fa fa-check"></i><b>3.7.2</b> The Kalman smoother</a></li>
 <li class="chapter" data-level="3.7.3" data-path="the-kalman-filter.html"><a href="the-kalman-filter.html#implementation-1"><i class="fa fa-check"></i><b>3.7.3</b> Implementation</a></li>
 <li class="chapter" data-level="3.7.4" data-path="the-kalman-filter.html"><a href="the-kalman-filter.html#the-kalman-filter-1"><i class="fa fa-check"></i><b>3.7.4</b> The Kalman filter</a></li>
+</ul></li>
+<li class="chapter" data-level="3.8" data-path="exercises-2.html"><a href="exercises-2.html"><i class="fa fa-check"></i><b>3.8</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="exercises-2.html"><a href="exercises-2.html#nearest-neighbors"><i class="fa fa-check"></i>Nearest neighbors</a></li>
+<li class="chapter" data-level="" data-path="exercises-2.html"><a href="exercises-2.html#kernel-estimators"><i class="fa fa-check"></i>Kernel estimators</a></li>
 </ul></li>
 </ul></li>
 <li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
@@ -188,8 +217,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="4.4.1" data-path="adaptive.html"><a href="adaptive.html#beta-distribution"><i class="fa fa-check"></i><b>4.4.1</b> Beta distribution</a></li>
 <li class="chapter" data-level="4.4.2" data-path="adaptive.html"><a href="adaptive.html#von-mises-distribution"><i class="fa fa-check"></i><b>4.4.2</b> von Mises distribution</a></li>
 </ul></li>
-<li class="chapter" data-level="4.5" data-path="exercises-2.html"><a href="exercises-2.html"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
-<li class="chapter" data-level="" data-path="exercises-2.html"><a href="exercises-2.html#rejection-sampling-of-gaussian-random-variables"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
+<li class="chapter" data-level="4.5" data-path="exercises-3.html"><a href="exercises-3.html"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="exercises-3.html"><a href="exercises-3.html#rejection-sampling-of-gaussian-random-variables"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
 </ul></li>
 </ul></li>
 <li class="chapter" data-level="5" data-path="mci.html"><a href="mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
@@ -205,69 +234,53 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="5.3" data-path="network-failure.html"><a href="network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
 <li class="chapter" data-level="5.3.1" data-path="network-failure.html"><a href="network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
 </ul></li>
-<li class="chapter" data-level="5.4" data-path="design-of-experiments.html"><a href="design-of-experiments.html"><i class="fa fa-check"></i><b>5.4</b> Design of experiments</a></li>
-</ul></li>
-<li class="chapter" data-level="6" data-path="multivariate-random-variables.html"><a href="multivariate-random-variables.html"><i class="fa fa-check"></i><b>6</b> Multivariate random variables</a><ul>
-<li class="chapter" data-level="6.1" data-path="sequential-simulation.html"><a href="sequential-simulation.html"><i class="fa fa-check"></i><b>6.1</b> Sequential simulation</a><ul>
-<li class="chapter" data-level="6.1.1" data-path="sequential-simulation.html"><a href="sequential-simulation.html#sequential-mc-for-the-ar1-process"><i class="fa fa-check"></i><b>6.1.1</b> Sequential MC for the AR(1)-process</a></li>
-</ul></li>
-<li class="chapter" data-level="6.2" data-path="gaussian-random-variables.html"><a href="gaussian-random-variables.html"><i class="fa fa-check"></i><b>6.2</b> Gaussian random variables</a></li>
 </ul></li>
 <li class="part"><span><b>Part III: Optimization</b></span></li>
-<li class="chapter" data-level="7" data-path="five-examples.html"><a href="five-examples.html"><i class="fa fa-check"></i><b>7</b> Five Examples</a><ul>
-<li class="chapter" data-level="7.1" data-path="exp-fam.html"><a href="exp-fam.html"><i class="fa fa-check"></i><b>7.1</b> Exponential families</a><ul>
-<li class="chapter" data-level="7.1.1" data-path="exp-fam.html"><a href="exp-fam.html#full-exponential-families"><i class="fa fa-check"></i><b>7.1.1</b> Full exponential families</a></li>
-<li class="chapter" data-level="7.1.2" data-path="exp-fam.html"><a href="exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>7.1.2</b> Exponential family Bayesian networks</a></li>
-<li class="chapter" data-level="7.1.3" data-path="exp-fam.html"><a href="exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>7.1.3</b> Likelihood computations</a></li>
-<li class="chapter" data-level="7.1.4" data-path="exp-fam.html"><a href="exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>7.1.4</b> Curved exponential families</a></li>
+<li class="chapter" data-level="6" data-path="four-examples.html"><a href="four-examples.html"><i class="fa fa-check"></i><b>6</b> Four Examples</a><ul>
+<li class="chapter" data-level="6.1" data-path="exp-fam.html"><a href="exp-fam.html"><i class="fa fa-check"></i><b>6.1</b> Exponential families</a><ul>
+<li class="chapter" data-level="6.1.1" data-path="exp-fam.html"><a href="exp-fam.html#full-exponential-families"><i class="fa fa-check"></i><b>6.1.1</b> Full exponential families</a></li>
+<li class="chapter" data-level="6.1.2" data-path="exp-fam.html"><a href="exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>6.1.2</b> Exponential family Bayesian networks</a></li>
+<li class="chapter" data-level="6.1.3" data-path="exp-fam.html"><a href="exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>6.1.3</b> Likelihood computations</a></li>
+<li class="chapter" data-level="6.1.4" data-path="exp-fam.html"><a href="exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>6.1.4</b> Curved exponential families</a></li>
 </ul></li>
-<li class="chapter" data-level="7.2" data-path="multinomial-models.html"><a href="multinomial-models.html"><i class="fa fa-check"></i><b>7.2</b> Multinomial models</a><ul>
-<li class="chapter" data-level="7.2.1" data-path="multinomial-models.html"><a href="multinomial-models.html#pep-moth"><i class="fa fa-check"></i><b>7.2.1</b> Peppered Moths</a></li>
+<li class="chapter" data-level="6.2" data-path="multinomial-models.html"><a href="multinomial-models.html"><i class="fa fa-check"></i><b>6.2</b> Multinomial models</a><ul>
+<li class="chapter" data-level="6.2.1" data-path="multinomial-models.html"><a href="multinomial-models.html#pep-moth"><i class="fa fa-check"></i><b>6.2.1</b> Peppered Moths</a></li>
 </ul></li>
-<li class="chapter" data-level="7.3" data-path="regression.html"><a href="regression.html"><i class="fa fa-check"></i><b>7.3</b> Regression models</a></li>
-<li class="chapter" data-level="7.4" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html"><i class="fa fa-check"></i><b>7.4</b> Finite mixture models</a><ul>
-<li class="chapter" data-level="7.4.1" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html#Gaus-mix-ex"><i class="fa fa-check"></i><b>7.4.1</b> Gaussian mixtures</a></li>
-<li class="chapter" data-level="7.4.2" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html#von-mises-mixtures"><i class="fa fa-check"></i><b>7.4.2</b> von Mises mixtures</a></li>
+<li class="chapter" data-level="6.3" data-path="regression.html"><a href="regression.html"><i class="fa fa-check"></i><b>6.3</b> Regression models</a></li>
+<li class="chapter" data-level="6.4" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html"><i class="fa fa-check"></i><b>6.4</b> Finite mixture models</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html#Gaus-mix-ex"><i class="fa fa-check"></i><b>6.4.1</b> Gaussian mixtures</a></li>
 </ul></li>
-<li class="chapter" data-level="7.5" data-path="mixed-models.html"><a href="mixed-models.html"><i class="fa fa-check"></i><b>7.5</b> Mixed models</a></li>
-<li class="chapter" data-level="7.6" data-path="state-space-models.html"><a href="state-space-models.html"><i class="fa fa-check"></i><b>7.6</b> State space models</a></li>
+<li class="chapter" data-level="6.5" data-path="mixed-models.html"><a href="mixed-models.html"><i class="fa fa-check"></i><b>6.5</b> Mixed models</a></li>
 </ul></li>
-<li class="chapter" data-level="8" data-path="numopt.html"><a href="numopt.html"><i class="fa fa-check"></i><b>8</b> Numerical optimization</a><ul>
-<li class="chapter" data-level="8.1" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html"><i class="fa fa-check"></i><b>8.1</b> Algorithms and convergence</a><ul>
-<li class="chapter" data-level="8.1.1" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#descent-algorithms"><i class="fa fa-check"></i><b>8.1.1</b> Descent algorithms</a></li>
-<li class="chapter" data-level="8.1.2" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#maps-and-fixed-points"><i class="fa fa-check"></i><b>8.1.2</b> Maps and fixed points</a></li>
-<li class="chapter" data-level="8.1.3" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#convergence-rate"><i class="fa fa-check"></i><b>8.1.3</b> Convergence rate</a></li>
-<li class="chapter" data-level="8.1.4" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#stopping-criteria"><i class="fa fa-check"></i><b>8.1.4</b> Stopping criteria</a></li>
+<li class="chapter" data-level="7" data-path="numopt.html"><a href="numopt.html"><i class="fa fa-check"></i><b>7</b> Numerical optimization</a><ul>
+<li class="chapter" data-level="7.1" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html"><i class="fa fa-check"></i><b>7.1</b> Algorithms and convergence</a><ul>
+<li class="chapter" data-level="7.1.1" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#descent-algorithms"><i class="fa fa-check"></i><b>7.1.1</b> Descent algorithms</a></li>
+<li class="chapter" data-level="7.1.2" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#maps-and-fixed-points"><i class="fa fa-check"></i><b>7.1.2</b> Maps and fixed points</a></li>
+<li class="chapter" data-level="7.1.3" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#convergence-rate"><i class="fa fa-check"></i><b>7.1.3</b> Convergence rate</a></li>
+<li class="chapter" data-level="7.1.4" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#stopping-criteria"><i class="fa fa-check"></i><b>7.1.4</b> Stopping criteria</a></li>
 </ul></li>
-<li class="chapter" data-level="8.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html"><i class="fa fa-check"></i><b>8.2</b> Descent direction algorithms</a><ul>
-<li class="chapter" data-level="8.2.1" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#line-search"><i class="fa fa-check"></i><b>8.2.1</b> Line search</a></li>
-<li class="chapter" data-level="8.2.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#gradient-descent"><i class="fa fa-check"></i><b>8.2.2</b> Gradient descent</a></li>
-<li class="chapter" data-level="8.2.3" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>8.2.3</b> Conjugate gradients</a></li>
-<li class="chapter" data-level="8.2.4" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#pep-moth-descent"><i class="fa fa-check"></i><b>8.2.4</b> Peppered Moths</a></li>
+<li class="chapter" data-level="7.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html"><i class="fa fa-check"></i><b>7.2</b> Descent direction algorithms</a><ul>
+<li class="chapter" data-level="7.2.1" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#line-search"><i class="fa fa-check"></i><b>7.2.1</b> Line search</a></li>
+<li class="chapter" data-level="7.2.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#gradient-descent"><i class="fa fa-check"></i><b>7.2.2</b> Gradient descent</a></li>
+<li class="chapter" data-level="7.2.3" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>7.2.3</b> Conjugate gradients</a></li>
+<li class="chapter" data-level="7.2.4" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#pep-moth-descent"><i class="fa fa-check"></i><b>7.2.4</b> Peppered Moths</a></li>
 </ul></li>
-<li class="chapter" data-level="8.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html"><i class="fa fa-check"></i><b>8.3</b> Newton-type algorithms</a><ul>
-<li class="chapter" data-level="8.3.1" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>8.3.1</b> Poisson regression</a></li>
-<li class="chapter" data-level="8.3.2" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>8.3.2</b> Quasi-Newton algorithms</a></li>
-<li class="chapter" data-level="8.3.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>8.3.3</b> Sparsity</a></li>
+<li class="chapter" data-level="7.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html"><i class="fa fa-check"></i><b>7.3</b> Newton-type algorithms</a><ul>
+<li class="chapter" data-level="7.3.1" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>7.3.1</b> Poisson regression</a></li>
+<li class="chapter" data-level="7.3.2" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>7.3.2</b> Quasi-Newton algorithms</a></li>
+<li class="chapter" data-level="7.3.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>7.3.3</b> Sparsity</a></li>
 </ul></li>
-<li class="chapter" data-level="8.4" data-path="misc-.html"><a href="misc-.html"><i class="fa fa-check"></i><b>8.4</b> Misc.</a></li>
+<li class="chapter" data-level="7.4" data-path="misc-.html"><a href="misc-.html"><i class="fa fa-check"></i><b>7.4</b> Misc.</a></li>
 </ul></li>
-<li class="chapter" data-level="9" data-path="em.html"><a href="em.html"><i class="fa fa-check"></i><b>9</b> Expectation maximization algorithms</a><ul>
-<li class="chapter" data-level="9.1" data-path="basic-properties.html"><a href="basic-properties.html"><i class="fa fa-check"></i><b>9.1</b> Basic properties</a><ul>
-<li class="chapter" data-level="9.1.1" data-path="basic-properties.html"><a href="basic-properties.html#incomplete-data-likelihood"><i class="fa fa-check"></i><b>9.1.1</b> Incomplete data likelihood</a></li>
-<li class="chapter" data-level="9.1.2" data-path="basic-properties.html"><a href="basic-properties.html#monotonicity-of-the-em-algorithm"><i class="fa fa-check"></i><b>9.1.2</b> Monotonicity of the EM algorithm</a></li>
-<li class="chapter" data-level="9.1.3" data-path="basic-properties.html"><a href="basic-properties.html#peppered-moths"><i class="fa fa-check"></i><b>9.1.3</b> Peppered moths</a></li>
+<li class="chapter" data-level="8" data-path="em.html"><a href="em.html"><i class="fa fa-check"></i><b>8</b> Expectation maximization algorithms</a><ul>
+<li class="chapter" data-level="8.1" data-path="basic-properties.html"><a href="basic-properties.html"><i class="fa fa-check"></i><b>8.1</b> Basic properties</a><ul>
+<li class="chapter" data-level="8.1.1" data-path="basic-properties.html"><a href="basic-properties.html#incomplete-data-likelihood"><i class="fa fa-check"></i><b>8.1.1</b> Incomplete data likelihood</a></li>
+<li class="chapter" data-level="8.1.2" data-path="basic-properties.html"><a href="basic-properties.html#monotonicity-of-the-em-algorithm"><i class="fa fa-check"></i><b>8.1.2</b> Monotonicity of the EM algorithm</a></li>
+<li class="chapter" data-level="8.1.3" data-path="basic-properties.html"><a href="basic-properties.html#peppered-moths"><i class="fa fa-check"></i><b>8.1.3</b> Peppered moths</a></li>
 </ul></li>
-<li class="chapter" data-level="9.2" data-path="EM-exp.html"><a href="EM-exp.html"><i class="fa fa-check"></i><b>9.2</b> Exponential families</a></li>
-<li class="chapter" data-level="9.3" data-path="fisher-information.html"><a href="fisher-information.html"><i class="fa fa-check"></i><b>9.3</b> Fisher information</a></li>
-<li class="chapter" data-level="9.4" data-path="two-examples-revisited.html"><a href="two-examples-revisited.html"><i class="fa fa-check"></i><b>9.4</b> Two examples revisited</a><ul>
-<li class="chapter" data-level="9.4.1" data-path="two-examples-revisited.html"><a href="two-examples-revisited.html#gaussian-mixtures"><i class="fa fa-check"></i><b>9.4.1</b> Gaussian mixtures</a></li>
-<li class="chapter" data-level="9.4.2" data-path="two-examples-revisited.html"><a href="two-examples-revisited.html#gaussian-state-space"><i class="fa fa-check"></i><b>9.4.2</b> Gaussian state space</a></li>
-</ul></li>
-</ul></li>
-<li class="chapter" data-level="10" data-path="stochopt.html"><a href="stochopt.html"><i class="fa fa-check"></i><b>10</b> Stochastic Optimization</a><ul>
-<li class="chapter" data-level="10.1" data-path="stochastic-gradient.html"><a href="stochastic-gradient.html"><i class="fa fa-check"></i><b>10.1</b> Stochastic gradient</a></li>
-<li class="chapter" data-level="10.2" data-path="stochastic-em.html"><a href="stochastic-em.html"><i class="fa fa-check"></i><b>10.2</b> Stochastic EM</a></li>
+<li class="chapter" data-level="8.2" data-path="EM-exp.html"><a href="EM-exp.html"><i class="fa fa-check"></i><b>8.2</b> Exponential families</a></li>
+<li class="chapter" data-level="8.3" data-path="fisher-information.html"><a href="fisher-information.html"><i class="fa fa-check"></i><b>8.3</b> Fisher information</a></li>
+<li class="chapter" data-level="8.4" data-path="revisiting-gaussian-mixtures.html"><a href="revisiting-gaussian-mixtures.html"><i class="fa fa-check"></i><b>8.4</b> Revisiting Gaussian mixtures</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
 </ul>
@@ -288,43 +301,130 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
             <section class="normal" id="section-">
 <div id="algorithms-and-convergence" class="section level2">
-<h2><span class="header-section-number">8.1</span> Algorithms and convergence</h2>
-<p>A numerical optimization algorithm computes from an initial value <span class="math inline">\(\theta_0 \in \Theta\)</span> a sequence <span class="math inline">\(\theta_1, \theta_2, \ldots \in \Theta\)</span>. One could hope for <span class="math display">\[\theta_n \rightarrow \text{arg min}_{\theta} H(\theta)\]</span> for <span class="math inline">\(n \to \infty\)</span>, but much less can typically be guaranteed. First, the global minimizer may not exist or it may not be unique, in which case the convergence itself is ambiguous. Second, <span class="math inline">\(\theta_n\)</span> can in general only be shown to converge to a <em>local</em> minimizer if anything. Third, <span class="math inline">\(\theta_n\)</span> may not even converge, but <span class="math inline">\(H(\theta_n)\)</span> may still converge to a local minimum.</p>
-<p>This section will give a brief introduction to convergence analysis of optimization algorithms. We will see what kind of conditions on <span class="math inline">\(H\)</span> can be used to show convergence results and some of the basic proof techniques. We will only scratch the surface here with the hope that it can motivate the algorithms that will be introduced in subsequent sections and chapters as well as the empirical techniques introduced below for practical assessment of convergence.</p>
+<h2><span class="header-section-number">7.1</span> Algorithms and convergence</h2>
+<p>A numerical optimization algorithm computes from an initial value
+<span class="math inline">\(\theta_0 \in \Theta\)</span> a sequence <span class="math inline">\(\theta_1, \theta_2, \ldots \in \Theta\)</span>.
+One could hope for
+<span class="math display">\[\theta_n \rightarrow \text{arg min}_{\theta} H(\theta)\]</span>
+for <span class="math inline">\(n \to \infty\)</span>, but much less can typically be guaranteed. First,
+the global minimizer may not exist or it may not be unique, in which
+case the convergence itself is ambiguous. Second, <span class="math inline">\(\theta_n\)</span>
+can in general only be shown to converge to a <em>local</em> minimizer if anything.
+Third, <span class="math inline">\(\theta_n\)</span> may not even converge, but <span class="math inline">\(H(\theta_n)\)</span>
+may still converge to a local minimum.</p>
+<p>This section will give a brief introduction to convergence analysis
+of optimization algorithms. We will see what kind of conditions on <span class="math inline">\(H\)</span> can be
+used to show convergence results and some of the basic proof techniques.
+We will only scratch the surface here with the hope that it can motivate
+the algorithms that will be introduced in subsequent sections and chapters as well
+as the empirical techniques introduced below for practical assessment of
+convergence.</p>
 <div id="descent-algorithms" class="section level3">
-<h3><span class="header-section-number">8.1.1</span> Descent algorithms</h3>
+<h3><span class="header-section-number">7.1.1</span> Descent algorithms</h3>
 
 <div class="example">
-<p><span id="exm:grad-descent" class="example"><strong>Example 8.1  </strong></span>Suppose that <span class="math inline">\(D^2H(\theta)\)</span> has <em>numerical radius</em> uniformly bounded by <span class="math inline">\(L\)</span>, that is, <span class="math display">\[|\gamma^T D^2H(\theta) \gamma| \leq L \|\gamma\|_2^2\]</span> for all <span class="math inline">\(\theta \in \Theta\)</span> and <span class="math inline">\(\gamma \in \mathbb{R}^p\)</span>. Define an algorithm by <span class="math display">\[\theta_{n} = \theta_{n-1} - \frac{1}{L + 1} \nabla H(\theta_{n-1}).\]</span> Fixing <span class="math inline">\(n\)</span> there is by Taylor’s theorem a <span class="math inline">\(\tilde{\theta} = \alpha \theta_{n} + (1- \alpha)\theta_{n-1}\)</span> (where <span class="math inline">\(\alpha \in [0,1]\)</span>) on the line between <span class="math inline">\(\theta_n\)</span> and <span class="math inline">\(\theta_{n-1}\)</span> such that</p>
-<span class="math display">\[\begin{align*}
+<p><span id="exm:grad-descent" class="example"><strong>Example 7.1  </strong></span>Suppose that <span class="math inline">\(D^2H(\theta)\)</span> has <em>numerical radius</em> uniformly bounded by <span class="math inline">\(L\)</span>, that is,
+<span class="math display">\[|\gamma^T D^2H(\theta) \gamma| \leq L \|\gamma\|_2^2\]</span>
+for all <span class="math inline">\(\theta \in \Theta\)</span> and <span class="math inline">\(\gamma \in \mathbb{R}^p\)</span>. Define
+an algorithm by
+<span class="math display">\[\theta_{n} = \theta_{n-1} - \frac{1}{L + 1} \nabla H(\theta_{n-1}).\]</span>
+Fixing <span class="math inline">\(n\)</span> there is by Taylor’s theorem a
+<span class="math inline">\(\tilde{\theta} = \alpha \theta_{n} + (1- \alpha)\theta_{n-1}\)</span> (where <span class="math inline">\(\alpha \in [0,1]\)</span>)
+on the line between <span class="math inline">\(\theta_n\)</span> and <span class="math inline">\(\theta_{n-1}\)</span> such that</p>
+<p><span class="math display">\[\begin{align*}
 H(\theta_n) &amp; = H(\theta_{n-1}) - \frac{1}{L+1} \|\nabla H(\theta_{n-1})\|_2^2 +  
   \frac{1}{(L+1)^2} \nabla H(\theta_{n-1})^T D^2H(\tilde{\theta}) \nabla H(\theta_{n-1}) \\
 &amp; \leq H(\theta_{n-1}) - \frac{1}{L+1} \|\nabla H(\theta_{n-1})\|_2^2 + 
    \frac{L}{(L+1)^2} \|\nabla H(\theta_{n-1})\|_2^2 \\
 &amp; = H(\theta_{n-1}) - \frac{1}{(L+1)^2} \|\nabla H(\theta_{n-1})\|_2^2.
-\end{align*}\]</span>
-<p>This shows that <span class="math inline">\(H(\theta_n) \leq H(\theta_{n-1})\)</span>, and if <span class="math inline">\(\theta_{n-1}\)</span> is not a stationary point, <span class="math inline">\(H(\theta_n) &lt; H(\theta_{n-1})\)</span>. That is, the algorithm will produce a sequence with non-increasing <span class="math inline">\(H\)</span>-values, and unless it hits a stationary point the <span class="math inline">\(H\)</span>-values will be strictly decreasing. The algorithm is an example of a <em>gradient descent</em> algorithm.</p>
+\end{align*}\]</span></p>
+<p>This shows that <span class="math inline">\(H(\theta_n) \leq H(\theta_{n-1})\)</span>, and if <span class="math inline">\(\theta_{n-1}\)</span> is not a
+stationary point, <span class="math inline">\(H(\theta_n) &lt; H(\theta_{n-1})\)</span>. That is, the algorithm
+will produce a sequence with non-increasing <span class="math inline">\(H\)</span>-values, and unless it
+hits a stationary point the <span class="math inline">\(H\)</span>-values will be strictly decreasing. The
+algorithm is an example of a <em>gradient descent</em> algorithm.</p>
 </div>
 
-<p>In general, we define a <em>descent algorithm</em> to be an algorithm for which <span class="math display">\[H(\theta_0) \geq H(\theta_1) \geq H(\theta_2) \geq \ldots.\]</span> If all inequalities are sharp, unless if some <span class="math inline">\(\theta_i\)</span> is a local minimizer, the algorithm is called a <em>strict</em> descent algorithm. The gradient descent algorithm in Example <a href="algorithms-and-convergence.html#exm:grad-descent">8.1</a> is a strict descent algorithm. However, even for a strict descent algorithm, <span class="math inline">\(H\)</span> may just descent in smaller and smaller steps without converging toward a local minimum – even if <span class="math inline">\(H\)</span> is bounded below.</p>
-<p>Suppose now that <span class="math inline">\(H\)</span> is <em>level bounded</em>, meaning that the closed set <span class="math display">\[\mathrm{lev}(\theta_0) =  \{\theta \in \Theta \mid H(\theta) \leq H(\theta_0)\}\]</span> is bounded (and thereby compact). Then <span class="math inline">\(H\)</span> is bounded from below and <span class="math inline">\(H(\theta_n)\)</span> is convergent for any descent algorithm. Restricting attention to the gradient descent algorithm, we see that</p>
-<span class="math display">\[\begin{align}
+<p>In general, we define a <em>descent algorithm</em> to be an algorithm for which
+<span class="math display">\[H(\theta_0) \geq H(\theta_1) \geq H(\theta_2) \geq \ldots.\]</span>
+If all inequalities are sharp, unless if some <span class="math inline">\(\theta_i\)</span> is a local minimizer,
+the algorithm is called a <em>strict</em> descent algorithm. The gradient descent
+algorithm in Example <a href="algorithms-and-convergence.html#exm:grad-descent">7.1</a> is a strict descent algorithm.
+However, even for a strict descent algorithm, <span class="math inline">\(H\)</span> may just descent in smaller
+and smaller steps without converging toward a local minimum – even if <span class="math inline">\(H\)</span> is
+bounded below.</p>
+<p>Suppose now that <span class="math inline">\(H\)</span> is <em>level bounded</em>,
+meaning that the closed set
+<span class="math display">\[\mathrm{lev}(\theta_0) =  \{\theta \in \Theta \mid H(\theta) \leq H(\theta_0)\}\]</span>
+is bounded (and thereby compact). Then <span class="math inline">\(H\)</span> is bounded from below and
+<span class="math inline">\(H(\theta_n)\)</span> is convergent for any descent algorithm.
+Restricting attention to the gradient descent algorithm, we see that</p>
+<p><span class="math display">\[\begin{align}
 H(\theta_n) &amp; = 
 (H(\theta_n) - H(\theta_{n-1})) + (H(\theta_{n-1}) - H(\theta_{n-2})) + ... + 
 (H(\theta_1) - H(\theta_0)) + H(\theta_0) \\
 &amp; \leq H(\theta_0) - \frac{1}{(L + 1)^2} \sum_{k=1}^n \|\nabla H(\theta_{k-1})\|_2^2.
-\end{align}\]</span>
-<p>Because <span class="math inline">\(H\)</span> is bounded below, this implies that <span class="math inline">\(\sum_{k=1}^{\infty} \|\nabla H(\theta_{k-1})\|_2^2 &lt; \infty\)</span> and hence <span class="math display">\[\|\nabla H(\theta_{n})\|_2 \rightarrow 0\]</span> for <span class="math inline">\(n \to \infty\)</span>. By compactness of <span class="math inline">\(\mathrm{lev}(\theta_0)\)</span>, <span class="math inline">\(\theta_n\)</span> has a convergent subsequence with limit <span class="math inline">\(\theta_{\infty}\)</span>, and we conclude by continuity of <span class="math inline">\(\nabla H\)</span> that <span class="math display">\[\nabla H(\theta_{\infty}) = 0,\]</span> and <span class="math inline">\(\theta_{\infty}\)</span> is a stationary point. In fact, this holds for any limit point of the sequence, and this implies that if <span class="math inline">\(H\)</span> has a <em>unique</em> stationary point in <span class="math inline">\(\mathrm{lev}(\theta_0)\)</span>,<br />
-<span class="math inline">\(\theta_{\infty}\)</span> is a minimizer, and <span class="math display">\[\theta_n \rightarrow \theta_{\infty}\]</span> for <span class="math inline">\(n \to \infty\)</span>.</p>
-<p>To summarize, if <span class="math inline">\(D^2H(\theta)\)</span> has uniformly bounded numerical radius, and if <span class="math inline">\(H\)</span> is level bounded with a unique stationary point in <span class="math inline">\(\mathrm{lev}(\theta_0)\)</span>, then the gradient descent algorithm of Example <a href="algorithms-and-convergence.html#exm:grad-descent">8.1</a> is a strict descent algorithm that converges toward that minimum. A sufficient condition on <span class="math inline">\(H\)</span> for this to hold is that the eigenvalues of (the symmetric) matrix <span class="math inline">\(D^2H(\theta)\)</span> for all <span class="math inline">\(\theta\)</span> are contained in an interval <span class="math inline">\([l, L]\)</span> with <span class="math inline">\(0 &lt; l \leq L\)</span>. In this case, <span class="math inline">\(H\)</span> is a <em>strongly convex function</em> with a unique global minimizer.</p>
+\end{align}\]</span></p>
+<p>Because <span class="math inline">\(H\)</span> is bounded below, this implies that <span class="math inline">\(\sum_{k=1}^{\infty} \|\nabla H(\theta_{k-1})\|_2^2 &lt; \infty\)</span>
+and hence
+<span class="math display">\[\|\nabla H(\theta_{n})\|_2 \rightarrow 0\]</span>
+for <span class="math inline">\(n \to \infty\)</span>. By compactness of <span class="math inline">\(\mathrm{lev}(\theta_0)\)</span>,
+<span class="math inline">\(\theta_n\)</span> has a convergent subsequence with limit <span class="math inline">\(\theta_{\infty}\)</span>, and
+we conclude by continuity of <span class="math inline">\(\nabla H\)</span> that
+<span class="math display">\[\nabla H(\theta_{\infty}) = 0,\]</span>
+and <span class="math inline">\(\theta_{\infty}\)</span> is a stationary point. In fact, this holds for any
+limit point of the sequence, and this implies that if <span class="math inline">\(H\)</span> has a <em>unique</em>
+stationary point in <span class="math inline">\(\mathrm{lev}(\theta_0)\)</span>, <span class="math inline">\(\theta_{\infty}\)</span> is a minimizer,
+and
+<span class="math display">\[\theta_n \rightarrow \theta_{\infty}\]</span>
+for <span class="math inline">\(n \to \infty\)</span>.</p>
+<p>To summarize, if <span class="math inline">\(D^2H(\theta)\)</span> has uniformly bounded numerical radius, and if
+<span class="math inline">\(H\)</span> is level bounded with a unique stationary point in <span class="math inline">\(\mathrm{lev}(\theta_0)\)</span>,
+then the gradient descent algorithm of Example <a href="algorithms-and-convergence.html#exm:grad-descent">7.1</a> is a strict descent
+algorithm that converges toward that minimum. A sufficient condition
+on <span class="math inline">\(H\)</span> for this to hold is that the eigenvalues of (the symmetric) matrix
+<span class="math inline">\(D^2H(\theta)\)</span> for all <span class="math inline">\(\theta\)</span> are contained in an interval <span class="math inline">\([l, L]\)</span>
+with <span class="math inline">\(0 &lt; l \leq L\)</span>. In this case, <span class="math inline">\(H\)</span> is a <em>strongly convex function</em>
+with a unique global minimizer.</p>
 </div>
 <div id="maps-and-fixed-points" class="section level3">
-<h3><span class="header-section-number">8.1.2</span> Maps and fixed points</h3>
-<p>Most algorithms take the form of an <em>update scheme</em>, which from a mathematical viewpoint is a map <span class="math inline">\(\Phi : \Theta \to \Theta\)</span> such that <span class="math display">\[\theta_n = \Phi(\theta_{n-1}) = \Phi \circ \Phi (\theta_{n-2}) =  \Phi^{\circ n}(\theta_0).\]</span> The gradient descent algorithm from Example <a href="algorithms-and-convergence.html#exm:grad-descent">8.1</a> is given by the map <span class="math display">\[\Phi_{\nabla}(\theta) = \theta - \frac{1}{L + 1} \nabla H(\theta).\]</span> When the map <span class="math inline">\(\Phi\)</span> is continuous and <span class="math inline">\(\theta_n \rightarrow \theta_{\infty}\)</span> it follows that <span class="math display">\[\Phi(\theta_n) \rightarrow \Phi(\theta_{\infty}).\]</span> Since <span class="math inline">\(\Phi(\theta_n) = \theta_{n+1} \rightarrow \theta_{\infty}\)</span> we see that <span class="math display">\[\Phi(\theta_{\infty}) = \theta_{\infty}.\]</span> That is, <span class="math inline">\(\theta_{\infty}\)</span> is a <em>fixed point</em> of <span class="math inline">\(\Phi\)</span>. The gradient descent map, <span class="math inline">\(\Phi_{\nabla}\)</span>, has <span class="math inline">\(\theta\)</span> as fixed point if and only if<br />
-<span class="math display">\[\nabla H(\theta) = 0,\]</span> that is, if and only if <span class="math inline">\(\theta\)</span> is a stationary point.</p>
-<p>We can use the observation above to flip the perspective around. Instead of asking if <span class="math inline">\(\theta_n\)</span> converges to a local minimizer for a given algorithm, we can ask if we can find a map <span class="math inline">\(\Phi: \Theta \to \Theta\)</span> whose fixed points are local minimizers. If so, we can ask if the iterates <span class="math inline">\(\Phi^{\circ n}(\theta_0)\)</span> converge. Mathematics is full of <em>fixed point theorems</em> that: i) give conditions under which a map has a fixed point; and ii) in some cases guarantee that the iterates <span class="math inline">\(\Phi^{\circ n}(\theta_0)\)</span> converge. The most prominent such fixed point theorem is <a href="https://en.wikipedia.org/wiki/Banach_fixed-point_theorem">Banach’s fixed point theorem</a>. It states that if <span class="math inline">\(\Phi\)</span> is a <em>contraction</em>, that is, <span class="math display">\[\| \Phi(\theta) - \Phi(\theta&#39;)\| \leq c \|\theta - \theta&#39;\|\]</span> for a constant <span class="math inline">\(c \in [0,1)\)</span> (using any norm), then <span class="math inline">\(\Phi\)</span> has a unique fixed point and <span class="math inline">\(\Phi^{\circ n}(\theta_0)\)</span> converges to that fixed point for any starting point <span class="math inline">\(\theta_0 \in \Theta\)</span>.</p>
-<p>We will show that <span class="math inline">\(\Phi_{\nabla}\)</span> is a contraction under the assumption that the eigenvalues of <span class="math inline">\(D^2H(\theta)\)</span> for all <span class="math inline">\(\theta\)</span> are contained in an interval <span class="math inline">\([l, L]\)</span> with <span class="math inline">\(0 &lt; l \leq L\)</span>. If <span class="math inline">\(\theta, \theta&#39; \in \Theta\)</span> we find by Taylor’s theorem that <span class="math display">\[\nabla H(\theta) = \nabla H(\theta&#39;) + D^2H(\tilde{\theta})(\theta - \theta&#39;)\]</span> for some <span class="math inline">\(\tilde{\theta}\)</span> on the line between <span class="math inline">\(\theta\)</span> and <span class="math inline">\(\theta&#39;\)</span>. For the gradient descent map this gives that</p>
-<span class="math display">\[\begin{align*}
+<h3><span class="header-section-number">7.1.2</span> Maps and fixed points</h3>
+<p>Most algorithms take the form of an <em>update scheme</em>, which from a mathematical
+viewpoint is a map <span class="math inline">\(\Phi : \Theta \to \Theta\)</span> such that
+<span class="math display">\[\theta_n = \Phi(\theta_{n-1}) = \Phi \circ \Phi (\theta_{n-2}) =  \Phi^{\circ n}(\theta_0).\]</span>
+The gradient descent algorithm from Example <a href="algorithms-and-convergence.html#exm:grad-descent">7.1</a> is given
+by the map
+<span class="math display">\[\Phi_{\nabla}(\theta) = \theta - \frac{1}{L + 1} \nabla H(\theta).\]</span>
+When the map <span class="math inline">\(\Phi\)</span> is continuous and <span class="math inline">\(\theta_n \rightarrow \theta_{\infty}\)</span>
+it follows that
+<span class="math display">\[\Phi(\theta_n) \rightarrow \Phi(\theta_{\infty}).\]</span>
+Since <span class="math inline">\(\Phi(\theta_n) = \theta_{n+1} \rightarrow \theta_{\infty}\)</span> we see that
+<span class="math display">\[\Phi(\theta_{\infty}) = \theta_{\infty}.\]</span>
+That is, <span class="math inline">\(\theta_{\infty}\)</span> is a <em>fixed point</em> of <span class="math inline">\(\Phi\)</span>. The gradient descent
+map, <span class="math inline">\(\Phi_{\nabla}\)</span>, has <span class="math inline">\(\theta\)</span> as fixed point if and only if<br />
+<span class="math display">\[\nabla H(\theta) = 0,\]</span>
+that is, if and only if <span class="math inline">\(\theta\)</span> is a stationary point.</p>
+<p>We can use the observation above to flip the perspective around. Instead of asking if <span class="math inline">\(\theta_n\)</span> converges to a
+local minimizer for a given algorithm, we can ask if we can find a map
+<span class="math inline">\(\Phi: \Theta \to \Theta\)</span> whose fixed points are local minimizers. If so, we
+can ask if the iterates <span class="math inline">\(\Phi^{\circ n}(\theta_0)\)</span> converge. Mathematics
+is full of <em>fixed point theorems</em> that: i) give conditions under which a map
+has a fixed point; and ii) in some cases guarantee that the iterates <span class="math inline">\(\Phi^{\circ n}(\theta_0)\)</span>
+converge. The most prominent such fixed point theorem is <a href="https://en.wikipedia.org/wiki/Banach_fixed-point_theorem">Banach’s fixed point
+theorem</a>.
+It states that if <span class="math inline">\(\Phi\)</span> is a <em>contraction</em>, that is,
+<span class="math display">\[\| \Phi(\theta) - \Phi(\theta&#39;)\| \leq c \|\theta - \theta&#39;\|\]</span>
+for a constant <span class="math inline">\(c \in [0,1)\)</span> (using any norm), then <span class="math inline">\(\Phi\)</span> has a unique
+fixed point and <span class="math inline">\(\Phi^{\circ n}(\theta_0)\)</span> converges to that fixed point for
+any starting point <span class="math inline">\(\theta_0 \in \Theta\)</span>.</p>
+<p>We will show that <span class="math inline">\(\Phi_{\nabla}\)</span> is a contraction under the assumption
+that the eigenvalues of <span class="math inline">\(D^2H(\theta)\)</span> for all <span class="math inline">\(\theta\)</span> are contained in an interval <span class="math inline">\([l, L]\)</span>
+with <span class="math inline">\(0 &lt; l \leq L\)</span>. If <span class="math inline">\(\theta, \theta&#39; \in \Theta\)</span> we find by Taylor’s theorem
+that
+<span class="math display">\[\nabla H(\theta) = \nabla H(\theta&#39;) + D^2H(\tilde{\theta})(\theta - \theta&#39;)\]</span>
+for some <span class="math inline">\(\tilde{\theta}\)</span> on the line between <span class="math inline">\(\theta\)</span> and <span class="math inline">\(\theta&#39;\)</span>.
+For the gradient descent map this gives that</p>
+<p><span class="math display">\[\begin{align*}
 \|\Phi_{\nabla}(\theta) - \Phi_{\nabla}(\theta&#39;)\|_2 &amp; = 
 \left\|\theta - \theta&#39; - \frac{1}{L+1}\left(\nabla H(\theta) - \nabla H(\theta&#39;)\right)\right\|_2 \\
 &amp; = 
@@ -332,26 +432,84 @@ H(\theta_n) &amp; =
 &amp; = 
 \left\|\left(I - \frac{1}{L+1} D^2H(\tilde{\theta}) \right) (\theta - \theta&#39;)\right\|_2 \\
 &amp; \leq \left(1 - \frac{l}{L + 1}\right) \|\theta - \theta&#39;\|_2,
-\end{align*}\]</span>
-<p>since the eigenvalues of <span class="math inline">\(I - \frac{1}{L+1} D^2H(\tilde{\theta})\)</span> are all between <span class="math inline">\(1 - L/(L + 1)\)</span> and <span class="math inline">\(1 - l/(L+1)\)</span>. This shows that <span class="math inline">\(\Phi_{\nabla}\)</span> is a contraction with <span class="math inline">\(c = 1 - l/(L + 1) &lt; 1\)</span>, and it provides an alternative proof, via Banach’s fixed point theorem, of convergence of the gradient descent algorithm in Example <a href="algorithms-and-convergence.html#exm:grad-descent">8.1</a> for a <em>strongly</em> convex <span class="math inline">\(H\)</span> with uniformly bounded Hessian.</p>
+\end{align*}\]</span></p>
+<p>since the eigenvalues of <span class="math inline">\(I - \frac{1}{L+1} D^2H(\tilde{\theta})\)</span> are all between
+<span class="math inline">\(1 - L/(L + 1)\)</span> and <span class="math inline">\(1 - l/(L+1)\)</span>. This shows that <span class="math inline">\(\Phi_{\nabla}\)</span> is a
+contraction with <span class="math inline">\(c = 1 - l/(L + 1) &lt; 1\)</span>, and it provides an alternative proof,
+via Banach’s fixed point theorem, of convergence of the gradient descent algorithm
+in Example <a href="algorithms-and-convergence.html#exm:grad-descent">7.1</a> for a <em>strongly</em> convex <span class="math inline">\(H\)</span> with uniformly
+bounded Hessian.</p>
 </div>
 <div id="convergence-rate" class="section level3">
-<h3><span class="header-section-number">8.1.3</span> Convergence rate</h3>
-<p>Banach’s fixed point theorem tells us more. It actually tells us that <span class="math display">\[\|\theta_n - \theta_{\infty}\| = \|\Phi(\theta_{n-1}) - \theta_{\infty}\| \leq c \|\theta_{n-1} - \theta_{\infty}\| \leq c^n \|\theta_0 - \theta_{\infty}\|.\]</span> That is, <span class="math inline">\(\|\theta_n - \theta_{\infty}\| \to 0\)</span> with at least geometric rate <span class="math inline">\(c &lt; 1\)</span>.</p>
-<p>To discuss how fast numerical optimization algorithms converge in general, there is a refined notion of asymptotic convergence <em>order</em> as well as <em>rate</em>. We say that the algorithm has asymptotic convergence order <span class="math inline">\(q\)</span> with asymptotic rate <span class="math inline">\(r\)</span> if <span class="math display">\[\lim_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|^q} = r.\]</span> If the order is <span class="math inline">\(q = 1\)</span> we say that the convergence is linear, if <span class="math inline">\(q = 2\)</span> we say that the convergence is quadratic and so on. If <span class="math display">\[\limsup_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|} = 1\]</span> we say that convergence is sublinear. Clearly, Banach’s fixed point theorem implies a convergence that is at least as fast as linear convergence with asymptotic rate <span class="math inline">\(c\)</span>. If the smallest possible <span class="math inline">\(c\)</span> is close to 1, the convergence may be relatively slow, but it is still linear and thus (asymptotically) faster than sublinear convergence.</p>
-<p>It is, of course, also possible to investigate how <span class="math inline">\(H(\theta_n)\)</span> converges toward a local minimum, or how the gradient, <span class="math inline">\(\nabla H(\theta_n)\)</span>, converges toward zero. We will use the same terminology of order and rate for these sequences.</p>
-<p>For applications it is of interest to estimate order and rate from running the algorithm. One way to do it is by running the algorithm for a large number, <span class="math inline">\(N\)</span>, say, of iterations – ideally so that <span class="math inline">\(\theta_N = \theta_{\infty}\)</span> up to computer precision. If the order is <span class="math inline">\(q\)</span> and the rate is <span class="math inline">\(r\)</span> then <span class="math display">\[\log \|\theta_{n} - \theta_{N}\| \simeq q \log \|\theta_{n-1} - \theta_{N}\| + \log(r)\]</span> for <span class="math inline">\(n = N_0, \ldots, N\)</span> for some <span class="math inline">\(N_0\)</span>. We can use that to estimate <span class="math inline">\(q\)</span> and <span class="math inline">\(\log(r)\)</span> by fitting a linear function by least squares to these log-log transformed norms of errors.</p>
-<p>Alternatively, if <span class="math inline">\(\Phi\)</span> is a contraction for <span class="math inline">\(n \geq N_0\)</span> for some <span class="math inline">\(N_0\)</span>, then for <span class="math inline">\(n \geq N_0\)</span> <span class="math display">\[\|\theta_{n + 1} - \theta_{n}\| \leq r^n \| \theta_1 - \theta_0\|.\]</span> The convergence may be superlinear, but if it linear, the rate is bounded by <span class="math inline">\(r\)</span>. If the inequality is approximately an equality, the convergence is linear and the asymptotic rate is <span class="math inline">\(r\)</span>. Moreover, <span class="math display">\[R_n = \frac{\|\theta_{n + 1} - \theta_{n}\|}{\|\theta_{n} - \theta_{n- 1}\|} \rightarrow r.\]</span> We can monitor and plot the ratio <span class="math inline">\(R_n\)</span> as the algorithm is running, and we can use <span class="math inline">\(R_n\)</span> as an estimate of <span class="math inline">\(r\)</span> for large <span class="math inline">\(n\)</span>. If <span class="math inline">\(R_n \to 1\)</span> the algorithm is called logarithmically convergent (by definition) and it has sublinear convergence. Observing <span class="math inline">\(R_n \rightarrow 0\)</span> is an indication of superlinear convergence, while observing <span class="math inline">\(R_n \rightarrow r \in (0,1)\)</span> is an indication of linear convergence with rate <span class="math inline">\(r\)</span>.</p>
+<h3><span class="header-section-number">7.1.3</span> Convergence rate</h3>
+<p>Banach’s fixed point theorem tells us more. It actually tells us that
+<span class="math display">\[\|\theta_n - \theta_{\infty}\| = \|\Phi(\theta_{n-1}) - \theta_{\infty}\| \leq c \|\theta_{n-1} - \theta_{\infty}\| \leq c^n \|\theta_0 - \theta_{\infty}\|.\]</span>
+That is, <span class="math inline">\(\|\theta_n - \theta_{\infty}\| \to 0\)</span> with at least geometric rate <span class="math inline">\(c &lt; 1\)</span>.</p>
+<p>To discuss how fast numerical optimization algorithms converge in general,
+there is a refined notion of asymptotic convergence <em>order</em> as well as
+<em>rate</em>. We say that the algorithm has asymptotic convergence order <span class="math inline">\(q\)</span> with
+asymptotic rate <span class="math inline">\(r\)</span> if
+<span class="math display">\[\lim_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|^q} = r.\]</span>
+If the order is <span class="math inline">\(q = 1\)</span> we say that the convergence is linear, if <span class="math inline">\(q = 2\)</span>
+we say that the convergence is quadratic and so on. If
+<span class="math display">\[\limsup_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|} = 1\]</span>
+we say that convergence is sublinear. Clearly,
+Banach’s fixed point theorem implies a convergence that is at least as fast as
+linear convergence with asymptotic rate <span class="math inline">\(c\)</span>. If the smallest possible <span class="math inline">\(c\)</span>
+is close to 1, the convergence may be relatively slow, but it is still
+linear and thus (asymptotically) faster than sublinear convergence.</p>
+<p>It is, of course, also possible to investigate how <span class="math inline">\(H(\theta_n)\)</span>
+converges toward a local minimum, or how the gradient, <span class="math inline">\(\nabla H(\theta_n)\)</span>,
+converges toward zero. We will use the same terminology of order
+and rate for these sequences.</p>
+<p>For applications it is of interest
+to estimate order and rate from running the algorithm. One way to do it is by running the algorithm
+for a large number, <span class="math inline">\(N\)</span>, say, of iterations – ideally so that
+<span class="math inline">\(\theta_N = \theta_{\infty}\)</span> up to computer precision. If the order is <span class="math inline">\(q\)</span> and the rate is <span class="math inline">\(r\)</span> then
+<span class="math display">\[\log \|\theta_{n} - \theta_{N}\| \simeq q \log \|\theta_{n-1} - \theta_{N}\| + \log(r)\]</span>
+for <span class="math inline">\(n = N_0, \ldots, N\)</span> for some <span class="math inline">\(N_0\)</span>. We can use that to estimate <span class="math inline">\(q\)</span> and <span class="math inline">\(\log(r)\)</span>
+by fitting a linear function by least squares to these log-log transformed norms of errors.</p>
+<p>Alternatively, if <span class="math inline">\(\Phi\)</span> is
+a contraction for <span class="math inline">\(n \geq N_0\)</span> for some <span class="math inline">\(N_0\)</span>, then for <span class="math inline">\(n \geq N_0\)</span>
+<span class="math display">\[\|\theta_{n + 1} - \theta_{n}\| \leq r^n \| \theta_1 - \theta_0\|.\]</span>
+The convergence may be superlinear, but if it linear, the rate is bounded by <span class="math inline">\(r\)</span>.
+If the inequality is approximately an equality, the convergence
+is linear and the asymptotic rate is <span class="math inline">\(r\)</span>. Moreover,
+<span class="math display">\[R_n = \frac{\|\theta_{n + 1} - \theta_{n}\|}{\|\theta_{n} - \theta_{n- 1}\|} \rightarrow r.\]</span>
+We can monitor and plot the ratio <span class="math inline">\(R_n\)</span> as the algorithm is running, and we can
+use <span class="math inline">\(R_n\)</span> as an estimate of <span class="math inline">\(r\)</span> for large <span class="math inline">\(n\)</span>. If <span class="math inline">\(R_n \to 1\)</span>
+the algorithm is called logarithmically convergent (by definition) and it has sublinear convergence.
+Observing <span class="math inline">\(R_n \rightarrow 0\)</span> is an indication of superlinear convergence,
+while observing <span class="math inline">\(R_n \rightarrow r \in (0,1)\)</span> is an indication of linear convergence with rate <span class="math inline">\(r\)</span>.</p>
 <p>We can also consider<br />
-<span class="math display">\[\log \|\theta_{n + 1} - \theta_{n}\| \simeq n \log(r) + d,\]</span> and we can plot and monitor <span class="math inline">\(\log \|\theta_{n + 1} - \theta_{n}\|\)</span> as the algorithm is running. It should decay approximately linearly as a function of <span class="math inline">\(n\)</span> with slope <span class="math inline">\(\log(r) &lt; 0\)</span> that can be estimated by least squares. If the algorithm has sublinear convergence we will see this as a slower-than-linear decay.</p>
-<p>As mentioned above, we can monitor the convergence of the sequences <span class="math inline">\(H(\theta_n)\)</span> or <span class="math inline">\(\nabla H(\theta_n)\)</span>, instead of <span class="math inline">\(\theta_n\)</span>, using the same techniques as described for <span class="math inline">\(\theta_n\)</span>. Here <span class="math inline">\(\nabla H(\theta_n)\)</span> is particularly appealing as we know that the limit should be <span class="math inline">\(0\)</span>. Thus we can directly monitor <span class="math inline">\(\log \| \nabla H(\theta_n) \|\)</span> as a function of <span class="math inline">\(n\)</span>, plot it against <span class="math inline">\(\log \| \nabla H(\theta_{n-1}) \|\)</span> and estimate asymptotic order and rate.</p>
+<span class="math display">\[\log \|\theta_{n + 1} - \theta_{n}\| \simeq n \log(r) + d,\]</span>
+and we can plot and monitor <span class="math inline">\(\log \|\theta_{n + 1} - \theta_{n}\|\)</span> as the algorithm is running.
+It should decay approximately linearly as a function of <span class="math inline">\(n\)</span> with slope <span class="math inline">\(\log(r) &lt; 0\)</span>
+that can be estimated by least squares. If the algorithm has sublinear convergence
+we will see this as a slower-than-linear decay.</p>
+<p>As mentioned above, we can monitor the convergence of the sequences
+<span class="math inline">\(H(\theta_n)\)</span> or <span class="math inline">\(\nabla H(\theta_n)\)</span>, instead of <span class="math inline">\(\theta_n\)</span>, using the
+same techniques as described for <span class="math inline">\(\theta_n\)</span>. Here <span class="math inline">\(\nabla H(\theta_n)\)</span> is particularly appealing
+as we know that the limit should be <span class="math inline">\(0\)</span>. Thus we can directly monitor
+<span class="math inline">\(\log \| \nabla H(\theta_n) \|\)</span> as a function of <span class="math inline">\(n\)</span>, plot it against
+<span class="math inline">\(\log \| \nabla H(\theta_{n-1}) \|\)</span> and estimate asymptotic order and rate.</p>
 </div>
 <div id="stopping-criteria" class="section level3">
-<h3><span class="header-section-number">8.1.4</span> Stopping criteria</h3>
-<p>All the stopping criteria considered here depend on choosing a <em>tolerance parameter</em> <span class="math inline">\(\varepsilon &gt; 0\)</span>.</p>
-<p><strong>Small relative descent:</strong> Stop when <span class="math display">\[H(\theta_{n-1}) - H(\theta_n) \leq \varepsilon (H(\theta_n) + \varepsilon).\]</span> The reason for this formulation, and in particular the added <span class="math inline">\(\varepsilon\)</span> on the right hand side, is for the criterion to be well behaved even if <span class="math inline">\(H(\theta_n)\)</span> comes close to zero.</p>
-<p><strong>Small gradient:</strong> Stop when <span class="math display">\[\|\nabla H(\theta_n)\| \leq \varepsilon.\]</span> Note that many different norms, <span class="math inline">\(\|\cdot\|\)</span>, may be used. If the coordinates of the gradient generally are of different orders of magnitude a norm that rescales the coordinates can be chosen.</p>
-<p><strong>Small relative change:</strong> Stop when <span class="math display">\[\|\theta_n - \theta_{n-1}\| \leq \varepsilon(\|\theta_n\| + \varepsilon).\]</span></p>
+<h3><span class="header-section-number">7.1.4</span> Stopping criteria</h3>
+<p>All the stopping criteria considered here depend on choosing a <em>tolerance parameter</em>
+<span class="math inline">\(\varepsilon &gt; 0\)</span>.</p>
+<p><strong>Small relative descent:</strong> Stop when
+<span class="math display">\[H(\theta_{n-1}) - H(\theta_n) \leq \varepsilon (H(\theta_n) + \varepsilon).\]</span>
+The reason for this formulation, and in particular the added <span class="math inline">\(\varepsilon\)</span>
+on the right hand side, is for the criterion to be well behaved even if <span class="math inline">\(H(\theta_n)\)</span>
+comes close to zero.</p>
+<p><strong>Small gradient:</strong> Stop when
+<span class="math display">\[\|\nabla H(\theta_n)\| \leq \varepsilon.\]</span>
+Note that many different norms, <span class="math inline">\(\|\cdot\|\)</span>, may be used. If the coordinates
+of the gradient generally are of different orders of magnitude a norm
+that rescales the coordinates can be chosen.</p>
+<p><strong>Small relative change:</strong> Stop when
+<span class="math display">\[\|\theta_n - \theta_{n-1}\| \leq \varepsilon(\|\theta_n\| + \varepsilon).\]</span></p>
 </div>
 </div>
             </section>
@@ -380,7 +538,7 @@ gitbook.start({
 "google": false,
 "linkedin": false,
 "weibo": false,
-"instapper": false,
+"instapaper": false,
 "vk": false,
 "all": ["facebook", "google", "twitter", "linkedin", "weibo", "instapaper"]
 },
@@ -390,6 +548,10 @@ gitbook.start({
 "size": 2
 },
 "edit": {
+"link": null,
+"text": null
+},
+"history": {
 "link": null,
 "text": null
 },
@@ -406,10 +568,11 @@ gitbook.start({
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    var src = "";
-    if (src === "" || src === "true") src = "https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML";
-    if (location.protocol !== "file:" && /^https?:/.test(src))
-      src = src.replace(/^https?:/, '');
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
     script.src = src;
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
