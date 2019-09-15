@@ -19,8 +19,8 @@ approximation in terms of properties of the function to be integrated. Such
 bounds provide a guarantee on what the error at most can be. It 
 is generally impossible to provide such a guarantee when using Monte 
 Carlo integration because the computed approximation is by construction 
-random. Thus the error analysis and assessment of the accuracy of $\hat{\mu}_{\textrm{MC}}$
-as an approximation of $\mu$ has to be probabilistic. 
+(pseudo)random. Thus the error analysis and assessment of the accuracy of 
+$\hat{\mu}_{\textrm{MC}}$ as an approximation of $\mu$ will be probabilistic. 
 
 There are two main approaches. We can use approximations of the distribution
 of $\hat{\mu}_{\textrm{MC}}$ to assess the accuracy by computing a confidence 
@@ -71,8 +71,9 @@ x <- gammasim(1000, 8)
 nn <- seq_along(x)
 muhat <- cumsum(x) / nn; sigmahat <- sd(x)
 qplot(nn, muhat) + 
-  geom_ribbon(ymin = muhat - 1.96 * sigmahat / sqrt(nn), 
-              ymax = muhat + 1.96 * sigmahat / sqrt(nn), 
+  geom_ribbon(aes(
+    ymin = muhat - 1.96 * sigmahat / sqrt(nn), 
+    ymax = muhat + 1.96 * sigmahat / sqrt(nn)), 
               fill = "gray") + 
   geom_line() + 
   geom_point()
@@ -431,8 +432,7 @@ simNet <- function(Aup, p) {
 }
 ```
 
-It is fairly fast to sample even a large number of random 
-graphs this way. 
+It is fairly fast to sample even a large number of random graphs this way. 
 
 ```{r network_bench, dependson = c("network_simNet", "network_adj")}
 Aup <- A
@@ -455,12 +455,11 @@ disconAB <- function(A) {
     Apow <- Apow %*% A
     k <- k + 1    
   }
-  Apow[1, 10] == 0  ## TRUE if A and B not connected
+  Apow[1, 10] == 0  ## TRUE if 1 and 10 are not connected
 }
 ```
 
-Estimating probability of nodes 1 and 10 being disconnected using  
-Monte Carlo integration. 
+Estimating probability of nodes 1 and 10 being disconnected using Monte Carlo integration. 
 
 ```{r network_sim, dependson=c("network_connect", "network_simNet", "network_bench")}
 seed <- 27092016
