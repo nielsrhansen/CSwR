@@ -327,9 +327,7 @@ The normalization constant</p>
 <p>is given in terms of the <a href="http://mathworld.wolfram.com/ModifiedBesselFunctionoftheFirstKind.html">modified Bessel function</a>
 <span class="math inline">\(I_0\)</span>. We can easily compute and plot the density using R’s <code>besselI</code> implementation of
 the modified Bessel function.</p>
-<p>(ref:vMdenscap) Density for the von Mises distribution with parameters
-<span class="math inline">\(\kappa = 1\)</span> and <span class="math inline">\(\nu = 0\)</span> (black), <span class="math inline">\(\kappa = 2\)</span> and <span class="math inline">\(\nu = 1\)</span> (red),
-and <span class="math inline">\(\kappa = 0.5\)</span> and <span class="math inline">\(\nu = - 1.5\)</span> (blue).</p>
+
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1">phi &lt;-<span class="st"> </span><span class="cf">function</span>(k) <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi <span class="op">*</span><span class="st"> </span><span class="kw">besselI</span>(k, <span class="dv">0</span>)</a>
 <a class="sourceLine" id="cb11-2" data-line-number="2"><span class="kw">curve</span>(<span class="kw">exp</span>(<span class="kw">cos</span>(x)) <span class="op">/</span><span class="st"> </span><span class="kw">phi</span>(<span class="dv">1</span>), <span class="op">-</span>pi, pi, </a>
 <a class="sourceLine" id="cb11-3" data-line-number="3">      <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">ylab =</span> <span class="st">&quot;density&quot;</span>, <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="fl">0.52</span>))</a>
@@ -338,9 +336,9 @@ and <span class="math inline">\(\kappa = 0.5\)</span> and <span class="math inli
 <a class="sourceLine" id="cb11-6" data-line-number="6"><span class="kw">curve</span>(<span class="kw">exp</span>(<span class="fl">0.5</span> <span class="op">*</span><span class="st"> </span><span class="kw">cos</span>(x <span class="op">+</span><span class="st"> </span><span class="fl">1.5</span>)) <span class="op">/</span><span class="st"> </span><span class="kw">phi</span>(<span class="fl">0.5</span>), <span class="op">-</span>pi, pi, </a>
 <a class="sourceLine" id="cb11-7" data-line-number="7">      <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:vonMisesDens"></span>
-<img src="CSwR_files/figure-html/vonMisesDens-1.png" alt="(ref:vMdenscap)" width="70%" />
+<img src="CSwR_files/figure-html/vonMisesDens-1.png" alt="Density for the von Mises distribution with parameters \(\kappa = 1\) and \(\nu = 0\) (black), \(\kappa = 2\) and \(\nu = 1\) (red), and \(\kappa = 0.5\) and \(\nu = - 1.5\) (blue)." width="70%" />
 <p class="caption">
-Figure 1.7: (ref:vMdenscap)
+Figure 1.7: Density for the von Mises distribution with parameters <span class="math inline">\(\kappa = 1\)</span> and <span class="math inline">\(\nu = 0\)</span> (black), <span class="math inline">\(\kappa = 2\)</span> and <span class="math inline">\(\nu = 1\)</span> (red), and <span class="math inline">\(\kappa = 0.5\)</span> and <span class="math inline">\(\nu = - 1.5\)</span> (blue).
 </p>
 </div>
 <p>It is not entirely obvious how we should go about simulating data points
@@ -356,18 +354,16 @@ unit spheres.</p>
 <a class="sourceLine" id="cb12-2" data-line-number="2">xy &lt;-<span class="st"> </span><span class="kw">rmovMF</span>(<span class="dv">500</span>, <span class="fl">0.5</span> <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="kw">cos</span>(<span class="op">-</span><span class="fl">1.5</span>), <span class="kw">sin</span>(<span class="op">-</span><span class="fl">1.5</span>)))</a>
 <a class="sourceLine" id="cb12-3" data-line-number="3"><span class="co">## rmovMF represents samples as elements on the unit circle</span></a>
 <a class="sourceLine" id="cb12-4" data-line-number="4">x &lt;-<span class="st"> </span><span class="kw">acos</span>(xy[, <span class="dv">1</span>]) <span class="op">*</span><span class="st"> </span><span class="kw">sign</span>(xy[, <span class="dv">2</span>])</a></code></pre></div>
-<p>(ref:vMdatacap) Histogram of 500 simulated data points from a von Mises distribution with
-parameters <span class="math inline">\(\kappa = 0.5\)</span> and <span class="math inline">\(\nu = - 1.5\)</span>. A smoothed density estimate (red)
-and the true density (blue) are added to the plot.</p>
+
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">15</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)</a>
 <a class="sourceLine" id="cb13-2" data-line-number="2"><span class="kw">rug</span>(x)</a>
 <a class="sourceLine" id="cb13-3" data-line-number="3"><span class="kw">density</span>(x, <span class="dt">bw =</span> <span class="st">&quot;SJ&quot;</span>, <span class="dt">cut =</span> <span class="dv">0</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">lines</span>(<span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>)</a>
 <a class="sourceLine" id="cb13-4" data-line-number="4"><span class="kw">curve</span>(<span class="kw">exp</span>(<span class="fl">0.5</span> <span class="op">*</span><span class="st"> </span><span class="kw">cos</span>(x <span class="op">+</span><span class="st"> </span><span class="fl">1.5</span>)) <span class="op">/</span><span class="st"> </span><span class="kw">phi</span>(<span class="fl">0.5</span>), <span class="op">-</span>pi, pi, </a>
 <a class="sourceLine" id="cb13-5" data-line-number="5">      <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:vMdata"></span>
-<img src="CSwR_files/figure-html/vMdata-1.png" alt="(ref:vMdatacap)" width="70%" />
+<img src="CSwR_files/figure-html/vMdata-1.png" alt="Histogram of 500 simulated data points from a von Mises distribution with parameters \(\kappa = 0.5\) and \(\nu = - 1.5\). A smoothed density estimate (red) and the true density (blue) are added to the plot." width="70%" />
 <p class="caption">
-Figure 1.8: (ref:vMdatacap)
+Figure 1.8: Histogram of 500 simulated data points from a von Mises distribution with parameters <span class="math inline">\(\kappa = 0.5\)</span> and <span class="math inline">\(\nu = - 1.5\)</span>. A smoothed density estimate (red) and the true density (blue) are added to the plot.
 </p>
 </div>
 </div>
@@ -405,10 +401,7 @@ on the unit circle as reference
 measure, thus the need for the <span class="math inline">\(2\pi\)</span> division if we want the result to be
 comparable to histograms and density estimates that use Lebesgue measure on
 <span class="math inline">\((-\pi, \pi]\)</span> as the reference measure.</p>
-<p>(ref:mixvMdatacap) Histograms of 500 simulated data points from a mixture
-of two von Mises distributions using either the explicit construction of the mixture
-(left) or the functionality in <code>rmovMF</code> to simulate mixtures directly (right).
-A smoothed density estimate (red) and the true density (blue) are added to the plot.</p>
+
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">15</span>), </a>
 <a class="sourceLine" id="cb17-2" data-line-number="2">     <span class="dt">prob =</span> <span class="ot">TRUE</span>, <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="fl">0.5</span>))</a>
 <a class="sourceLine" id="cb17-3" data-line-number="3"><span class="kw">rug</span>(x)</a>
@@ -420,9 +413,9 @@ A smoothed density estimate (red) and the true density (blue) are added to the p
 <a class="sourceLine" id="cb17-9" data-line-number="9"><span class="kw">density</span>(x_alt, <span class="dt">bw =</span> <span class="st">&quot;SJ&quot;</span>, <span class="dt">cut =</span> <span class="dv">0</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">lines</span>(<span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>)</a>
 <a class="sourceLine" id="cb17-10" data-line-number="10"><span class="kw">curve</span>(<span class="kw">dvM</span>(x, theta, alpha), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:mixvMdata"></span>
-<img src="CSwR_files/figure-html/mixvMdata-1.png" alt="(ref:mixvMdatacap)" width="49%" /><img src="CSwR_files/figure-html/mixvMdata-2.png" alt="(ref:mixvMdatacap)" width="49%" />
+<img src="CSwR_files/figure-html/mixvMdata-1.png" alt="Histograms of 500 simulated data points from a mixture of two von Mises distributions using either the explicit construction of the mixture (left) or the functionality in rmovMF to simulate mixtures directly (right). A smoothed density estimate (red) and the true density (blue) are added to the plot." width="49%" /><img src="CSwR_files/figure-html/mixvMdata-2.png" alt="Histograms of 500 simulated data points from a mixture of two von Mises distributions using either the explicit construction of the mixture (left) or the functionality in rmovMF to simulate mixtures directly (right). A smoothed density estimate (red) and the true density (blue) are added to the plot." width="49%" />
 <p class="caption">
-Figure 1.9: (ref:mixvMdatacap)
+Figure 1.9: Histograms of 500 simulated data points from a mixture of two von Mises distributions using either the explicit construction of the mixture (left) or the functionality in <code>rmovMF</code> to simulate mixtures directly (right). A smoothed density estimate (red) and the true density (blue) are added to the plot.
 </p>
 </div>
 <p>Simulation of data from a distribution finds many applications. The technique
