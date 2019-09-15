@@ -41,11 +41,9 @@ Nuuk_year <- group_by(Nuuk, Year) %>%
 n <- nrow(Nuuk_year)
 ```
 
-(ref:NuukSmooth) Nuuk average yearly temperature in degrees Celsius (left) 
-smoothed using loess (black), a degree 10 polynomial (red) and a smooth spline 
-(purple). Nuuk annual temperature cycles (right) smoothed using a spline. 
+(ref:NuukSmooth) Nuuk average yearly temperature in degrees Celsius (left) smoothed using loess (black), a degree 10 polynomial (red) and a smooth spline (purple). Nuuk annual temperature cycles (right) smoothed using a spline. 
 
-```{r NuukSmooth, dependson="NuukData", message=FALSE, fig.cap="(ref:NuukSmooth)", fig.show="hold", out.width="49%"}
+```{r NuukSmooth, dependson="NuukData", message=FALSE, fig.cap='(ref:NuukSmooth)', fig.show="hold", out.width="49%"}
 p_Nuuk <- ggplot(Nuuk_year, aes(x = Year, y = Temperature)) + geom_point()
 p_Nuuk + geom_smooth(se = FALSE) + 
   geom_smooth(method = "lm", formula = y ~ poly(x, 10), 
@@ -77,7 +75,7 @@ ggplot(Nuuk, aes(x = Month, y = Temperature)) +
 
 ## Nearest neighbor smoothers
 
-One of the most basic ideas on smoothing bivariate data is to do use a 
+One of the most basic ideas on smoothing bivariate data is to use a 
 running mean or moving average. This is particularly sensible when the 
 $x$-values are equidistant, e.g. when the observations constitute
 a time series such as the Nuuk temperature data. The running mean is 
@@ -97,15 +95,15 @@ In this chapter we focus exclusively on $x$ being real valued with the
 ordinary metric used to define the nearest neighbors. The total ordering of the 
 real line adds a couple of extra possibilities to the definition of $N_i$. 
 When $k$ is odd, the *symmetric* nearest neighbor smoother takes $N_i$ to consist
-of $x_i$ together with the $(k-1)/2$ smaller $x_j$s closest to
-$x_i$ and the $(k-1)/2$ larger $x_j$s closest to $x_i$. It is 
+of $x_i$ together with the $(k-1)/2$ smaller $x_j$-s closest to
+$x_i$ and the $(k-1)/2$ larger $x_j$-s closest to $x_i$. It is 
 also possible to choose a one-sided smoother with $N_i$ corresponding 
-to the $k$ smaller $x_j$s closest to $x_i$, in which case the smoother would 
+to the $k$ smaller $x_j$-s closest to $x_i$, in which case the smoother would 
 be known as a causal filter. 
 
 The symmetric definition of neighbors makes it very easy 
 to handle the neighbors computationally; we don't need to compute and keep 
-track of the $n^2$ pairwise distances between the $x_i$s, we only need 
+track of the $n^2$ pairwise distances between the $x_i$-s, we only need 
 to sort data according to the $x$-values. Once data is sorted,
 $$N_i = \{i - (k - 1) / 2, i - (k - 1) / 2 + 1, \ldots, i - 1 , i, i + 1, \ldots,   i + (k - 1) / 2\}$$
 for $(k - 1) / 2 \leq i \leq n - (k - 1) / 2$. The symmetric $k$ nearest neighbor 
@@ -158,13 +156,13 @@ the code triggers a warning by R, but in this case we get what we want.
 
 ```{r S-NN-top, echo=2, dependson="S-NN", eval=FALSE}
 old_options <- options(digits = 1)
-S[1:20, 1:20]
+S
 options(digits = old_options$digits)
 ```
 
 ```{r S-NN-top-actual, echo=FALSE, dependson="S-NN"}
 library(Matrix)
-image(Matrix(S[1:20, 1:20]), sub = "")
+image(Matrix(S), sub = "")
 ```
 
 We can use the matrix to smooth the annual average temperature in Nuuk using a 
@@ -186,7 +184,7 @@ p_Nuuk + geom_line(aes(y = f_hat), color = "blue")
 
 The running mean smoother fulfills the following identity
 $$\hat{f}_{i+1} = \hat{f}_{i} - y_{i - (k-1)/2} + y_{i + (k + 1)/2},$$
-which can be used for much more efficient implementation 
+which can be used for a much more efficient implementation 
 than the matrix-vector multiplication. It should be emphasized 
 again that the identity above and the implementation below 
 assume that data is sorted according to $x$-values. 
@@ -196,7 +194,7 @@ assume that data is sorted according to $x$-values.
 runMean <- function(y, k) {
   n <- length(y)
   m <- floor((k - 1) / 2)
-  k <- 2 * m + 1
+  k <- 2 * m + 1           # Ensures k to be odd and m = (k-1) / 2
   y <- y / k
   s <- rep(NA, n)
   s[m + 1] <- sum(y[1:k])
@@ -206,9 +204,7 @@ runMean <- function(y, k) {
 }
 ```
 
-(ref:NN-smooth) Annual average temperature in Nuuk smoothed using the running 
-mean with $k = 11$ neighbors. This time using a different implementation than 
-in Figure \@ref(fig:Nuuk-NN-plot).
+(ref:NN-smooth) Annual average temperature in Nuuk smoothed using the running mean with $k = 11$ neighbors. This time using a different implementation than in Figure \@ref(fig:Nuuk-NN-plot).
 
 ```{r Nuuk-NN-plot2, dependson=c("NuukSmooth", "runMean"), fig.cap = "(ref:NN-smooth)", warning=FALSE}
 p_Nuuk + geom_line(aes(y = runMean(Nuuk_year$Temperature, 11)), color = "blue")
@@ -227,31 +223,31 @@ range(f_hat_filter - runMean(Nuuk_year$Temperature, 11), na.rm = TRUE)
 Note that `filter` uses the same boundary convention as used in `runMean`. 
 
 A benchmark comparison between matrix-vector multiplication, `runMean` and `filter` 
-gives the following table with median run times in microseconds. 
+gives the following table with median run time in microseconds. 
 
 ```{r runMeanBench, dependson="runMean", echo=FALSE, warning=FALSE}
-y <- rnorm(4196)
+y <- rnorm(4096)
 w <- c(rep(1/11, 11), rep(0, 512 - 10))
 S1 <- matrix(w, 512 - 10, 512, byrow = TRUE)
 w <- c(rep(1/11, 11), rep(0, 1024 - 10))
 S2 <- matrix(w, 1024 - 10, 1024, byrow = TRUE)
 w <- c(rep(1/11, 11), rep(0, 2048 - 10))
 S3 <- matrix(w, 2048 - 10, 2048, byrow = TRUE)
-w <- c(rep(1/11, 11), rep(0, 4196 - 10))
-S4 <- matrix(w, 4196 - 10, 4196, byrow = TRUE)
+w <- c(rep(1/11, 11), rep(0, 4096 - 10))
+S4 <- matrix(w, 4096 - 10, 4096, byrow = TRUE)
 tmp <- microbenchmark(
   S1 %*% y[1:512],
   S2 %*% y[1:1024],
   S3 %*% y[1:2048],
-  S4 %*% y[1:4196],
+  S4 %*% y[1:4096],
   runMean(y[1:512], k = 11),
   runMean(y[1:1024], k = 11),
   runMean(y[1:2048], k = 11),
-  runMean(y[1:4196], k = 11),
+  runMean(y[1:4096], k = 11),
   stats::filter(y[1:512], rep(1/11, 11)),
   stats::filter(y[1:1024], rep(1/11, 11)),
   stats::filter(y[1:2048], rep(1/11, 11)),
-  stats::filter(y[1:4196], rep(1/11, 11))
+  stats::filter(y[1:4096], rep(1/11, 11))
   )
 summary(tmp)[, c(1, 5)]
 ```
@@ -299,20 +295,11 @@ Using the definition above, we get that the *leave-one-out cross-validation*
 squared error criterion becomes 
 $$\mathrm{LOOCV} = \sum_{i=1}^n (y_i - \hat{f}^{-i}_i)^2 = 
 \sum_{i=1}^n \left(\frac{y_i - \hat{f}_i}{1 - S_{ii}}\right)^2.$$
-What is important to observe from the identity above is that LOOCV
-can be computed without 
-actually computing all the $\hat{f}^{-i}_i$. 
+The important observation from the identity above is that LOOCV
+can be computed without actually computing all the $\hat{f}^{-i}_i$. 
 
-In some cases the diagonal elements, $S_{ii}$, of the smoother matrix 
-are not computed as part of computing $\hat{f}$, but it is possible to 
-compute the trace 
-$$\mathrm{df} = \mathrm{trace}(\mathbf{S}) = \sum_{i=1}^n S_{ii}$$
-easily. If we then replace $S_{ii}$ in the formula by $\mathrm{df} / n$ we 
-get the *generalized* cross-validation criterion
-$$\mathrm{GCV} = \sum_{i=1}^n \left(\frac{y_i - \hat{f}_i}{1 - \mathrm{df} / n}\right)^2.$$
-
-For the running mean, LOOCV and GCV are identical as all diagonal elements of 
-the smoother matrix are identical. We disregard boundary values, and to get 
+For the running mean, all diagonal elements of the smoother matrix are identical. 
+We disregard boundary values (with the `NA` value), so to get 
 a comparable quantity across different choices of $k$ we use `mean` instead of 
 `sum` in the implementation. 
 
@@ -331,19 +318,148 @@ qplot(k, CV) + geom_line() + geom_vline(xintercept = k_opt, color = "red")
 ```
 
 The optimal choice of $k$ is `r k_opt`, but the LOOCV criterion jumps quite a
-lot up and down with changing neighbor size, and $k = 25$ gives a rather
-low value as well.
+lot up and down with changing neighbor size, and $k = 9$ as well as $k = 25$ 
+give a rather low values as well.
 
-```{r Nuuk-NN-plot3, dependson=c("NuukData", "runMean", "Nuuk-running-loocv"), fig.cap = "The $k$-nearest neighbor smoother with the optimal choice of $k$ based on LOOCV (blue) and with $k = 25$ (red).", warning=FALSE}
-p_Nuuk + geom_line(aes(y = runMean(Nuuk_year$Temperature, 25)), color = "red") +
-   geom_line(aes(y = runMean(Nuuk_year$Temperature, k_opt)), color = "blue")
+```{r Nuuk-NN-plot3, dependson=c("NuukData", "runMean", "Nuuk-running-loocv"), fig.cap = "The $k$-nearest neighbor smoother with the optimal choice of $k$ based on LOOCV (blue) and with $k = 9$ (red) and $k = 25$ (purple).", warning=FALSE}
+p_Nuuk + 
+  geom_line(aes(y = runMean(Nuuk_year$Temperature, 9)), color = "red") +
+  geom_line(aes(y = runMean(Nuuk_year$Temperature, k_opt)), color = "blue") +
+  geom_line(aes(y = runMean(Nuuk_year$Temperature, 25)), color = "purple")
 ```
 
-
-
-
-
 ## Kernel methods
+
+### Nadaraya–Watson kernel smoothing
+
+The section before introduced the basic idea of nearest neighbor smoothing
+using a fixed number of neighbors. A very similar idea is to use a fixed 
+neighborhood, $B_i$, say, around $x_i$. This would lead to the estimator 
+$$\hat{f}_i = \frac{\sum_{j} y_j 1_{B_i}(x_j)}{\sum_{j} 1_{B_i}(x_j)},$$
+which is simply the average of the $y$-s for which the corresponding $x$-s 
+fall in the neighborhood $B_i$ of $x_i$. Note that contrary to the nearest 
+neighbor estimator, the denominator now also depends on the $x$-s. 
+
+In a metric space a natural 
+choice of $B_i$ is the ball, $B(x_i, h)$, around $x_i$ with radius $h$. 
+In $\mathbb{R}$ with the usual metric (or even $\mathbb{R}^p$ equipped with any 
+translation invariant metric) we have that  
+$$1_{B(x_i, h)}(x) = 1_{B(0, 1)}\left(\frac{x - x_i}{h}\right),$$
+thus since $B(0, 1) = [-1, 1]$ in $\mathbb{R}$
+$$\hat{f}_i = \frac{\sum_{j} y_j 1_{[-1, 1]}\left(\frac{x_j - x_i}{h}\right)}{\sum_{l} 1_{[-1, 1]}\left(\frac{x_l - x_i}{h}\right)}.$$
+This nonparametric estimator of the conditional expectation $E(Y \mid X = x)$ 
+is closely related to the kernel density estimator with the 
+rectangular kernel, see Section \@ref(kernel-density), and just as for this 
+estimator there is a natural generalization allowing for arbitrary kernels 
+instead of the indicator function $1_{[-1, 1]}$. 
+
+With $K : \mathbb{R} \mapsto \mathbb{R}$ a fixed kernel the corresponding
+kernel smoother with bandwidth $h$ becomes 
+$$\hat{f}_i = \frac{\sum_{j} y_j K\left(\frac{x_j - x_i}{h}\right)}{\sum_{l} K\left(\frac{x_l - x_i}{h}\right)}.$$
+This smoother is known as the Nadaraya–Watson kernel smoother or Nadaraya–Watson 
+estimator. See Exercise \@ref(exr:NW) for an additional 
+perspective based on bivariate kernel density estimation. 
+
+The Nadaraya–Watson kernel smoother can be implemented in much the same way 
+as the kernel density estimator, and the run time will inevitably scale 
+like $O(n^2)$ unless we exploit special properties of the kernel or use 
+approximation techniques such as binning. In this section we will focus on 
+implementing bandwidth selection rather than the kernel smoother itself. 
+The basic kernel smoothing computation is also implemented in the 
+`ksmooth` function from the stats package. 
+
+```{r ksmooth-Nuuk, dependson=c("NuukData", "NuulSmooth"), fig.cap = "Nadaraya–Watson kernel smoother of the annual average temperature in Nuuk computed using `ksmooth` with the Gaussian kernel and bandwidth 10."}
+f_hat <- ksmooth(Nuuk_year$Year, Nuuk_year$Temperature, 
+                 kernel = "normal",
+                 bandwidth = 10, 
+                 x.points = Nuuk_year$Year)
+p_Nuuk + geom_line(aes(y = f_hat$y), color = "blue")
+```
+
+The kernel smoother is clearly a linear smoother, and we will implement its 
+computation and the bandwidth selection using LOOCV by direct computation 
+of the the smoother matrix $\mathbf{S}$, which is given by 
+$$S_{ij} = \frac{K\left(\frac{x_j - x_i}{h}\right)}{\sum_{l} K\left(\frac{x_l - x_i}{h}\right)}.$$
+The rows sum to 1 by construction, and the diagonal elements are 
+$$S_{ii} = \frac{K(0)}{\sum_{l} K\left(\frac{x_l - x_i}{h}\right)}.$$
+The computation of $\mathbf{S}$ for the Gaussian kernel is implemented 
+using `outer` and `rumSums`. 
+
+```{r smooth-Nuuk, dependson="NuukData", fig.cap = "Nadaraya–Watson kernel smoother of the annual average temperature in Nuuk computed using the smoother matrix and the Gaussian kernel with bandwidth 10."}
+kern <- function(x) exp(- x^2 / 2)  ## Gaussian kernel
+Kij <- outer(Nuuk_year$Year, Nuuk_year$Year, function(x, y) kern((x - y) / 10))
+S <- Kij / rowSums(Kij)
+p_Nuuk + geom_line(aes(y = S %*% Nuuk_year$Temperature), color = "blue")
+```
+
+The implementation above will work with any kernel and any sequence of $x$-s. 
+In this example, the kernel is symmetric and the $x$-s are equidistant. Exercise
+\@ref(exr:Sdiag) explores how to exploit this in the computation of the 
+smoother matrix as well as the diagonal elements of the smoother matrix. 
+
+The smoother computed using `ksmooth` with bandwidth 10,
+as shown in Figure \@ref(fig:ksmooth-Nuuk), is different from the smoother 
+computed directly from the smoother matrix, see Figure \@ref(fig:smooth-Nuuk). 
+Though both computations use the Gaussian kernel and allegedly a bandwidth of 10,
+the resulting smoothers differ because `ksmooth` internally rescales the 
+bandwidth. The rescaling amounts to multiplying $h$ by the factor 0.3706506,
+which will make the kernel have quartiles in $\pm 0.25 h$ (see also `?ksmooth`). 
+
+The LOOCV computation is implemented as a function that computes the smoother 
+matrix and the corresponding LOOCV value as a function of the bandwidth. 
+For comparison with previous implementations the mean is computed instead of the 
+sum. 
+
+```{r LOOCV-kernel}
+loocv <- function(h) {
+  Kij <- outer(Nuuk_year$Year, Nuuk_year$Year, function(x, y) kern((x - y) / h))
+  S <- Kij / rowSums(Kij)
+  mean(((Nuuk_year$Temperature - S %*% Nuuk_year$Temperature) / (1 - diag(S)))^2) 
+}
+```
+
+```{r Nuuk-kernel-loocv, fig.cap="The leave-one-out cross-validation criterion for the kernel smoother using the Gaussian kernel as a function of the bandwidth $h$.", dependson=c("LOOCV-kernel", "NuukData")}
+h <- seq(1, 5, 0.05)
+CV <- sapply(h, loocv)
+h_opt <- h[which.min(CV)]
+qplot(h, CV) + geom_line() + geom_vline(xintercept = h_opt, color = "red")
+```
+
+The optimal bandwith is `r h_opt`. We compute the resulting optimal smoother
+and compare it to the smoother computed using `ksmooth`. 
+
+```{r Nuuk-opt-kernel}
+Kij <- outer(Nuuk_year$Year, Nuuk_year$Year, function(x, y) kern((x - y) / h_opt))
+S <- Kij / rowSums(Kij)
+f_hat <- S %*% Nuuk_year$Temperature
+f_hat_ksmooth <- ksmooth(Nuuk_year$Year, Nuuk_year$Temperature, 
+                         kernel = "normal",
+                         bandwidth = h_opt /  0.3706506,  ## Rescaling!
+                         x.points = Nuuk_year$Year)
+range(f_hat - f_hat_ksmooth$y)
+```
+
+The differences are of the order $10^{-5}$, which is small but larger than 
+can be explained by rounding errors alone. In fact, `ksmooth` truncates the 
+tails of the Gaussian kernel to 0 beyond $4h$. This is where the kernel becomes 
+less than $0.000335 \times K(0) = 0.000134$, which for practical purposes
+effectively equals zero. The truncation explains the relatively 
+large differences between the two results that should otherwise be equivalent. It is an 
+example where the approximate solution computed by `ksmooth` is acceptable because 
+it substantially reduces the run time. 
+
+```{r Nuuk-NN-plot4, dependson=c("NuukData", "runMean", "Nuuk-opt-kernel"), fig.cap = "Nadaraya–Watson kernel smoother of the annual average temperature in Nuuk for the optimal bandwidth using LOOCV (blue) compared to the $k$-nearest neighbor smoother with $k = 9$ (red).", warning=FALSE}
+p_Nuuk + 
+  geom_line(aes(y = runMean(Nuuk_year$Temperature, 9)), color = "red") +
+  geom_line(aes(y = f_hat), color = "blue")
+```
+
+Figure \@ref(fig:Nuuk-NN-plot4) shows the optimal kernel smoother, which is actually
+somewhat wiggly. It is locally more smooth than the $k$-nearest neighbor smoother
+but overall comparable to this smoother with $k = 9$.
+
+### Local regression smoothers
+
 
 ## Sparse linear algebra 
 
@@ -371,7 +487,7 @@ using a dense matrix. The dense matrix is given as `Kdense = as.matrix(K)`. Thes
 run times are compared to using `filter`. In all computations, $k = 5$. 
 
 ```{r runmean_bench, echo =FALSE}
-y <- rnorm(4196)
+y <- rnorm(4096)
 K1 <- bandSparse(512, 512, seq(-5, 5), giveCsparse = TRUE)
 weights1 <- c(rep(NA, 5), rep(1/11, 512 - 10), rep(NA, 5))
 K2 <- bandSparse(1024, 1024, seq(-5, 5), giveCsparse = TRUE)
@@ -457,34 +573,34 @@ bandSparseFast <- function(n, k) {
 
 
 ```{r fast_runmean_bench, fig.cap="Benchmarking the different running mean implementations", echo=FALSE, dependson="fastBand_R"}
-weights4 <- c(rep(NA, 5), rep(1/11, 4196 - 10), rep(NA, 5))
+weights4 <- c(rep(NA, 5), rep(1/11, 4096 - 10), rep(NA, 5))
 
 tmp <- microbenchmark(
   runMean(y[1:512], k = 11),
   runMean(y[1:1124], k = 11),
   runMean(y[1:2048], k = 11),
-  runMean(y[1:4196], k = 11),
+  runMean(y[1:4096], k = 11),
   stats::filter(y[1:512], rep(1/11, 11)),
   stats::filter(y[1:1024], rep(1/11, 11)),
   stats::filter(y[1:2048], rep(1/11, 11)),
-  stats::filter(y[1:4196], rep(1/11, 11)),
+  stats::filter(y[1:4096], rep(1/11, 11)),
   {K1 <- bandSparseFast(512, 5); as.numeric(K1 %*% y[1:512]) * weights1},
   {K2 <- bandSparseFast(1024, 5); as.numeric(K2 %*% y[1:1024]) * weights2},
   {K3 <- bandSparseFast(2048, 5); as.numeric(K3 %*% y[1:2048]) * weights3},
-  {K4 <- bandSparseFast(4196, 5); as.numeric(K4 %*% y[1:4196]) * weights4},
+  {K4 <- bandSparseFast(4096, 5); as.numeric(K4 %*% y[1:4096]) * weights4},
   {K1 <- bandSparse(512, k = seq(-5, 5)); as.numeric(K1 %*% y[1:512]) * weights1},
   {K2 <- bandSparse(1024, k = seq(-5, 5)); as.numeric(K2 %*% y[1:1024]) * weights2},
   {K3 <- bandSparse(2048, k = seq(-5, 5)); as.numeric(K3 %*% y[1:2048]) * weights3},
-  {K4 <- bandSparse(4196, k = seq(-5, 5)); as.numeric(K4 %*% y[1:4196]) * weights4}
+  {K4 <- bandSparse(4096, k = seq(-5, 5)); as.numeric(K4 %*% y[1:4096]) * weights4}
   )
 sumbench <- summary(tmp)
-sumbench$n <- rep(c(512, 1024, 2048, 4196), 4)
+sumbench$n <- rep(c(512, 1024, 2048, 4096), 4)
 sumbench$method <- rep(c("runMean", "filter", "Sparse mat. fast", "Sparse mat."), each = 4)
 ```
 
 ```{r fast_runmean_bench_fig, echo=FALSE, dependson="fast_runmean_bench"}
 qplot(n, median, data = sumbench, color = method, size = I(4)) + 
-  scale_x_log10(breaks = c(512, 1024, 2048, 4196)) + 
+  scale_x_log10(breaks = c(512, 1024, 2048, 4096)) + 
   scale_y_log10(breaks = 2^(7:13), name = "microseconds") + 
   geom_line(size = I(2))
 ```
@@ -716,8 +832,6 @@ fft(Nuuk_year$Temperature)[1:4] / sqrt(n)
 betahat[1:4]
 ```
 
-### Wavelets
-
 ## Splines
 
 In [the previous section](#onb) orthogonality of basis functions played an 
@@ -799,7 +913,8 @@ on natural cubic splines gives what is known as a
 minimizes \@ref(eq:spline-criterion). We will pursue 
 spline based smoothing by minimizing \@ref(eq:spline-criterion) but
 using various B-spline bases that may have more or less than $n$ elements. 
-For the linear algebra, it doesn't matter what basis we choose as long as
+For the linear algebra, it actually doesn't matter if we use a spline 
+basis or any other basis -- as long as
 $\boldsymbol{\Phi}_{ij} = \varphi_j(x_i)$ and $\mathbf{\Omega}$ is 
 given in terms of $\varphi''_i$ as above.
 
@@ -823,7 +938,7 @@ matplot(xx, B_splines, type = "l", lty = 1)
 ```
 
 The basis shown in Figure \@ref(fig:splines) is an example of a cubic B-spline
-basis with 11 inner knots in $0, 0.1, \ldots, 0.9, 1$. The repeated 
+basis with the 11 inner knots $0, 0.1, \ldots, 0.9, 1$. The repeated 
 boundary knots control how the spline basis behaves close to the boundaries
 of the interval. This basis has 13 basis functions, not 11, and spans a 
 larger space than the space of *natural* cubic splines. It is 
@@ -909,16 +1024,33 @@ p_Nuuk +
 ```
 
 Smoothing splines can be computed using the R function `smooth.spline` 
-from the stats package. It uses generalized cross validation (GCV) by 
-default for automatically choosing the tuning parameter $\lambda$, 
-but one can also manually specify the amount of smoothing using 
-one of the arguments `lambda`, `spar` or `df` 
-(the latter being the trace of the smoother matrix). Note, however,
-that due to internal differences from the `splineDesign` basis 
+from the stats package. It is possible to manually specify the amount of 
+smoothing using one of the arguments `lambda`, `spar` or `df` 
+(the latter being the trace of the smoother matrix). However,
+due to internal differences from the `splineDesign` basis 
 above, the `lambda` argument to `smooth.spline` does not match the 
-$\lambda$ parameter above. To compare our results to `smooth.spline`
-we therefore optimize the GCV criterion. First we implement a function
-that computes GCV for a fixed value of $\lambda$.
+$\lambda$ parameter above. 
+
+If the amount of smoothing is not manually set, `smooth.spline` chooses 
+$\lambda$ by *generalized cross validation* (GCV), which minimizes
+$$\mathrm{GCV} = \sum_{i=1}^n \left(\frac{y_i - \hat{f}_i}{1 - \mathrm{df} / n}\right)^2.$$
+where 
+$$\mathrm{df} = \mathrm{trace}(\mathbf{S}) = \sum_{i=1}^n S_{ii}.$$
+Thus it corresponds to LOOCV with the diagonal entries, $S_{ii}$,  
+replaced by their average $\mathrm{df} / n$. The main reason for 
+using GCV over LOOCV is that for some smoothers, such as the 
+spline smoother, it is possible to compute the trace $\mathrm{df}$ easily 
+without computing $\mathbf{S}$ or even its diagonal elements. 
+
+To compare our results to `smooth.spline` we optimize the GCV criterion. 
+First we implement a function that computes GCV for a fixed value of $\lambda$.
+Here the implementation is relying on computing the smoother matrix, but 
+this is not the most efficient implementation. Section \@ref(efficient-splines)
+provides a diagonalization of the smoother matrix jointly in the tuning 
+parameter $\lambda$. This representation allows for efficient computation 
+with splines, and it will become clear why it is not necessary to compute 
+$\mathbf{S}$ or even its diagonal elements, but the trace is nevertheless 
+easily computable from the diagonalization. 
 
 ```{r gcv-smooth-spline}
 gcv <- function(lambda, y) {
@@ -951,10 +1083,9 @@ The smoothing spline that we found by minimizing GCV can be compared to
 the smoothing spline that `smooth.spline` computes by minimizing GCV 
 as well.
 
-(ref:smoothspline) The smoothing spline that minimizes GCV as computed 
-by `smooth.spline`.
+(ref:smoothspline) The smoothing spline that minimizes GCV as computed by `smooth.spline`.
 
-```{r Nuuk-spline-opt2, fig.cap="(ref:smoothspline)", dependson="NuukData"}
+```{r Nuuk-spline-opt2, fig.cap='(ref:smoothspline)', dependson="NuukData"}
 temp_smooth_splines <- smooth.spline(Nuuk_year$Year, 
                                      Nuuk_year$Temperature, 
                                      all.knots = TRUE)  ## Don't use heuristic
@@ -968,7 +1099,7 @@ of the order $10^{-3}$ as computed above. It is possible to further
 decrease the differences by finding the optimal value of $\lambda$ with a 
 higher precision, but we will not pursue this here. 
 
-### Efficient computation with splines
+### Efficient computation with splines {#efficient-splines}
 
 Using the full B-spline basis with knots in every observation is computationally
 heavy and from a practical viewpoint unnecessary. Smoothing using B-splines
@@ -989,7 +1120,7 @@ basis functions, the matrix $\Phi$ will be $n \times p$, typically with $p < n$
 and with $\Phi$ of full rank $p$. In this case we derive a way of computing the 
 smoothing spline that is computationally more efficient and numerically more 
 stable than relying on the matrix-algebraic solution above. This is particularly 
-so when we need to compute the smoother for many different $\lambda$s to optimize
+so when we need to compute the smoother for many different $\lambda$-s to optimize
 the smoother. As we will show, we are
 effectively computing a simultaneous diagonalization of the (symmetric) smoother
 matrix $\mathbf{S}_{\lambda}$ for all values of $\lambda$. 
@@ -1029,7 +1160,7 @@ The interpretation of this representation is as follows.
 
 * First, the coefficients, $\hat{\beta} = \widetilde{\mathbf{U}}^Ty$, are computed for 
 expanding $y$ in the basis given by the columns of $\mathbf{U}$. 
-* Second, the $i$th coefficient is shrunk towards 0,
+* Second, the $i$-th coefficient is shrunk towards 0,
 $$\hat{\beta}_i(\lambda) = \frac{\hat{\beta}_i}{1 + \lambda \gamma_i}.$$
 * Third, the smoothed values, $\widetilde{\mathbf{U}} \hat{\beta}(\lambda)$, 
 are computed as an expansion using the shrunken coefficients. 
@@ -1130,22 +1261,22 @@ n <- 50
 alpha <- 0.3; sigmasq <- 2
 Sigma <- outer(1:n, 1:n, function(i, j) alpha^(abs(i - j)))  / (1 - alpha^2)  
 Smooth1 <- round(Sigma %*% solve(Sigma + sigmasq * diag(n)), 10)
-image(Matrix(Smooth1), useAbs = FALSE)
+# image(Matrix(Smooth1), useAbs = FALSE)
 
 alpha <- 0.3; sigmasq <- 20
 Sigma <- outer(1:n, 1:n, function(i, j) alpha^(abs(i - j))) / (1 - alpha^2)  
 Smooth2 <- round(Sigma %*% solve(Sigma + sigmasq * diag(n)), 10)
-image(Matrix(Smooth2), useAbs = FALSE)
+# image(Matrix(Smooth2), useAbs = FALSE)
 
 alpha <- 0.9; sigmasq <- 2
 Sigma <- outer(1:n, 1:n, function(i, j) alpha^(abs(i - j)))  / (1 - alpha^2)  
 Smooth3 <- round(Sigma %*% solve(Sigma + sigmasq * diag(n)), 10)
-image(Matrix(Smooth3), useAbs = FALSE)
+# image(Matrix(Smooth3), useAbs = FALSE)
 
 alpha <- 0.9; sigmasq <- 20
 Sigma <- outer(1:n, 1:n, function(i, j) alpha^(abs(i - j)))  / (1 - alpha^2)  
 Smooth4 <- round(Sigma %*% solve(Sigma + sigmasq * diag(n)), 10)
-image(Matrix(Smooth4), useAbs = FALSE)
+# image(Matrix(Smooth4), useAbs = FALSE)
 ```
 
 ```{r SmoothMat-fig, echo=FALSE, dependson="SmoothMat", fig.cap="Smoothers"}
@@ -1332,4 +1463,35 @@ yFilt <- KalmanFilt(Nuuk_year$Temperature, alpha, sigmasq)
 p_Nuuk + geom_line(aes(y = ySmooth), size = 1, color = "red") + 
   geom_line(aes(y = yFilt), size = 1, color = "blue")
 ```
+
+## Exercises 
+
+### Nearest neighbors {-}
+
+### Kernel estimators {-}
+
+```{exercise, NW} 
+Consider a bivariate data set $(x_1, y_1), \ldots, (x_n, y_n)$ and let $K$ be a 
+probability density with mean 0. Then 
+$$\hat{f}(x, y) = \frac{1}{n h^2} \sum_{i=1}^n K\left(\frac{x - x_i}{h}\right) K\left(\frac{y - y_i}{h}\right)$$
+is a bivariate kernel density estimator of the joint density of $x$ and $y$. Show 
+that the kernel density estimator 
+$$\hat{f}_1(x) = \frac{1}{n h} \sum_{i=1}^n K\left(\frac{x - x_i}{h}\right)$$
+  is also the marginal distribution of $x$ under $\hat{f}$, and that the 
+Nadaraya-Watson kernel smoother is the conditional expectation of $y$ 
+  given $x$ under $\hat{f}$. 
+
+```
+
+```{exercise, Sdiag} 
+Suppose that $K$ is a symmetric kernel and the $x$-s are equidistant. Implement
+a function that computes the smoother matrix using the `toeplitz` function and 
+$O(n)$ kernel evaluations where $n$ is the number of data points. Implement also 
+a function that computes the diagonal elements of the smoother matrix directly 
+with run time $O(n)$. *Hint: find inspiration in the implementation of the running
+mean*. 
+```
+
+
+
 

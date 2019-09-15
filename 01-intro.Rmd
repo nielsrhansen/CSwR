@@ -329,7 +329,7 @@ We compute the density estimate in a grid of size 100 by 100 using a bandwidth
 of 2 and using the `kde2d` function that uses a bivariate normal kernel. 
 
 ```{r denshat, dependson="phipsiload"}
-denshat <- kde2d(phi, psi, h = 2, n = 100)
+denshat <- kde2d(phipsi$phi, phipsi$psi, h = 2, n = 100)
 ```
 
 ```{r manip, dependson="denshat"}
@@ -353,7 +353,7 @@ We then recompute the density estimate in the same grid of size using
 the smaller bandwidth of 0.5.
 
 ```{r denshat2, dependson="phipsiload"}
-denshat <- kde2d(phi, psi, h = 0.5, n = 100)
+denshat <- kde2d(phipsi$phi, phipsi$psi, h = 0.5, n = 100)
 ```
 
 ```{r bidens2, echo = FALSE, fig.cap="Bivariate density estimates of protein backbone angles using a bivariate Gaussian kernel with bandwiths $2$ (left) and $0.5$ (right).", dependson=c("denshat2", "phipsiload"), dev='png', dpi=144, out.width="49%", fig.show='hold'}
@@ -662,15 +662,10 @@ and we can then use Monte Carlo integration to compute whatever
 probability or integral w.r.t. the distribution of the statistic that we are 
 interested in. 
 
-### Large scale simulation
-
-Relations to Complex sampling models. Ex Bayes, MCMC, Stan.
-
 ## Optimization
 
-Likelihood optimization for mixtures of the von Mises distribution. Direct 
-implementation using `optim` and the density implementations. Alternatively
-using the EM-algorithm as implemented in movMF.
+This section illustrates how a mixture of von Mises distributions to the 
+angel data using the EM-algorithm as implemented in the R package movMF.
 
 ### The EM-algorithm
 
@@ -696,10 +691,6 @@ density(phipsi$psi, bw = "SJ", cut = 0) %>%
 curve(dvM(x, vM_fit$theta, vM_fit$alpha[1]), -pi, pi, 
       add = TRUE, col = "blue", lwd = 2)
 ```
-
-### Large scale optimization
-
-Relations to complex optimization problems. Ex. deep learning, tensorflow.
 
 ## Exercises
 
@@ -799,7 +790,8 @@ following properties:
 The following four exercises build on having implemented a function that 
 computes breakpoints for a histogram either as in 
 Exercise \@ref(exr:myBreaks) or as in Exercise \@ref(exr:myBreaks-advanced).
-The purpose of the exercises is to explore. 
+The purpose of the exercises is to explore various features of the R language
+related to functions and using R as a functional programming language. 
 
 ```{exercise, myHist}
 Write a function called `myHist`, which takes a single argument `h` and plots a 

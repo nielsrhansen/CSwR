@@ -1,15 +1,14 @@
 <!DOCTYPE html>
-<html >
-
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
 <head>
 
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Computational Statistics with R</title>
-  <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language.">
-  <meta name="generator" content="bookdown 0.7 and GitBook 2.6.7">
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>7.3 Newton-type algorithms | Computational Statistics with R</title>
+  <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  <meta name="generator" content="bookdown 0.13 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Computational Statistics with R" />
+  <meta property="og:title" content="7.3 Newton-type algorithms | Computational Statistics with R" />
   <meta property="og:type" content="book" />
   
   
@@ -17,24 +16,25 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Computational Statistics with R" />
+  <meta name="twitter:title" content="7.3 Newton-type algorithms | Computational Statistics with R" />
   
   <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   
 
-<meta name="author" content="Niels Richard Hansen">
+<meta name="author" content="Niels Richard Hansen" />
 
 
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="descent-direction-algorithms.html">
-<link rel="next" href="misc-.html">
+<link rel="prev" href="descent-direction-algorithms.html"/>
+<link rel="next" href="misc-.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
@@ -49,41 +49,66 @@
 
 
 <style type="text/css">
-div.sourceCode { overflow-x: auto; }
-table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
-  margin: 0; padding: 0; vertical-align: baseline; border: none; }
-table.sourceCode { width: 100%; line-height: 100%; }
-td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
-td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code > span.dt { color: #902000; } /* DataType */
-code > span.dv { color: #40a070; } /* DecVal */
-code > span.bn { color: #40a070; } /* BaseN */
-code > span.fl { color: #40a070; } /* Float */
-code > span.ch { color: #4070a0; } /* Char */
-code > span.st { color: #4070a0; } /* String */
-code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code > span.ot { color: #007020; } /* Other */
-code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code > span.fu { color: #06287e; } /* Function */
-code > span.er { color: #ff0000; font-weight: bold; } /* Error */
-code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-code > span.cn { color: #880000; } /* Constant */
-code > span.sc { color: #4070a0; } /* SpecialChar */
-code > span.vs { color: #4070a0; } /* VerbatimString */
-code > span.ss { color: #bb6688; } /* SpecialString */
-code > span.im { } /* Import */
-code > span.va { color: #19177c; } /* Variable */
-code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code > span.op { color: #666666; } /* Operator */
-code > span.bu { } /* BuiltIn */
-code > span.ex { } /* Extension */
-code > span.pp { color: #bc7a00; } /* Preprocessor */
-code > span.at { color: #7d9029; } /* Attribute */
-code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 </style>
 
 <link rel="stylesheet" href="style.css" type="text/css" />
@@ -114,11 +139,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="1.2" data-path="monte-carlo-methods.html"><a href="monte-carlo-methods.html"><i class="fa fa-check"></i><b>1.2</b> Monte Carlo Methods</a><ul>
 <li class="chapter" data-level="1.2.1" data-path="monte-carlo-methods.html"><a href="monte-carlo-methods.html#vM"><i class="fa fa-check"></i><b>1.2.1</b> Univariate von Mises distributions</a></li>
 <li class="chapter" data-level="1.2.2" data-path="monte-carlo-methods.html"><a href="monte-carlo-methods.html#mixtures-of-von-mises-distributions"><i class="fa fa-check"></i><b>1.2.2</b> Mixtures of von Mises distributions</a></li>
-<li class="chapter" data-level="1.2.3" data-path="monte-carlo-methods.html"><a href="monte-carlo-methods.html#large-scale-simulation"><i class="fa fa-check"></i><b>1.2.3</b> Large scale simulation</a></li>
 </ul></li>
 <li class="chapter" data-level="1.3" data-path="optimization.html"><a href="optimization.html"><i class="fa fa-check"></i><b>1.3</b> Optimization</a><ul>
 <li class="chapter" data-level="1.3.1" data-path="optimization.html"><a href="optimization.html#the-em-algorithm"><i class="fa fa-check"></i><b>1.3.1</b> The EM-algorithm</a></li>
-<li class="chapter" data-level="1.3.2" data-path="optimization.html"><a href="optimization.html#large-scale-optimization"><i class="fa fa-check"></i><b>1.3.2</b> Large scale optimization</a></li>
 </ul></li>
 <li class="chapter" data-level="1.4" data-path="exercises.html"><a href="exercises.html"><i class="fa fa-check"></i><b>1.4</b> Exercises</a><ul>
 <li class="chapter" data-level="" data-path="exercises.html"><a href="exercises.html#r-training-exercises"><i class="fa fa-check"></i>R training exercises</a></li>
@@ -154,17 +177,19 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="3.1.2" data-path="nearest-neighbor-smoothers.html"><a href="nearest-neighbor-smoothers.html#implementing-the-running-mean"><i class="fa fa-check"></i><b>3.1.2</b> Implementing the running mean</a></li>
 <li class="chapter" data-level="3.1.3" data-path="nearest-neighbor-smoothers.html"><a href="nearest-neighbor-smoothers.html#choose-k-by-cross-validation"><i class="fa fa-check"></i><b>3.1.3</b> Choose <span class="math inline">\(k\)</span> by cross-validation</a></li>
 </ul></li>
-<li class="chapter" data-level="3.2" data-path="kernel-methods.html"><a href="kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a></li>
+<li class="chapter" data-level="3.2" data-path="kernel-methods.html"><a href="kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="kernel-methods.html"><a href="kernel-methods.html#nadarayawatson-kernel-smoothing"><i class="fa fa-check"></i><b>3.2.1</b> Nadaraya–Watson kernel smoothing</a></li>
+<li class="chapter" data-level="3.2.2" data-path="kernel-methods.html"><a href="kernel-methods.html#local-regression-smoothers"><i class="fa fa-check"></i><b>3.2.2</b> Local regression smoothers</a></li>
+</ul></li>
 <li class="chapter" data-level="3.3" data-path="sparse-linear-algebra.html"><a href="sparse-linear-algebra.html"><i class="fa fa-check"></i><b>3.3</b> Sparse linear algebra</a></li>
 <li class="chapter" data-level="3.4" data-path="onb.html"><a href="onb.html"><i class="fa fa-check"></i><b>3.4</b> Orthogonal basis expansions</a><ul>
 <li class="chapter" data-level="3.4.1" data-path="onb.html"><a href="onb.html#polynomial-expansions"><i class="fa fa-check"></i><b>3.4.1</b> Polynomial expansions</a></li>
 <li class="chapter" data-level="3.4.2" data-path="onb.html"><a href="onb.html#fourier-expansions"><i class="fa fa-check"></i><b>3.4.2</b> Fourier expansions</a></li>
-<li class="chapter" data-level="3.4.3" data-path="onb.html"><a href="onb.html#wavelets"><i class="fa fa-check"></i><b>3.4.3</b> Wavelets</a></li>
 </ul></li>
 <li class="chapter" data-level="3.5" data-path="splines.html"><a href="splines.html"><i class="fa fa-check"></i><b>3.5</b> Splines</a><ul>
 <li class="chapter" data-level="3.5.1" data-path="splines.html"><a href="splines.html#smoothing-splines"><i class="fa fa-check"></i><b>3.5.1</b> Smoothing splines</a></li>
 <li class="chapter" data-level="3.5.2" data-path="splines.html"><a href="splines.html#splines-in-r"><i class="fa fa-check"></i><b>3.5.2</b> Splines in R</a></li>
-<li class="chapter" data-level="3.5.3" data-path="splines.html"><a href="splines.html#efficient-computation-with-splines"><i class="fa fa-check"></i><b>3.5.3</b> Efficient computation with splines</a></li>
+<li class="chapter" data-level="3.5.3" data-path="splines.html"><a href="splines.html#efficient-splines"><i class="fa fa-check"></i><b>3.5.3</b> Efficient computation with splines</a></li>
 </ul></li>
 <li class="chapter" data-level="3.6" data-path="gaussian-processes.html"><a href="gaussian-processes.html"><i class="fa fa-check"></i><b>3.6</b> Gaussian processes</a></li>
 <li class="chapter" data-level="3.7" data-path="the-kalman-filter.html"><a href="the-kalman-filter.html"><i class="fa fa-check"></i><b>3.7</b> The Kalman filter</a><ul>
@@ -172,6 +197,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="3.7.2" data-path="the-kalman-filter.html"><a href="the-kalman-filter.html#the-kalman-smoother"><i class="fa fa-check"></i><b>3.7.2</b> The Kalman smoother</a></li>
 <li class="chapter" data-level="3.7.3" data-path="the-kalman-filter.html"><a href="the-kalman-filter.html#implementation-1"><i class="fa fa-check"></i><b>3.7.3</b> Implementation</a></li>
 <li class="chapter" data-level="3.7.4" data-path="the-kalman-filter.html"><a href="the-kalman-filter.html#the-kalman-filter-1"><i class="fa fa-check"></i><b>3.7.4</b> The Kalman filter</a></li>
+</ul></li>
+<li class="chapter" data-level="3.8" data-path="exercises-2.html"><a href="exercises-2.html"><i class="fa fa-check"></i><b>3.8</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="exercises-2.html"><a href="exercises-2.html#nearest-neighbors"><i class="fa fa-check"></i>Nearest neighbors</a></li>
+<li class="chapter" data-level="" data-path="exercises-2.html"><a href="exercises-2.html#kernel-estimators"><i class="fa fa-check"></i>Kernel estimators</a></li>
 </ul></li>
 </ul></li>
 <li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
@@ -188,8 +217,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="4.4.1" data-path="adaptive.html"><a href="adaptive.html#beta-distribution"><i class="fa fa-check"></i><b>4.4.1</b> Beta distribution</a></li>
 <li class="chapter" data-level="4.4.2" data-path="adaptive.html"><a href="adaptive.html#von-mises-distribution"><i class="fa fa-check"></i><b>4.4.2</b> von Mises distribution</a></li>
 </ul></li>
-<li class="chapter" data-level="4.5" data-path="exercises-2.html"><a href="exercises-2.html"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
-<li class="chapter" data-level="" data-path="exercises-2.html"><a href="exercises-2.html#rejection-sampling-of-gaussian-random-variables"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
+<li class="chapter" data-level="4.5" data-path="exercises-3.html"><a href="exercises-3.html"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="exercises-3.html"><a href="exercises-3.html#rejection-sampling-of-gaussian-random-variables"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
 </ul></li>
 </ul></li>
 <li class="chapter" data-level="5" data-path="mci.html"><a href="mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
@@ -205,69 +234,53 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="5.3" data-path="network-failure.html"><a href="network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
 <li class="chapter" data-level="5.3.1" data-path="network-failure.html"><a href="network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
 </ul></li>
-<li class="chapter" data-level="5.4" data-path="design-of-experiments.html"><a href="design-of-experiments.html"><i class="fa fa-check"></i><b>5.4</b> Design of experiments</a></li>
-</ul></li>
-<li class="chapter" data-level="6" data-path="multivariate-random-variables.html"><a href="multivariate-random-variables.html"><i class="fa fa-check"></i><b>6</b> Multivariate random variables</a><ul>
-<li class="chapter" data-level="6.1" data-path="sequential-simulation.html"><a href="sequential-simulation.html"><i class="fa fa-check"></i><b>6.1</b> Sequential simulation</a><ul>
-<li class="chapter" data-level="6.1.1" data-path="sequential-simulation.html"><a href="sequential-simulation.html#sequential-mc-for-the-ar1-process"><i class="fa fa-check"></i><b>6.1.1</b> Sequential MC for the AR(1)-process</a></li>
-</ul></li>
-<li class="chapter" data-level="6.2" data-path="gaussian-random-variables.html"><a href="gaussian-random-variables.html"><i class="fa fa-check"></i><b>6.2</b> Gaussian random variables</a></li>
 </ul></li>
 <li class="part"><span><b>Part III: Optimization</b></span></li>
-<li class="chapter" data-level="7" data-path="five-examples.html"><a href="five-examples.html"><i class="fa fa-check"></i><b>7</b> Five Examples</a><ul>
-<li class="chapter" data-level="7.1" data-path="exp-fam.html"><a href="exp-fam.html"><i class="fa fa-check"></i><b>7.1</b> Exponential families</a><ul>
-<li class="chapter" data-level="7.1.1" data-path="exp-fam.html"><a href="exp-fam.html#full-exponential-families"><i class="fa fa-check"></i><b>7.1.1</b> Full exponential families</a></li>
-<li class="chapter" data-level="7.1.2" data-path="exp-fam.html"><a href="exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>7.1.2</b> Exponential family Bayesian networks</a></li>
-<li class="chapter" data-level="7.1.3" data-path="exp-fam.html"><a href="exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>7.1.3</b> Likelihood computations</a></li>
-<li class="chapter" data-level="7.1.4" data-path="exp-fam.html"><a href="exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>7.1.4</b> Curved exponential families</a></li>
+<li class="chapter" data-level="6" data-path="four-examples.html"><a href="four-examples.html"><i class="fa fa-check"></i><b>6</b> Four Examples</a><ul>
+<li class="chapter" data-level="6.1" data-path="exp-fam.html"><a href="exp-fam.html"><i class="fa fa-check"></i><b>6.1</b> Exponential families</a><ul>
+<li class="chapter" data-level="6.1.1" data-path="exp-fam.html"><a href="exp-fam.html#full-exponential-families"><i class="fa fa-check"></i><b>6.1.1</b> Full exponential families</a></li>
+<li class="chapter" data-level="6.1.2" data-path="exp-fam.html"><a href="exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>6.1.2</b> Exponential family Bayesian networks</a></li>
+<li class="chapter" data-level="6.1.3" data-path="exp-fam.html"><a href="exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>6.1.3</b> Likelihood computations</a></li>
+<li class="chapter" data-level="6.1.4" data-path="exp-fam.html"><a href="exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>6.1.4</b> Curved exponential families</a></li>
 </ul></li>
-<li class="chapter" data-level="7.2" data-path="multinomial-models.html"><a href="multinomial-models.html"><i class="fa fa-check"></i><b>7.2</b> Multinomial models</a><ul>
-<li class="chapter" data-level="7.2.1" data-path="multinomial-models.html"><a href="multinomial-models.html#pep-moth"><i class="fa fa-check"></i><b>7.2.1</b> Peppered Moths</a></li>
+<li class="chapter" data-level="6.2" data-path="multinomial-models.html"><a href="multinomial-models.html"><i class="fa fa-check"></i><b>6.2</b> Multinomial models</a><ul>
+<li class="chapter" data-level="6.2.1" data-path="multinomial-models.html"><a href="multinomial-models.html#pep-moth"><i class="fa fa-check"></i><b>6.2.1</b> Peppered Moths</a></li>
 </ul></li>
-<li class="chapter" data-level="7.3" data-path="regression.html"><a href="regression.html"><i class="fa fa-check"></i><b>7.3</b> Regression models</a></li>
-<li class="chapter" data-level="7.4" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html"><i class="fa fa-check"></i><b>7.4</b> Finite mixture models</a><ul>
-<li class="chapter" data-level="7.4.1" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html#Gaus-mix-ex"><i class="fa fa-check"></i><b>7.4.1</b> Gaussian mixtures</a></li>
-<li class="chapter" data-level="7.4.2" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html#von-mises-mixtures"><i class="fa fa-check"></i><b>7.4.2</b> von Mises mixtures</a></li>
+<li class="chapter" data-level="6.3" data-path="regression.html"><a href="regression.html"><i class="fa fa-check"></i><b>6.3</b> Regression models</a></li>
+<li class="chapter" data-level="6.4" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html"><i class="fa fa-check"></i><b>6.4</b> Finite mixture models</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html#Gaus-mix-ex"><i class="fa fa-check"></i><b>6.4.1</b> Gaussian mixtures</a></li>
 </ul></li>
-<li class="chapter" data-level="7.5" data-path="mixed-models.html"><a href="mixed-models.html"><i class="fa fa-check"></i><b>7.5</b> Mixed models</a></li>
-<li class="chapter" data-level="7.6" data-path="state-space-models.html"><a href="state-space-models.html"><i class="fa fa-check"></i><b>7.6</b> State space models</a></li>
+<li class="chapter" data-level="6.5" data-path="mixed-models.html"><a href="mixed-models.html"><i class="fa fa-check"></i><b>6.5</b> Mixed models</a></li>
 </ul></li>
-<li class="chapter" data-level="8" data-path="numopt.html"><a href="numopt.html"><i class="fa fa-check"></i><b>8</b> Numerical optimization</a><ul>
-<li class="chapter" data-level="8.1" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html"><i class="fa fa-check"></i><b>8.1</b> Algorithms and convergence</a><ul>
-<li class="chapter" data-level="8.1.1" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#descent-algorithms"><i class="fa fa-check"></i><b>8.1.1</b> Descent algorithms</a></li>
-<li class="chapter" data-level="8.1.2" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#maps-and-fixed-points"><i class="fa fa-check"></i><b>8.1.2</b> Maps and fixed points</a></li>
-<li class="chapter" data-level="8.1.3" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#convergence-rate"><i class="fa fa-check"></i><b>8.1.3</b> Convergence rate</a></li>
-<li class="chapter" data-level="8.1.4" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#stopping-criteria"><i class="fa fa-check"></i><b>8.1.4</b> Stopping criteria</a></li>
+<li class="chapter" data-level="7" data-path="numopt.html"><a href="numopt.html"><i class="fa fa-check"></i><b>7</b> Numerical optimization</a><ul>
+<li class="chapter" data-level="7.1" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html"><i class="fa fa-check"></i><b>7.1</b> Algorithms and convergence</a><ul>
+<li class="chapter" data-level="7.1.1" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#descent-algorithms"><i class="fa fa-check"></i><b>7.1.1</b> Descent algorithms</a></li>
+<li class="chapter" data-level="7.1.2" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#maps-and-fixed-points"><i class="fa fa-check"></i><b>7.1.2</b> Maps and fixed points</a></li>
+<li class="chapter" data-level="7.1.3" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#convergence-rate"><i class="fa fa-check"></i><b>7.1.3</b> Convergence rate</a></li>
+<li class="chapter" data-level="7.1.4" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#stopping-criteria"><i class="fa fa-check"></i><b>7.1.4</b> Stopping criteria</a></li>
 </ul></li>
-<li class="chapter" data-level="8.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html"><i class="fa fa-check"></i><b>8.2</b> Descent direction algorithms</a><ul>
-<li class="chapter" data-level="8.2.1" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#line-search"><i class="fa fa-check"></i><b>8.2.1</b> Line search</a></li>
-<li class="chapter" data-level="8.2.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#gradient-descent"><i class="fa fa-check"></i><b>8.2.2</b> Gradient descent</a></li>
-<li class="chapter" data-level="8.2.3" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>8.2.3</b> Conjugate gradients</a></li>
-<li class="chapter" data-level="8.2.4" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#pep-moth-descent"><i class="fa fa-check"></i><b>8.2.4</b> Peppered Moths</a></li>
+<li class="chapter" data-level="7.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html"><i class="fa fa-check"></i><b>7.2</b> Descent direction algorithms</a><ul>
+<li class="chapter" data-level="7.2.1" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#line-search"><i class="fa fa-check"></i><b>7.2.1</b> Line search</a></li>
+<li class="chapter" data-level="7.2.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#gradient-descent"><i class="fa fa-check"></i><b>7.2.2</b> Gradient descent</a></li>
+<li class="chapter" data-level="7.2.3" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>7.2.3</b> Conjugate gradients</a></li>
+<li class="chapter" data-level="7.2.4" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#pep-moth-descent"><i class="fa fa-check"></i><b>7.2.4</b> Peppered Moths</a></li>
 </ul></li>
-<li class="chapter" data-level="8.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html"><i class="fa fa-check"></i><b>8.3</b> Newton-type algorithms</a><ul>
-<li class="chapter" data-level="8.3.1" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>8.3.1</b> Poisson regression</a></li>
-<li class="chapter" data-level="8.3.2" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>8.3.2</b> Quasi-Newton algorithms</a></li>
-<li class="chapter" data-level="8.3.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>8.3.3</b> Sparsity</a></li>
+<li class="chapter" data-level="7.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html"><i class="fa fa-check"></i><b>7.3</b> Newton-type algorithms</a><ul>
+<li class="chapter" data-level="7.3.1" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>7.3.1</b> Poisson regression</a></li>
+<li class="chapter" data-level="7.3.2" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>7.3.2</b> Quasi-Newton algorithms</a></li>
+<li class="chapter" data-level="7.3.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>7.3.3</b> Sparsity</a></li>
 </ul></li>
-<li class="chapter" data-level="8.4" data-path="misc-.html"><a href="misc-.html"><i class="fa fa-check"></i><b>8.4</b> Misc.</a></li>
+<li class="chapter" data-level="7.4" data-path="misc-.html"><a href="misc-.html"><i class="fa fa-check"></i><b>7.4</b> Misc.</a></li>
 </ul></li>
-<li class="chapter" data-level="9" data-path="em.html"><a href="em.html"><i class="fa fa-check"></i><b>9</b> Expectation maximization algorithms</a><ul>
-<li class="chapter" data-level="9.1" data-path="basic-properties.html"><a href="basic-properties.html"><i class="fa fa-check"></i><b>9.1</b> Basic properties</a><ul>
-<li class="chapter" data-level="9.1.1" data-path="basic-properties.html"><a href="basic-properties.html#incomplete-data-likelihood"><i class="fa fa-check"></i><b>9.1.1</b> Incomplete data likelihood</a></li>
-<li class="chapter" data-level="9.1.2" data-path="basic-properties.html"><a href="basic-properties.html#monotonicity-of-the-em-algorithm"><i class="fa fa-check"></i><b>9.1.2</b> Monotonicity of the EM algorithm</a></li>
-<li class="chapter" data-level="9.1.3" data-path="basic-properties.html"><a href="basic-properties.html#peppered-moths"><i class="fa fa-check"></i><b>9.1.3</b> Peppered moths</a></li>
+<li class="chapter" data-level="8" data-path="em.html"><a href="em.html"><i class="fa fa-check"></i><b>8</b> Expectation maximization algorithms</a><ul>
+<li class="chapter" data-level="8.1" data-path="basic-properties.html"><a href="basic-properties.html"><i class="fa fa-check"></i><b>8.1</b> Basic properties</a><ul>
+<li class="chapter" data-level="8.1.1" data-path="basic-properties.html"><a href="basic-properties.html#incomplete-data-likelihood"><i class="fa fa-check"></i><b>8.1.1</b> Incomplete data likelihood</a></li>
+<li class="chapter" data-level="8.1.2" data-path="basic-properties.html"><a href="basic-properties.html#monotonicity-of-the-em-algorithm"><i class="fa fa-check"></i><b>8.1.2</b> Monotonicity of the EM algorithm</a></li>
+<li class="chapter" data-level="8.1.3" data-path="basic-properties.html"><a href="basic-properties.html#peppered-moths"><i class="fa fa-check"></i><b>8.1.3</b> Peppered moths</a></li>
 </ul></li>
-<li class="chapter" data-level="9.2" data-path="EM-exp.html"><a href="EM-exp.html"><i class="fa fa-check"></i><b>9.2</b> Exponential families</a></li>
-<li class="chapter" data-level="9.3" data-path="fisher-information.html"><a href="fisher-information.html"><i class="fa fa-check"></i><b>9.3</b> Fisher information</a></li>
-<li class="chapter" data-level="9.4" data-path="two-examples-revisited.html"><a href="two-examples-revisited.html"><i class="fa fa-check"></i><b>9.4</b> Two examples revisited</a><ul>
-<li class="chapter" data-level="9.4.1" data-path="two-examples-revisited.html"><a href="two-examples-revisited.html#gaussian-mixtures"><i class="fa fa-check"></i><b>9.4.1</b> Gaussian mixtures</a></li>
-<li class="chapter" data-level="9.4.2" data-path="two-examples-revisited.html"><a href="two-examples-revisited.html#gaussian-state-space"><i class="fa fa-check"></i><b>9.4.2</b> Gaussian state space</a></li>
-</ul></li>
-</ul></li>
-<li class="chapter" data-level="10" data-path="stochopt.html"><a href="stochopt.html"><i class="fa fa-check"></i><b>10</b> Stochastic Optimization</a><ul>
-<li class="chapter" data-level="10.1" data-path="stochastic-gradient.html"><a href="stochastic-gradient.html"><i class="fa fa-check"></i><b>10.1</b> Stochastic gradient</a></li>
-<li class="chapter" data-level="10.2" data-path="stochastic-em.html"><a href="stochastic-em.html"><i class="fa fa-check"></i><b>10.2</b> Stochastic EM</a></li>
+<li class="chapter" data-level="8.2" data-path="EM-exp.html"><a href="EM-exp.html"><i class="fa fa-check"></i><b>8.2</b> Exponential families</a></li>
+<li class="chapter" data-level="8.3" data-path="fisher-information.html"><a href="fisher-information.html"><i class="fa fa-check"></i><b>8.3</b> Fisher information</a></li>
+<li class="chapter" data-level="8.4" data-path="revisiting-gaussian-mixtures.html"><a href="revisiting-gaussian-mixtures.html"><i class="fa fa-check"></i><b>8.4</b> Revisiting Gaussian mixtures</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
 </ul>
@@ -288,42 +301,52 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
             <section class="normal" id="section-">
 <div id="newton-type-algorithms" class="section level2">
-<h2><span class="header-section-number">8.3</span> Newton-type algorithms</h2>
-<p>The Newton algorithm is very similar to gradient descent except that the gradient descent direction is replaced by <span class="math display">\[\rho_n = - D^2 H(\theta_n)^{-1} \nabla H(\theta_n).\]</span></p>
-<p>The Newton algorithm is typically much more efficient than gradient descent and will converge in few iterations. However, the storage of the <span class="math inline">\(p \times p\)</span> Hessian, its computation, and the solution of the equation to compute <span class="math inline">\(\rho_n\)</span> all scale like <span class="math inline">\(p^2\)</span> and this can make the algorithm useless for very large <span class="math inline">\(p\)</span>.</p>
-<p>A variety of alternatives to the Newton algorithm exist that replace the Hessian by another matrix that can be easier to compute and update. It should be noted that if we choose a matrix <span class="math inline">\(B_n\)</span> in the <span class="math inline">\(n\)</span>th iteration, then <span class="math inline">\(- B_n \nabla H(\theta_n)\)</span> is a descent direction whenever <span class="math inline">\(B_n\)</span> is a positive definite matrix.</p>
+<h2><span class="header-section-number">7.3</span> Newton-type algorithms</h2>
+<p>The Newton algorithm is very similar to gradient descent
+except that the gradient descent direction is replaced by
+<span class="math display">\[\rho_n = - D^2 H(\theta_n)^{-1} \nabla H(\theta_n).\]</span></p>
+<p>The Newton algorithm is typically much more efficient than gradient
+descent and will converge in few iterations. However, the storage of the
+<span class="math inline">\(p \times p\)</span> Hessian, its computation, and the solution of the equation
+to compute <span class="math inline">\(\rho_n\)</span> all scale like <span class="math inline">\(p^2\)</span> and this can make the algorithm useless
+for very large <span class="math inline">\(p\)</span>.</p>
+<p>A variety of alternatives to the Newton algorithm exist that replace
+the Hessian by another matrix that can be easier to compute and update.
+It should be noted that if we choose a matrix <span class="math inline">\(B_n\)</span> in the <span class="math inline">\(n\)</span>th
+iteration, then <span class="math inline">\(- B_n \nabla H(\theta_n)\)</span>
+is a descent direction whenever <span class="math inline">\(B_n\)</span> is a positive definite matrix.</p>
 <p>Newton implementation (with trace).</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Newton &lt;-<span class="st"> </span><span class="cf">function</span>(par, 
-                   <span class="dt">d =</span> <span class="fl">0.8</span>, 
-                   <span class="dt">c =</span> <span class="fl">0.1</span>, 
-                   <span class="dt">gamma0 =</span> <span class="dv">1</span>, 
-                   <span class="dt">epsilon =</span> <span class="fl">1e-10</span>, 
-                   <span class="dt">trace =</span> <span class="ot">NULL</span>) {
-    <span class="cf">repeat</span> {
-      value &lt;-<span class="st"> </span><span class="kw">H</span>(par)
-      grad &lt;-<span class="st"> </span><span class="kw">grad_H</span>(par)
-      <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(trace)) <span class="kw">trace</span>()
-      <span class="cf">if</span>(<span class="kw">sum</span>(grad<span class="op">^</span><span class="dv">2</span>) <span class="op">&lt;=</span><span class="st"> </span>epsilon) <span class="cf">break</span>
-      Hessian &lt;-<span class="st"> </span><span class="kw">Hessian_H</span>(par) 
-      rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span><span class="kw">drop</span>(<span class="kw">solve</span>(Hessian, grad)) 
-      gamma &lt;-<span class="st"> </span>gamma0
-      par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho
-      h_prime &lt;-<span class="st"> </span><span class="kw">t</span>(grad) <span class="op">%*%</span><span class="st"> </span>rho 
-      <span class="cf">while</span>(<span class="kw">H</span>(par1) <span class="op">&gt;</span><span class="st"> </span>value <span class="op">+</span><span class="st">  </span>c <span class="op">*</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>h_prime) { 
-        gamma &lt;-<span class="st"> </span>d <span class="op">*</span><span class="st"> </span>gamma 
-        par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho
-      }
-     par &lt;-<span class="st"> </span>par1 
-    }
-  par
-}</code></pre></div>
+<div class="sourceCode" id="cb277"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb277-1" data-line-number="1">Newton &lt;-<span class="st"> </span><span class="cf">function</span>(par, </a>
+<a class="sourceLine" id="cb277-2" data-line-number="2">                   <span class="dt">d =</span> <span class="fl">0.8</span>, </a>
+<a class="sourceLine" id="cb277-3" data-line-number="3">                   <span class="dt">c =</span> <span class="fl">0.1</span>, </a>
+<a class="sourceLine" id="cb277-4" data-line-number="4">                   <span class="dt">gamma0 =</span> <span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb277-5" data-line-number="5">                   <span class="dt">epsilon =</span> <span class="fl">1e-10</span>, </a>
+<a class="sourceLine" id="cb277-6" data-line-number="6">                   <span class="dt">trace =</span> <span class="ot">NULL</span>) {</a>
+<a class="sourceLine" id="cb277-7" data-line-number="7">    <span class="cf">repeat</span> {</a>
+<a class="sourceLine" id="cb277-8" data-line-number="8">      value &lt;-<span class="st"> </span><span class="kw">H</span>(par)</a>
+<a class="sourceLine" id="cb277-9" data-line-number="9">      grad &lt;-<span class="st"> </span><span class="kw">grad_H</span>(par)</a>
+<a class="sourceLine" id="cb277-10" data-line-number="10">      <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(trace)) <span class="kw">trace</span>()</a>
+<a class="sourceLine" id="cb277-11" data-line-number="11">      <span class="cf">if</span>(<span class="kw">sum</span>(grad<span class="op">^</span><span class="dv">2</span>) <span class="op">&lt;=</span><span class="st"> </span>epsilon) <span class="cf">break</span></a>
+<a class="sourceLine" id="cb277-12" data-line-number="12">      Hessian &lt;-<span class="st"> </span><span class="kw">Hessian_H</span>(par) </a>
+<a class="sourceLine" id="cb277-13" data-line-number="13">      rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span><span class="kw">drop</span>(<span class="kw">solve</span>(Hessian, grad)) </a>
+<a class="sourceLine" id="cb277-14" data-line-number="14">      gamma &lt;-<span class="st"> </span>gamma0</a>
+<a class="sourceLine" id="cb277-15" data-line-number="15">      par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</a>
+<a class="sourceLine" id="cb277-16" data-line-number="16">      h_prime &lt;-<span class="st"> </span><span class="kw">t</span>(grad) <span class="op">%*%</span><span class="st"> </span>rho </a>
+<a class="sourceLine" id="cb277-17" data-line-number="17">      <span class="cf">while</span>(<span class="kw">H</span>(par1) <span class="op">&gt;</span><span class="st"> </span>value <span class="op">+</span><span class="st">  </span>c <span class="op">*</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>h_prime) { </a>
+<a class="sourceLine" id="cb277-18" data-line-number="18">        gamma &lt;-<span class="st"> </span>d <span class="op">*</span><span class="st"> </span>gamma </a>
+<a class="sourceLine" id="cb277-19" data-line-number="19">        par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</a>
+<a class="sourceLine" id="cb277-20" data-line-number="20">      }</a>
+<a class="sourceLine" id="cb277-21" data-line-number="21">     par &lt;-<span class="st"> </span>par1 </a>
+<a class="sourceLine" id="cb277-22" data-line-number="22">    }</a>
+<a class="sourceLine" id="cb277-23" data-line-number="23">  par</a>
+<a class="sourceLine" id="cb277-24" data-line-number="24">}</a></code></pre></div>
 <div id="poisson-regression" class="section level3">
-<h3><span class="header-section-number">8.3.1</span> Poisson regression</h3>
+<h3><span class="header-section-number">7.3.1</span> Poisson regression</h3>
 <p>It requires the implementation of the Hessian matrix.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Hessian_H &lt;-<span class="st"> </span><span class="cf">function</span>(beta)
-  (<span class="kw">crossprod</span>(X, <span class="kw">drop</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">*</span><span class="st"> </span>X)) <span class="op">/</span><span class="st"> </span><span class="kw">nrow</span>(X)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Newton_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">1</span>)
-pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> Newton_tracer<span class="op">$</span>trace)</code></pre></div>
+<div class="sourceCode" id="cb278"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb278-1" data-line-number="1">Hessian_H &lt;-<span class="st"> </span><span class="cf">function</span>(beta)</a>
+<a class="sourceLine" id="cb278-2" data-line-number="2">  (<span class="kw">crossprod</span>(X, <span class="kw">drop</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">*</span><span class="st"> </span>X)) <span class="op">/</span><span class="st"> </span><span class="kw">nrow</span>(X)</a></code></pre></div>
+<div class="sourceCode" id="cb279"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb279-1" data-line-number="1">Newton_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb279-2" data-line-number="2">pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> Newton_tracer<span class="op">$</span>trace)</a></code></pre></div>
 <pre><code>## n = 1: value = 1; h_prime = NA; gamma = NA; 
 ## n = 2: value = -14.8327; h_prime = -4140.563; gamma = 0.022518; 
 ## n = 3: value = -64.81635; h_prime = -402.9847; gamma = 0.262144; 
@@ -334,42 +357,50 @@ pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span c
 ## n = 8: value = -128.5873; h_prime = -0.1647034; gamma = 1; 
 ## n = 9: value = -128.5894; h_prime = -0.004159696; gamma = 1; 
 ## n = 10: value = -128.5895; h_prime = -3.288913e-06; gamma = 1;</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">range</span>(pois_Newton <span class="op">-</span><span class="st"> </span>pois_model<span class="op">$</span>coefficients)</code></pre></div>
+<div class="sourceCode" id="cb281"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb281-1" data-line-number="1"><span class="kw">range</span>(pois_Newton <span class="op">-</span><span class="st"> </span>pois_model<span class="op">$</span>coefficients)</a></code></pre></div>
 <pre><code>## [1] -4.979404e-10  1.298776e-06</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">H</span>(pois_Newton)</code></pre></div>
+<div class="sourceCode" id="cb283"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb283-1" data-line-number="1"><span class="kw">H</span>(pois_Newton)</a></code></pre></div>
 <pre><code>## [1] -128.58945047446988497</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">H</span>(<span class="kw">coefficients</span>(pois_model))</code></pre></div>
+<div class="sourceCode" id="cb285"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb285-1" data-line-number="1"><span class="kw">H</span>(<span class="kw">coefficients</span>(pois_model))</a></code></pre></div>
 <pre><code>## [1] -128.58945047447093657</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(Newton_tracer)</code></pre></div>
+<div class="sourceCode" id="cb287"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb287-1" data-line-number="1"><span class="kw">summary</span>(Newton_tracer)</a></code></pre></div>
 <pre><code>##         value       h_prime    gamma .time
 ## 1     1.00000            NA       NA 0.000
-## 2   -14.83270 -4.140563e+03 0.022518 0.191
-## 3   -64.81635 -4.029847e+02 0.262144 0.373
-## 4  -111.33647 -7.636275e+01 1.000000 0.556
-## 5  -124.24937 -2.104160e+01 1.000000 0.731
-## 6  -127.71116 -5.652483e+00 1.000000 0.908
-## 7  -128.49729 -1.332600e+00 1.000000 1.082
-## 8  -128.58733 -1.647034e-01 1.000000 1.265
-## 9  -128.58945 -4.159696e-03 1.000000 1.447
-## 10 -128.58945 -3.288913e-06 1.000000 1.623</code></pre>
-<p>The R function <code>glm.fit</code> uses a Newton algorithm (without backtracking) and is about a factor five faster on this example.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(<span class="kw">glm.fit</span>(X, y, <span class="dt">family =</span> <span class="kw">poisson</span>()))</code></pre></div>
+## 2   -14.83270 -4.140563e+03 0.022518 0.174
+## 3   -64.81635 -4.029847e+02 0.262144 0.342
+## 4  -111.33647 -7.636275e+01 1.000000 0.503
+## 5  -124.24937 -2.104160e+01 1.000000 0.669
+## 6  -127.71116 -5.652483e+00 1.000000 0.838
+## 7  -128.49729 -1.332600e+00 1.000000 1.017
+## 8  -128.58733 -1.647034e-01 1.000000 1.193
+## 9  -128.58945 -4.159696e-03 1.000000 1.360
+## 10 -128.58945 -3.288913e-06 1.000000 1.526</code></pre>
+<p>The R function <code>glm.fit</code> uses a Newton algorithm (without backtracking)
+and is about a factor five faster on this example.</p>
+<div class="sourceCode" id="cb289"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb289-1" data-line-number="1"><span class="kw">system.time</span>(<span class="kw">glm.fit</span>(X, y, <span class="dt">family =</span> <span class="kw">poisson</span>()))</a></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   0.425   0.009   0.437</code></pre>
-<p>One should be careful when comparing run times for different optimization algorithms, but in this case they have achieved about the same precision with <code>glm.fit</code> even obtaining the smallest negative log-likelihood value.</p>
+##   0.377   0.003   0.380</code></pre>
+<p>One should be careful when comparing run times for different optimization
+algorithms, but in this case they have achieved about the same precision
+with <code>glm.fit</code> even obtaining the smallest negative log-likelihood value.</p>
 </div>
 <div id="quasi-newton-algorithms" class="section level3">
-<h3><span class="header-section-number">8.3.2</span> Quasi-Newton algorithms</h3>
-<p>We turn to other descent direction algorithms that are more efficient than gradient descent by choosing the descent direction in a more clever way but less computationally demanding than the Newton algorithm that requires the computation of the full Hessian in each iteration.</p>
-<p>We will only consider the application of the BFGS algorithm via the implementation in the R function <code>optim</code>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(
-  pois_BFGS &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), H, grad_H, 
-               <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)))</code></pre></div>
+<h3><span class="header-section-number">7.3.2</span> Quasi-Newton algorithms</h3>
+<p>We turn to other descent direction algorithms that are more efficient
+than gradient descent by choosing the descent direction in a more
+clever way but less computationally demanding than the Newton
+algorithm that requires the computation of the full Hessian in each
+iteration.</p>
+<p>We will only consider the application of the BFGS algorithm via the
+implementation in the R function <code>optim</code>.</p>
+<div class="sourceCode" id="cb291"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb291-1" data-line-number="1"><span class="kw">system.time</span>(</a>
+<a class="sourceLine" id="cb291-2" data-line-number="2">  pois_BFGS &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), H, grad_H, </a>
+<a class="sourceLine" id="cb291-3" data-line-number="3">               <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)))</a></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   0.517   0.040   0.559</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">range</span>(pois_BFGS<span class="op">$</span>par <span class="op">-</span><span class="st"> </span><span class="kw">coefficients</span>(pois_model))</code></pre></div>
+##   0.432   0.134   0.567</code></pre>
+<div class="sourceCode" id="cb293"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb293-1" data-line-number="1"><span class="kw">range</span>(pois_BFGS<span class="op">$</span>par <span class="op">-</span><span class="st"> </span><span class="kw">coefficients</span>(pois_model))</a></code></pre></div>
 <pre><code>## [1] -0.00954968  0.08481093</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">pois_BFGS[<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;counts&quot;</span>)]</code></pre></div>
+<div class="sourceCode" id="cb295"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb295-1" data-line-number="1">pois_BFGS[<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;counts&quot;</span>)]</a></code></pre></div>
 <pre><code>## $value
 ## [1] -128.5894
 ## 
@@ -378,48 +409,84 @@ pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span c
 ##      158      148</code></pre>
 </div>
 <div id="sparsity" class="section level3">
-<h3><span class="header-section-number">8.3.3</span> Sparsity</h3>
-<p>One of the benefits of the implementations of <span class="math inline">\(H\)</span> and its derivatives as well as of the descent algorithms is that they can exploit sparsity of <span class="math inline">\(\mathbf{X}\)</span> almost for free. The implementations have not done that in previous computations, because <span class="math inline">\(\mathbf{X}\)</span> has been stored as a dense matrix. In reality, <span class="math inline">\(\mathbf{X}\)</span> is a very sparse matrix (the vast majority of the matrix entries are zero), and if we convert it into a sparse matrix, all the matrix-vector products will be more run time efficient. Sparse matrices are implemented in the R package Matrix.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(Matrix)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">X &lt;-<span class="st"> </span><span class="kw">Matrix</span>(X)</code></pre></div>
-<p>Without changing any other code, we get an immediate run time improvement using e.g. <code>optim</code> and the BFGS algorithm.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system.time</span>(
-  pois_BFGS_sparse &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), H, grad_H, 
-                            <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>))
-)</code></pre></div>
+<h3><span class="header-section-number">7.3.3</span> Sparsity</h3>
+<p>One of the benefits of the implementations of <span class="math inline">\(H\)</span> and its derivatives
+as well as of the descent algorithms is that they can exploit sparsity
+of <span class="math inline">\(\mathbf{X}\)</span> almost for free. The implementations have not done that in
+previous computations, because <span class="math inline">\(\mathbf{X}\)</span> has been stored as a dense matrix. In
+reality, <span class="math inline">\(\mathbf{X}\)</span> is a very sparse matrix (the vast majority of the matrix
+entries are zero),
+and if we convert it into a sparse matrix, all the matrix-vector products
+will be more run time efficient. Sparse matrices are implemented in the
+R package Matrix.</p>
+<div class="sourceCode" id="cb297"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb297-1" data-line-number="1"><span class="kw">library</span>(Matrix)</a></code></pre></div>
+<div class="sourceCode" id="cb298"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb298-1" data-line-number="1">X &lt;-<span class="st"> </span><span class="kw">Matrix</span>(X)</a></code></pre></div>
+<p>Without changing any other code, we get an immediate
+run time improvement using e.g. <code>optim</code> and the BFGS algorithm.</p>
+<div class="sourceCode" id="cb299"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb299-1" data-line-number="1"><span class="kw">system.time</span>(</a>
+<a class="sourceLine" id="cb299-2" data-line-number="2">  pois_BFGS_sparse &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), H, grad_H, </a>
+<a class="sourceLine" id="cb299-3" data-line-number="3">                            <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>))</a>
+<a class="sourceLine" id="cb299-4" data-line-number="4">)</a></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   0.150   0.009   0.160</code></pre>
-<p>We should in real applications avoid constructing a dense intermediate model matrix as a step toward constructing a sparse model matrix. This is possible by constructing the sparse model matrix directly using a function from the R package MatrixModels.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(MatrixModels)
-X &lt;-<span class="st"> </span><span class="kw">model.Matrix</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, 
-                   <span class="dt">data =</span> vegetables, <span class="dt">sparse =</span> <span class="ot">TRUE</span>)
-<span class="kw">class</span>(X)</code></pre></div>
+##   0.130   0.001   0.137</code></pre>
+<p>We should in real applications avoid constructing a dense intermediate
+model matrix as a step toward constructing a sparse model matrix. This
+is possible by constructing the sparse model matrix directly using
+a function from the R package MatrixModels.</p>
+<div class="sourceCode" id="cb301"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb301-1" data-line-number="1"><span class="kw">library</span>(MatrixModels)</a>
+<a class="sourceLine" id="cb301-2" data-line-number="2">X &lt;-<span class="st"> </span><span class="kw">model.Matrix</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb301-3" data-line-number="3">                   <span class="dt">data =</span> vegetables, <span class="dt">sparse =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb301-4" data-line-number="4"><span class="kw">class</span>(X)</a></code></pre></div>
 <pre><code>## [1] &quot;dsparseModelMatrix&quot;
 ## attr(,&quot;package&quot;)
 ## [1] &quot;MatrixModels&quot;</code></pre>
-<p>The Newton implementation benefits enormously from using sparse matrices because the bottleneck is the computation of the Hessian.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Newton_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">0</span>)
-pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> Newton_tracer<span class="op">$</span>trace)
-<span class="kw">summary</span>(Newton_tracer)</code></pre></div>
+<p>The Newton implementation benefits enormously from using sparse matrices
+because the bottleneck is the computation of the Hessian.</p>
+<div class="sourceCode" id="cb303"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb303-1" data-line-number="1">Newton_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb303-2" data-line-number="2">pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> Newton_tracer<span class="op">$</span>trace)</a>
+<a class="sourceLine" id="cb303-3" data-line-number="3"><span class="kw">summary</span>(Newton_tracer)</a></code></pre></div>
 <pre><code>##         value       h_prime    gamma .time
 ## 1     1.00000            NA       NA 0.000
-## 2   -14.83270 -4.140563e+03 0.022518 0.005
-## 3   -64.81635 -4.029847e+02 0.262144 0.009
-## 4  -111.33647 -7.636275e+01 1.000000 0.012
-## 5  -124.24937 -2.104160e+01 1.000000 0.014
-## 6  -127.71116 -5.652483e+00 1.000000 0.017
-## 7  -128.49729 -1.332600e+00 1.000000 0.019
-## 8  -128.58733 -1.647034e-01 1.000000 0.022
-## 9  -128.58945 -4.159696e-03 1.000000 0.025
-## 10 -128.58945 -3.288913e-06 1.000000 0.027</code></pre>
-<p>Run time efficiency is not the only argument for using sparse matrices as they are also more memory efficient. It is memory (and time) inefficient to use dense intermediates, and for truly large scale problems impossible. Using sparse model matrices for regression models allows us to work with larger models that have more variables, more factor levels and more observations than if we use dense model matrices. For the Poisson regression model the memory used by either representation can be found.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">object.size</span>(X)
-<span class="kw">object.size</span>(<span class="kw">as.matrix</span>(X))</code></pre></div>
+## 2   -14.83270 -4.140563e+03 0.022518 0.008
+## 3   -64.81635 -4.029847e+02 0.262144 0.012
+## 4  -111.33647 -7.636275e+01 1.000000 0.016
+## 5  -124.24937 -2.104160e+01 1.000000 0.019
+## 6  -127.71116 -5.652483e+00 1.000000 0.021
+## 7  -128.49729 -1.332600e+00 1.000000 0.024
+## 8  -128.58733 -1.647034e-01 1.000000 0.028
+## 9  -128.58945 -4.159696e-03 1.000000 0.031
+## 10 -128.58945 -3.288913e-06 1.000000 0.033</code></pre>
+<p>Run time efficiency is not the only argument for using sparse matrices as they are
+also more memory efficient. It is memory (and time) inefficient to use dense intermediates,
+and for truly large scale problems impossible. Using sparse model matrices
+for regression models allows us to work with larger models that have
+more variables, more factor levels and more observations than if we use dense
+model matrices. For the Poisson regression model the memory used by either representation
+can be found.</p>
+<div class="sourceCode" id="cb305"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb305-1" data-line-number="1"><span class="kw">object.size</span>(X)</a>
+<a class="sourceLine" id="cb305-2" data-line-number="2"><span class="kw">object.size</span>(<span class="kw">as.matrix</span>(X))</a></code></pre></div>
 <pre><code>## Sparse matrix memory usage:
 ## 123440 bytes
 ## Dense matrix memory usage:
 ## 3103728 bytes</code></pre>
-<p>We see that the dense matrix uses around a factor 30 more memory than the sparse representation. In this case it means using around 3 MB for storing the dense matrix instead of around 100 kB, which won’t be a problem on a contemporary computer. However, going from using 3 GB for storing a matrix to using 100 Mb could be the difference between not being able to work with the matrix on a standard laptop to running the computations with no problems. Using <code>model.Matrix</code> makes it possible to construct sparse model matrices directly and avoid all dense intermediates. This is exploited in the <code>glm4</code> function from the MatrixModels package for fitting regression models, which can thus be useful in cases where your model matrix becomes very large but sparse. There are two main cases where the model matrix becomes sparse. When you model the response using one or more factors, and possibly their interactions, the model matrix will become particularly sparse if the factors have many levels. Another case is when you model the response via basis expansions of quantitative predictors and use basis functions with local support. The B-splines form an important example of such a basis with local support that results in a sparse model matrix.</p>
+<p>We see that the dense matrix uses around a factor 30 more memory than the
+sparse representation. In this case it means using around 3 MB for storing the
+dense matrix instead of around 100 kB, which won’t be a problem
+on a contemporary computer. However, going from using 3 GB for
+storing a matrix to using 100 Mb could be the difference between
+not being able to work with the matrix on a standard laptop to
+running the computations with no problems. Using <code>model.Matrix</code> makes
+it possible to construct sparse model matrices directly and avoid
+all dense intermediates. This is exploited in the <code>glm4</code> function from
+the MatrixModels package for fitting regression models, which can
+thus be useful in cases where your model matrix becomes very large but sparse.
+There are two main cases where the model matrix becomes sparse.
+When you model the response using one or more factors, and possibly their
+interactions, the model matrix will become particularly sparse if
+the factors have many levels. Another case is when you model the response
+via basis expansions of quantitative predictors and use basis functions
+with local support. The B-splines form an important example of such a basis
+with local support that results in a sparse model matrix.</p>
 </div>
 </div>
             </section>
@@ -448,7 +515,7 @@ gitbook.start({
 "google": false,
 "linkedin": false,
 "weibo": false,
-"instapper": false,
+"instapaper": false,
 "vk": false,
 "all": ["facebook", "google", "twitter", "linkedin", "weibo", "instapaper"]
 },
@@ -458,6 +525,10 @@ gitbook.start({
 "size": 2
 },
 "edit": {
+"link": null,
+"text": null
+},
+"history": {
 "link": null,
 "text": null
 },
@@ -474,10 +545,11 @@ gitbook.start({
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    var src = "";
-    if (src === "" || src === "true") src = "https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML";
-    if (location.protocol !== "file:" && /^https?:/.test(src))
-      src = src.replace(/^https?:/, '');
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
     script.src = src;
     document.getElementsByTagName("head")[0].appendChild(script);
   })();

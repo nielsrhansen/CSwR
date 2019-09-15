@@ -1,0 +1,33 @@
+---
+title: "Bivariate smoothing: Exercise solutions"
+author: "Niels Richard Hansen"
+date: "September 15, 2019"
+output:
+  html_document: 
+    code_folding: show 
+---
+
+
+# Exercise 3.2
+
+
+```{r}
+S_diag <- function(n, delta, bandwidth, kernel) {
+  x <- 0:(n-1)
+  kx <- kernel(delta * x / bandwidth)
+  y <- numeric(n)
+  y[1] <- sum(kx)
+  for(i in 2:n)
+    y[i] <- y[i - 1] + kx[i] - kx[n - i + 2]
+  kernel(0) / y
+}
+```
+
+
+
+We test the implementation of `S_diag` by comparing its output with `Sii` 
+as computed above. 
+
+```{r}
+range(Sii - S_diag(length(Nuuk_year$Year), 1, 10, kern))
+```

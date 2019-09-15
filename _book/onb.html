@@ -1,15 +1,14 @@
 <!DOCTYPE html>
-<html >
-
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
 <head>
 
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Computational Statistics with R</title>
-  <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language.">
-  <meta name="generator" content="bookdown 0.7 and GitBook 2.6.7">
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>3.4 Orthogonal basis expansions | Computational Statistics with R</title>
+  <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  <meta name="generator" content="bookdown 0.13 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Computational Statistics with R" />
+  <meta property="og:title" content="3.4 Orthogonal basis expansions | Computational Statistics with R" />
   <meta property="og:type" content="book" />
   
   
@@ -17,24 +16,25 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Computational Statistics with R" />
+  <meta name="twitter:title" content="3.4 Orthogonal basis expansions | Computational Statistics with R" />
   
   <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   
 
-<meta name="author" content="Niels Richard Hansen">
+<meta name="author" content="Niels Richard Hansen" />
 
 
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="sparse-linear-algebra.html">
-<link rel="next" href="splines.html">
+<link rel="prev" href="sparse-linear-algebra.html"/>
+<link rel="next" href="splines.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
@@ -49,41 +49,66 @@
 
 
 <style type="text/css">
-div.sourceCode { overflow-x: auto; }
-table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
-  margin: 0; padding: 0; vertical-align: baseline; border: none; }
-table.sourceCode { width: 100%; line-height: 100%; }
-td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
-td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code > span.dt { color: #902000; } /* DataType */
-code > span.dv { color: #40a070; } /* DecVal */
-code > span.bn { color: #40a070; } /* BaseN */
-code > span.fl { color: #40a070; } /* Float */
-code > span.ch { color: #4070a0; } /* Char */
-code > span.st { color: #4070a0; } /* String */
-code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code > span.ot { color: #007020; } /* Other */
-code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code > span.fu { color: #06287e; } /* Function */
-code > span.er { color: #ff0000; font-weight: bold; } /* Error */
-code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-code > span.cn { color: #880000; } /* Constant */
-code > span.sc { color: #4070a0; } /* SpecialChar */
-code > span.vs { color: #4070a0; } /* VerbatimString */
-code > span.ss { color: #bb6688; } /* SpecialString */
-code > span.im { } /* Import */
-code > span.va { color: #19177c; } /* Variable */
-code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code > span.op { color: #666666; } /* Operator */
-code > span.bu { } /* BuiltIn */
-code > span.ex { } /* Extension */
-code > span.pp { color: #bc7a00; } /* Preprocessor */
-code > span.at { color: #7d9029; } /* Attribute */
-code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 </style>
 
 <link rel="stylesheet" href="style.css" type="text/css" />
@@ -114,11 +139,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="1.2" data-path="monte-carlo-methods.html"><a href="monte-carlo-methods.html"><i class="fa fa-check"></i><b>1.2</b> Monte Carlo Methods</a><ul>
 <li class="chapter" data-level="1.2.1" data-path="monte-carlo-methods.html"><a href="monte-carlo-methods.html#vM"><i class="fa fa-check"></i><b>1.2.1</b> Univariate von Mises distributions</a></li>
 <li class="chapter" data-level="1.2.2" data-path="monte-carlo-methods.html"><a href="monte-carlo-methods.html#mixtures-of-von-mises-distributions"><i class="fa fa-check"></i><b>1.2.2</b> Mixtures of von Mises distributions</a></li>
-<li class="chapter" data-level="1.2.3" data-path="monte-carlo-methods.html"><a href="monte-carlo-methods.html#large-scale-simulation"><i class="fa fa-check"></i><b>1.2.3</b> Large scale simulation</a></li>
 </ul></li>
 <li class="chapter" data-level="1.3" data-path="optimization.html"><a href="optimization.html"><i class="fa fa-check"></i><b>1.3</b> Optimization</a><ul>
 <li class="chapter" data-level="1.3.1" data-path="optimization.html"><a href="optimization.html#the-em-algorithm"><i class="fa fa-check"></i><b>1.3.1</b> The EM-algorithm</a></li>
-<li class="chapter" data-level="1.3.2" data-path="optimization.html"><a href="optimization.html#large-scale-optimization"><i class="fa fa-check"></i><b>1.3.2</b> Large scale optimization</a></li>
 </ul></li>
 <li class="chapter" data-level="1.4" data-path="exercises.html"><a href="exercises.html"><i class="fa fa-check"></i><b>1.4</b> Exercises</a><ul>
 <li class="chapter" data-level="" data-path="exercises.html"><a href="exercises.html#r-training-exercises"><i class="fa fa-check"></i>R training exercises</a></li>
@@ -154,17 +177,19 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="3.1.2" data-path="nearest-neighbor-smoothers.html"><a href="nearest-neighbor-smoothers.html#implementing-the-running-mean"><i class="fa fa-check"></i><b>3.1.2</b> Implementing the running mean</a></li>
 <li class="chapter" data-level="3.1.3" data-path="nearest-neighbor-smoothers.html"><a href="nearest-neighbor-smoothers.html#choose-k-by-cross-validation"><i class="fa fa-check"></i><b>3.1.3</b> Choose <span class="math inline">\(k\)</span> by cross-validation</a></li>
 </ul></li>
-<li class="chapter" data-level="3.2" data-path="kernel-methods.html"><a href="kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a></li>
+<li class="chapter" data-level="3.2" data-path="kernel-methods.html"><a href="kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="kernel-methods.html"><a href="kernel-methods.html#nadarayawatson-kernel-smoothing"><i class="fa fa-check"></i><b>3.2.1</b> Nadaraya–Watson kernel smoothing</a></li>
+<li class="chapter" data-level="3.2.2" data-path="kernel-methods.html"><a href="kernel-methods.html#local-regression-smoothers"><i class="fa fa-check"></i><b>3.2.2</b> Local regression smoothers</a></li>
+</ul></li>
 <li class="chapter" data-level="3.3" data-path="sparse-linear-algebra.html"><a href="sparse-linear-algebra.html"><i class="fa fa-check"></i><b>3.3</b> Sparse linear algebra</a></li>
 <li class="chapter" data-level="3.4" data-path="onb.html"><a href="onb.html"><i class="fa fa-check"></i><b>3.4</b> Orthogonal basis expansions</a><ul>
 <li class="chapter" data-level="3.4.1" data-path="onb.html"><a href="onb.html#polynomial-expansions"><i class="fa fa-check"></i><b>3.4.1</b> Polynomial expansions</a></li>
 <li class="chapter" data-level="3.4.2" data-path="onb.html"><a href="onb.html#fourier-expansions"><i class="fa fa-check"></i><b>3.4.2</b> Fourier expansions</a></li>
-<li class="chapter" data-level="3.4.3" data-path="onb.html"><a href="onb.html#wavelets"><i class="fa fa-check"></i><b>3.4.3</b> Wavelets</a></li>
 </ul></li>
 <li class="chapter" data-level="3.5" data-path="splines.html"><a href="splines.html"><i class="fa fa-check"></i><b>3.5</b> Splines</a><ul>
 <li class="chapter" data-level="3.5.1" data-path="splines.html"><a href="splines.html#smoothing-splines"><i class="fa fa-check"></i><b>3.5.1</b> Smoothing splines</a></li>
 <li class="chapter" data-level="3.5.2" data-path="splines.html"><a href="splines.html#splines-in-r"><i class="fa fa-check"></i><b>3.5.2</b> Splines in R</a></li>
-<li class="chapter" data-level="3.5.3" data-path="splines.html"><a href="splines.html#efficient-computation-with-splines"><i class="fa fa-check"></i><b>3.5.3</b> Efficient computation with splines</a></li>
+<li class="chapter" data-level="3.5.3" data-path="splines.html"><a href="splines.html#efficient-splines"><i class="fa fa-check"></i><b>3.5.3</b> Efficient computation with splines</a></li>
 </ul></li>
 <li class="chapter" data-level="3.6" data-path="gaussian-processes.html"><a href="gaussian-processes.html"><i class="fa fa-check"></i><b>3.6</b> Gaussian processes</a></li>
 <li class="chapter" data-level="3.7" data-path="the-kalman-filter.html"><a href="the-kalman-filter.html"><i class="fa fa-check"></i><b>3.7</b> The Kalman filter</a><ul>
@@ -172,6 +197,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="3.7.2" data-path="the-kalman-filter.html"><a href="the-kalman-filter.html#the-kalman-smoother"><i class="fa fa-check"></i><b>3.7.2</b> The Kalman smoother</a></li>
 <li class="chapter" data-level="3.7.3" data-path="the-kalman-filter.html"><a href="the-kalman-filter.html#implementation-1"><i class="fa fa-check"></i><b>3.7.3</b> Implementation</a></li>
 <li class="chapter" data-level="3.7.4" data-path="the-kalman-filter.html"><a href="the-kalman-filter.html#the-kalman-filter-1"><i class="fa fa-check"></i><b>3.7.4</b> The Kalman filter</a></li>
+</ul></li>
+<li class="chapter" data-level="3.8" data-path="exercises-2.html"><a href="exercises-2.html"><i class="fa fa-check"></i><b>3.8</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="exercises-2.html"><a href="exercises-2.html#nearest-neighbors"><i class="fa fa-check"></i>Nearest neighbors</a></li>
+<li class="chapter" data-level="" data-path="exercises-2.html"><a href="exercises-2.html#kernel-estimators"><i class="fa fa-check"></i>Kernel estimators</a></li>
 </ul></li>
 </ul></li>
 <li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
@@ -188,8 +217,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="4.4.1" data-path="adaptive.html"><a href="adaptive.html#beta-distribution"><i class="fa fa-check"></i><b>4.4.1</b> Beta distribution</a></li>
 <li class="chapter" data-level="4.4.2" data-path="adaptive.html"><a href="adaptive.html#von-mises-distribution"><i class="fa fa-check"></i><b>4.4.2</b> von Mises distribution</a></li>
 </ul></li>
-<li class="chapter" data-level="4.5" data-path="exercises-2.html"><a href="exercises-2.html"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
-<li class="chapter" data-level="" data-path="exercises-2.html"><a href="exercises-2.html#rejection-sampling-of-gaussian-random-variables"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
+<li class="chapter" data-level="4.5" data-path="exercises-3.html"><a href="exercises-3.html"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="exercises-3.html"><a href="exercises-3.html#rejection-sampling-of-gaussian-random-variables"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
 </ul></li>
 </ul></li>
 <li class="chapter" data-level="5" data-path="mci.html"><a href="mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
@@ -205,69 +234,53 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="5.3" data-path="network-failure.html"><a href="network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
 <li class="chapter" data-level="5.3.1" data-path="network-failure.html"><a href="network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
 </ul></li>
-<li class="chapter" data-level="5.4" data-path="design-of-experiments.html"><a href="design-of-experiments.html"><i class="fa fa-check"></i><b>5.4</b> Design of experiments</a></li>
-</ul></li>
-<li class="chapter" data-level="6" data-path="multivariate-random-variables.html"><a href="multivariate-random-variables.html"><i class="fa fa-check"></i><b>6</b> Multivariate random variables</a><ul>
-<li class="chapter" data-level="6.1" data-path="sequential-simulation.html"><a href="sequential-simulation.html"><i class="fa fa-check"></i><b>6.1</b> Sequential simulation</a><ul>
-<li class="chapter" data-level="6.1.1" data-path="sequential-simulation.html"><a href="sequential-simulation.html#sequential-mc-for-the-ar1-process"><i class="fa fa-check"></i><b>6.1.1</b> Sequential MC for the AR(1)-process</a></li>
-</ul></li>
-<li class="chapter" data-level="6.2" data-path="gaussian-random-variables.html"><a href="gaussian-random-variables.html"><i class="fa fa-check"></i><b>6.2</b> Gaussian random variables</a></li>
 </ul></li>
 <li class="part"><span><b>Part III: Optimization</b></span></li>
-<li class="chapter" data-level="7" data-path="five-examples.html"><a href="five-examples.html"><i class="fa fa-check"></i><b>7</b> Five Examples</a><ul>
-<li class="chapter" data-level="7.1" data-path="exp-fam.html"><a href="exp-fam.html"><i class="fa fa-check"></i><b>7.1</b> Exponential families</a><ul>
-<li class="chapter" data-level="7.1.1" data-path="exp-fam.html"><a href="exp-fam.html#full-exponential-families"><i class="fa fa-check"></i><b>7.1.1</b> Full exponential families</a></li>
-<li class="chapter" data-level="7.1.2" data-path="exp-fam.html"><a href="exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>7.1.2</b> Exponential family Bayesian networks</a></li>
-<li class="chapter" data-level="7.1.3" data-path="exp-fam.html"><a href="exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>7.1.3</b> Likelihood computations</a></li>
-<li class="chapter" data-level="7.1.4" data-path="exp-fam.html"><a href="exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>7.1.4</b> Curved exponential families</a></li>
+<li class="chapter" data-level="6" data-path="four-examples.html"><a href="four-examples.html"><i class="fa fa-check"></i><b>6</b> Four Examples</a><ul>
+<li class="chapter" data-level="6.1" data-path="exp-fam.html"><a href="exp-fam.html"><i class="fa fa-check"></i><b>6.1</b> Exponential families</a><ul>
+<li class="chapter" data-level="6.1.1" data-path="exp-fam.html"><a href="exp-fam.html#full-exponential-families"><i class="fa fa-check"></i><b>6.1.1</b> Full exponential families</a></li>
+<li class="chapter" data-level="6.1.2" data-path="exp-fam.html"><a href="exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>6.1.2</b> Exponential family Bayesian networks</a></li>
+<li class="chapter" data-level="6.1.3" data-path="exp-fam.html"><a href="exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>6.1.3</b> Likelihood computations</a></li>
+<li class="chapter" data-level="6.1.4" data-path="exp-fam.html"><a href="exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>6.1.4</b> Curved exponential families</a></li>
 </ul></li>
-<li class="chapter" data-level="7.2" data-path="multinomial-models.html"><a href="multinomial-models.html"><i class="fa fa-check"></i><b>7.2</b> Multinomial models</a><ul>
-<li class="chapter" data-level="7.2.1" data-path="multinomial-models.html"><a href="multinomial-models.html#pep-moth"><i class="fa fa-check"></i><b>7.2.1</b> Peppered Moths</a></li>
+<li class="chapter" data-level="6.2" data-path="multinomial-models.html"><a href="multinomial-models.html"><i class="fa fa-check"></i><b>6.2</b> Multinomial models</a><ul>
+<li class="chapter" data-level="6.2.1" data-path="multinomial-models.html"><a href="multinomial-models.html#pep-moth"><i class="fa fa-check"></i><b>6.2.1</b> Peppered Moths</a></li>
 </ul></li>
-<li class="chapter" data-level="7.3" data-path="regression.html"><a href="regression.html"><i class="fa fa-check"></i><b>7.3</b> Regression models</a></li>
-<li class="chapter" data-level="7.4" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html"><i class="fa fa-check"></i><b>7.4</b> Finite mixture models</a><ul>
-<li class="chapter" data-level="7.4.1" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html#Gaus-mix-ex"><i class="fa fa-check"></i><b>7.4.1</b> Gaussian mixtures</a></li>
-<li class="chapter" data-level="7.4.2" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html#von-mises-mixtures"><i class="fa fa-check"></i><b>7.4.2</b> von Mises mixtures</a></li>
+<li class="chapter" data-level="6.3" data-path="regression.html"><a href="regression.html"><i class="fa fa-check"></i><b>6.3</b> Regression models</a></li>
+<li class="chapter" data-level="6.4" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html"><i class="fa fa-check"></i><b>6.4</b> Finite mixture models</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="finite-mixture-models.html"><a href="finite-mixture-models.html#Gaus-mix-ex"><i class="fa fa-check"></i><b>6.4.1</b> Gaussian mixtures</a></li>
 </ul></li>
-<li class="chapter" data-level="7.5" data-path="mixed-models.html"><a href="mixed-models.html"><i class="fa fa-check"></i><b>7.5</b> Mixed models</a></li>
-<li class="chapter" data-level="7.6" data-path="state-space-models.html"><a href="state-space-models.html"><i class="fa fa-check"></i><b>7.6</b> State space models</a></li>
+<li class="chapter" data-level="6.5" data-path="mixed-models.html"><a href="mixed-models.html"><i class="fa fa-check"></i><b>6.5</b> Mixed models</a></li>
 </ul></li>
-<li class="chapter" data-level="8" data-path="numopt.html"><a href="numopt.html"><i class="fa fa-check"></i><b>8</b> Numerical optimization</a><ul>
-<li class="chapter" data-level="8.1" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html"><i class="fa fa-check"></i><b>8.1</b> Algorithms and convergence</a><ul>
-<li class="chapter" data-level="8.1.1" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#descent-algorithms"><i class="fa fa-check"></i><b>8.1.1</b> Descent algorithms</a></li>
-<li class="chapter" data-level="8.1.2" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#maps-and-fixed-points"><i class="fa fa-check"></i><b>8.1.2</b> Maps and fixed points</a></li>
-<li class="chapter" data-level="8.1.3" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#convergence-rate"><i class="fa fa-check"></i><b>8.1.3</b> Convergence rate</a></li>
-<li class="chapter" data-level="8.1.4" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#stopping-criteria"><i class="fa fa-check"></i><b>8.1.4</b> Stopping criteria</a></li>
+<li class="chapter" data-level="7" data-path="numopt.html"><a href="numopt.html"><i class="fa fa-check"></i><b>7</b> Numerical optimization</a><ul>
+<li class="chapter" data-level="7.1" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html"><i class="fa fa-check"></i><b>7.1</b> Algorithms and convergence</a><ul>
+<li class="chapter" data-level="7.1.1" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#descent-algorithms"><i class="fa fa-check"></i><b>7.1.1</b> Descent algorithms</a></li>
+<li class="chapter" data-level="7.1.2" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#maps-and-fixed-points"><i class="fa fa-check"></i><b>7.1.2</b> Maps and fixed points</a></li>
+<li class="chapter" data-level="7.1.3" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#convergence-rate"><i class="fa fa-check"></i><b>7.1.3</b> Convergence rate</a></li>
+<li class="chapter" data-level="7.1.4" data-path="algorithms-and-convergence.html"><a href="algorithms-and-convergence.html#stopping-criteria"><i class="fa fa-check"></i><b>7.1.4</b> Stopping criteria</a></li>
 </ul></li>
-<li class="chapter" data-level="8.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html"><i class="fa fa-check"></i><b>8.2</b> Descent direction algorithms</a><ul>
-<li class="chapter" data-level="8.2.1" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#line-search"><i class="fa fa-check"></i><b>8.2.1</b> Line search</a></li>
-<li class="chapter" data-level="8.2.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#gradient-descent"><i class="fa fa-check"></i><b>8.2.2</b> Gradient descent</a></li>
-<li class="chapter" data-level="8.2.3" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>8.2.3</b> Conjugate gradients</a></li>
-<li class="chapter" data-level="8.2.4" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#pep-moth-descent"><i class="fa fa-check"></i><b>8.2.4</b> Peppered Moths</a></li>
+<li class="chapter" data-level="7.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html"><i class="fa fa-check"></i><b>7.2</b> Descent direction algorithms</a><ul>
+<li class="chapter" data-level="7.2.1" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#line-search"><i class="fa fa-check"></i><b>7.2.1</b> Line search</a></li>
+<li class="chapter" data-level="7.2.2" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#gradient-descent"><i class="fa fa-check"></i><b>7.2.2</b> Gradient descent</a></li>
+<li class="chapter" data-level="7.2.3" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>7.2.3</b> Conjugate gradients</a></li>
+<li class="chapter" data-level="7.2.4" data-path="descent-direction-algorithms.html"><a href="descent-direction-algorithms.html#pep-moth-descent"><i class="fa fa-check"></i><b>7.2.4</b> Peppered Moths</a></li>
 </ul></li>
-<li class="chapter" data-level="8.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html"><i class="fa fa-check"></i><b>8.3</b> Newton-type algorithms</a><ul>
-<li class="chapter" data-level="8.3.1" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>8.3.1</b> Poisson regression</a></li>
-<li class="chapter" data-level="8.3.2" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>8.3.2</b> Quasi-Newton algorithms</a></li>
-<li class="chapter" data-level="8.3.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>8.3.3</b> Sparsity</a></li>
+<li class="chapter" data-level="7.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html"><i class="fa fa-check"></i><b>7.3</b> Newton-type algorithms</a><ul>
+<li class="chapter" data-level="7.3.1" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>7.3.1</b> Poisson regression</a></li>
+<li class="chapter" data-level="7.3.2" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>7.3.2</b> Quasi-Newton algorithms</a></li>
+<li class="chapter" data-level="7.3.3" data-path="newton-type-algorithms.html"><a href="newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>7.3.3</b> Sparsity</a></li>
 </ul></li>
-<li class="chapter" data-level="8.4" data-path="misc-.html"><a href="misc-.html"><i class="fa fa-check"></i><b>8.4</b> Misc.</a></li>
+<li class="chapter" data-level="7.4" data-path="misc-.html"><a href="misc-.html"><i class="fa fa-check"></i><b>7.4</b> Misc.</a></li>
 </ul></li>
-<li class="chapter" data-level="9" data-path="em.html"><a href="em.html"><i class="fa fa-check"></i><b>9</b> Expectation maximization algorithms</a><ul>
-<li class="chapter" data-level="9.1" data-path="basic-properties.html"><a href="basic-properties.html"><i class="fa fa-check"></i><b>9.1</b> Basic properties</a><ul>
-<li class="chapter" data-level="9.1.1" data-path="basic-properties.html"><a href="basic-properties.html#incomplete-data-likelihood"><i class="fa fa-check"></i><b>9.1.1</b> Incomplete data likelihood</a></li>
-<li class="chapter" data-level="9.1.2" data-path="basic-properties.html"><a href="basic-properties.html#monotonicity-of-the-em-algorithm"><i class="fa fa-check"></i><b>9.1.2</b> Monotonicity of the EM algorithm</a></li>
-<li class="chapter" data-level="9.1.3" data-path="basic-properties.html"><a href="basic-properties.html#peppered-moths"><i class="fa fa-check"></i><b>9.1.3</b> Peppered moths</a></li>
+<li class="chapter" data-level="8" data-path="em.html"><a href="em.html"><i class="fa fa-check"></i><b>8</b> Expectation maximization algorithms</a><ul>
+<li class="chapter" data-level="8.1" data-path="basic-properties.html"><a href="basic-properties.html"><i class="fa fa-check"></i><b>8.1</b> Basic properties</a><ul>
+<li class="chapter" data-level="8.1.1" data-path="basic-properties.html"><a href="basic-properties.html#incomplete-data-likelihood"><i class="fa fa-check"></i><b>8.1.1</b> Incomplete data likelihood</a></li>
+<li class="chapter" data-level="8.1.2" data-path="basic-properties.html"><a href="basic-properties.html#monotonicity-of-the-em-algorithm"><i class="fa fa-check"></i><b>8.1.2</b> Monotonicity of the EM algorithm</a></li>
+<li class="chapter" data-level="8.1.3" data-path="basic-properties.html"><a href="basic-properties.html#peppered-moths"><i class="fa fa-check"></i><b>8.1.3</b> Peppered moths</a></li>
 </ul></li>
-<li class="chapter" data-level="9.2" data-path="EM-exp.html"><a href="EM-exp.html"><i class="fa fa-check"></i><b>9.2</b> Exponential families</a></li>
-<li class="chapter" data-level="9.3" data-path="fisher-information.html"><a href="fisher-information.html"><i class="fa fa-check"></i><b>9.3</b> Fisher information</a></li>
-<li class="chapter" data-level="9.4" data-path="two-examples-revisited.html"><a href="two-examples-revisited.html"><i class="fa fa-check"></i><b>9.4</b> Two examples revisited</a><ul>
-<li class="chapter" data-level="9.4.1" data-path="two-examples-revisited.html"><a href="two-examples-revisited.html#gaussian-mixtures"><i class="fa fa-check"></i><b>9.4.1</b> Gaussian mixtures</a></li>
-<li class="chapter" data-level="9.4.2" data-path="two-examples-revisited.html"><a href="two-examples-revisited.html#gaussian-state-space"><i class="fa fa-check"></i><b>9.4.2</b> Gaussian state space</a></li>
-</ul></li>
-</ul></li>
-<li class="chapter" data-level="10" data-path="stochopt.html"><a href="stochopt.html"><i class="fa fa-check"></i><b>10</b> Stochastic Optimization</a><ul>
-<li class="chapter" data-level="10.1" data-path="stochastic-gradient.html"><a href="stochastic-gradient.html"><i class="fa fa-check"></i><b>10.1</b> Stochastic gradient</a></li>
-<li class="chapter" data-level="10.2" data-path="stochastic-em.html"><a href="stochastic-em.html"><i class="fa fa-check"></i><b>10.2</b> Stochastic EM</a></li>
+<li class="chapter" data-level="8.2" data-path="EM-exp.html"><a href="EM-exp.html"><i class="fa fa-check"></i><b>8.2</b> Exponential families</a></li>
+<li class="chapter" data-level="8.3" data-path="fisher-information.html"><a href="fisher-information.html"><i class="fa fa-check"></i><b>8.3</b> Fisher information</a></li>
+<li class="chapter" data-level="8.4" data-path="revisiting-gaussian-mixtures.html"><a href="revisiting-gaussian-mixtures.html"><i class="fa fa-check"></i><b>8.4</b> Revisiting Gaussian mixtures</a></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
 </ul>
@@ -294,88 +307,117 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>Degree 19 polynomial fitted to the temperature data.</p>
 <p><img src="CSwR_files/figure-html/Nuuk_poly_fig-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <p>We can extract the model matrix from the lm-object.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">intercept &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="dv">1</span><span class="op">/</span><span class="kw">sqrt</span>(n), n)  ## To make intercept column have norm one
-polylm &lt;-<span class="st"> </span><span class="kw">lm</span>(Temperature <span class="op">~</span><span class="st"> </span>intercept <span class="op">+</span><span class="st"> </span><span class="kw">poly</span>(Year, <span class="dv">19</span>) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Nuuk_year)
-Phi &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(polylm)</code></pre></div>
+<div class="sourceCode" id="cb89"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb89-1" data-line-number="1">intercept &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="dv">1</span><span class="op">/</span><span class="kw">sqrt</span>(n), n)  <span class="co">## To make intercept column have norm one</span></a>
+<a class="sourceLine" id="cb89-2" data-line-number="2">polylm &lt;-<span class="st"> </span><span class="kw">lm</span>(Temperature <span class="op">~</span><span class="st"> </span>intercept <span class="op">+</span><span class="st"> </span><span class="kw">poly</span>(Year, <span class="dv">19</span>) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Nuuk_year)</a>
+<a class="sourceLine" id="cb89-3" data-line-number="3">Phi &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(polylm)</a></code></pre></div>
+<pre><code>## Warning: `as.tibble()` is deprecated, use `as_tibble()` (but mind the new semantics).
+## This warning is displayed once per session.</code></pre>
 <div class="figure" style="text-align: center"><span id="fig:model-matrix-fig"></span>
 <img src="CSwR_files/figure-html/model-matrix-fig-1.png" alt="The model matrix columns as functions" width="100%" />
 <p class="caption">
-Figure 3.6: The model matrix columns as functions
+Figure 3.10: The model matrix columns as functions
 </p>
 </div>
-<p>The model matrix is (almost) orthogonal, and estimation becomes quite simple. With an orthogonal model matrix the normal equation reduces to the estimate <span class="math display">\[\hat{\beta} = \Phi^T Y\]</span> since <span class="math inline">\(\Phi^T \Phi = I\)</span>. The predicted (or fitted) values are <span class="math inline">\(\Phi \Phi^T Y\)</span> with smoother matrix <span class="math inline">\(\mathbf{S} = \Phi \Phi^T\)</span> being a projection.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(<span class="kw">t</span>(Phi) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, <span class="dv">1</span>]</code></pre></div>
+<p>The model matrix is (almost) orthogonal, and estimation becomes quite simple.
+With an orthogonal model matrix the normal equation reduces to the estimate
+<span class="math display">\[\hat{\beta} = \Phi^T Y\]</span>
+since <span class="math inline">\(\Phi^T \Phi = I\)</span>. The predicted (or fitted) values are <span class="math inline">\(\Phi \Phi^T Y\)</span>
+with smoother matrix <span class="math inline">\(\mathbf{S} = \Phi \Phi^T\)</span> being a projection.</p>
+<div class="sourceCode" id="cb91"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb91-1" data-line-number="1">(<span class="kw">t</span>(Phi) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, <span class="dv">1</span>]</a></code></pre></div>
 <pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 
 ##     -17.2469646       4.9002430      -1.7968913       0.8175400 
 ## poly(Year, 19)4 poly(Year, 19)5 poly(Year, 19)6 poly(Year, 19)7 
 ##       5.9668689       1.4265091      -1.9258864      -0.2523581 
 ## poly(Year, 19)8 poly(Year, 19)9 
 ##      -2.1355117      -0.8046267</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef</span>(polylm)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>]</code></pre></div>
+<div class="sourceCode" id="cb93"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb93-1" data-line-number="1"><span class="kw">coef</span>(polylm)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>]</a></code></pre></div>
 <pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 
 ##     -17.2469646       4.9002430      -1.7968913       0.8175400 
 ## poly(Year, 19)4 poly(Year, 19)5 poly(Year, 19)6 poly(Year, 19)7 
 ##       5.9668689       1.4265091      -1.9258864      -0.2523581 
 ## poly(Year, 19)8 poly(Year, 19)9 
 ##      -2.1355117      -0.8046267</code></pre>
-<p>With homogeneous variance <span class="math display">\[\hat{\beta}_i \overset{\text{approx}}{\sim} \mathcal{N}(\beta_i, \sigma^2),\]</span> and for <span class="math inline">\(\beta_i = 0\)</span> we have <span class="math inline">\(P(|\hat{\beta}_i| \geq 1.96\sigma) \simeq 0.05.\)</span></p>
+<p>With homogeneous variance
+<span class="math display">\[\hat{\beta}_i \overset{\text{approx}}{\sim} \mathcal{N}(\beta_i, \sigma^2),\]</span>
+and for <span class="math inline">\(\beta_i = 0\)</span> we have <span class="math inline">\(P(|\hat{\beta}_i| \geq 1.96\sigma) \simeq 0.05.\)</span></p>
 <p>Thresholding:</p>
 <p><img src="CSwR_files/figure-html/Nuuk_poly_threshold-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <div class="figure" style="text-align: center"><span id="fig:Nuuk-poly-fig2"></span>
 <img src="CSwR_files/figure-html/Nuuk-poly-fig2-1.png" alt="Polynomial fit using all 19 basis functions (blue) and using a degree 5 polynomial (red)." width="70%" />
 <p class="caption">
-Figure 3.7: Polynomial fit using all 19 basis functions (blue) and using a degree 5 polynomial (red).
+Figure 3.11: Polynomial fit using all 19 basis functions (blue) and using a degree 5 polynomial (red).
 </p>
 </div>
 </div>
 <div id="fourier-expansions" class="section level3">
 <h3><span class="header-section-number">3.4.2</span> Fourier expansions</h3>
-<p>Introducing <span class="math display">\[x_{k,m} = \frac{1}{\sqrt{n}} e^{2 \pi i k m / n},\]</span> then</p>
+<p>Introducing
+<span class="math display">\[x_{k,m} = \frac{1}{\sqrt{n}} e^{2 \pi i k m / n},\]</span>
+then</p>
 <p><span class="math display">\[\sum_{k=0}^{n-1} |x_{k,m}|^2 = 1\]</span></p>
-<p>and for <span class="math inline">\(m_1 \neq m_2\)</span> <span class="math display">\[\sum_{k=0}^{n-1} x_{k,m_1}\overline{x_{k,m_2}} = 0\]</span></p>
-<p>Thus <span class="math inline">\(\Phi = (x_{k,m})_{k,m}\)</span> is an <span class="math inline">\(n \times n\)</span> unitary matrix; <span class="math display">\[\Phi^*\Phi = I\]</span> where <span class="math inline">\(\Phi^*\)</span> is the conjugate transposed of <span class="math inline">\(\Phi\)</span>.</p>
-<p><span class="math inline">\(\hat{\beta} = \Phi^* y\)</span> is the <em>discrete Fourier transform</em> of <span class="math inline">\(y\)</span>. It is the basis coefficients in the orthonormal basis given by <span class="math inline">\(\Phi\)</span>; <span class="math display">\[y_k = \frac{1}{\sqrt{n}} \sum_{m=0}^{n-1} \hat{\beta}_m  e^{2 \pi i k m / n}\]</span></p>
+<p>and for <span class="math inline">\(m_1 \neq m_2\)</span>
+<span class="math display">\[\sum_{k=0}^{n-1} x_{k,m_1}\overline{x_{k,m_2}} = 0\]</span></p>
+<p>Thus <span class="math inline">\(\Phi = (x_{k,m})_{k,m}\)</span> is an <span class="math inline">\(n \times n\)</span> unitary matrix;
+<span class="math display">\[\Phi^*\Phi = I\]</span>
+where <span class="math inline">\(\Phi^*\)</span> is the conjugate transposed of <span class="math inline">\(\Phi\)</span>.</p>
+<p><span class="math inline">\(\hat{\beta} = \Phi^* y\)</span> is the <em>discrete Fourier transform</em> of <span class="math inline">\(y\)</span>.
+It is the basis coefficients in the orthonormal basis given by <span class="math inline">\(\Phi\)</span>;
+<span class="math display">\[y_k = \frac{1}{\sqrt{n}} \sum_{m=0}^{n-1} \hat{\beta}_m  e^{2 \pi i k m / n}\]</span></p>
 <p>or <span class="math inline">\(y = \Phi \hat{\beta}.\)</span></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Phi &lt;-<span class="st"> </span><span class="kw">outer</span>(<span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), <span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), 
-           <span class="cf">function</span>(k, m) <span class="kw">exp</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi <span class="op">*</span><span class="st"> </span>1i <span class="op">*</span><span class="st"> </span>(k <span class="op">*</span><span class="st"> </span>m) <span class="op">/</span><span class="st"> </span>n) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n))</code></pre></div>
+<div class="sourceCode" id="cb95"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb95-1" data-line-number="1">Phi &lt;-<span class="st"> </span><span class="kw">outer</span>(<span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), <span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), </a>
+<a class="sourceLine" id="cb95-2" data-line-number="2">           <span class="cf">function</span>(k, m) <span class="kw">exp</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi <span class="op">*</span><span class="st"> </span>1i <span class="op">*</span><span class="st"> </span>(k <span class="op">*</span><span class="st"> </span>m) <span class="op">/</span><span class="st"> </span>n) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n))</a></code></pre></div>
 <p>The matrix <span class="math inline">\(\Phi\)</span> generates an interesting pattern.</p>
 <p><img src="CSwR_files/figure-html/Fourier_fig-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <p>Columns in the matrix <span class="math inline">\(\Phi\)</span>:</p>
 <p><img src="CSwR_files/figure-html/Fourier_basis_fig-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <p>We can estimate by matrix multiplication</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">betahat &lt;-<span class="st"> </span><span class="kw">Conj</span>(<span class="kw">t</span>(Phi)) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature <span class="co"># t(Phi) = Phi for Fourier bases</span>
-betahat[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span><span class="op">:</span><span class="dv">4</span>, <span class="dv">73</span>, n<span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">2</span>))]</code></pre></div>
+<div class="sourceCode" id="cb96"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb96-1" data-line-number="1">betahat &lt;-<span class="st"> </span><span class="kw">Conj</span>(<span class="kw">t</span>(Phi)) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature <span class="co"># t(Phi) = Phi for Fourier bases</span></a>
+<a class="sourceLine" id="cb96-2" data-line-number="2">betahat[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span><span class="op">:</span><span class="dv">4</span>, <span class="dv">73</span>, n<span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">2</span>))]</a></code></pre></div>
 <pre><code>## [1] -17.2469646+0.0000000i  -2.4642887+2.3871189i   3.5481329+0.9099226i
 ## [4]   1.6721444+0.7413580i   0.0321232+0.7089991i  -2.4642887-2.3871189i
 ## [7]   3.5481329-0.9099226i   1.6721444-0.7413580i</code></pre>
-<p>For real <span class="math inline">\(y\)</span> it holds that <span class="math inline">\(\hat{\beta}_0\)</span> is real, and the symmetry <span class="math display">\[\hat{\beta}_{n-m} = \hat{\beta}_m^*\]</span> holds for <span class="math inline">\(m = 1, \ldots, n - 1\)</span>. (For <span class="math inline">\(n\)</span> even, <span class="math inline">\(\hat{\beta}_{n/2}\)</span> is real too).</p>
+<p>For real <span class="math inline">\(y\)</span> it holds that <span class="math inline">\(\hat{\beta}_0\)</span> is real, and the symmetry
+<span class="math display">\[\hat{\beta}_{n-m} = \hat{\beta}_m^*\]</span>
+holds for <span class="math inline">\(m = 1, \ldots, n - 1\)</span>. (For <span class="math inline">\(n\)</span> even, <span class="math inline">\(\hat{\beta}_{n/2}\)</span> is real too).</p>
 <p>Modulus distribution:</p>
 <p>Note that for <span class="math inline">\(m \neq 0, n/2\)</span>, <span class="math inline">\(\beta_m = 0\)</span> and <span class="math inline">\(y \sim \mathcal{N}(\Phi\beta, \sigma^2 I_n)\)</span> then<br />
 <span class="math display">\[(\mathrm{Re}(\hat{\beta}_m), \mathrm{Im}(\hat{\beta}_m))^T \sim \mathcal{N}\left(0, \frac{\sigma^2}{2} I_2\right),\]</span></p>
-<p>hence <span class="math display">\[|\hat{\beta}_m|^2 = \mathrm{Re}(\hat{\beta}_m)^2 + \mathrm{Im}(\hat{\beta}_m)^2 \sim \frac{\sigma^2}{2} \chi^2_2,\]</span> that is, <span class="math inline">\(P(|\hat{\beta}_m| \geq 1.73 \sigma) = 0.05.\)</span> There is a clear case of multiple testing if we use this threshold at face value, and we would expect around <span class="math inline">\(0.05 \times n/2\)</span> false positive if there is no signal at all. Lowering the probability using the Bonferroni correction yields a threshold of around <span class="math inline">\(2.7 \sigma\)</span> instead.</p>
+<p>hence
+<span class="math display">\[|\hat{\beta}_m|^2 = \mathrm{Re}(\hat{\beta}_m)^2 + \mathrm{Im}(\hat{\beta}_m)^2 \sim \frac{\sigma^2}{2} \chi^2_2,\]</span>
+that is, <span class="math inline">\(P(|\hat{\beta}_m| \geq 1.73 \sigma) = 0.05.\)</span> There is a clear case
+of multiple testing if we use this threshold at face value, and we would expect
+around <span class="math inline">\(0.05 \times n/2\)</span> false positive if there is no signal at all. Lowering
+the probability using the Bonferroni correction yields a threshold of around <span class="math inline">\(2.7 \sigma\)</span>
+instead.</p>
 <p>Thresholding Fourier:</p>
 <p><img src="CSwR_files/figure-html/Nuuk_Fourier_threshold-1.png" width="70%" style="display: block; margin: auto;" /></p>
-<p>The coefficients are not independent (remember the symmetry), and one can alternatively consider <span class="math display">\[\hat{\gamma}_m = \sqrt{2} \mathrm{Re}(\hat{\beta}_m) \quad \text{and} \quad 
-\hat{\gamma}_{n&#39; + m} = - \sqrt{2} \mathrm{Im}(\hat{\beta}_m)\]</span> for <span class="math inline">\(1 \leq m &lt; n / 2\)</span>. Here <span class="math inline">\(n&#39; = \lfloor n / 2 \rfloor\)</span>. Here, <span class="math inline">\(\hat{\gamma}_0 = \hat{\beta}_0\)</span>, and <span class="math inline">\(\hat{\gamma}_{n/2} = \hat{\beta}_{n/2}\)</span> for <span class="math inline">\(n\)</span> even.</p>
-<p>These coefficients are the coefficients in a real cosine, <span class="math inline">\(\sqrt{2} \cos(2\pi k m / n)\)</span>, and sine, <span class="math inline">\(\sqrt{2} \sin(2\pi k m / n)\)</span>, basis expansion, and they are i.i.d. <span class="math inline">\(\mathcal{N}(0, \sigma^2)\)</span> distributed.</p>
+<p>The coefficients are not independent (remember the symmetry), and one can alternatively
+consider
+<span class="math display">\[\hat{\gamma}_m = \sqrt{2} \mathrm{Re}(\hat{\beta}_m) \quad \text{and} \quad 
+\hat{\gamma}_{n&#39; + m} = - \sqrt{2} \mathrm{Im}(\hat{\beta}_m)\]</span>
+for <span class="math inline">\(1 \leq m &lt; n / 2\)</span>. Here <span class="math inline">\(n&#39; = \lfloor n / 2 \rfloor\)</span>. Here, <span class="math inline">\(\hat{\gamma}_0 = \hat{\beta}_0\)</span>, and <span class="math inline">\(\hat{\gamma}_{n/2} = \hat{\beta}_{n/2}\)</span> for <span class="math inline">\(n\)</span> even.</p>
+<p>These coefficients are the coefficients in a real cosine,
+<span class="math inline">\(\sqrt{2} \cos(2\pi k m / n)\)</span>, and sine, <span class="math inline">\(\sqrt{2} \sin(2\pi k m / n)\)</span>, basis
+expansion, and they are i.i.d.
+<span class="math inline">\(\mathcal{N}(0, \sigma^2)\)</span> distributed.</p>
 <p>Thresholding Fourier:</p>
 <p><img src="CSwR_files/figure-html/Nuuk_Fourier_threshold2-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <div class="figure" style="text-align: center"><span id="fig:NuukFourierthresholdfig"></span>
 <img src="CSwR_files/figure-html/NuukFourierthresholdfig-1.png" alt="Fourier based smoother by thresholding (blue) and polynomial fit of degree 5 (red)." width="70%" />
 <p class="caption">
-Figure 3.8: Fourier based smoother by thresholding (blue) and polynomial fit of degree 5 (red).
+Figure 3.12: Fourier based smoother by thresholding (blue) and polynomial fit of degree 5 (red).
 </p>
 </div>
-<p>What is the point using the discrete Fourier transform? The point is that the discrete Fourier transform can be computed via the <em>fast Fourier transform</em> (FFT), which has an <span class="math inline">\(O(n\log(n))\)</span> time complexity. The FFT works optimally for <span class="math inline">\(n = 2^p\)</span>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">fft</span>(Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>] <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n)</code></pre></div>
+<p>What is the point using the discrete Fourier transform?
+The point is that the discrete Fourier transform can be computed via the
+<em>fast Fourier transform</em> (FFT), which has an <span class="math inline">\(O(n\log(n))\)</span> time complexity.
+The FFT works optimally for <span class="math inline">\(n = 2^p\)</span>.</p>
+<div class="sourceCode" id="cb98"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb98-1" data-line-number="1"><span class="kw">fft</span>(Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>] <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n)</a></code></pre></div>
 <pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i
 ## [4]   1.672144+0.741358i</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">betahat[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>]</code></pre></div>
+<div class="sourceCode" id="cb100"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb100-1" data-line-number="1">betahat[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>]</a></code></pre></div>
 <pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i
 ## [4]   1.672144+0.741358i</code></pre>
-</div>
-<div id="wavelets" class="section level3">
-<h3><span class="header-section-number">3.4.3</span> Wavelets</h3>
 </div>
 </div>
             </section>
@@ -404,7 +446,7 @@ gitbook.start({
 "google": false,
 "linkedin": false,
 "weibo": false,
-"instapper": false,
+"instapaper": false,
 "vk": false,
 "all": ["facebook", "google", "twitter", "linkedin", "weibo", "instapaper"]
 },
@@ -414,6 +456,10 @@ gitbook.start({
 "size": 2
 },
 "edit": {
+"link": null,
+"text": null
+},
+"history": {
 "link": null,
 "text": null
 },
@@ -430,10 +476,11 @@ gitbook.start({
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    var src = "";
-    if (src === "" || src === "true") src = "https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML";
-    if (location.protocol !== "file:" && /^https?:/.test(src))
-      src = src.replace(/^https?:/, '');
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
     script.src = src;
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
