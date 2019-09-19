@@ -872,18 +872,22 @@ $$\|g\|_2^2 = \int g(z)^2 \ \mathrm{d}z  \quad (\mathrm{squared } \ L_2\mathrm{-
 Some regularity assumptions on $f_0$ are necessary, and from the result 
 we clearly need to require that $f_0''$ is meaningful and square integrable. 
 However, that is also enough. See Proposition A.1 in @Tsybakov:2009 for a rigorous 
-proof. It is noteworthy that the result and the proof holds even if $K$ is not assumed 
-to be nonnegative, though the resulting estimate may then take negative values
-and thus not be a valid density. @Tsybakov:2009 contains an extensive 
-treatment of results that improve on the rate $n^{-4/5}$ by 
-allowing for kernels that take negative values. 
+proof. 
 
 By minimizing $\mathrm{AMISE}(h)$ we derive the optimal oracle bandwidth 
 
 \begin{equation}
 (\#eq:oracle)
-h_n = \left( \frac{\|K\|_2^2}{\sigma_K^4 \|f_0''\|_2^2} \right)^{1/5} n^{-1/5}.
+h_n = \left( \frac{\|K\|_2^2}{ \|f_0''\|^2_2  \sigma_K^4} \right)^{1/5} n^{-1/5}.
 \end{equation}
+
+If we plug this formula into the formula for AMISE we arrive at the asymptotic 
+error rate $\mathrm{AMISE}(h_n) = C n^{-4/5}$ with a constant $C$ depending on 
+$f_0''$ and the kernel. It is noteworthy that the asymptotic analysis can be carried 
+out even if $K$ is allowed to take negative values, though the resulting estimate 
+may not be a valid density as it is. @Tsybakov:2009 demonstrates how to improve on 
+the rate $n^{-4/5}$ by allowing for kernels whose moments of order two or above vanish. 
+Necessarily, such kernels must take negative values. 
 
 We observe that for the rectangular kernel, 
 $$\sigma_K^4 = \left(\frac{1}{2} \int_{-1}^1 z^2 \ \mathrm{d} z\right)^2 = \frac{1}{9}$$
@@ -896,46 +900,66 @@ $$\|K\|_2^2 = \frac{1}{2 \pi} \int e^{-x^2} \ \mathrm{d} x = \frac{1}{2 \sqrt{\p
 
 ### Plug-in estimation of the oracle bandwidth
 
-Suppose that $f_0$ is Gaussian with mean 0 and variance $\sigma^2$. Then 
+To compute $\|f_0''\|^2_2$ that enters into the formula for the asymptotically optimal 
+bandwidth we have to know $f_0$ that we are trying to estimate in the first place. 
+To resolve the circularity we will make a first guess of what $f_0$ is and plug that 
+guess into the formula for the oracle bandwidth. 
+
+Our first guess is that $f_0$ is Gaussian with mean 0 and variance $\sigma^2$. 
+Then 
 
 \begin{align*}
 \|f_0''\|^2_2 & = \frac{1}{2 \pi \sigma^2} \int \left(\frac{x^2}{\sigma^4} -  \frac{1}{\sigma^2}\right)^2 e^{-x^2/\sigma^2} \ \mathrm{d}x \\
 & = \frac{1}{2 \sigma^9 \sqrt{\pi}} \frac{1}{\sqrt{\pi \sigma^2}} \int (x^4 - 2 \sigma^2 x^2 + \sigma^4) e^{-x^2/\sigma^2} \ \mathrm{d}x \\ 
 & = \frac{1}{2 \sigma^9 \sqrt{\pi}} (\frac{3}{4} \sigma^4 - \sigma^4 + \sigma^4) \\
-& = \frac{1}{2 \sqrt{\pi}} \frac{3}{4 \sigma^5}.
+& = \frac{3}{8 \sigma^5 \sqrt{\pi}}.
 \end{align*}
 
-If we use the Gaussian kernel as well and plug this formula for the
-squared 2-norm of the second derivative of the density into the formula
-for the oracle bandwidth we get
-$$h_n = \left(\frac{4}{3n}\right)^{1/5} \sigma.$$
-We can now simply estimate $\sigma$, using e.g. the empirical standard 
-deviation $\hat{\sigma}$, and plug this estimate into the formula above to get an estimate
-of the oracle bandwidth. 
+Plugging this expression for the squared 2-norm of the second derivative of the density 
+into the formula for the oracle bandwidth gives 
+
+\begin{equation}
+(\#eq:oracle-silverman)
+h_n = \left( \frac{8 \sqrt{\pi} \|K\|_2^2}{3 \sigma_K^4} \right)^{1/5} \sigma n^{-1/5},
+\end{equation}
+
+with $\sigma$ the only quantity depending on the unknown density $f_0$. We can now
+simply estimate $\sigma$, using e.g. the empirical standard 
+deviation $\hat{\sigma}$, and plug this estimate into the formula above to get an 
+estimate of the oracle bandwidth. 
 
 It is well known that the empirical standard deviation is sensitive to outliers,
-and to get a more robust bandwidth estimator, Silverman suggested using 
+and if $\sigma$ is overestimated for that reason, the bandwidth will be too large
+and the resulting estimate will be oversmoothed. To
+get more robust bandwidth selection, @Silverman:1986 suggested using 
 the interquartile range to estimate $\sigma$. In fact, he suggested 
 estimating $\sigma$ by
-$$\tilde{\sigma} = \min\{\hat{\sigma}, \mathrm{IQR} / 1.35\}$$
-where $1.35$ to two decimals accuracy is the interquartile range, $\Phi^{-1}(0.75) - \Phi^{-1}(0.25)$, 
-of the standard Gaussian distribution and 
-IQR is the empirical interquartile range. The bandwidth is then estimated 
-as
-$$\hat{h}_n = \left(\frac{4}{3n}\right)^{1/5} \tilde{\sigma},$$
-and this estimator has become known as *Silverman's rule of thumb*. Curiously, 
-Silverman actually used 1.34 instead of 1.35 as the approximation of the 
-Gaussian interquartile range, and the implementation in R does the same.
-Even if the derivation assumes that $f_0$ 
-is Gaussian, it could still be a reasonable bandwidth estimator
--- at least if $f_0$ is unimodal. If $f_0$ is multimodal, Silverman's 
-rule of thumb is known to oversmooth the density estimate.  
+$$\tilde{\sigma} = \min\{\hat{\sigma}, \mathrm{IQR} / 1.34\}.$$
+In this estimator, IQR denotes the empirical interquartile range, and
+$1.34$ is approximately the interquartile range, $\Phi^{-1}(0.75) - \Phi^{-1}(0.25)$, 
+of the standard Gaussian distribution. Curiously, the interquartile range for 
+the standard Gaussian distribution is $1.35$ to two decimals accuracy, but the 
+use of $1.34$ in the estimator $\tilde{\sigma}$
+has prevailed. Silverman, moreover, suggested to reduce the kernel-dependent 
+constant in the formula \@ref(eq:oracle-silverman) for $h_n$ to further reduce
+oversmoothing. 
 
-Silverman's rule of thumb is the default bandwidth estimator for `density`
-as implemented by the function `bw.nrd0`, though this particular implementation 
-follows an ad hoc suggestion by Silverman to use a factor of 0.9 instead of 
-$(4/3)^{1/5} \simeq 1.06$. The `bw.nrd` function implements the rule using
-the factor 1.06. 
+If we specialize to the Gaussian kernel, formula \@ref(eq:oracle-silverman) 
+simplifies to 
+$$\hat{h}_n = \left(\frac{4}{3}\right)^{1/5} \tilde{\sigma} n^{-1/5},$$
+with $\tilde{\sigma}$ plugged in as a robust estimate of $\sigma$. @Silverman:1986 
+made the ad hoc suggestion to reduce the factor $(4/3)^{1/5} \simeq 1.06$ to $0.9$.
+This results in the bandwidth selector 
+$$\hat{h}_n = 0.9 \tilde{\sigma} n^{-1/5},$$
+which has become known as *Silverman's rule of thumb*.  
+
+Silverman's rule of thumb is the default bandwidth selector for `density`
+as implemented by the function `bw.nrd0`. The `bw.nrd` function implements 
+bandwidth selection using the factor $1.06$ instead of $0.9$. Though the theoretical 
+derivations behind these implementations assume that $f_0$ 
+is Gaussian, either will give reasonable bandwidth selection for a range of 
+unimodal distributions. If $f_0$ is multimodal, Silverman's 
+rule of thumb is known to oversmooth the density estimate.  
 
 Instead of computing $\|f_0''\|^2_2$ assuming that the distribution is Gaussian,
 we can compute the norm for a pilot estimate, $\tilde{f}$, and plug the result 
@@ -955,8 +979,9 @@ using the estimated pilot bandwidth $\hat{r}$.
 * Plug $\|\tilde{f}''\|^2_2$ into the oracle bandwidth formula \@ref(eq:oracle)
 to compute $\hat{h}_n$ for the kernel $K$. 
 
-Note that if we want to use a pilot kernel different from the Gaussian we have 
-to adjust the formulas above for Silverman's rule of thumb accordingly. 
+Note that to use a pilot kernel different from the Gaussian we have 
+to adjust the constant 0.9 (or 1.06) in Silverman's rule of thumb accordingly 
+by computing $\|H\|_2^2$ and $\sigma_H^4$ and using \@ref(eq:oracle-silverman). 
 
 @Sheather:1991 took these plug-in ideas a step further and analyzed in detail 
 how to choose the pilot bandwidth in a good and data adaptive way. The resulting
@@ -1021,7 +1046,7 @@ $$\frac{2}{n} \sum_{i=1}^n \hat{f}^{-i}_h,$$
 and this leads to the statistic
 $$\mathrm{UCV}(h) = \| \hat{f}_h\|_2^2 - \frac{2}{n} \sum_{i=1}^n \hat{f}^{-i}_h$$
 known as the unbiased cross-validation criterion. The corresponding 
-bandwidth estimator is 
+bandwidth selector is 
 $$\hat{h}_{\mathrm{UCV}} = \textrm{arg min}_h \ \ \mathrm{UCV}(h).$$
 Contrary to the log-likelihood based criterion, this criterion requires 
 the computation of $\| \hat{f}_h\|_2^2$. Bandwidth selection using UCV 

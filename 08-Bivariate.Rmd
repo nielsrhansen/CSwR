@@ -334,20 +334,20 @@ p_Nuuk +
 
 The section before introduced the basic idea of nearest neighbor smoothing
 using a fixed number of neighbors. A very similar idea is to use a fixed 
-neighborhood, $B_i$, say, around $x_i$. This would lead to the estimator 
-$$\hat{f}_i = \frac{\sum_{j} y_j 1_{B_i}(x_j)}{\sum_{j} 1_{B_i}(x_j)},$$
+neighborhood, $B_i$, say, around $x_i$. This leads to the estimator 
+$$\hat{f}_i = \frac{\sum_{j=1}^n y_j 1_{B_i}(x_j)}{\sum_{j=1}^n 1_{B_i}(x_j)},$$
 which is simply the average of the $y$-s for which the corresponding $x$-s 
 fall in the neighborhood $B_i$ of $x_i$. Note that contrary to the nearest 
 neighbor estimator, the denominator now also depends on the $x$-s. 
 
-In a metric space a natural 
-choice of $B_i$ is the ball, $B(x_i, h)$, around $x_i$ with radius $h$. 
+In a metric space the natural 
+choice of $B_i$ is the ball, $B(x_i, h)$, around $x_i$ with some radius $h$. 
 In $\mathbb{R}$ with the usual metric (or even $\mathbb{R}^p$ equipped with any 
-translation invariant metric) we have that  
+norm-induced metric) we have that  
 $$1_{B(x_i, h)}(x) = 1_{B(0, 1)}\left(\frac{x - x_i}{h}\right),$$
 thus since $B(0, 1) = [-1, 1]$ in $\mathbb{R}$
-$$\hat{f}_i = \frac{\sum_{j} y_j 1_{[-1, 1]}\left(\frac{x_j - x_i}{h}\right)}{\sum_{l} 1_{[-1, 1]}\left(\frac{x_l - x_i}{h}\right)}.$$
-This nonparametric estimator of the conditional expectation $E(Y \mid X = x)$ 
+$$\hat{f}_i = \frac{\sum_{j=1}^n y_j 1_{[-1, 1]}\left(\frac{x_j - x_i}{h}\right)}{\sum_{l=1}^n 1_{[-1, 1]}\left(\frac{x_l - x_i}{h}\right)}.$$
+This nonparametric estimator of the conditional expectation $E(Y \mid X = x_i)$ 
 is closely related to the kernel density estimator with the 
 rectangular kernel, see Section \@ref(kernel-density), and just as for this 
 estimator there is a natural generalization allowing for arbitrary kernels 
@@ -355,7 +355,7 @@ instead of the indicator function $1_{[-1, 1]}$.
 
 With $K : \mathbb{R} \mapsto \mathbb{R}$ a fixed kernel the corresponding
 kernel smoother with bandwidth $h$ becomes 
-$$\hat{f}_i = \frac{\sum_{j} y_j K\left(\frac{x_j - x_i}{h}\right)}{\sum_{l} K\left(\frac{x_l - x_i}{h}\right)}.$$
+$$\hat{f}_i = \frac{\sum_{j=1}^n y_j K\left(\frac{x_j - x_i}{h}\right)}{\sum_{l=1}^n K\left(\frac{x_l - x_i}{h}\right)}.$$
 This smoother is known as the Nadaraya–Watson kernel smoother or Nadaraya–Watson 
 estimator. See Exercise \@ref(exr:NW) for an additional 
 perspective based on bivariate kernel density estimation. 
@@ -379,9 +379,9 @@ p_Nuuk + geom_line(aes(y = f_hat$y), color = "blue")
 The kernel smoother is clearly a linear smoother, and we will implement its 
 computation and the bandwidth selection using LOOCV by direct computation 
 of the the smoother matrix $\mathbf{S}$, which is given by 
-$$S_{ij} = \frac{K\left(\frac{x_j - x_i}{h}\right)}{\sum_{l} K\left(\frac{x_l - x_i}{h}\right)}.$$
+$$S_{ij} = \frac{K\left(\frac{x_j - x_i}{h}\right)}{\sum_{l=1}^n K\left(\frac{x_l - x_i}{h}\right)}.$$
 The rows sum to 1 by construction, and the diagonal elements are 
-$$S_{ii} = \frac{K(0)}{\sum_{l} K\left(\frac{x_l - x_i}{h}\right)}.$$
+$$S_{ii} = \frac{K(0)}{\sum_{l=1}^n K\left(\frac{x_l - x_i}{h}\right)}.$$
 The computation of $\mathbf{S}$ for the Gaussian kernel is implemented 
 using `outer` and `rumSums`. 
 
@@ -664,7 +664,7 @@ Phi <- model.matrix(polylm)
 ```{r model-matrix-fig, echo=FALSE, dependson=c("NuukData", "Nuuk_model_matrix"), fig.cap="The model matrix columns as functions", out.width="100%"}
 XX <- Phi
 colnames(XX) <- c("intercept", paste(rep("pol", 19), 1:19, sep = ""))
-bind_cols(select(Nuuk_year, Year), as.tibble(XX)) %>% 
+bind_cols(select(Nuuk_year, Year), as_tibble(XX)) %>% 
   gather(key = "term", value = "value", -Year, factor_key = TRUE) %>% 
   ggplot(aes(Year, value, color = term)) + 
   geom_line() + 
@@ -1033,10 +1033,10 @@ $\lambda$ parameter above.
 
 If the amount of smoothing is not manually set, `smooth.spline` chooses 
 $\lambda$ by *generalized cross validation* (GCV), which minimizes
-$$\mathrm{GCV} = \sum_{i=1}^n \left(\frac{y_i - \hat{f}_i}{1 - \mathrm{df} / n}\right)^2.$$
+$$\mathrm{GCV} = \sum_{i=1}^n \left(\frac{y_i - \hat{f}_i}{1 - \mathrm{df} / n}\right)^2,$$
 where 
 $$\mathrm{df} = \mathrm{trace}(\mathbf{S}) = \sum_{i=1}^n S_{ii}.$$
-Thus it corresponds to LOOCV with the diagonal entries, $S_{ii}$,  
+Thus it corresponds to LOOCV with the diagonal entries, $S_{ii}$,
 replaced by their average $\mathrm{df} / n$. The main reason for 
 using GCV over LOOCV is that for some smoothers, such as the 
 spline smoother, it is possible to compute the trace $\mathrm{df}$ easily 
@@ -1047,9 +1047,9 @@ First we implement a function that computes GCV for a fixed value of $\lambda$.
 Here the implementation is relying on computing the smoother matrix, but 
 this is not the most efficient implementation. Section \@ref(efficient-splines)
 provides a diagonalization of the smoother matrix jointly in the tuning 
-parameter $\lambda$. This representation allows for efficient computation 
+parameters. This representation allows for efficient computation 
 with splines, and it will become clear why it is not necessary to compute 
-$\mathbf{S}$ or even its diagonal elements, but the trace is nevertheless 
+$\mathbf{S}$ or even its diagonal elements. The trace is nevertheless 
 easily computable from the diagonalization. 
 
 ```{r gcv-smooth-spline}
@@ -1165,10 +1165,12 @@ $$\hat{\beta}_i(\lambda) = \frac{\hat{\beta}_i}{1 + \lambda \gamma_i}.$$
 * Third, the smoothed values, $\widetilde{\mathbf{U}} \hat{\beta}(\lambda)$, 
 are computed as an expansion using the shrunken coefficients. 
 
-Thus the smoother works by shrinking the coefficients in the orthonormal basis given by 
-$\widetilde{\mathbf{U}}$ toward zero. The coefficients corresponding to the 
+Thus the smoother works by shrinking the coefficients toward zero in the orthonormal basis 
+given by the columns of $\widetilde{\mathbf{U}}$. The coefficients corresponding to the 
 largest eigenvalues $\gamma_i$ are shrunk relatively more toward zero 
-than those corresponding to the small eigenvalues. 
+than those corresponding to the small eigenvalues. The basis formed by the 
+columns of $\widetilde{\mathbf{U}}$ is known as the Demmler-Reinch basis 
+with reference to @Demmler:1975.
 
 We implement the computation of the diagonalization for the Nuuk temperature 
 data using $p = 20$ basis functions (18 inner knots) equidistantly distributed
@@ -1194,9 +1196,9 @@ p
 p + scale_y_log10() + ylab("")
 ```
 
-```{r spline-basis, echo=FALSE, dependson=c("NuukData", "spline-diagonalization"), fig.cap="The columns of $\\widetilde{\\mathbf{U}}$  that consitute an orthonormal basis for computing the spline based smoother.", out.width="100%"}
+```{r spline-basis, echo=FALSE, dependson=c("NuukData", "spline-diagonalization"), fig.cap="The columns of $\\widetilde{\\mathbf{U}}$  that consitute an orthonormal basis known as the Demmler-Reinch basis for computing the spline based smoother.", out.width="100%"}
 colnames(U_tilde) <- paste(rep("u", 20), 1:20, sep = "")
-bind_cols(select(Nuuk_year, Year), as.tibble(U_tilde)) %>% 
+bind_cols(select(Nuuk_year, Year), as_tibble(U_tilde)) %>% 
   gather(key = "term", value = "value", -Year, factor_key = TRUE) %>% 
   ggplot(aes(Year, value, color = term)) + 
   geom_line() + 
@@ -1215,7 +1217,7 @@ coefficient shrunk toward zero by the spline smoother.
 
 Observe also that 
 $$\mathrm{df}(\lambda) = \mathrm{trace}(\mathbf{S}_\lambda) 
-= \sum_{i=1}^n \frac{1}{1 + \lambda \gamma_i},$$
+= \sum_{i=1}^p \frac{1}{1 + \lambda \gamma_i},$$
 which makes it possible to implement GCV without even computing the diagonal entries
 of $\mathbf{S}_{\lambda}.$
 
