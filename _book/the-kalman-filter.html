@@ -393,35 +393,35 @@ y_1&#39; \\ y_2&#39; \\ y_3&#39; \\ \vdots \\ y_{n-1}&#39; \\ y_n&#39;
 </div>
 <div id="implementation-1" class="section level3">
 <h3><span class="header-section-number">3.7.3</span> Implementation</h3>
-<div class="sourceCode" id="cb119"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb119-1" data-line-number="1"><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></a>
-<a class="sourceLine" id="cb119-2" data-line-number="2"><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</a>
-<a class="sourceLine" id="cb119-3" data-line-number="3"><span class="co">// [[Rcpp::export]]</span></a>
-<a class="sourceLine" id="cb119-4" data-line-number="4">NumericVector KalmanSmooth(NumericVector y, <span class="dt">double</span> alpha, <span class="dt">double</span> sigmasq) {</a>
-<a class="sourceLine" id="cb119-5" data-line-number="5">  <span class="dt">double</span> tmp, gamma0 = <span class="dv">1</span> + sigmasq, rho = - sigmasq * alpha;</a>
-<a class="sourceLine" id="cb119-6" data-line-number="6">  <span class="dt">double</span> gamma = <span class="dv">1</span> + sigmasq * (<span class="dv">1</span> + alpha * alpha);</a>
-<a class="sourceLine" id="cb119-7" data-line-number="7">  <span class="dt">int</span> n = y.size();</a>
-<a class="sourceLine" id="cb119-8" data-line-number="8">  NumericVector x(n), rhop(n - <span class="dv">1</span>);</a>
-<a class="sourceLine" id="cb119-9" data-line-number="9">  rhop[<span class="dv">0</span>] = rho / gamma0;</a>
-<a class="sourceLine" id="cb119-10" data-line-number="10">  x[<span class="dv">0</span>] = y[<span class="dv">0</span>] / gamma0;</a>
-<a class="sourceLine" id="cb119-11" data-line-number="11">  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">1</span>; i &lt; n - <span class="dv">1</span>; ++i) { <span class="co">/* Forward sweep */</span></a>
-<a class="sourceLine" id="cb119-12" data-line-number="12">    tmp = (gamma - rho * rhop[i - <span class="dv">1</span>]);</a>
-<a class="sourceLine" id="cb119-13" data-line-number="13">    rhop[i] = rho / tmp;</a>
-<a class="sourceLine" id="cb119-14" data-line-number="14">    x[i] = (y[i] - rho * x[i - <span class="dv">1</span>]) / tmp;</a>
-<a class="sourceLine" id="cb119-15" data-line-number="15">  }</a>
-<a class="sourceLine" id="cb119-16" data-line-number="16">  x[n - <span class="dv">1</span>] = (y[n - <span class="dv">1</span>] - rho * x[n - <span class="dv">2</span>]) / (gamma0 - rho * rhop[n - <span class="dv">2</span>]);</a>
-<a class="sourceLine" id="cb119-17" data-line-number="17">  <span class="cf">for</span>(<span class="dt">int</span> i = n - <span class="dv">2</span>; i &gt;= <span class="dv">0</span>; --i) { <span class="co">/* Backsubstitution */</span></a>
-<a class="sourceLine" id="cb119-18" data-line-number="18">    x[i] = x[i] - rhop[i] * x[i + <span class="dv">1</span>];</a>
-<a class="sourceLine" id="cb119-19" data-line-number="19">  }</a>
-<a class="sourceLine" id="cb119-20" data-line-number="20">  <span class="cf">return</span> x;</a>
-<a class="sourceLine" id="cb119-21" data-line-number="21">}</a></code></pre></div>
+<div class="sourceCode" id="cb118"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb118-1" data-line-number="1"><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></a>
+<a class="sourceLine" id="cb118-2" data-line-number="2"><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</a>
+<a class="sourceLine" id="cb118-3" data-line-number="3"><span class="co">// [[Rcpp::export]]</span></a>
+<a class="sourceLine" id="cb118-4" data-line-number="4">NumericVector KalmanSmooth(NumericVector y, <span class="dt">double</span> alpha, <span class="dt">double</span> sigmasq) {</a>
+<a class="sourceLine" id="cb118-5" data-line-number="5">  <span class="dt">double</span> tmp, gamma0 = <span class="dv">1</span> + sigmasq, rho = - sigmasq * alpha;</a>
+<a class="sourceLine" id="cb118-6" data-line-number="6">  <span class="dt">double</span> gamma = <span class="dv">1</span> + sigmasq * (<span class="dv">1</span> + alpha * alpha);</a>
+<a class="sourceLine" id="cb118-7" data-line-number="7">  <span class="dt">int</span> n = y.size();</a>
+<a class="sourceLine" id="cb118-8" data-line-number="8">  NumericVector x(n), rhop(n - <span class="dv">1</span>);</a>
+<a class="sourceLine" id="cb118-9" data-line-number="9">  rhop[<span class="dv">0</span>] = rho / gamma0;</a>
+<a class="sourceLine" id="cb118-10" data-line-number="10">  x[<span class="dv">0</span>] = y[<span class="dv">0</span>] / gamma0;</a>
+<a class="sourceLine" id="cb118-11" data-line-number="11">  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">1</span>; i &lt; n - <span class="dv">1</span>; ++i) { <span class="co">/* Forward sweep */</span></a>
+<a class="sourceLine" id="cb118-12" data-line-number="12">    tmp = (gamma - rho * rhop[i - <span class="dv">1</span>]);</a>
+<a class="sourceLine" id="cb118-13" data-line-number="13">    rhop[i] = rho / tmp;</a>
+<a class="sourceLine" id="cb118-14" data-line-number="14">    x[i] = (y[i] - rho * x[i - <span class="dv">1</span>]) / tmp;</a>
+<a class="sourceLine" id="cb118-15" data-line-number="15">  }</a>
+<a class="sourceLine" id="cb118-16" data-line-number="16">  x[n - <span class="dv">1</span>] = (y[n - <span class="dv">1</span>] - rho * x[n - <span class="dv">2</span>]) / (gamma0 - rho * rhop[n - <span class="dv">2</span>]);</a>
+<a class="sourceLine" id="cb118-17" data-line-number="17">  <span class="cf">for</span>(<span class="dt">int</span> i = n - <span class="dv">2</span>; i &gt;= <span class="dv">0</span>; --i) { <span class="co">/* Backsubstitution */</span></a>
+<a class="sourceLine" id="cb118-18" data-line-number="18">    x[i] = x[i] - rhop[i] * x[i + <span class="dv">1</span>];</a>
+<a class="sourceLine" id="cb118-19" data-line-number="19">  }</a>
+<a class="sourceLine" id="cb118-20" data-line-number="20">  <span class="cf">return</span> x;</a>
+<a class="sourceLine" id="cb118-21" data-line-number="21">}</a></code></pre></div>
 <p>Result, <span class="math inline">\(\alpha = 0.95\)</span>, <span class="math inline">\(\sigma^2 = 10\)</span></p>
 <p><img src="CSwR_files/figure-html/Nuuk_smooth-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <p>Comparing results</p>
-<div class="sourceCode" id="cb120"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb120-1" data-line-number="1">Sigma &lt;-<span class="st"> </span><span class="kw">outer</span>(<span class="dv">1</span><span class="op">:</span>n, <span class="dv">1</span><span class="op">:</span>n, </a>
-<a class="sourceLine" id="cb120-2" data-line-number="2">               <span class="cf">function</span>(i, j) alpha<span class="op">^</span>(<span class="kw">abs</span>(i <span class="op">-</span><span class="st"> </span>j))) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>alpha<span class="op">^</span><span class="dv">2</span>)  </a>
-<a class="sourceLine" id="cb120-3" data-line-number="3">Smooth &lt;-<span class="st"> </span>Sigma <span class="op">%*%</span><span class="st"> </span><span class="kw">solve</span>(Sigma <span class="op">+</span><span class="st"> </span>sigmasq <span class="op">*</span><span class="st"> </span><span class="kw">diag</span>(n))</a>
-<a class="sourceLine" id="cb120-4" data-line-number="4"><span class="kw">qplot</span>(<span class="dv">1</span><span class="op">:</span>n, Smooth <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature <span class="op">-</span><span class="st"> </span>ySmooth) <span class="op">+</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb120-5" data-line-number="5"><span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;Difference&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb119"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb119-1" data-line-number="1">Sigma &lt;-<span class="st"> </span><span class="kw">outer</span>(<span class="dv">1</span><span class="op">:</span>n, <span class="dv">1</span><span class="op">:</span>n, </a>
+<a class="sourceLine" id="cb119-2" data-line-number="2">               <span class="cf">function</span>(i, j) alpha<span class="op">^</span>(<span class="kw">abs</span>(i <span class="op">-</span><span class="st"> </span>j))) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>alpha<span class="op">^</span><span class="dv">2</span>)  </a>
+<a class="sourceLine" id="cb119-3" data-line-number="3">Smooth &lt;-<span class="st"> </span>Sigma <span class="op">%*%</span><span class="st"> </span><span class="kw">solve</span>(Sigma <span class="op">+</span><span class="st"> </span>sigmasq <span class="op">*</span><span class="st"> </span><span class="kw">diag</span>(n))</a>
+<a class="sourceLine" id="cb119-4" data-line-number="4"><span class="kw">qplot</span>(<span class="dv">1</span><span class="op">:</span>n, Smooth <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature <span class="op">-</span><span class="st"> </span>ySmooth) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb119-5" data-line-number="5"><span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;Difference&quot;</span>)</a></code></pre></div>
 <p><img src="CSwR_files/figure-html/Nuuk_smooth_accuracy-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <p>Note that the forward sweep computes <span class="math inline">\(x_n = E(X_n \mid Y)\)</span>, and from this, the backsubstitution solves the smoothing problem of computing <span class="math inline">\(E(X \mid Y)\)</span>.</p>
 <p>The Gaussian process used here (the AR(1)-process) is not very smooth and nor is
@@ -433,26 +433,26 @@ filter algorithm.</p>
 </div>
 <div id="the-kalman-filter-1" class="section level3">
 <h3><span class="header-section-number">3.7.4</span> The Kalman filter</h3>
-<div class="sourceCode" id="cb121"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb121-1" data-line-number="1"><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></a>
-<a class="sourceLine" id="cb121-2" data-line-number="2"><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</a>
-<a class="sourceLine" id="cb121-3" data-line-number="3"><span class="co">// [[Rcpp::export]]</span></a>
-<a class="sourceLine" id="cb121-4" data-line-number="4">NumericVector KalmanFilt(NumericVector y, <span class="dt">double</span> alpha, <span class="dt">double</span> sigmasq) {</a>
-<a class="sourceLine" id="cb121-5" data-line-number="5">  <span class="dt">double</span> tmp, gamma0 = <span class="dv">1</span> + sigmasq, rho = - sigmasq * alpha, yp;</a>
-<a class="sourceLine" id="cb121-6" data-line-number="6">  <span class="dt">double</span> gamma = <span class="dv">1</span> + sigmasq * (<span class="dv">1</span> + alpha * alpha);</a>
-<a class="sourceLine" id="cb121-7" data-line-number="7">  <span class="dt">int</span> n = y.size();</a>
-<a class="sourceLine" id="cb121-8" data-line-number="8">  NumericVector x(n), rhop(n);</a>
-<a class="sourceLine" id="cb121-9" data-line-number="9">  rhop[<span class="dv">0</span>] = rho / gamma0;</a>
-<a class="sourceLine" id="cb121-10" data-line-number="10">  yp = y[<span class="dv">0</span>] / gamma0;</a>
-<a class="sourceLine" id="cb121-11" data-line-number="11">  x[<span class="dv">0</span>] = y[<span class="dv">0</span>] / (<span class="dv">1</span> + sigmasq * (<span class="dv">1</span> - alpha * alpha));</a>
-<a class="sourceLine" id="cb121-12" data-line-number="12">  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">1</span>; i &lt; n; ++i) { </a>
-<a class="sourceLine" id="cb121-13" data-line-number="13">    tmp = (gamma - rho * rhop[i - <span class="dv">1</span>]);</a>
-<a class="sourceLine" id="cb121-14" data-line-number="14">    rhop[i] = rho / tmp;</a>
-<a class="sourceLine" id="cb121-15" data-line-number="15">    <span class="co">/* Note differences when compared to smoother */</span></a>
-<a class="sourceLine" id="cb121-16" data-line-number="16">    x[i] = (y[i] - rho * yp) / (gamma0 - rho * rhop[i - <span class="dv">1</span>]); </a>
-<a class="sourceLine" id="cb121-17" data-line-number="17">    yp = (y[i] - rho * yp) / tmp;         </a>
-<a class="sourceLine" id="cb121-18" data-line-number="18">  }</a>
-<a class="sourceLine" id="cb121-19" data-line-number="19">  <span class="cf">return</span> x;</a>
-<a class="sourceLine" id="cb121-20" data-line-number="20">}</a></code></pre></div>
+<div class="sourceCode" id="cb120"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb120-1" data-line-number="1"><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></a>
+<a class="sourceLine" id="cb120-2" data-line-number="2"><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</a>
+<a class="sourceLine" id="cb120-3" data-line-number="3"><span class="co">// [[Rcpp::export]]</span></a>
+<a class="sourceLine" id="cb120-4" data-line-number="4">NumericVector KalmanFilt(NumericVector y, <span class="dt">double</span> alpha, <span class="dt">double</span> sigmasq) {</a>
+<a class="sourceLine" id="cb120-5" data-line-number="5">  <span class="dt">double</span> tmp, gamma0 = <span class="dv">1</span> + sigmasq, rho = - sigmasq * alpha, yp;</a>
+<a class="sourceLine" id="cb120-6" data-line-number="6">  <span class="dt">double</span> gamma = <span class="dv">1</span> + sigmasq * (<span class="dv">1</span> + alpha * alpha);</a>
+<a class="sourceLine" id="cb120-7" data-line-number="7">  <span class="dt">int</span> n = y.size();</a>
+<a class="sourceLine" id="cb120-8" data-line-number="8">  NumericVector x(n), rhop(n);</a>
+<a class="sourceLine" id="cb120-9" data-line-number="9">  rhop[<span class="dv">0</span>] = rho / gamma0;</a>
+<a class="sourceLine" id="cb120-10" data-line-number="10">  yp = y[<span class="dv">0</span>] / gamma0;</a>
+<a class="sourceLine" id="cb120-11" data-line-number="11">  x[<span class="dv">0</span>] = y[<span class="dv">0</span>] / (<span class="dv">1</span> + sigmasq * (<span class="dv">1</span> - alpha * alpha));</a>
+<a class="sourceLine" id="cb120-12" data-line-number="12">  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">1</span>; i &lt; n; ++i) { </a>
+<a class="sourceLine" id="cb120-13" data-line-number="13">    tmp = (gamma - rho * rhop[i - <span class="dv">1</span>]);</a>
+<a class="sourceLine" id="cb120-14" data-line-number="14">    rhop[i] = rho / tmp;</a>
+<a class="sourceLine" id="cb120-15" data-line-number="15">    <span class="co">/* Note differences when compared to smoother */</span></a>
+<a class="sourceLine" id="cb120-16" data-line-number="16">    x[i] = (y[i] - rho * yp) / (gamma0 - rho * rhop[i - <span class="dv">1</span>]); </a>
+<a class="sourceLine" id="cb120-17" data-line-number="17">    yp = (y[i] - rho * yp) / tmp;         </a>
+<a class="sourceLine" id="cb120-18" data-line-number="18">  }</a>
+<a class="sourceLine" id="cb120-19" data-line-number="19">  <span class="cf">return</span> x;</a>
+<a class="sourceLine" id="cb120-20" data-line-number="20">}</a></code></pre></div>
 <p>Result, <span class="math inline">\(\alpha = 0.95\)</span>, <span class="math inline">\(\sigma^2 = 10\)</span></p>
 <p><img src="CSwR_files/figure-html/Nuuk_filter-1.png" width="70%" style="display: block; margin: auto;" /></p>
 </div>

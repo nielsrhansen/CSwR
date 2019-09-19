@@ -310,8 +310,6 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cb89"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb89-1" data-line-number="1">intercept &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="dv">1</span><span class="op">/</span><span class="kw">sqrt</span>(n), n)  <span class="co">## To make intercept column have norm one</span></a>
 <a class="sourceLine" id="cb89-2" data-line-number="2">polylm &lt;-<span class="st"> </span><span class="kw">lm</span>(Temperature <span class="op">~</span><span class="st"> </span>intercept <span class="op">+</span><span class="st"> </span><span class="kw">poly</span>(Year, <span class="dv">19</span>) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Nuuk_year)</a>
 <a class="sourceLine" id="cb89-3" data-line-number="3">Phi &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(polylm)</a></code></pre></div>
-<pre><code>## Warning: `as.tibble()` is deprecated, use `as_tibble()` (but mind the new semantics).
-## This warning is displayed once per session.</code></pre>
 <div class="figure" style="text-align: center"><span id="fig:model-matrix-fig"></span>
 <img src="CSwR_files/figure-html/model-matrix-fig-1.png" alt="The model matrix columns as functions" width="100%" />
 <p class="caption">
@@ -323,14 +321,14 @@ With an orthogonal model matrix the normal equation reduces to the estimate
 <span class="math display">\[\hat{\beta} = \Phi^T Y\]</span>
 since <span class="math inline">\(\Phi^T \Phi = I\)</span>. The predicted (or fitted) values are <span class="math inline">\(\Phi \Phi^T Y\)</span>
 with smoother matrix <span class="math inline">\(\mathbf{S} = \Phi \Phi^T\)</span> being a projection.</p>
-<div class="sourceCode" id="cb91"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb91-1" data-line-number="1">(<span class="kw">t</span>(Phi) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, <span class="dv">1</span>]</a></code></pre></div>
+<div class="sourceCode" id="cb90"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb90-1" data-line-number="1">(<span class="kw">t</span>(Phi) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, <span class="dv">1</span>]</a></code></pre></div>
 <pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 
 ##     -17.2469646       4.9002430      -1.7968913       0.8175400 
 ## poly(Year, 19)4 poly(Year, 19)5 poly(Year, 19)6 poly(Year, 19)7 
 ##       5.9668689       1.4265091      -1.9258864      -0.2523581 
 ## poly(Year, 19)8 poly(Year, 19)9 
 ##      -2.1355117      -0.8046267</code></pre>
-<div class="sourceCode" id="cb93"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb93-1" data-line-number="1"><span class="kw">coef</span>(polylm)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>]</a></code></pre></div>
+<div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb92-1" data-line-number="1"><span class="kw">coef</span>(polylm)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>]</a></code></pre></div>
 <pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 
 ##     -17.2469646       4.9002430      -1.7968913       0.8175400 
 ## poly(Year, 19)4 poly(Year, 19)5 poly(Year, 19)6 poly(Year, 19)7 
@@ -364,15 +362,15 @@ where <span class="math inline">\(\Phi^*\)</span> is the conjugate transposed of
 It is the basis coefficients in the orthonormal basis given by <span class="math inline">\(\Phi\)</span>;
 <span class="math display">\[y_k = \frac{1}{\sqrt{n}} \sum_{m=0}^{n-1} \hat{\beta}_m  e^{2 \pi i k m / n}\]</span></p>
 <p>or <span class="math inline">\(y = \Phi \hat{\beta}.\)</span></p>
-<div class="sourceCode" id="cb95"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb95-1" data-line-number="1">Phi &lt;-<span class="st"> </span><span class="kw">outer</span>(<span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), <span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), </a>
-<a class="sourceLine" id="cb95-2" data-line-number="2">           <span class="cf">function</span>(k, m) <span class="kw">exp</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi <span class="op">*</span><span class="st"> </span>1i <span class="op">*</span><span class="st"> </span>(k <span class="op">*</span><span class="st"> </span>m) <span class="op">/</span><span class="st"> </span>n) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n))</a></code></pre></div>
+<div class="sourceCode" id="cb94"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb94-1" data-line-number="1">Phi &lt;-<span class="st"> </span><span class="kw">outer</span>(<span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), <span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), </a>
+<a class="sourceLine" id="cb94-2" data-line-number="2">           <span class="cf">function</span>(k, m) <span class="kw">exp</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi <span class="op">*</span><span class="st"> </span>1i <span class="op">*</span><span class="st"> </span>(k <span class="op">*</span><span class="st"> </span>m) <span class="op">/</span><span class="st"> </span>n) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n))</a></code></pre></div>
 <p>The matrix <span class="math inline">\(\Phi\)</span> generates an interesting pattern.</p>
 <p><img src="CSwR_files/figure-html/Fourier_fig-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <p>Columns in the matrix <span class="math inline">\(\Phi\)</span>:</p>
 <p><img src="CSwR_files/figure-html/Fourier_basis_fig-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <p>We can estimate by matrix multiplication</p>
-<div class="sourceCode" id="cb96"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb96-1" data-line-number="1">betahat &lt;-<span class="st"> </span><span class="kw">Conj</span>(<span class="kw">t</span>(Phi)) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature <span class="co"># t(Phi) = Phi for Fourier bases</span></a>
-<a class="sourceLine" id="cb96-2" data-line-number="2">betahat[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span><span class="op">:</span><span class="dv">4</span>, <span class="dv">73</span>, n<span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">2</span>))]</a></code></pre></div>
+<div class="sourceCode" id="cb95"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb95-1" data-line-number="1">betahat &lt;-<span class="st"> </span><span class="kw">Conj</span>(<span class="kw">t</span>(Phi)) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature <span class="co"># t(Phi) = Phi for Fourier bases</span></a>
+<a class="sourceLine" id="cb95-2" data-line-number="2">betahat[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span><span class="op">:</span><span class="dv">4</span>, <span class="dv">73</span>, n<span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">2</span>))]</a></code></pre></div>
 <pre><code>## [1] -17.2469646+0.0000000i  -2.4642887+2.3871189i   3.5481329+0.9099226i
 ## [4]   1.6721444+0.7413580i   0.0321232+0.7089991i  -2.4642887-2.3871189i
 ## [7]   3.5481329-0.9099226i   1.6721444-0.7413580i</code></pre>
@@ -412,10 +410,10 @@ Figure 3.12: Fourier based smoother by thresholding (blue) and polynomial fit of
 The point is that the discrete Fourier transform can be computed via the
 <em>fast Fourier transform</em> (FFT), which has an <span class="math inline">\(O(n\log(n))\)</span> time complexity.
 The FFT works optimally for <span class="math inline">\(n = 2^p\)</span>.</p>
-<div class="sourceCode" id="cb98"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb98-1" data-line-number="1"><span class="kw">fft</span>(Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>] <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n)</a></code></pre></div>
+<div class="sourceCode" id="cb97"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb97-1" data-line-number="1"><span class="kw">fft</span>(Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>] <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n)</a></code></pre></div>
 <pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i
 ## [4]   1.672144+0.741358i</code></pre>
-<div class="sourceCode" id="cb100"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb100-1" data-line-number="1">betahat[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>]</a></code></pre></div>
+<div class="sourceCode" id="cb99"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb99-1" data-line-number="1">betahat[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>]</a></code></pre></div>
 <pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i
 ## [4]   1.672144+0.741358i</code></pre>
 </div>

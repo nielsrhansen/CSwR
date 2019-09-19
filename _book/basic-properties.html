@@ -437,71 +437,71 @@ the EM algorithm for multinomial cell collapsing.</p>
 <p>The EM algorithm can be implemented by two simple functions that compute
 the conditional expectations above (the E-step) and then maximization
 of the complete observation log-likelihood.</p>
-<div class="sourceCode" id="cb307"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb307-1" data-line-number="1">EStep0 &lt;-<span class="st"> </span><span class="cf">function</span>(p, x, group) {</a>
-<a class="sourceLine" id="cb307-2" data-line-number="2">  x[group] <span class="op">*</span><span class="st"> </span>p <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(p, group)[group]</a>
-<a class="sourceLine" id="cb307-3" data-line-number="3">}</a></code></pre></div>
+<div class="sourceCode" id="cb306"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb306-1" data-line-number="1">EStep0 &lt;-<span class="st"> </span><span class="cf">function</span>(p, x, group) {</a>
+<a class="sourceLine" id="cb306-2" data-line-number="2">  x[group] <span class="op">*</span><span class="st"> </span>p <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(p, group)[group]</a>
+<a class="sourceLine" id="cb306-3" data-line-number="3">}</a></code></pre></div>
 <p>The MLE of the complete log-likelihood is a linear estimator,
 as is the case in many examples with explicit MLEs.</p>
-<div class="sourceCode" id="cb308"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb308-1" data-line-number="1">MStep0 &lt;-<span class="st"> </span><span class="cf">function</span>(n, X)</a>
-<a class="sourceLine" id="cb308-2" data-line-number="2">  <span class="kw">as.vector</span>(X <span class="op">%*%</span><span class="st"> </span>n <span class="op">/</span><span class="st"> </span>(<span class="kw">sum</span>(n)))</a></code></pre></div>
+<div class="sourceCode" id="cb307"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb307-1" data-line-number="1">MStep0 &lt;-<span class="st"> </span><span class="cf">function</span>(n, X)</a>
+<a class="sourceLine" id="cb307-2" data-line-number="2">  <span class="kw">as.vector</span>(X <span class="op">%*%</span><span class="st"> </span>n <span class="op">/</span><span class="st"> </span>(<span class="kw">sum</span>(n)))</a></code></pre></div>
 <p>The <code>EStep0</code> and <code>MStep0</code> functions are abstract implementations. They require
 specification of the arguments <code>group</code> and <code>X</code>, respectively, to become concrete.</p>
 <p>The M-step is only implemented in the case where the complete-data MLE is a
 <em>linear estimator</em>, that is, a linear map of the complete data vector <span class="math inline">\(y\)</span>
 that can be expressed in terms of a matrix <span class="math inline">\(\mathbf{X}\)</span>.</p>
-<div class="sourceCode" id="cb309"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb309-1" data-line-number="1">EStep &lt;-<span class="st"> </span><span class="cf">function</span>(par, x)</a>
-<a class="sourceLine" id="cb309-2" data-line-number="2">  <span class="kw">EStep0</span>(<span class="kw">prob</span>(par), x, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</a>
-<a class="sourceLine" id="cb309-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb309-4" data-line-number="4">MStep &lt;-<span class="st"> </span><span class="cf">function</span>(n) {</a>
-<a class="sourceLine" id="cb309-5" data-line-number="5">  X &lt;-<span class="st"> </span><span class="kw">matrix</span>(</a>
-<a class="sourceLine" id="cb309-6" data-line-number="6">  <span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>,</a>
-<a class="sourceLine" id="cb309-7" data-line-number="7">    <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">0</span>) <span class="op">/</span><span class="st"> </span><span class="dv">2</span>,</a>
-<a class="sourceLine" id="cb309-8" data-line-number="8">  <span class="dv">2</span>, <span class="dv">6</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb309-9" data-line-number="9">  </a>
-<a class="sourceLine" id="cb309-10" data-line-number="10">  <span class="kw">MStep0</span>(n, X)</a>
-<a class="sourceLine" id="cb309-11" data-line-number="11">}</a></code></pre></div>
+<div class="sourceCode" id="cb308"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb308-1" data-line-number="1">EStep &lt;-<span class="st"> </span><span class="cf">function</span>(par, x)</a>
+<a class="sourceLine" id="cb308-2" data-line-number="2">  <span class="kw">EStep0</span>(<span class="kw">prob</span>(par), x, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</a>
+<a class="sourceLine" id="cb308-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb308-4" data-line-number="4">MStep &lt;-<span class="st"> </span><span class="cf">function</span>(n) {</a>
+<a class="sourceLine" id="cb308-5" data-line-number="5">  X &lt;-<span class="st"> </span><span class="kw">matrix</span>(</a>
+<a class="sourceLine" id="cb308-6" data-line-number="6">  <span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>,</a>
+<a class="sourceLine" id="cb308-7" data-line-number="7">    <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">0</span>) <span class="op">/</span><span class="st"> </span><span class="dv">2</span>,</a>
+<a class="sourceLine" id="cb308-8" data-line-number="8">  <span class="dv">2</span>, <span class="dv">6</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb308-9" data-line-number="9">  </a>
+<a class="sourceLine" id="cb308-10" data-line-number="10">  <span class="kw">MStep0</span>(n, X)</a>
+<a class="sourceLine" id="cb308-11" data-line-number="11">}</a></code></pre></div>
 <p>The EM algorithm is finally implemented as an iterative, alternating call
 of <code>EStep</code> and <code>MStep</code> until convergence as measured in terms of the relative
 change from iteration to iteration being sufficiently small.</p>
-<div class="sourceCode" id="cb310"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb310-1" data-line-number="1">EM &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, <span class="dt">epsilon =</span> <span class="fl">1e-6</span>, <span class="dt">trace =</span> <span class="ot">NULL</span>) {</a>
-<a class="sourceLine" id="cb310-2" data-line-number="2">  <span class="cf">repeat</span>{</a>
-<a class="sourceLine" id="cb310-3" data-line-number="3">    par0 &lt;-<span class="st"> </span>par</a>
-<a class="sourceLine" id="cb310-4" data-line-number="4">    par &lt;-<span class="st"> </span><span class="kw">MStep</span>(<span class="kw">EStep</span>(par, x))</a>
-<a class="sourceLine" id="cb310-5" data-line-number="5">    <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(trace)) <span class="kw">trace</span>()</a>
-<a class="sourceLine" id="cb310-6" data-line-number="6">    <span class="cf">if</span>(<span class="kw">sum</span>((par <span class="op">-</span><span class="st"> </span>par0)<span class="op">^</span><span class="dv">2</span>) <span class="op">&lt;=</span><span class="st"> </span>epsilon <span class="op">*</span><span class="st"> </span>(<span class="kw">sum</span>(par<span class="op">^</span><span class="dv">2</span>) <span class="op">+</span><span class="st"> </span>epsilon))</a>
-<a class="sourceLine" id="cb310-7" data-line-number="7">      <span class="cf">break</span></a>
-<a class="sourceLine" id="cb310-8" data-line-number="8">  } </a>
-<a class="sourceLine" id="cb310-9" data-line-number="9">  par  <span class="co">## Remember to return the parameter estimate</span></a>
-<a class="sourceLine" id="cb310-10" data-line-number="10">}</a>
-<a class="sourceLine" id="cb310-11" data-line-number="11">  </a>
-<a class="sourceLine" id="cb310-12" data-line-number="12">phat &lt;-<span class="st"> </span><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>))</a>
-<a class="sourceLine" id="cb310-13" data-line-number="13">phat</a></code></pre></div>
+<div class="sourceCode" id="cb309"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb309-1" data-line-number="1">EM &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, <span class="dt">epsilon =</span> <span class="fl">1e-6</span>, <span class="dt">trace =</span> <span class="ot">NULL</span>) {</a>
+<a class="sourceLine" id="cb309-2" data-line-number="2">  <span class="cf">repeat</span>{</a>
+<a class="sourceLine" id="cb309-3" data-line-number="3">    par0 &lt;-<span class="st"> </span>par</a>
+<a class="sourceLine" id="cb309-4" data-line-number="4">    par &lt;-<span class="st"> </span><span class="kw">MStep</span>(<span class="kw">EStep</span>(par, x))</a>
+<a class="sourceLine" id="cb309-5" data-line-number="5">    <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(trace)) <span class="kw">trace</span>()</a>
+<a class="sourceLine" id="cb309-6" data-line-number="6">    <span class="cf">if</span>(<span class="kw">sum</span>((par <span class="op">-</span><span class="st"> </span>par0)<span class="op">^</span><span class="dv">2</span>) <span class="op">&lt;=</span><span class="st"> </span>epsilon <span class="op">*</span><span class="st"> </span>(<span class="kw">sum</span>(par<span class="op">^</span><span class="dv">2</span>) <span class="op">+</span><span class="st"> </span>epsilon))</a>
+<a class="sourceLine" id="cb309-7" data-line-number="7">      <span class="cf">break</span></a>
+<a class="sourceLine" id="cb309-8" data-line-number="8">  } </a>
+<a class="sourceLine" id="cb309-9" data-line-number="9">  par  <span class="co">## Remember to return the parameter estimate</span></a>
+<a class="sourceLine" id="cb309-10" data-line-number="10">}</a>
+<a class="sourceLine" id="cb309-11" data-line-number="11">  </a>
+<a class="sourceLine" id="cb309-12" data-line-number="12">phat &lt;-<span class="st"> </span><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>))</a>
+<a class="sourceLine" id="cb309-13" data-line-number="13">phat</a></code></pre></div>
 <pre><code>## [1] 0.07083693 0.18877365</code></pre>
 <p>We check what is going on in each step of the EM algorithm.</p>
-<div class="sourceCode" id="cb312"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb312-1" data-line-number="1">EM_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="st">&quot;par&quot;</span>)</a>
-<a class="sourceLine" id="cb312-2" data-line-number="2"><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), <span class="dt">trace =</span> EM_tracer<span class="op">$</span>trace)</a></code></pre></div>
+<div class="sourceCode" id="cb311"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb311-1" data-line-number="1">EM_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="st">&quot;par&quot;</span>)</a>
+<a class="sourceLine" id="cb311-2" data-line-number="2"><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), <span class="dt">trace =</span> EM_tracer<span class="op">$</span>trace)</a></code></pre></div>
 <pre><code>## n = 1: par = 0.08038585, 0.22464192; 
 ## n = 2: par = 0.07118928, 0.19546961; 
 ## n = 3: par = 0.07084985, 0.18993393; 
 ## n = 4: par = 0.07083738, 0.18894757; 
 ## n = 5: par = 0.07083693, 0.18877365;</code></pre>
 <pre><code>## [1] 0.07083693 0.18877365</code></pre>
-<div class="sourceCode" id="cb315"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb315-1" data-line-number="1">EM_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;par0&quot;</span>, <span class="st">&quot;par&quot;</span>), <span class="dt">N =</span> <span class="dv">0</span>)</a>
-<a class="sourceLine" id="cb315-2" data-line-number="2">phat &lt;-<span class="st"> </span><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), <span class="dt">epsilon =</span> <span class="fl">1e-20</span>, </a>
-<a class="sourceLine" id="cb315-3" data-line-number="3">           <span class="dt">trace =</span> EM_tracer<span class="op">$</span>trace)</a></code></pre></div>
-<div class="sourceCode" id="cb316"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb316-1" data-line-number="1">EM_trace &lt;-<span class="st"> </span><span class="kw">summary</span>(EM_tracer)</a>
-<a class="sourceLine" id="cb316-2" data-line-number="2">  EM_trace &lt;-<span class="st"> </span><span class="kw">transform</span>(</a>
-<a class="sourceLine" id="cb316-3" data-line-number="3">  EM_trace, </a>
-<a class="sourceLine" id="cb316-4" data-line-number="4">  <span class="dt">n =</span> <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(EM_trace),</a>
-<a class="sourceLine" id="cb316-5" data-line-number="5">  <span class="dt">par_norm_diff =</span> <span class="kw">sqrt</span>((par0<span class="fl">.1</span> <span class="op">-</span><span class="st"> </span>par<span class="fl">.1</span>)<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span>(par0<span class="fl">.2</span> <span class="op">-</span><span class="st"> </span>par<span class="fl">.2</span>)<span class="op">^</span><span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb316-6" data-line-number="6">)</a>
-<a class="sourceLine" id="cb316-7" data-line-number="7"><span class="kw">qplot</span>(n, <span class="kw">log</span>(par_norm_diff), <span class="dt">data =</span> EM_trace)</a></code></pre></div>
+<div class="sourceCode" id="cb314"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb314-1" data-line-number="1">EM_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;par0&quot;</span>, <span class="st">&quot;par&quot;</span>), <span class="dt">N =</span> <span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb314-2" data-line-number="2">phat &lt;-<span class="st"> </span><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), <span class="dt">epsilon =</span> <span class="fl">1e-20</span>, </a>
+<a class="sourceLine" id="cb314-3" data-line-number="3">           <span class="dt">trace =</span> EM_tracer<span class="op">$</span>trace)</a></code></pre></div>
+<div class="sourceCode" id="cb315"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb315-1" data-line-number="1">EM_trace &lt;-<span class="st"> </span><span class="kw">summary</span>(EM_tracer)</a>
+<a class="sourceLine" id="cb315-2" data-line-number="2">  EM_trace &lt;-<span class="st"> </span><span class="kw">transform</span>(</a>
+<a class="sourceLine" id="cb315-3" data-line-number="3">  EM_trace, </a>
+<a class="sourceLine" id="cb315-4" data-line-number="4">  <span class="dt">n =</span> <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(EM_trace),</a>
+<a class="sourceLine" id="cb315-5" data-line-number="5">  <span class="dt">par_norm_diff =</span> <span class="kw">sqrt</span>((par0<span class="fl">.1</span> <span class="op">-</span><span class="st"> </span>par<span class="fl">.1</span>)<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span>(par0<span class="fl">.2</span> <span class="op">-</span><span class="st"> </span>par<span class="fl">.2</span>)<span class="op">^</span><span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb315-6" data-line-number="6">)</a>
+<a class="sourceLine" id="cb315-7" data-line-number="7"><span class="kw">qplot</span>(n, <span class="kw">log</span>(par_norm_diff), <span class="dt">data =</span> EM_trace)</a></code></pre></div>
 <p><img src="CSwR_files/figure-html/moth_EM_figure-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <p>Note the log-axis. The EM-algorithm converges linearly (this is the terminology,
 see <a href="algorithms-and-convergence.html#algorithms-and-convergence">Algorithms and Convergence</a>). The log-rate of the convergence can be estimated
 by least-squares.</p>
-<div class="sourceCode" id="cb317"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb317-1" data-line-number="1">log_rate_fit &lt;-<span class="st"> </span><span class="kw">lm</span>(<span class="kw">log</span>(par_norm_diff) <span class="op">~</span><span class="st"> </span>n,  <span class="dt">data =</span> EM_trace)</a>
-<a class="sourceLine" id="cb317-2" data-line-number="2"><span class="kw">exp</span>(<span class="kw">coefficients</span>(log_rate_fit)[<span class="st">&quot;n&quot;</span>])</a></code></pre></div>
+<div class="sourceCode" id="cb316"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb316-1" data-line-number="1">log_rate_fit &lt;-<span class="st"> </span><span class="kw">lm</span>(<span class="kw">log</span>(par_norm_diff) <span class="op">~</span><span class="st"> </span>n,  <span class="dt">data =</span> EM_trace)</a>
+<a class="sourceLine" id="cb316-2" data-line-number="2"><span class="kw">exp</span>(<span class="kw">coefficients</span>(log_rate_fit)[<span class="st">&quot;n&quot;</span>])</a></code></pre></div>
 <pre><code>##         n 
 ## 0.1750251</code></pre>
 <p>The rate is very small in this case implying fast convergence. This is not always the case.

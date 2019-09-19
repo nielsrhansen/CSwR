@@ -346,8 +346,8 @@ under a marketing campaign. A predicted number of items sold in a normal week
 (without a campaign) based on historic sales is included. It is of interest to
 recalibrate this number to give a good prediction of the number of items
 actually sold.</p>
-<div class="sourceCode" id="cb231"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb231-1" data-line-number="1">vegetables &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/vegetables.csv&quot;</span>, <span class="dt">col_types =</span> <span class="kw">cols</span>(<span class="dt">store =</span> <span class="st">&quot;c&quot;</span>))</a></code></pre></div>
-<div class="sourceCode" id="cb232"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb232-1" data-line-number="1"><span class="kw">summary</span>(vegetables)</a></code></pre></div>
+<div class="sourceCode" id="cb230"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb230-1" data-line-number="1">vegetables &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/vegetables.csv&quot;</span>, <span class="dt">col_types =</span> <span class="kw">cols</span>(<span class="dt">store =</span> <span class="st">&quot;c&quot;</span>))</a></code></pre></div>
+<div class="sourceCode" id="cb231"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb231-1" data-line-number="1"><span class="kw">summary</span>(vegetables)</a></code></pre></div>
 <pre><code>##       sale          normalSale        store          
 ##  Min.   :  1.00   Min.   :  0.20   Length:1066       
 ##  1st Qu.: 12.00   1st Qu.:  4.20   Class :character  
@@ -364,10 +364,10 @@ be fitted to data using the <code>glm</code> function and using the formula inte
 to specify how the response should depend on the normal sale. The model is
 fitted by computing the maximum-likelihood estimate of the two parameters
 <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span>.</p>
-<div class="sourceCode" id="cb234"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb234-1" data-line-number="1">pois_model_null &lt;-<span class="st"> </span><span class="kw">glm</span>(sale <span class="op">~</span><span class="st"> </span><span class="kw">log</span>(normalSale), </a>
-<a class="sourceLine" id="cb234-2" data-line-number="2">                       <span class="dt">data =</span> vegetables, </a>
-<a class="sourceLine" id="cb234-3" data-line-number="3">                       <span class="dt">family =</span> poisson)   <span class="co">## A Poisson regression model</span></a></code></pre></div>
-<div class="sourceCode" id="cb235"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb235-1" data-line-number="1"><span class="kw">summary</span>(pois_model_null)</a></code></pre></div>
+<div class="sourceCode" id="cb233"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb233-1" data-line-number="1">pois_model_null &lt;-<span class="st"> </span><span class="kw">glm</span>(sale <span class="op">~</span><span class="st"> </span><span class="kw">log</span>(normalSale), </a>
+<a class="sourceLine" id="cb233-2" data-line-number="2">                       <span class="dt">data =</span> vegetables, </a>
+<a class="sourceLine" id="cb233-3" data-line-number="3">                       <span class="dt">family =</span> poisson)   <span class="co">## A Poisson regression model</span></a></code></pre></div>
+<div class="sourceCode" id="cb234"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb234-1" data-line-number="1"><span class="kw">summary</span>(pois_model_null)</a></code></pre></div>
 <pre><code>## 
 ## Call:
 ## glm(formula = sale ~ log(normalSale), family = poisson, data = vegetables)
@@ -401,14 +401,14 @@ stores in the data set, and it is not obvious that the same effect should
 apply across all stores. Thus we would like to fit a model of the form</p>
 <p><span class="math display">\[\log(E(\text{sale})) = \beta_{\text{store}} + \beta_1 \log(\text{normalSale})\]</span></p>
 <p>instead. Fortunately, this is also straightforward using <code>glm</code>.</p>
-<div class="sourceCode" id="cb237"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb237-1" data-line-number="1"><span class="co">## Note, variable store is a factor! The &#39;intercept&#39; is removed </span></a>
-<a class="sourceLine" id="cb237-2" data-line-number="2"><span class="co">## in the formula to obtain a parametrization as above. </span></a>
-<a class="sourceLine" id="cb237-3" data-line-number="3">pois_model &lt;-<span class="st"> </span><span class="kw">glm</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, </a>
-<a class="sourceLine" id="cb237-4" data-line-number="4">                  <span class="dt">data =</span> vegetables, </a>
-<a class="sourceLine" id="cb237-5" data-line-number="5">                  <span class="dt">family =</span> poisson)</a></code></pre></div>
+<div class="sourceCode" id="cb236"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb236-1" data-line-number="1"><span class="co">## Note, variable store is a factor! The &#39;intercept&#39; is removed </span></a>
+<a class="sourceLine" id="cb236-2" data-line-number="2"><span class="co">## in the formula to obtain a parametrization as above. </span></a>
+<a class="sourceLine" id="cb236-3" data-line-number="3">pois_model &lt;-<span class="st"> </span><span class="kw">glm</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb236-4" data-line-number="4">                  <span class="dt">data =</span> vegetables, </a>
+<a class="sourceLine" id="cb236-5" data-line-number="5">                  <span class="dt">family =</span> poisson)</a></code></pre></div>
 <p>We will not print all the individual store effects as there are 352
 individual stores.</p>
-<div class="sourceCode" id="cb238"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb238-1" data-line-number="1"><span class="kw">summary</span>(pois_model)<span class="op">$</span>coefficients[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">353</span>), ]</a></code></pre></div>
+<div class="sourceCode" id="cb237"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb237-1" data-line-number="1"><span class="kw">summary</span>(pois_model)<span class="op">$</span>coefficients[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">353</span>), ]</a></code></pre></div>
 <pre><code>##                 Estimate Std. Error z value   Pr(&gt;|z|)
 ## store1            2.7182    0.12756  21.309 9.416e-101
 ## store10           4.2954    0.12043  35.668 1.254e-278

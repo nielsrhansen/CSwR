@@ -306,26 +306,26 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h3><span class="header-section-number">3.2.1</span> Nadaraya–Watson kernel smoothing</h3>
 <p>The section before introduced the basic idea of nearest neighbor smoothing
 using a fixed number of neighbors. A very similar idea is to use a fixed
-neighborhood, <span class="math inline">\(B_i\)</span>, say, around <span class="math inline">\(x_i\)</span>. This would lead to the estimator
-<span class="math display">\[\hat{f}_i = \frac{\sum_{j} y_j 1_{B_i}(x_j)}{\sum_{j} 1_{B_i}(x_j)},\]</span>
+neighborhood, <span class="math inline">\(B_i\)</span>, say, around <span class="math inline">\(x_i\)</span>. This leads to the estimator
+<span class="math display">\[\hat{f}_i = \frac{\sum_{j=1}^n y_j 1_{B_i}(x_j)}{\sum_{j=1}^n 1_{B_i}(x_j)},\]</span>
 which is simply the average of the <span class="math inline">\(y\)</span>-s for which the corresponding <span class="math inline">\(x\)</span>-s
 fall in the neighborhood <span class="math inline">\(B_i\)</span> of <span class="math inline">\(x_i\)</span>. Note that contrary to the nearest
 neighbor estimator, the denominator now also depends on the <span class="math inline">\(x\)</span>-s.</p>
-<p>In a metric space a natural
-choice of <span class="math inline">\(B_i\)</span> is the ball, <span class="math inline">\(B(x_i, h)\)</span>, around <span class="math inline">\(x_i\)</span> with radius <span class="math inline">\(h\)</span>.
+<p>In a metric space the natural
+choice of <span class="math inline">\(B_i\)</span> is the ball, <span class="math inline">\(B(x_i, h)\)</span>, around <span class="math inline">\(x_i\)</span> with some radius <span class="math inline">\(h\)</span>.
 In <span class="math inline">\(\mathbb{R}\)</span> with the usual metric (or even <span class="math inline">\(\mathbb{R}^p\)</span> equipped with any
-translation invariant metric) we have that<br />
+norm-induced metric) we have that<br />
 <span class="math display">\[1_{B(x_i, h)}(x) = 1_{B(0, 1)}\left(\frac{x - x_i}{h}\right),\]</span>
 thus since <span class="math inline">\(B(0, 1) = [-1, 1]\)</span> in <span class="math inline">\(\mathbb{R}\)</span>
-<span class="math display">\[\hat{f}_i = \frac{\sum_{j} y_j 1_{[-1, 1]}\left(\frac{x_j - x_i}{h}\right)}{\sum_{l} 1_{[-1, 1]}\left(\frac{x_l - x_i}{h}\right)}.\]</span>
-This nonparametric estimator of the conditional expectation <span class="math inline">\(E(Y \mid X = x)\)</span>
+<span class="math display">\[\hat{f}_i = \frac{\sum_{j=1}^n y_j 1_{[-1, 1]}\left(\frac{x_j - x_i}{h}\right)}{\sum_{l=1}^n 1_{[-1, 1]}\left(\frac{x_l - x_i}{h}\right)}.\]</span>
+This nonparametric estimator of the conditional expectation <span class="math inline">\(E(Y \mid X = x_i)\)</span>
 is closely related to the kernel density estimator with the
 rectangular kernel, see Section <a href="kernel-density.html#kernel-density">2.2</a>, and just as for this
 estimator there is a natural generalization allowing for arbitrary kernels
 instead of the indicator function <span class="math inline">\(1_{[-1, 1]}\)</span>.</p>
 <p>With <span class="math inline">\(K : \mathbb{R} \mapsto \mathbb{R}\)</span> a fixed kernel the corresponding
 kernel smoother with bandwidth <span class="math inline">\(h\)</span> becomes
-<span class="math display">\[\hat{f}_i = \frac{\sum_{j} y_j K\left(\frac{x_j - x_i}{h}\right)}{\sum_{l} K\left(\frac{x_l - x_i}{h}\right)}.\]</span>
+<span class="math display">\[\hat{f}_i = \frac{\sum_{j=1}^n y_j K\left(\frac{x_j - x_i}{h}\right)}{\sum_{l=1}^n K\left(\frac{x_l - x_i}{h}\right)}.\]</span>
 This smoother is known as the Nadaraya–Watson kernel smoother or Nadaraya–Watson
 estimator. See Exercise <a href="exercises-2.html#exr:NW">3.1</a> for an additional
 perspective based on bivariate kernel density estimation.</p>
@@ -350,9 +350,9 @@ Figure 3.6: Nadaraya–Watson kernel smoother of the annual average temperature 
 <p>The kernel smoother is clearly a linear smoother, and we will implement its
 computation and the bandwidth selection using LOOCV by direct computation
 of the the smoother matrix <span class="math inline">\(\mathbf{S}\)</span>, which is given by
-<span class="math display">\[S_{ij} = \frac{K\left(\frac{x_j - x_i}{h}\right)}{\sum_{l} K\left(\frac{x_l - x_i}{h}\right)}.\]</span>
+<span class="math display">\[S_{ij} = \frac{K\left(\frac{x_j - x_i}{h}\right)}{\sum_{l=1}^n K\left(\frac{x_l - x_i}{h}\right)}.\]</span>
 The rows sum to 1 by construction, and the diagonal elements are
-<span class="math display">\[S_{ii} = \frac{K(0)}{\sum_{l} K\left(\frac{x_l - x_i}{h}\right)}.\]</span>
+<span class="math display">\[S_{ii} = \frac{K(0)}{\sum_{l=1}^n K\left(\frac{x_l - x_i}{h}\right)}.\]</span>
 The computation of <span class="math inline">\(\mathbf{S}\)</span> for the Gaussian kernel is implemented
 using <code>outer</code> and <code>rumSums</code>.</p>
 <div class="sourceCode" id="cb71"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb71-1" data-line-number="1">kern &lt;-<span class="st"> </span><span class="cf">function</span>(x) <span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>x<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span><span class="dv">2</span>)  <span class="co">## Gaussian kernel</span></a>

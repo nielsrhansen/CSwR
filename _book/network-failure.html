@@ -312,7 +312,7 @@ node 10 become disconnected?</p>
 <p>The network of nodes can be represented as a graph adjacency matrix <span class="math inline">\(A\)</span> such
 that <span class="math inline">\(A_{ij} = 1\)</span> if and only if there is an edge between <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span> (and <span class="math inline">\(A_{ij} = 0\)</span>
 otherwise).</p>
-<div class="sourceCode" id="cb178"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb178-1" data-line-number="1">A  <span class="co">## Graph adjacency matrix</span></a></code></pre></div>
+<div class="sourceCode" id="cb177"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb177-1" data-line-number="1">A  <span class="co">## Graph adjacency matrix</span></a></code></pre></div>
 <pre><code>##       [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
 ##  [1,]    0    1    0    1    1    0    0    0    0     0
 ##  [2,]    1    0    1    0    0    1    0    0    0     0
@@ -328,16 +328,16 @@ otherwise).</p>
 integration, we need to sample (sub)graphs by randomly removing some of the
 edges. This is implemented using the upper triangular part of the (symmetric)
 adjacency matrix.</p>
-<div class="sourceCode" id="cb180"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb180-1" data-line-number="1">simNet &lt;-<span class="st"> </span><span class="cf">function</span>(Aup, p) {</a>
-<a class="sourceLine" id="cb180-2" data-line-number="2">  ones &lt;-<span class="st"> </span><span class="kw">which</span>(Aup <span class="op">==</span><span class="st"> </span><span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb180-3" data-line-number="3">  Aup[ones] &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="kw">length</span>(ones), </a>
-<a class="sourceLine" id="cb180-4" data-line-number="4">                      <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p))</a>
-<a class="sourceLine" id="cb180-5" data-line-number="5">  Aup <span class="op">+</span><span class="st"> </span><span class="kw">t</span>(Aup)</a>
-<a class="sourceLine" id="cb180-6" data-line-number="6">}</a></code></pre></div>
+<div class="sourceCode" id="cb179"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb179-1" data-line-number="1">simNet &lt;-<span class="st"> </span><span class="cf">function</span>(Aup, p) {</a>
+<a class="sourceLine" id="cb179-2" data-line-number="2">  ones &lt;-<span class="st"> </span><span class="kw">which</span>(Aup <span class="op">==</span><span class="st"> </span><span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb179-3" data-line-number="3">  Aup[ones] &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="kw">length</span>(ones), </a>
+<a class="sourceLine" id="cb179-4" data-line-number="4">                      <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p))</a>
+<a class="sourceLine" id="cb179-5" data-line-number="5">  Aup <span class="op">+</span><span class="st"> </span><span class="kw">t</span>(Aup)</a>
+<a class="sourceLine" id="cb179-6" data-line-number="6">}</a></code></pre></div>
 <p>It is fairly fast to sample even a large number of random graphs this way.</p>
-<div class="sourceCode" id="cb181"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb181-1" data-line-number="1">Aup &lt;-<span class="st"> </span>A</a>
-<a class="sourceLine" id="cb181-2" data-line-number="2">Aup[<span class="kw">lower.tri</span>(Aup)] &lt;-<span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb181-3" data-line-number="3"><span class="kw">system.time</span>(<span class="kw">replicate</span>(<span class="fl">1e5</span>, {<span class="kw">simNet</span>(Aup, <span class="fl">0.5</span>); <span class="ot">NULL</span>}))</a></code></pre></div>
+<div class="sourceCode" id="cb180"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb180-1" data-line-number="1">Aup &lt;-<span class="st"> </span>A</a>
+<a class="sourceLine" id="cb180-2" data-line-number="2">Aup[<span class="kw">lower.tri</span>(Aup)] &lt;-<span class="st"> </span><span class="dv">0</span></a>
+<a class="sourceLine" id="cb180-3" data-line-number="3"><span class="kw">system.time</span>(<span class="kw">replicate</span>(<span class="fl">1e5</span>, {<span class="kw">simNet</span>(Aup, <span class="fl">0.5</span>); <span class="ot">NULL</span>}))</a></code></pre></div>
 <pre><code>##    user  system elapsed 
 ##   1.633   0.088   1.721</code></pre>
 <p>The second function we need to implement checks network connectivity.
@@ -346,26 +346,26 @@ of <span class="math inline">\(k\)</span> edges if and only if <span class="math
 path needs to consist of at least <span class="math inline">\(k = 3\)</span> edges. Also, we don’t need to
 check paths with more than <span class="math inline">\(k = 9\)</span> edges as they will contain the same node
 multiple times and can thus be shortened.</p>
-<div class="sourceCode" id="cb183"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb183-1" data-line-number="1">disconAB &lt;-<span class="st"> </span><span class="cf">function</span>(A) {</a>
-<a class="sourceLine" id="cb183-2" data-line-number="2">  k &lt;-<span class="st"> </span><span class="dv">3</span></a>
-<a class="sourceLine" id="cb183-3" data-line-number="3">  Apow &lt;-<span class="st"> </span>A <span class="op">%*%</span><span class="st"> </span>A <span class="op">%*%</span><span class="st"> </span>A <span class="co">## A%^%3</span></a>
-<a class="sourceLine" id="cb183-4" data-line-number="4">  <span class="cf">while</span>(Apow[<span class="dv">1</span>, <span class="dv">10</span>] <span class="op">==</span><span class="st"> </span><span class="dv">0</span> <span class="op">&amp;</span><span class="st"> </span>k <span class="op">&lt;</span><span class="st"> </span><span class="dv">9</span>) {</a>
-<a class="sourceLine" id="cb183-5" data-line-number="5">    Apow &lt;-<span class="st"> </span>Apow <span class="op">%*%</span><span class="st"> </span>A</a>
-<a class="sourceLine" id="cb183-6" data-line-number="6">    k &lt;-<span class="st"> </span>k <span class="op">+</span><span class="st"> </span><span class="dv">1</span>    </a>
-<a class="sourceLine" id="cb183-7" data-line-number="7">  }</a>
-<a class="sourceLine" id="cb183-8" data-line-number="8">  Apow[<span class="dv">1</span>, <span class="dv">10</span>] <span class="op">==</span><span class="st"> </span><span class="dv">0</span>  <span class="co">## TRUE if 1 and 10 are not connected</span></a>
-<a class="sourceLine" id="cb183-9" data-line-number="9">}</a></code></pre></div>
+<div class="sourceCode" id="cb182"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb182-1" data-line-number="1">disconAB &lt;-<span class="st"> </span><span class="cf">function</span>(A) {</a>
+<a class="sourceLine" id="cb182-2" data-line-number="2">  k &lt;-<span class="st"> </span><span class="dv">3</span></a>
+<a class="sourceLine" id="cb182-3" data-line-number="3">  Apow &lt;-<span class="st"> </span>A <span class="op">%*%</span><span class="st"> </span>A <span class="op">%*%</span><span class="st"> </span>A <span class="co">## A%^%3</span></a>
+<a class="sourceLine" id="cb182-4" data-line-number="4">  <span class="cf">while</span>(Apow[<span class="dv">1</span>, <span class="dv">10</span>] <span class="op">==</span><span class="st"> </span><span class="dv">0</span> <span class="op">&amp;</span><span class="st"> </span>k <span class="op">&lt;</span><span class="st"> </span><span class="dv">9</span>) {</a>
+<a class="sourceLine" id="cb182-5" data-line-number="5">    Apow &lt;-<span class="st"> </span>Apow <span class="op">%*%</span><span class="st"> </span>A</a>
+<a class="sourceLine" id="cb182-6" data-line-number="6">    k &lt;-<span class="st"> </span>k <span class="op">+</span><span class="st"> </span><span class="dv">1</span>    </a>
+<a class="sourceLine" id="cb182-7" data-line-number="7">  }</a>
+<a class="sourceLine" id="cb182-8" data-line-number="8">  Apow[<span class="dv">1</span>, <span class="dv">10</span>] <span class="op">==</span><span class="st"> </span><span class="dv">0</span>  <span class="co">## TRUE if 1 and 10 are not connected</span></a>
+<a class="sourceLine" id="cb182-9" data-line-number="9">}</a></code></pre></div>
 <p>Estimating probability of nodes 1 and 10 being disconnected using Monte Carlo integration.</p>
-<div class="sourceCode" id="cb184"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb184-1" data-line-number="1">seed &lt;-<span class="st"> </span><span class="dv">27092016</span></a>
-<a class="sourceLine" id="cb184-2" data-line-number="2"><span class="kw">set.seed</span>(seed)</a>
-<a class="sourceLine" id="cb184-3" data-line-number="3">n &lt;-<span class="st"> </span><span class="fl">1e5</span></a>
-<a class="sourceLine" id="cb184-4" data-line-number="4">tmp &lt;-<span class="st"> </span><span class="kw">replicate</span>(n, <span class="kw">disconAB</span>(<span class="kw">simNet</span>(Aup, <span class="fl">0.05</span>)))</a>
-<a class="sourceLine" id="cb184-5" data-line-number="5">muhat &lt;-<span class="st"> </span><span class="kw">mean</span>(tmp)</a></code></pre></div>
+<div class="sourceCode" id="cb183"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb183-1" data-line-number="1">seed &lt;-<span class="st"> </span><span class="dv">27092016</span></a>
+<a class="sourceLine" id="cb183-2" data-line-number="2"><span class="kw">set.seed</span>(seed)</a>
+<a class="sourceLine" id="cb183-3" data-line-number="3">n &lt;-<span class="st"> </span><span class="fl">1e5</span></a>
+<a class="sourceLine" id="cb183-4" data-line-number="4">tmp &lt;-<span class="st"> </span><span class="kw">replicate</span>(n, <span class="kw">disconAB</span>(<span class="kw">simNet</span>(Aup, <span class="fl">0.05</span>)))</a>
+<a class="sourceLine" id="cb183-5" data-line-number="5">muhat &lt;-<span class="st"> </span><span class="kw">mean</span>(tmp)</a></code></pre></div>
 <p>As this is a (random) approximation, we should report not only the Monte Carlo
 estimate but also the confidence interval. Since the estimate is an average of
 0-1-variables, we can estimate the variance, <span class="math inline">\(\sigma^2\)</span>, of the individual terms
 using that <span class="math inline">\(\sigma^2 = \mu (1 - \mu)\)</span>.</p>
-<div class="sourceCode" id="cb185"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb185-1" data-line-number="1">muhat <span class="op">+</span><span class="st"> </span><span class="fl">1.96</span> <span class="op">*</span><span class="st"> </span><span class="kw">sqrt</span>(muhat <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>muhat) <span class="op">/</span><span class="st"> </span>n) <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb184"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb184-1" data-line-number="1">muhat <span class="op">+</span><span class="st"> </span><span class="fl">1.96</span> <span class="op">*</span><span class="st"> </span><span class="kw">sqrt</span>(muhat <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>muhat) <span class="op">/</span><span class="st"> </span>n) <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)</a></code></pre></div>
 <pre><code>## [1] 0.0002257328 0.0003400000 0.0004542672</code></pre>
 <p>To implement importance sampling we note that the point probabilities
 (density w.r.t. counting measure) for sampling 18 independent 0-1-variables
@@ -374,30 +374,30 @@ using that <span class="math inline">\(\sigma^2 = \mu (1 - \mu)\)</span>.</p>
 <p>where <span class="math inline">\(b = 18 - \sum_{i=1}^{18} x_i\)</span>. The implementation computes
 the weights when sampling using probability <span class="math inline">\(p_0\)</span> (density <span class="math inline">\(g = f_{p_0}\)</span>)
 instead of <span class="math inline">\(p\)</span>, and the weights are only computed if the graph is disconnected.</p>
-<div class="sourceCode" id="cb187"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb187-1" data-line-number="1">impw &lt;-<span class="st"> </span><span class="cf">function</span>(Aup, A0, p0, p) {</a>
-<a class="sourceLine" id="cb187-2" data-line-number="2">  w &lt;-<span class="st"> </span><span class="kw">disconAB</span>(A0)</a>
-<a class="sourceLine" id="cb187-3" data-line-number="3">  <span class="cf">if</span> (w) {</a>
-<a class="sourceLine" id="cb187-4" data-line-number="4">    b &lt;-<span class="st"> </span><span class="dv">18</span> <span class="op">-</span><span class="st"> </span><span class="kw">sum</span>(Aup[A0 <span class="op">==</span><span class="st"> </span><span class="dv">1</span>])</a>
-<a class="sourceLine" id="cb187-5" data-line-number="5">    w &lt;-<span class="st"> </span>((<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p0))<span class="op">^</span><span class="dv">18</span> <span class="op">*</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb187-6" data-line-number="6"><span class="st">      </span>(p <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p0) <span class="op">/</span><span class="st"> </span>(p0 <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p)))<span class="op">^</span>b</a>
-<a class="sourceLine" id="cb187-7" data-line-number="7">  }</a>
-<a class="sourceLine" id="cb187-8" data-line-number="8">  <span class="kw">as.numeric</span>(w)</a>
-<a class="sourceLine" id="cb187-9" data-line-number="9">}</a></code></pre></div>
+<div class="sourceCode" id="cb186"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb186-1" data-line-number="1">impw &lt;-<span class="st"> </span><span class="cf">function</span>(Aup, A0, p0, p) {</a>
+<a class="sourceLine" id="cb186-2" data-line-number="2">  w &lt;-<span class="st"> </span><span class="kw">disconAB</span>(A0)</a>
+<a class="sourceLine" id="cb186-3" data-line-number="3">  <span class="cf">if</span> (w) {</a>
+<a class="sourceLine" id="cb186-4" data-line-number="4">    b &lt;-<span class="st"> </span><span class="dv">18</span> <span class="op">-</span><span class="st"> </span><span class="kw">sum</span>(Aup[A0 <span class="op">==</span><span class="st"> </span><span class="dv">1</span>])</a>
+<a class="sourceLine" id="cb186-5" data-line-number="5">    w &lt;-<span class="st"> </span>((<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p0))<span class="op">^</span><span class="dv">18</span> <span class="op">*</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb186-6" data-line-number="6"><span class="st">      </span>(p <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p0) <span class="op">/</span><span class="st"> </span>(p0 <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p)))<span class="op">^</span>b</a>
+<a class="sourceLine" id="cb186-7" data-line-number="7">  }</a>
+<a class="sourceLine" id="cb186-8" data-line-number="8">  <span class="kw">as.numeric</span>(w)</a>
+<a class="sourceLine" id="cb186-9" data-line-number="9">}</a></code></pre></div>
 <p>The implementation uses the formula</p>
 <p><span class="math display">\[
 w(x) = \frac{f_p(x)}{f_{p_0}(x)} = \frac{p^b (1- p)^{18-b}}{p_0^b (1- p_0)^{18-b}} = 
 \left(\frac{1- p}{1- p_0}\right)^{18} \left(\frac{p (1- p_0)}{p_0 (1- p)}\right)^b.
 \]</span></p>
-<div class="sourceCode" id="cb188"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb188-1" data-line-number="1"><span class="kw">set.seed</span>(seed)</a>
-<a class="sourceLine" id="cb188-2" data-line-number="2">tmp &lt;-<span class="st"> </span><span class="kw">replicate</span>(n, <span class="kw">impw</span>(Aup, <span class="kw">simNet</span>(Aup, <span class="fl">0.2</span>), <span class="fl">0.2</span>, <span class="fl">0.05</span>))</a>
-<a class="sourceLine" id="cb188-3" data-line-number="3">muhatIS &lt;-<span class="st"> </span><span class="kw">mean</span>(tmp)</a></code></pre></div>
+<div class="sourceCode" id="cb187"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb187-1" data-line-number="1"><span class="kw">set.seed</span>(seed)</a>
+<a class="sourceLine" id="cb187-2" data-line-number="2">tmp &lt;-<span class="st"> </span><span class="kw">replicate</span>(n, <span class="kw">impw</span>(Aup, <span class="kw">simNet</span>(Aup, <span class="fl">0.2</span>), <span class="fl">0.2</span>, <span class="fl">0.05</span>))</a>
+<a class="sourceLine" id="cb187-3" data-line-number="3">muhatIS &lt;-<span class="st"> </span><span class="kw">mean</span>(tmp)</a></code></pre></div>
 <p>Confidence interval using empirical variance estimate <span class="math inline">\(\hat{\sigma}^2\)</span>.</p>
-<div class="sourceCode" id="cb189"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb189-1" data-line-number="1">muhatIS <span class="op">+</span><span class="st"> </span><span class="fl">1.96</span> <span class="op">*</span><span class="st"> </span><span class="kw">sd</span>(tmp) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n) <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb188"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb188-1" data-line-number="1">muhatIS <span class="op">+</span><span class="st"> </span><span class="fl">1.96</span> <span class="op">*</span><span class="st"> </span><span class="kw">sd</span>(tmp) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n) <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)</a></code></pre></div>
 <pre><code>## [1] 0.0002619838 0.0002960900 0.0003301962</code></pre>
-<div class="sourceCode" id="cb191"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb191-1" data-line-number="1"><span class="kw">c</span>(<span class="kw">sd</span>(tmp), <span class="kw">sqrt</span>(muhat <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>muhat))) <span class="co">## The two standard deviations</span></a></code></pre></div>
+<div class="sourceCode" id="cb190"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb190-1" data-line-number="1"><span class="kw">c</span>(<span class="kw">sd</span>(tmp), <span class="kw">sqrt</span>(muhat <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>muhat))) <span class="co">## The two standard deviations</span></a></code></pre></div>
 <pre><code>## [1] 0.005502716 0.018435954</code></pre>
 <p>The ratio of variances is estimated as</p>
-<div class="sourceCode" id="cb193"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb193-1" data-line-number="1">muhat <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>muhat) <span class="op">/</span><span class="st"> </span><span class="kw">var</span>(tmp)</a></code></pre></div>
+<div class="sourceCode" id="cb192"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb192-1" data-line-number="1">muhat <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>muhat) <span class="op">/</span><span class="st"> </span><span class="kw">var</span>(tmp)</a></code></pre></div>
 <pre><code>## [1] 11.22476</code></pre>
 <p>We need around 11 times more naive samples
 when compared to importance sampling to obtain the same precision.
@@ -413,20 +413,20 @@ we use the function <code>intToBits</code> that convert an integer to its binary
 representation for integers from 0 to 262,143. This is a quick and convenient
 way of representing all the different fail and non-fail combinations
 for the edges.</p>
-<div class="sourceCode" id="cb195"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb195-1" data-line-number="1">ones &lt;-<span class="st"> </span><span class="kw">which</span>(Aup <span class="op">==</span><span class="st"> </span><span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb195-2" data-line-number="2">p &lt;-<span class="st"> </span><span class="fl">0.05</span></a>
-<a class="sourceLine" id="cb195-3" data-line-number="3">prob &lt;-<span class="st"> </span><span class="kw">numeric</span>(<span class="dv">2</span><span class="op">^</span><span class="dv">18</span>)</a>
-<a class="sourceLine" id="cb195-4" data-line-number="4"><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">0</span><span class="op">:</span>(<span class="dv">2</span><span class="op">^</span><span class="dv">18</span> <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)) {</a>
-<a class="sourceLine" id="cb195-5" data-line-number="5">  on &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">intToBits</span>(i)[<span class="dv">1</span><span class="op">:</span><span class="dv">18</span>])</a>
-<a class="sourceLine" id="cb195-6" data-line-number="6">  nr &lt;-<span class="st"> </span><span class="kw">sum</span>(on)</a>
-<a class="sourceLine" id="cb195-7" data-line-number="7">  Atmp &lt;-<span class="st"> </span>Aup</a>
-<a class="sourceLine" id="cb195-8" data-line-number="8">  Atmp[ones] &lt;-<span class="st"> </span>on</a>
-<a class="sourceLine" id="cb195-9" data-line-number="9">  <span class="cf">if</span>(<span class="kw">disconAB</span>(Atmp <span class="op">+</span><span class="st"> </span><span class="kw">t</span>(Atmp)))</a>
-<a class="sourceLine" id="cb195-10" data-line-number="10">    prob[i <span class="op">+</span><span class="st"> </span><span class="dv">1</span>] &lt;-<span class="st"> </span>p<span class="op">^</span>(<span class="dv">18</span> <span class="op">-</span><span class="st"> </span>nr) <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p)<span class="op">^</span>nr</a>
-<a class="sourceLine" id="cb195-11" data-line-number="11">}</a></code></pre></div>
+<div class="sourceCode" id="cb194"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb194-1" data-line-number="1">ones &lt;-<span class="st"> </span><span class="kw">which</span>(Aup <span class="op">==</span><span class="st"> </span><span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb194-2" data-line-number="2">p &lt;-<span class="st"> </span><span class="fl">0.05</span></a>
+<a class="sourceLine" id="cb194-3" data-line-number="3">prob &lt;-<span class="st"> </span><span class="kw">numeric</span>(<span class="dv">2</span><span class="op">^</span><span class="dv">18</span>)</a>
+<a class="sourceLine" id="cb194-4" data-line-number="4"><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">0</span><span class="op">:</span>(<span class="dv">2</span><span class="op">^</span><span class="dv">18</span> <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)) {</a>
+<a class="sourceLine" id="cb194-5" data-line-number="5">  on &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">intToBits</span>(i)[<span class="dv">1</span><span class="op">:</span><span class="dv">18</span>])</a>
+<a class="sourceLine" id="cb194-6" data-line-number="6">  nr &lt;-<span class="st"> </span><span class="kw">sum</span>(on)</a>
+<a class="sourceLine" id="cb194-7" data-line-number="7">  Atmp &lt;-<span class="st"> </span>Aup</a>
+<a class="sourceLine" id="cb194-8" data-line-number="8">  Atmp[ones] &lt;-<span class="st"> </span>on</a>
+<a class="sourceLine" id="cb194-9" data-line-number="9">  <span class="cf">if</span>(<span class="kw">disconAB</span>(Atmp <span class="op">+</span><span class="st"> </span><span class="kw">t</span>(Atmp)))</a>
+<a class="sourceLine" id="cb194-10" data-line-number="10">    prob[i <span class="op">+</span><span class="st"> </span><span class="dv">1</span>] &lt;-<span class="st"> </span>p<span class="op">^</span>(<span class="dv">18</span> <span class="op">-</span><span class="st"> </span>nr) <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p)<span class="op">^</span>nr</a>
+<a class="sourceLine" id="cb194-11" data-line-number="11">}</a></code></pre></div>
 <p>The probability of nodes 1 and 10 disconnected can then be computed as
 follows.</p>
-<div class="sourceCode" id="cb196"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb196-1" data-line-number="1"><span class="kw">sum</span>(prob)</a></code></pre></div>
+<div class="sourceCode" id="cb195"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb195-1" data-line-number="1"><span class="kw">sum</span>(prob)</a></code></pre></div>
 <pre><code>## [1] 0.000288295</code></pre>
 <p>This number should be compared to the estimates computed above. For a more complete
 comparison, we have used importance sampling with edge fail probability
@@ -445,15 +445,15 @@ Figure 5.4: Confidence intervals for importance sampling estimates of network no
 </div>
 <div id="object-oriented-implementation" class="section level3">
 <h3><span class="header-section-number">5.3.1</span> Object oriented implementation</h3>
-<div class="sourceCode" id="cb198"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb198-1" data-line-number="1">network &lt;-<span class="st"> </span><span class="cf">function</span>(A, p) {</a>
-<a class="sourceLine" id="cb198-2" data-line-number="2">  Aup &lt;-<span class="st"> </span>A</a>
-<a class="sourceLine" id="cb198-3" data-line-number="3">  Aup[<span class="kw">lower.tri</span>(Aup)] &lt;-<span class="st"> </span><span class="dv">0</span> </a>
-<a class="sourceLine" id="cb198-4" data-line-number="4">  ones &lt;-<span class="st"> </span><span class="kw">which</span>((Aup <span class="op">==</span><span class="st"> </span><span class="dv">1</span>))</a>
-<a class="sourceLine" id="cb198-5" data-line-number="5">  <span class="kw">structure</span>(<span class="kw">list</span>(<span class="dt">A =</span> A, <span class="dt">Aup =</span> Aup, <span class="dt">ones =</span> ones, <span class="dt">p =</span> p), </a>
-<a class="sourceLine" id="cb198-6" data-line-number="6">            <span class="dt">class =</span> <span class="st">&quot;network&quot;</span>)</a>
-<a class="sourceLine" id="cb198-7" data-line-number="7">}</a>
-<a class="sourceLine" id="cb198-8" data-line-number="8">myNet &lt;-<span class="st"> </span><span class="kw">network</span>(A, <span class="dt">p =</span> <span class="fl">0.05</span>)</a>
-<a class="sourceLine" id="cb198-9" data-line-number="9"><span class="kw">str</span>(myNet)</a></code></pre></div>
+<div class="sourceCode" id="cb197"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb197-1" data-line-number="1">network &lt;-<span class="st"> </span><span class="cf">function</span>(A, p) {</a>
+<a class="sourceLine" id="cb197-2" data-line-number="2">  Aup &lt;-<span class="st"> </span>A</a>
+<a class="sourceLine" id="cb197-3" data-line-number="3">  Aup[<span class="kw">lower.tri</span>(Aup)] &lt;-<span class="st"> </span><span class="dv">0</span> </a>
+<a class="sourceLine" id="cb197-4" data-line-number="4">  ones &lt;-<span class="st"> </span><span class="kw">which</span>((Aup <span class="op">==</span><span class="st"> </span><span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb197-5" data-line-number="5">  <span class="kw">structure</span>(<span class="kw">list</span>(<span class="dt">A =</span> A, <span class="dt">Aup =</span> Aup, <span class="dt">ones =</span> ones, <span class="dt">p =</span> p), </a>
+<a class="sourceLine" id="cb197-6" data-line-number="6">            <span class="dt">class =</span> <span class="st">&quot;network&quot;</span>)</a>
+<a class="sourceLine" id="cb197-7" data-line-number="7">}</a>
+<a class="sourceLine" id="cb197-8" data-line-number="8">myNet &lt;-<span class="st"> </span><span class="kw">network</span>(A, <span class="dt">p =</span> <span class="fl">0.05</span>)</a>
+<a class="sourceLine" id="cb197-9" data-line-number="9"><span class="kw">str</span>(myNet)</a></code></pre></div>
 <pre><code>## List of 4
 ##  $ A   : num [1:10, 1:10] 0 1 0 1 1 0 0 0 0 0 ...
 ##  $ Aup : num [1:10, 1:10] 0 0 0 0 0 0 0 0 0 0 ...
@@ -461,52 +461,52 @@ Figure 5.4: Confidence intervals for importance sampling estimates of network no
 ##  $ p   : num 0.05
 ##  - attr(*, &quot;class&quot;)= chr &quot;network&quot;</code></pre>
 <p>Generic functions.</p>
-<div class="sourceCode" id="cb200"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb200-1" data-line-number="1">sim &lt;-<span class="st"> </span><span class="cf">function</span>(x, ...)</a>
-<a class="sourceLine" id="cb200-2" data-line-number="2">  <span class="kw">UseMethod</span>(<span class="st">&quot;sim&quot;</span>)</a>
-<a class="sourceLine" id="cb200-3" data-line-number="3">failure &lt;-<span class="st"> </span><span class="cf">function</span>(x, ...)</a>
-<a class="sourceLine" id="cb200-4" data-line-number="4">  <span class="kw">UseMethod</span>(<span class="st">&quot;failure&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb199"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb199-1" data-line-number="1">sim &lt;-<span class="st"> </span><span class="cf">function</span>(x, ...)</a>
+<a class="sourceLine" id="cb199-2" data-line-number="2">  <span class="kw">UseMethod</span>(<span class="st">&quot;sim&quot;</span>)</a>
+<a class="sourceLine" id="cb199-3" data-line-number="3">failure &lt;-<span class="st"> </span><span class="cf">function</span>(x, ...)</a>
+<a class="sourceLine" id="cb199-4" data-line-number="4">  <span class="kw">UseMethod</span>(<span class="st">&quot;failure&quot;</span>)</a></code></pre></div>
 <p>The first method.</p>
-<div class="sourceCode" id="cb201"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb201-1" data-line-number="1">sim.network &lt;-<span class="st"> </span><span class="cf">function</span>(x) {</a>
-<a class="sourceLine" id="cb201-2" data-line-number="2">  Aup &lt;-<span class="st"> </span>x<span class="op">$</span>Aup</a>
-<a class="sourceLine" id="cb201-3" data-line-number="3">  Aup[x<span class="op">$</span>ones] &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="kw">length</span>(x<span class="op">$</span>ones), </a>
-<a class="sourceLine" id="cb201-4" data-line-number="4">                        <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(x<span class="op">$</span>p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>x<span class="op">$</span>p))</a>
-<a class="sourceLine" id="cb201-5" data-line-number="5">  Aup <span class="op">+</span><span class="st"> </span><span class="kw">t</span>(Aup)</a>
-<a class="sourceLine" id="cb201-6" data-line-number="6">}</a></code></pre></div>
+<div class="sourceCode" id="cb200"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb200-1" data-line-number="1">sim.network &lt;-<span class="st"> </span><span class="cf">function</span>(x) {</a>
+<a class="sourceLine" id="cb200-2" data-line-number="2">  Aup &lt;-<span class="st"> </span>x<span class="op">$</span>Aup</a>
+<a class="sourceLine" id="cb200-3" data-line-number="3">  Aup[x<span class="op">$</span>ones] &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="kw">length</span>(x<span class="op">$</span>ones), </a>
+<a class="sourceLine" id="cb200-4" data-line-number="4">                        <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(x<span class="op">$</span>p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>x<span class="op">$</span>p))</a>
+<a class="sourceLine" id="cb200-5" data-line-number="5">  Aup <span class="op">+</span><span class="st"> </span><span class="kw">t</span>(Aup)</a>
+<a class="sourceLine" id="cb200-6" data-line-number="6">}</a></code></pre></div>
 <p>And the second method.</p>
-<div class="sourceCode" id="cb202"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb202-1" data-line-number="1">failure.network &lt;-<span class="st"> </span><span class="cf">function</span>(x, n, <span class="dt">p0 =</span> <span class="ot">NULL</span>) {</a>
-<a class="sourceLine" id="cb202-2" data-line-number="2">  <span class="cf">if</span> (<span class="kw">is.null</span>(p0)) { <span class="co">## Naive simulation</span></a>
-<a class="sourceLine" id="cb202-3" data-line-number="3">    tmp &lt;-<span class="st"> </span><span class="kw">replicate</span>(n, <span class="kw">disconAB</span>(<span class="kw">sim</span>(x)))</a>
-<a class="sourceLine" id="cb202-4" data-line-number="4">    muhat &lt;-<span class="st"> </span><span class="kw">mean</span>(tmp)</a>
-<a class="sourceLine" id="cb202-5" data-line-number="5">    se &lt;-<span class="st"> </span><span class="kw">sqrt</span>(muhat <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>muhat) <span class="op">/</span><span class="st"> </span>n)</a>
-<a class="sourceLine" id="cb202-6" data-line-number="6">  } <span class="cf">else</span> { <span class="co">## Importance sampling</span></a>
-<a class="sourceLine" id="cb202-7" data-line-number="7">    p &lt;-<span class="st"> </span>x<span class="op">$</span>p</a>
-<a class="sourceLine" id="cb202-8" data-line-number="8">    x<span class="op">$</span>p &lt;-<span class="st"> </span>p0</a>
-<a class="sourceLine" id="cb202-9" data-line-number="9">    tmp &lt;-<span class="st"> </span><span class="kw">replicate</span>(n, <span class="kw">impw</span>(x<span class="op">$</span>Aup, <span class="kw">sim</span>(x), p0, p))</a>
-<a class="sourceLine" id="cb202-10" data-line-number="10">    se &lt;-<span class="st"> </span><span class="kw">sd</span>(tmp) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n)</a>
-<a class="sourceLine" id="cb202-11" data-line-number="11">    muhat &lt;-<span class="st"> </span><span class="kw">mean</span>(tmp)</a>
-<a class="sourceLine" id="cb202-12" data-line-number="12">  } </a>
-<a class="sourceLine" id="cb202-13" data-line-number="13">  value &lt;-<span class="st"> </span>muhat <span class="op">+</span><span class="st"> </span><span class="fl">1.96</span> <span class="op">*</span><span class="st"> </span>se <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)  </a>
-<a class="sourceLine" id="cb202-14" data-line-number="14">  <span class="kw">names</span>(value) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;low&quot;</span>, <span class="st">&quot;estimate&quot;</span>, <span class="st">&quot;high&quot;</span>)</a>
-<a class="sourceLine" id="cb202-15" data-line-number="15">  value</a>
-<a class="sourceLine" id="cb202-16" data-line-number="16">}</a></code></pre></div>
+<div class="sourceCode" id="cb201"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb201-1" data-line-number="1">failure.network &lt;-<span class="st"> </span><span class="cf">function</span>(x, n, <span class="dt">p0 =</span> <span class="ot">NULL</span>) {</a>
+<a class="sourceLine" id="cb201-2" data-line-number="2">  <span class="cf">if</span> (<span class="kw">is.null</span>(p0)) { <span class="co">## Naive simulation</span></a>
+<a class="sourceLine" id="cb201-3" data-line-number="3">    tmp &lt;-<span class="st"> </span><span class="kw">replicate</span>(n, <span class="kw">disconAB</span>(<span class="kw">sim</span>(x)))</a>
+<a class="sourceLine" id="cb201-4" data-line-number="4">    muhat &lt;-<span class="st"> </span><span class="kw">mean</span>(tmp)</a>
+<a class="sourceLine" id="cb201-5" data-line-number="5">    se &lt;-<span class="st"> </span><span class="kw">sqrt</span>(muhat <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>muhat) <span class="op">/</span><span class="st"> </span>n)</a>
+<a class="sourceLine" id="cb201-6" data-line-number="6">  } <span class="cf">else</span> { <span class="co">## Importance sampling</span></a>
+<a class="sourceLine" id="cb201-7" data-line-number="7">    p &lt;-<span class="st"> </span>x<span class="op">$</span>p</a>
+<a class="sourceLine" id="cb201-8" data-line-number="8">    x<span class="op">$</span>p &lt;-<span class="st"> </span>p0</a>
+<a class="sourceLine" id="cb201-9" data-line-number="9">    tmp &lt;-<span class="st"> </span><span class="kw">replicate</span>(n, <span class="kw">impw</span>(x<span class="op">$</span>Aup, <span class="kw">sim</span>(x), p0, p))</a>
+<a class="sourceLine" id="cb201-10" data-line-number="10">    se &lt;-<span class="st"> </span><span class="kw">sd</span>(tmp) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n)</a>
+<a class="sourceLine" id="cb201-11" data-line-number="11">    muhat &lt;-<span class="st"> </span><span class="kw">mean</span>(tmp)</a>
+<a class="sourceLine" id="cb201-12" data-line-number="12">  } </a>
+<a class="sourceLine" id="cb201-13" data-line-number="13">  value &lt;-<span class="st"> </span>muhat <span class="op">+</span><span class="st"> </span><span class="fl">1.96</span> <span class="op">*</span><span class="st"> </span>se <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)  </a>
+<a class="sourceLine" id="cb201-14" data-line-number="14">  <span class="kw">names</span>(value) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;low&quot;</span>, <span class="st">&quot;estimate&quot;</span>, <span class="st">&quot;high&quot;</span>)</a>
+<a class="sourceLine" id="cb201-15" data-line-number="15">  value</a>
+<a class="sourceLine" id="cb201-16" data-line-number="16">}</a></code></pre></div>
 <p>We test the implementation against the previously computed
 results.</p>
-<div class="sourceCode" id="cb203"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb203-1" data-line-number="1"><span class="kw">set.seed</span>(seed)  <span class="co">## Resetting seed</span></a>
-<a class="sourceLine" id="cb203-2" data-line-number="2"><span class="kw">failure</span>(myNet, n)</a></code></pre></div>
+<div class="sourceCode" id="cb202"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb202-1" data-line-number="1"><span class="kw">set.seed</span>(seed)  <span class="co">## Resetting seed</span></a>
+<a class="sourceLine" id="cb202-2" data-line-number="2"><span class="kw">failure</span>(myNet, n)</a></code></pre></div>
 <pre><code>##          low     estimate         high 
 ## 0.0002257328 0.0003400000 0.0004542672</code></pre>
-<div class="sourceCode" id="cb205"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb205-1" data-line-number="1"><span class="kw">set.seed</span>(seed)  <span class="co">## Resetting seed</span></a>
-<a class="sourceLine" id="cb205-2" data-line-number="2"><span class="kw">failure</span>(myNet, n, <span class="dt">p0 =</span> <span class="fl">0.2</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb204"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb204-1" data-line-number="1"><span class="kw">set.seed</span>(seed)  <span class="co">## Resetting seed</span></a>
+<a class="sourceLine" id="cb204-2" data-line-number="2"><span class="kw">failure</span>(myNet, n, <span class="dt">p0 =</span> <span class="fl">0.2</span>)</a></code></pre></div>
 <pre><code>##          low     estimate         high 
 ## 0.0002619838 0.0002960900 0.0003301962</code></pre>
 <p>We find that these are the same numbers as computed above, thus the object
 oriented implementation concurs with the non-object oriented on this example.</p>
 <p>We benchmark the object oriented implementation.</p>
-<div class="sourceCode" id="cb207"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb207-1" data-line-number="1"><span class="kw">microbenchmark</span>(</a>
-<a class="sourceLine" id="cb207-2" data-line-number="2">  <span class="kw">simNet</span>(Aup, <span class="fl">0.05</span>),</a>
-<a class="sourceLine" id="cb207-3" data-line-number="3">  <span class="kw">sim</span>(myNet),</a>
-<a class="sourceLine" id="cb207-4" data-line-number="4">  <span class="dt">times =</span> <span class="fl">1e4</span></a>
-<a class="sourceLine" id="cb207-5" data-line-number="5">)</a></code></pre></div>
+<div class="sourceCode" id="cb206"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb206-1" data-line-number="1"><span class="kw">microbenchmark</span>(</a>
+<a class="sourceLine" id="cb206-2" data-line-number="2">  <span class="kw">simNet</span>(Aup, <span class="fl">0.05</span>),</a>
+<a class="sourceLine" id="cb206-3" data-line-number="3">  <span class="kw">sim</span>(myNet),</a>
+<a class="sourceLine" id="cb206-4" data-line-number="4">  <span class="dt">times =</span> <span class="fl">1e4</span></a>
+<a class="sourceLine" id="cb206-5" data-line-number="5">)</a></code></pre></div>
 <pre><code>## Unit: microseconds
 ##               expr  min   lq mean median   uq   max neval
 ##  simNet(Aup, 0.05) 11.7 12.7 15.9   13.3 13.8 18576 10000
@@ -516,19 +516,19 @@ that is, the procedure that R uses to look up the appropriate <code>sim</code> m
 for an object of class <code>network</code>.</p>
 <p>The generic <code>print</code> function already exists. We implement a method
 for class <code>network</code>.</p>
-<div class="sourceCode" id="cb209"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb209-1" data-line-number="1">print.network &lt;-<span class="st"> </span><span class="cf">function</span>(x) {</a>
-<a class="sourceLine" id="cb209-2" data-line-number="2">  <span class="kw">cat</span>(<span class="st">&quot;#vertices: &quot;</span>, <span class="kw">nrow</span>(x<span class="op">$</span>A), <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</a>
-<a class="sourceLine" id="cb209-3" data-line-number="3">  <span class="kw">cat</span>(<span class="st">&quot;#edges:&quot;</span>, <span class="kw">sum</span>(x<span class="op">$</span>Aup), <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</a>
-<a class="sourceLine" id="cb209-4" data-line-number="4">  <span class="kw">cat</span>(<span class="st">&quot;p = &quot;</span>, x<span class="op">$</span>p, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</a>
-<a class="sourceLine" id="cb209-5" data-line-number="5">}</a></code></pre></div>
-<div class="sourceCode" id="cb210"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb210-1" data-line-number="1">myNet  <span class="co">## Implicitly calls &#39;print&#39;</span></a></code></pre></div>
+<div class="sourceCode" id="cb208"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb208-1" data-line-number="1">print.network &lt;-<span class="st"> </span><span class="cf">function</span>(x) {</a>
+<a class="sourceLine" id="cb208-2" data-line-number="2">  <span class="kw">cat</span>(<span class="st">&quot;#vertices: &quot;</span>, <span class="kw">nrow</span>(x<span class="op">$</span>A), <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</a>
+<a class="sourceLine" id="cb208-3" data-line-number="3">  <span class="kw">cat</span>(<span class="st">&quot;#edges:&quot;</span>, <span class="kw">sum</span>(x<span class="op">$</span>Aup), <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</a>
+<a class="sourceLine" id="cb208-4" data-line-number="4">  <span class="kw">cat</span>(<span class="st">&quot;p = &quot;</span>, x<span class="op">$</span>p, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</a>
+<a class="sourceLine" id="cb208-5" data-line-number="5">}</a></code></pre></div>
+<div class="sourceCode" id="cb209"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb209-1" data-line-number="1">myNet  <span class="co">## Implicitly calls &#39;print&#39;</span></a></code></pre></div>
 <pre><code>## #vertices:  10 
 ## #edges: 18 
 ## p =  0.05</code></pre>
 <p>Using igraph.</p>
-<div class="sourceCode" id="cb212"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb212-1" data-line-number="1"><span class="kw">library</span>(igraph)</a>
-<a class="sourceLine" id="cb212-2" data-line-number="2">net &lt;-<span class="st"> </span><span class="kw">graph_from_adjacency_matrix</span>(A, <span class="dt">mode =</span> <span class="st">&quot;undirected&quot;</span>)</a>
-<a class="sourceLine" id="cb212-3" data-line-number="3">net</a></code></pre></div>
+<div class="sourceCode" id="cb211"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb211-1" data-line-number="1"><span class="kw">library</span>(igraph)</a>
+<a class="sourceLine" id="cb211-2" data-line-number="2">net &lt;-<span class="st"> </span><span class="kw">graph_from_adjacency_matrix</span>(A, <span class="dt">mode =</span> <span class="st">&quot;undirected&quot;</span>)</a>
+<a class="sourceLine" id="cb211-3" data-line-number="3">net</a></code></pre></div>
 <pre><code>## IGRAPH bd5893b U--- 10 18 -- 
 ## + edges from bd5893b:
 ##  [1] 1-- 2 1-- 4 1-- 5 2-- 3 2-- 6 3-- 6 3-- 7 3-- 8 3--10 4-- 5 4-- 8
@@ -536,36 +536,36 @@ for class <code>network</code>.</p>
 <p>The igraph package supports a vast number of graph computation, manipulation and
 visualization tools.</p>
 <p>Plotting an igraph.</p>
-<div class="sourceCode" id="cb214"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb214-1" data-line-number="1"><span class="co">## You can generate a layout ...</span></a>
-<a class="sourceLine" id="cb214-2" data-line-number="2">net_layout &lt;-<span class="st"> </span><span class="kw">layout_</span>(net, <span class="kw">nicely</span>())</a>
-<a class="sourceLine" id="cb214-3" data-line-number="3"><span class="co">## ... or you can specify one yourself </span></a>
-<a class="sourceLine" id="cb214-4" data-line-number="4">net_layout &lt;-<span class="st"> </span><span class="kw">matrix</span>(</a>
-<a class="sourceLine" id="cb214-5" data-line-number="5">  <span class="kw">c</span>(<span class="op">-</span><span class="dv">20</span>,  <span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb214-6" data-line-number="6">    <span class="dv">-4</span>,  <span class="dv">3</span>,</a>
-<a class="sourceLine" id="cb214-7" data-line-number="7">    <span class="dv">-4</span>,  <span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb214-8" data-line-number="8">    <span class="dv">-4</span>, <span class="dv">-1</span>,</a>
-<a class="sourceLine" id="cb214-9" data-line-number="9">    <span class="dv">-4</span>, <span class="dv">-3</span>,</a>
-<a class="sourceLine" id="cb214-10" data-line-number="10">     <span class="dv">4</span>,  <span class="dv">3</span>,</a>
-<a class="sourceLine" id="cb214-11" data-line-number="11">     <span class="dv">4</span>,  <span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb214-12" data-line-number="12">     <span class="dv">4</span>, <span class="dv">-1</span>,</a>
-<a class="sourceLine" id="cb214-13" data-line-number="13">     <span class="dv">4</span>, <span class="dv">-3</span>,</a>
-<a class="sourceLine" id="cb214-14" data-line-number="14">     <span class="dv">20</span>,  <span class="dv">-1</span>),</a>
-<a class="sourceLine" id="cb214-15" data-line-number="15">  <span class="dt">ncol =</span> <span class="dv">2</span>, <span class="dt">nrow =</span> <span class="dv">10</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb213"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb213-1" data-line-number="1"><span class="co">## You can generate a layout ...</span></a>
+<a class="sourceLine" id="cb213-2" data-line-number="2">net_layout &lt;-<span class="st"> </span><span class="kw">layout_</span>(net, <span class="kw">nicely</span>())</a>
+<a class="sourceLine" id="cb213-3" data-line-number="3"><span class="co">## ... or you can specify one yourself </span></a>
+<a class="sourceLine" id="cb213-4" data-line-number="4">net_layout &lt;-<span class="st"> </span><span class="kw">matrix</span>(</a>
+<a class="sourceLine" id="cb213-5" data-line-number="5">  <span class="kw">c</span>(<span class="op">-</span><span class="dv">20</span>,  <span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb213-6" data-line-number="6">    <span class="dv">-4</span>,  <span class="dv">3</span>,</a>
+<a class="sourceLine" id="cb213-7" data-line-number="7">    <span class="dv">-4</span>,  <span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb213-8" data-line-number="8">    <span class="dv">-4</span>, <span class="dv">-1</span>,</a>
+<a class="sourceLine" id="cb213-9" data-line-number="9">    <span class="dv">-4</span>, <span class="dv">-3</span>,</a>
+<a class="sourceLine" id="cb213-10" data-line-number="10">     <span class="dv">4</span>,  <span class="dv">3</span>,</a>
+<a class="sourceLine" id="cb213-11" data-line-number="11">     <span class="dv">4</span>,  <span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb213-12" data-line-number="12">     <span class="dv">4</span>, <span class="dv">-1</span>,</a>
+<a class="sourceLine" id="cb213-13" data-line-number="13">     <span class="dv">4</span>, <span class="dv">-3</span>,</a>
+<a class="sourceLine" id="cb213-14" data-line-number="14">     <span class="dv">20</span>,  <span class="dv">-1</span>),</a>
+<a class="sourceLine" id="cb213-15" data-line-number="15">  <span class="dt">ncol =</span> <span class="dv">2</span>, <span class="dt">nrow =</span> <span class="dv">10</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
 <p>Plotting an igraph</p>
-<div class="sourceCode" id="cb215"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb215-1" data-line-number="1"><span class="kw">plot</span>(net, <span class="dt">layout =</span> net_layout, <span class="dt">asp =</span> <span class="dv">0</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb214"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb214-1" data-line-number="1"><span class="kw">plot</span>(net, <span class="dt">layout =</span> net_layout, <span class="dt">asp =</span> <span class="dv">0</span>)</a></code></pre></div>
 <p><img src="CSwR_files/figure-html/network_plot-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <p>Simulation method for igraph</p>
-<div class="sourceCode" id="cb216"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb216-1" data-line-number="1">sim.igraph &lt;-<span class="st"> </span><span class="cf">function</span>(x, p) {</a>
-<a class="sourceLine" id="cb216-2" data-line-number="2">  nr &lt;-<span class="st"> </span><span class="kw">ecount</span>(x)</a>
-<a class="sourceLine" id="cb216-3" data-line-number="3">  deledges &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="ot">TRUE</span>, <span class="ot">FALSE</span>), nr, </a>
-<a class="sourceLine" id="cb216-4" data-line-number="4">                     <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p))</a>
-<a class="sourceLine" id="cb216-5" data-line-number="5">  <span class="kw">delete_edges</span>(x, <span class="kw">which</span>(deledges))</a>
-<a class="sourceLine" id="cb216-6" data-line-number="6">}</a></code></pre></div>
+<div class="sourceCode" id="cb215"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb215-1" data-line-number="1">sim.igraph &lt;-<span class="st"> </span><span class="cf">function</span>(x, p) {</a>
+<a class="sourceLine" id="cb215-2" data-line-number="2">  nr &lt;-<span class="st"> </span><span class="kw">ecount</span>(x)</a>
+<a class="sourceLine" id="cb215-3" data-line-number="3">  deledges &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="ot">TRUE</span>, <span class="ot">FALSE</span>), nr, </a>
+<a class="sourceLine" id="cb215-4" data-line-number="4">                     <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p))</a>
+<a class="sourceLine" id="cb215-5" data-line-number="5">  <span class="kw">delete_edges</span>(x, <span class="kw">which</span>(deledges))</a>
+<a class="sourceLine" id="cb215-6" data-line-number="6">}</a></code></pre></div>
 <p>A simulated graph</p>
-<div class="sourceCode" id="cb217"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb217-1" data-line-number="1"><span class="kw">plot</span>(<span class="kw">sim</span>(net, <span class="fl">0.25</span>), <span class="dt">layout =</span> net_layout, <span class="dt">asp =</span> <span class="dv">0</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb216"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb216-1" data-line-number="1"><span class="kw">plot</span>(<span class="kw">sim</span>(net, <span class="fl">0.25</span>), <span class="dt">layout =</span> net_layout, <span class="dt">asp =</span> <span class="dv">0</span>)</a></code></pre></div>
 <p><img src="CSwR_files/figure-html/network_simulated-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <p>This is slower than using the matrix representation alone as in <code>simNet</code>.</p>
-<div class="sourceCode" id="cb218"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb218-1" data-line-number="1"><span class="kw">system.time</span>(<span class="kw">replicate</span>(<span class="fl">1e5</span>, {<span class="kw">sim</span>(net, <span class="fl">0.05</span>); <span class="ot">NULL</span>}))</a></code></pre></div>
+<div class="sourceCode" id="cb217"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb217-1" data-line-number="1"><span class="kw">system.time</span>(<span class="kw">replicate</span>(<span class="fl">1e5</span>, {<span class="kw">sim</span>(net, <span class="fl">0.05</span>); <span class="ot">NULL</span>}))</a></code></pre></div>
 <pre><code>##    user  system elapsed 
 ##   3.830   1.508   5.346</code></pre>
 <p>One could also implement the function for testing if nodes 1 and 10 are

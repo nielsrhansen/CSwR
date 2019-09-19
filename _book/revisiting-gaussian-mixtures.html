@@ -307,38 +307,38 @@ distribution of <span class="math inline">\(Y\)</span> is
 <span class="math display">\[ f(y) = p \frac{1}{\sqrt{2 \pi \sigma_1^2}} e^{-\frac{(y - \mu_1)^2}{2 \sigma_1^2}} + 
 (1 - p)\frac{1}{\sqrt{2 \pi \sigma_2^2}}e^{-\frac{(y - \mu_2)^2}{2 \sigma_2^2}}.\]</span>
 The following is a simulation of data from such a mixture model.</p>
-<div class="sourceCode" id="cb335"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb335-1" data-line-number="1">sigma1 &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb335-2" data-line-number="2">sigma2 &lt;-<span class="st"> </span><span class="dv">2</span></a>
-<a class="sourceLine" id="cb335-3" data-line-number="3">mu1 &lt;-<span class="st"> </span><span class="fl">-0.5</span></a>
-<a class="sourceLine" id="cb335-4" data-line-number="4">mu2 &lt;-<span class="st"> </span><span class="dv">4</span></a>
-<a class="sourceLine" id="cb335-5" data-line-number="5">p &lt;-<span class="st"> </span><span class="fl">0.5</span></a>
-<a class="sourceLine" id="cb335-6" data-line-number="6">n &lt;-<span class="st"> </span><span class="dv">1000</span></a>
-<a class="sourceLine" id="cb335-7" data-line-number="7">z &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="ot">TRUE</span>, <span class="ot">FALSE</span>), n, <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p))</a>
-<a class="sourceLine" id="cb335-8" data-line-number="8">y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
-<a class="sourceLine" id="cb335-9" data-line-number="9">n1 &lt;-<span class="st"> </span><span class="kw">sum</span>(z)</a>
-<a class="sourceLine" id="cb335-10" data-line-number="10">y[z] &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n1, mu1, sigma1)</a>
-<a class="sourceLine" id="cb335-11" data-line-number="11">y[<span class="op">!</span>z] &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n <span class="op">-</span><span class="st"> </span>n1, mu2, sigma2)</a></code></pre></div>
+<div class="sourceCode" id="cb334"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb334-1" data-line-number="1">sigma1 &lt;-<span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb334-2" data-line-number="2">sigma2 &lt;-<span class="st"> </span><span class="dv">2</span></a>
+<a class="sourceLine" id="cb334-3" data-line-number="3">mu1 &lt;-<span class="st"> </span><span class="fl">-0.5</span></a>
+<a class="sourceLine" id="cb334-4" data-line-number="4">mu2 &lt;-<span class="st"> </span><span class="dv">4</span></a>
+<a class="sourceLine" id="cb334-5" data-line-number="5">p &lt;-<span class="st"> </span><span class="fl">0.5</span></a>
+<a class="sourceLine" id="cb334-6" data-line-number="6">n &lt;-<span class="st"> </span><span class="dv">1000</span></a>
+<a class="sourceLine" id="cb334-7" data-line-number="7">z &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="ot">TRUE</span>, <span class="ot">FALSE</span>), n, <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p))</a>
+<a class="sourceLine" id="cb334-8" data-line-number="8">y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
+<a class="sourceLine" id="cb334-9" data-line-number="9">n1 &lt;-<span class="st"> </span><span class="kw">sum</span>(z)</a>
+<a class="sourceLine" id="cb334-10" data-line-number="10">y[z] &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n1, mu1, sigma1)</a>
+<a class="sourceLine" id="cb334-11" data-line-number="11">y[<span class="op">!</span>z] &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n <span class="op">-</span><span class="st"> </span>n1, mu2, sigma2)</a></code></pre></div>
 <p>We implement the log-likelihood assuming that the variances are known. Note
 that the implementation takes just one single parameter argument, which is
 then supposed to be a vector of all parameters in the model. Internally to
 the function one has to decide for each entry in the parameter vector what
 parameter in the model it corresponds to.</p>
-<div class="sourceCode" id="cb336"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb336-1" data-line-number="1">loglik &lt;-<span class="st"> </span><span class="cf">function</span>(par, y) {</a>
-<a class="sourceLine" id="cb336-2" data-line-number="2">  p &lt;-<span class="st"> </span>par[<span class="dv">1</span>]</a>
-<a class="sourceLine" id="cb336-3" data-line-number="3">  <span class="cf">if</span>(p <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>p <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb336-4" data-line-number="4">    <span class="kw">return</span>(<span class="ot">Inf</span>)</a>
-<a class="sourceLine" id="cb336-5" data-line-number="5">  </a>
-<a class="sourceLine" id="cb336-6" data-line-number="6">  mu1 &lt;-<span class="st"> </span>par[<span class="dv">2</span>]</a>
-<a class="sourceLine" id="cb336-7" data-line-number="7">  mu2 &lt;-<span class="st"> </span>par[<span class="dv">3</span>]</a>
-<a class="sourceLine" id="cb336-8" data-line-number="8">  <span class="op">-</span><span class="kw">sum</span>(<span class="kw">log</span>(p <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>(y <span class="op">-</span><span class="st"> </span>mu1)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma1<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma1 <span class="op">+</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb336-9" data-line-number="9"><span class="st">             </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>(y <span class="op">-</span><span class="st"> </span>mu2)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma2<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma2))</a>
-<a class="sourceLine" id="cb336-10" data-line-number="10">}</a></code></pre></div>
+<div class="sourceCode" id="cb335"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb335-1" data-line-number="1">loglik &lt;-<span class="st"> </span><span class="cf">function</span>(par, y) {</a>
+<a class="sourceLine" id="cb335-2" data-line-number="2">  p &lt;-<span class="st"> </span>par[<span class="dv">1</span>]</a>
+<a class="sourceLine" id="cb335-3" data-line-number="3">  <span class="cf">if</span>(p <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>p <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb335-4" data-line-number="4">    <span class="kw">return</span>(<span class="ot">Inf</span>)</a>
+<a class="sourceLine" id="cb335-5" data-line-number="5">  </a>
+<a class="sourceLine" id="cb335-6" data-line-number="6">  mu1 &lt;-<span class="st"> </span>par[<span class="dv">2</span>]</a>
+<a class="sourceLine" id="cb335-7" data-line-number="7">  mu2 &lt;-<span class="st"> </span>par[<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb335-8" data-line-number="8">  <span class="op">-</span><span class="kw">sum</span>(<span class="kw">log</span>(p <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>(y <span class="op">-</span><span class="st"> </span>mu1)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma1<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma1 <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb335-9" data-line-number="9"><span class="st">             </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>(y <span class="op">-</span><span class="st"> </span>mu2)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma2<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma2))</a>
+<a class="sourceLine" id="cb335-10" data-line-number="10">}</a></code></pre></div>
 <p>Without further implementations, <code>optim</code> can find the
 maximum-likelihood estimate if we have a sensible initial parameter guess.
 In this case we use the true parameters, which can be used when
 algorithms are tested, but they are, of course, not available for
 real applications.</p>
-<div class="sourceCode" id="cb337"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb337-1" data-line-number="1"><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.5</span>, <span class="fl">-0.5</span>, <span class="dv">4</span>), loglik, <span class="dt">y =</span> y)[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]</a></code></pre></div>
+<div class="sourceCode" id="cb336"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb336-1" data-line-number="1"><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.5</span>, <span class="fl">-0.5</span>, <span class="dv">4</span>), loglik, <span class="dt">y =</span> y)[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]</a></code></pre></div>
 <pre><code>## $par
 ## [1]  0.4934452 -0.5495679  4.0979106
 ## 
@@ -346,7 +346,7 @@ real applications.</p>
 ## [1] 1384.334</code></pre>
 <p>However, if we initialize the optimization badly, it does not find the maximum
 but a local maximum instead.</p>
-<div class="sourceCode" id="cb339"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb339-1" data-line-number="1"><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.9</span>, <span class="dv">3</span>, <span class="dv">1</span>), loglik, <span class="dt">y =</span> y)[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]</a></code></pre></div>
+<div class="sourceCode" id="cb338"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb338-1" data-line-number="1"><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.9</span>, <span class="dv">3</span>, <span class="dv">1</span>), loglik, <span class="dt">y =</span> y)[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]</a></code></pre></div>
 <pre><code>## $par
 ## [1] 0.2334382 5.6763596 0.6255516
 ## 
@@ -361,37 +361,37 @@ The M-step becomes identical to the MLE, which can be found explicitly,
 but where the indicators <span class="math inline">\(1(Z_i = 1)\)</span> and <span class="math inline">\(1(Z_i = 2) = 1 - 1(Z_i = 1)\)</span> are
 replaced by the conditional probabilities <span class="math inline">\(p_i(\mathbf{y})\)</span> and
 <span class="math inline">\(1 - p_i(\mathbf{y})\)</span>, respectively.</p>
-<div class="sourceCode" id="cb341"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb341-1" data-line-number="1">EStep &lt;-<span class="st"> </span><span class="cf">function</span>(par, y) {</a>
-<a class="sourceLine" id="cb341-2" data-line-number="2">  p &lt;-<span class="st"> </span>par[<span class="dv">1</span>]</a>
-<a class="sourceLine" id="cb341-3" data-line-number="3">  mu1 &lt;-<span class="st"> </span>par[<span class="dv">2</span>]</a>
-<a class="sourceLine" id="cb341-4" data-line-number="4">  mu2 &lt;-<span class="st"> </span>par[<span class="dv">3</span>]</a>
-<a class="sourceLine" id="cb341-5" data-line-number="5">  a &lt;-<span class="st"> </span>p <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>(y <span class="op">-</span><span class="st"> </span>mu1)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma1<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma1 </a>
-<a class="sourceLine" id="cb341-6" data-line-number="6">  b &lt;-<span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>(y <span class="op">-</span><span class="st"> </span>mu2)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma2<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma2</a>
-<a class="sourceLine" id="cb341-7" data-line-number="7">  b <span class="op">/</span><span class="st"> </span>(a <span class="op">+</span><span class="st"> </span>b)</a>
-<a class="sourceLine" id="cb341-8" data-line-number="8">}</a>
-<a class="sourceLine" id="cb341-9" data-line-number="9"></a>
-<a class="sourceLine" id="cb341-10" data-line-number="10">MStep &lt;-<span class="st"> </span><span class="cf">function</span>(y, pz) {</a>
-<a class="sourceLine" id="cb341-11" data-line-number="11">  n &lt;-<span class="st"> </span><span class="kw">length</span>(y)</a>
-<a class="sourceLine" id="cb341-12" data-line-number="12">  N2 &lt;-<span class="st"> </span><span class="kw">sum</span>(pz)</a>
-<a class="sourceLine" id="cb341-13" data-line-number="13">  N1 &lt;-<span class="st"> </span>n <span class="op">-</span><span class="st"> </span>N2</a>
-<a class="sourceLine" id="cb341-14" data-line-number="14">  <span class="kw">c</span>(N1 <span class="op">/</span><span class="st"> </span>n, <span class="kw">sum</span>((<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>pz) <span class="op">*</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>N1, <span class="kw">sum</span>(pz <span class="op">*</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>N2)</a>
-<a class="sourceLine" id="cb341-15" data-line-number="15">}</a>
-<a class="sourceLine" id="cb341-16" data-line-number="16"></a>
-<a class="sourceLine" id="cb341-17" data-line-number="17">EM &lt;-<span class="st"> </span><span class="cf">function</span>(par, y, <span class="dt">epsilon =</span> <span class="fl">1e-12</span>) {</a>
-<a class="sourceLine" id="cb341-18" data-line-number="18">  <span class="cf">repeat</span>{</a>
-<a class="sourceLine" id="cb341-19" data-line-number="19">    par0 &lt;-<span class="st"> </span>par</a>
-<a class="sourceLine" id="cb341-20" data-line-number="20">    par &lt;-<span class="st"> </span><span class="kw">MStep</span>(y, <span class="kw">EStep</span>(par, y))</a>
-<a class="sourceLine" id="cb341-21" data-line-number="21">    <span class="cf">if</span>(<span class="kw">sum</span>((par <span class="op">-</span><span class="st"> </span>par0)<span class="op">^</span><span class="dv">2</span>) <span class="op">&lt;=</span><span class="st"> </span>epsilon <span class="op">*</span><span class="st"> </span>(<span class="kw">sum</span>(par<span class="op">^</span><span class="dv">2</span>) <span class="op">+</span><span class="st"> </span>epsilon))</a>
-<a class="sourceLine" id="cb341-22" data-line-number="22">      <span class="cf">break</span></a>
-<a class="sourceLine" id="cb341-23" data-line-number="23">  } </a>
-<a class="sourceLine" id="cb341-24" data-line-number="24">  par  <span class="co">## Remember to return the parameter estimate</span></a>
-<a class="sourceLine" id="cb341-25" data-line-number="25">}</a>
-<a class="sourceLine" id="cb341-26" data-line-number="26"></a>
-<a class="sourceLine" id="cb341-27" data-line-number="27"><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.5</span>, <span class="fl">-0.5</span>, <span class="dv">4</span>), y)</a></code></pre></div>
+<div class="sourceCode" id="cb340"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb340-1" data-line-number="1">EStep &lt;-<span class="st"> </span><span class="cf">function</span>(par, y) {</a>
+<a class="sourceLine" id="cb340-2" data-line-number="2">  p &lt;-<span class="st"> </span>par[<span class="dv">1</span>]</a>
+<a class="sourceLine" id="cb340-3" data-line-number="3">  mu1 &lt;-<span class="st"> </span>par[<span class="dv">2</span>]</a>
+<a class="sourceLine" id="cb340-4" data-line-number="4">  mu2 &lt;-<span class="st"> </span>par[<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb340-5" data-line-number="5">  a &lt;-<span class="st"> </span>p <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>(y <span class="op">-</span><span class="st"> </span>mu1)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma1<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma1 </a>
+<a class="sourceLine" id="cb340-6" data-line-number="6">  b &lt;-<span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>(y <span class="op">-</span><span class="st"> </span>mu2)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma2<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma2</a>
+<a class="sourceLine" id="cb340-7" data-line-number="7">  b <span class="op">/</span><span class="st"> </span>(a <span class="op">+</span><span class="st"> </span>b)</a>
+<a class="sourceLine" id="cb340-8" data-line-number="8">}</a>
+<a class="sourceLine" id="cb340-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb340-10" data-line-number="10">MStep &lt;-<span class="st"> </span><span class="cf">function</span>(y, pz) {</a>
+<a class="sourceLine" id="cb340-11" data-line-number="11">  n &lt;-<span class="st"> </span><span class="kw">length</span>(y)</a>
+<a class="sourceLine" id="cb340-12" data-line-number="12">  N2 &lt;-<span class="st"> </span><span class="kw">sum</span>(pz)</a>
+<a class="sourceLine" id="cb340-13" data-line-number="13">  N1 &lt;-<span class="st"> </span>n <span class="op">-</span><span class="st"> </span>N2</a>
+<a class="sourceLine" id="cb340-14" data-line-number="14">  <span class="kw">c</span>(N1 <span class="op">/</span><span class="st"> </span>n, <span class="kw">sum</span>((<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>pz) <span class="op">*</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>N1, <span class="kw">sum</span>(pz <span class="op">*</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>N2)</a>
+<a class="sourceLine" id="cb340-15" data-line-number="15">}</a>
+<a class="sourceLine" id="cb340-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb340-17" data-line-number="17">EM &lt;-<span class="st"> </span><span class="cf">function</span>(par, y, <span class="dt">epsilon =</span> <span class="fl">1e-12</span>) {</a>
+<a class="sourceLine" id="cb340-18" data-line-number="18">  <span class="cf">repeat</span>{</a>
+<a class="sourceLine" id="cb340-19" data-line-number="19">    par0 &lt;-<span class="st"> </span>par</a>
+<a class="sourceLine" id="cb340-20" data-line-number="20">    par &lt;-<span class="st"> </span><span class="kw">MStep</span>(y, <span class="kw">EStep</span>(par, y))</a>
+<a class="sourceLine" id="cb340-21" data-line-number="21">    <span class="cf">if</span>(<span class="kw">sum</span>((par <span class="op">-</span><span class="st"> </span>par0)<span class="op">^</span><span class="dv">2</span>) <span class="op">&lt;=</span><span class="st"> </span>epsilon <span class="op">*</span><span class="st"> </span>(<span class="kw">sum</span>(par<span class="op">^</span><span class="dv">2</span>) <span class="op">+</span><span class="st"> </span>epsilon))</a>
+<a class="sourceLine" id="cb340-22" data-line-number="22">      <span class="cf">break</span></a>
+<a class="sourceLine" id="cb340-23" data-line-number="23">  } </a>
+<a class="sourceLine" id="cb340-24" data-line-number="24">  par  <span class="co">## Remember to return the parameter estimate</span></a>
+<a class="sourceLine" id="cb340-25" data-line-number="25">}</a>
+<a class="sourceLine" id="cb340-26" data-line-number="26"></a>
+<a class="sourceLine" id="cb340-27" data-line-number="27"><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.5</span>, <span class="fl">-0.5</span>, <span class="dv">4</span>), y)</a></code></pre></div>
 <pre><code>## [1]  0.4934443 -0.5497060  4.0982383</code></pre>
 <p>The EM algorithm may, just as any other optimization algorithm,
 end up in a <em>local</em> maximum, if it is started wrongly.</p>
-<div class="sourceCode" id="cb343"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb343-1" data-line-number="1"><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.9</span>, <span class="dv">3</span>, <span class="dv">1</span>), y)</a></code></pre></div>
+<div class="sourceCode" id="cb342"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb342-1" data-line-number="1"><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.9</span>, <span class="dv">3</span>, <span class="dv">1</span>), y)</a></code></pre></div>
 <pre><code>## [1] 0.2334722 5.6759456 0.6256279</code></pre>
 
 </div>
