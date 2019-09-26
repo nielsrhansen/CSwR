@@ -436,12 +436,15 @@ choosing the smallest $k \geq 0$ such that
 
 $$H(\theta_{n} + d^k \gamma_0 \nabla H(\theta_{n})) \leq H(\theta_n) -  cd^k \gamma_0 \|\nabla H(\theta_{n})\|_2^2.$$
 
-We insert a call to a trace function in each iteration given that it has been
-supplied as an argument. This gives us the possibility of extracting or 
+We include a callback argument (the `cb` argument) in the implementation. 
+If a function is passed to this argument, it will be evaluated in each iteration
+of the algorithm. This gives us the possibility of logging or 
 printing values of variables during evaluation, which can be highly useful 
-for understanding the inner workings of the algorithm. The actual implementation
-of the a trace function is given below, and can be adapted as we like to provide
-the information we want. 
+for understanding the inner workings of the algorithm. Monitoring or logging 
+intermediate values during the evaluation of code is often refered to as 
+*tracing*. The tracer function implemented below can be used to construct 
+a tracer object with a trace function that can be passed to the callback 
+argument. It can be adapted as we like to provide the information we want. 
 
 ```{r GD}
 GD <- function(par, 
@@ -449,12 +452,12 @@ GD <- function(par,
                c = 0.1, 
                gamma0 = 0.01, 
                epsilon = 1e-4, 
-               trace = NULL) {
+               cb = NULL) {
   repeat {
     value <- H(par)
     grad <- grad_H(par)
     h_prime <- sum(grad^2)
-    if(!is.null(trace)) trace()
+    if(!is.null(cb)) cb()
     ## Convergence criterion based on gradient norm
     if(h_prime <= epsilon) break
     gamma <- gamma0
@@ -527,8 +530,8 @@ of the function without interrupting evaluation.
 
 ```{r tracer}
 ## Function `tracer` constructs a tracer object containing a `trace` function
-## that can be passed as an argument to other functions that support a trace
-## function. Arguments are
+## that can be passed as an argument to other functions that support a callback
+## function as argument. Arguments are
 ##
 ## object: a character vector of names of the objects in the evaluation 
 ##         environment that are traced.
@@ -539,22 +542,25 @@ of the function without interrupting evaluation.
 ## time:   a logical value. Should run time information be save.
 ## ...:    other arguments passed to `format` for printing.
 
-tracer <- function(objects = NULL, N = 1, save = TRUE, time = TRUE, ...) {
+tracer <- function(objects = NULL, N = 1, save = TRUE, time = TRUE, expr = NULL, ...) {
   n <- 1
   values_save <- list()
-  last_time <- proc.time()
+  last_time <- bench::hires_time()
   trace <- function() {
+    if(is.expression(expr))
+      eval(expr, envir = parent.frame())
     if(is.null(objects))
       objects <- ls(parent.frame())
+    
     values <- mget(objects, envir = parent.frame(), ifnotfound = list(NA))
     if(N && (n == 1 || n %% N == 0))
       cat("n = ", n, ": ",  paste(names(values), " = ", format(values, ...), 
                                   "; ", sep = ""), "\n", sep = "")
     if(save)
       if(time) {
-        time_diff <- as.numeric(proc.time() - last_time)[c(1, 2)]
-        values[[".time"]] <- time_diff[1] + time_diff[2]
-        last_time <<- proc.time()
+        time_diff <- bench::hires_time() - last_time
+        values[[".time"]] <- time_diff
+        last_time <<- bench::hires_time()
       }
     values_save[[n]] <<- values
     n <<- n + 1
@@ -587,6 +593,7 @@ tracer <- function(objects = NULL, N = 1, save = TRUE, time = TRUE, ...) {
   structure(list(trace = trace, get = get), class = "tracer")
 }
 
+
 ## Methods for subsetting, printing and summarizing tracer objects
 '[.tracer' <- function(x, i, j, ..., drop = TRUE) {
   values <- x$get(...)[i] 
@@ -602,12 +609,12 @@ summary.tracer <- function(x, ...) {
 }
 ```
 
-We use the tracer object with the our gradient descent implementation
+We use the tracer object with our gradient descent implementation
 and print trace information every 50th iteration. 
 
 ```{r GD-trace, dependson=c("tracer", "GD", "Implement", "vegetables-data")}
 GD_tracer <- tracer(c("value", "h_prime", "gamma"), N = 50)
-system.time(pois_GD <- GD(rep(0, ncol(X)), trace = GD_tracer$trace))
+system.time(pois_GD <- GD(rep(0, ncol(X)), cb = GD_tracer$trace))
 ```
 
 We see that the gradient descent algorithm runs for a little more than 350
@@ -700,7 +707,7 @@ CG <- function(par,
                c = 0.1, 
                gamma0 = 1, 
                epsilon = 1e-6, 
-               trace = NULL) {
+               cb = NULL) {
   p <- length(par)
   m <- 1
   rho0 <- numeric(p)
@@ -708,7 +715,7 @@ CG <- function(par,
     value <- H(par)
     grad <- grad_H(par)
     grad_norm_sq <- sum(grad^2)
-    if(!is.null(trace)) trace()
+    if(!is.null(cb)) cb()
     if(grad_norm_sq <= epsilon) break
     gamma <- gamma0
     ## Descent direction
@@ -738,7 +745,7 @@ CG <- function(par,
 ```{r CG-test-null, echo=2:3, dependson=c("Implement", "tracer", "vegetables-data", "CG")}
 old_options = options(digits = 5)
 CG_tracer <- tracer(c("value", "gamma", "grad_norm_sq"), N = 10)
-pois_CG <- CG(rep(0, ncol(X)), trace = CG_tracer$trace)
+pois_CG <- CG(rep(0, ncol(X)), cb = CG_tracer$trace)
 options(digits = old_options$digits)
 ```
 
@@ -782,7 +789,7 @@ t_map <- drop(crossprod(X, y))
 ```{r CG-test, echo=2:3, dependson=c("Implement", "X-update", "tracer", "vegetables-data", "CG")}
 old_options = options(digits = 5)
 CG_tracer <- tracer(c("value", "gamma", "grad_norm_sq"), N = 100)
-pois_CG <- CG(rep(0, ncol(X)), trace = CG_tracer$trace)
+pois_CG <- CG(rep(0, ncol(X)), cb = CG_tracer$trace)
 options(digits = old_options$digits)
 ```
 
@@ -916,11 +923,11 @@ Newton <- function(par,
                    c = 0.1, 
                    gamma0 = 1, 
                    epsilon = 1e-10, 
-                   trace = NULL) {
+                   cb = NULL) {
     repeat {
       value <- H(par)
       grad <- grad_H(par)
-      if(!is.null(trace)) trace()
+      if(!is.null(cb)) cb()
       if(sum(grad^2) <= epsilon) break
       Hessian <- Hessian_H(par) 
       rho <- - drop(solve(Hessian, grad)) 
@@ -949,7 +956,7 @@ Hessian_H <- function(beta)
 
 ```{r Newton-test, dependson=c("Implement", "Hessian", "vegetables-data", "X-update", "Newton")}
 Newton_tracer <- tracer(c("value", "h_prime", "gamma"), N = 1)
-pois_Newton <- Newton(rep(0, ncol(X)), trace = Newton_tracer$trace)
+pois_Newton <- Newton(rep(0, ncol(X)), cb = Newton_tracer$trace)
 ```
 
 
@@ -1049,7 +1056,7 @@ because the bottleneck is the computation of the Hessian.
 ```{r time-sparse-model-matrix, echo=2:4, dependson=c("Implement", "Hessian", "Newton", "tracer", "sparse-model-matrix")}
 pois_Newton <- Newton(rep(0, ncol(X)))  ## Ensures more correct timings, pehaps due to lazy-loading?
 Newton_tracer <- tracer(c("value", "h_prime", "gamma"), N = 0)
-pois_Newton <- Newton(rep(0, ncol(X)), trace = Newton_tracer$trace)
+pois_Newton <- Newton(rep(0, ncol(X)), cb = Newton_tracer$trace)
 summary(Newton_tracer)
 ```
 
