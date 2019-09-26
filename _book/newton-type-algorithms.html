@@ -205,7 +205,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
 <li class="chapter" data-level="4" data-path="univariate-random-variables.html"><a href="univariate-random-variables.html"><i class="fa fa-check"></i><b>4</b> Univariate random variables</a><ul>
-<li class="chapter" data-level="4.1" data-path="pseudo-random-numbers.html"><a href="pseudo-random-numbers.html"><i class="fa fa-check"></i><b>4.1</b> Pseudo random numbers</a></li>
+<li class="chapter" data-level="4.1" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html"><i class="fa fa-check"></i><b>4.1</b> Pseudorandom number generators</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html#implementing-a-pseudorandom-number-generator"><i class="fa fa-check"></i><b>4.1.1</b> Implementing a pseudorandom number generator</a></li>
+<li class="chapter" data-level="4.1.2" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html#pseudorandom-number-packages"><i class="fa fa-check"></i><b>4.1.2</b> Pseudorandom number packages</a></li>
+</ul></li>
 <li class="chapter" data-level="4.2" data-path="transformation-techniques.html"><a href="transformation-techniques.html"><i class="fa fa-check"></i><b>4.2</b> Transformation techniques</a><ul>
 <li class="chapter" data-level="4.2.1" data-path="transformation-techniques.html"><a href="transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
 </ul></li>
@@ -316,37 +319,37 @@ It should be noted that if we choose a matrix <span class="math inline">\(B_n\)<
 iteration, then <span class="math inline">\(- B_n \nabla H(\theta_n)\)</span>
 is a descent direction whenever <span class="math inline">\(B_n\)</span> is a positive definite matrix.</p>
 <p>Newton implementation (with trace).</p>
-<div class="sourceCode" id="cb276"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb276-1" data-line-number="1">Newton &lt;-<span class="st"> </span><span class="cf">function</span>(par, </a>
-<a class="sourceLine" id="cb276-2" data-line-number="2">                   <span class="dt">d =</span> <span class="fl">0.8</span>, </a>
-<a class="sourceLine" id="cb276-3" data-line-number="3">                   <span class="dt">c =</span> <span class="fl">0.1</span>, </a>
-<a class="sourceLine" id="cb276-4" data-line-number="4">                   <span class="dt">gamma0 =</span> <span class="dv">1</span>, </a>
-<a class="sourceLine" id="cb276-5" data-line-number="5">                   <span class="dt">epsilon =</span> <span class="fl">1e-10</span>, </a>
-<a class="sourceLine" id="cb276-6" data-line-number="6">                   <span class="dt">trace =</span> <span class="ot">NULL</span>) {</a>
-<a class="sourceLine" id="cb276-7" data-line-number="7">    <span class="cf">repeat</span> {</a>
-<a class="sourceLine" id="cb276-8" data-line-number="8">      value &lt;-<span class="st"> </span><span class="kw">H</span>(par)</a>
-<a class="sourceLine" id="cb276-9" data-line-number="9">      grad &lt;-<span class="st"> </span><span class="kw">grad_H</span>(par)</a>
-<a class="sourceLine" id="cb276-10" data-line-number="10">      <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(trace)) <span class="kw">trace</span>()</a>
-<a class="sourceLine" id="cb276-11" data-line-number="11">      <span class="cf">if</span>(<span class="kw">sum</span>(grad<span class="op">^</span><span class="dv">2</span>) <span class="op">&lt;=</span><span class="st"> </span>epsilon) <span class="cf">break</span></a>
-<a class="sourceLine" id="cb276-12" data-line-number="12">      Hessian &lt;-<span class="st"> </span><span class="kw">Hessian_H</span>(par) </a>
-<a class="sourceLine" id="cb276-13" data-line-number="13">      rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span><span class="kw">drop</span>(<span class="kw">solve</span>(Hessian, grad)) </a>
-<a class="sourceLine" id="cb276-14" data-line-number="14">      gamma &lt;-<span class="st"> </span>gamma0</a>
-<a class="sourceLine" id="cb276-15" data-line-number="15">      par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</a>
-<a class="sourceLine" id="cb276-16" data-line-number="16">      h_prime &lt;-<span class="st"> </span><span class="kw">t</span>(grad) <span class="op">%*%</span><span class="st"> </span>rho </a>
-<a class="sourceLine" id="cb276-17" data-line-number="17">      <span class="cf">while</span>(<span class="kw">H</span>(par1) <span class="op">&gt;</span><span class="st"> </span>value <span class="op">+</span><span class="st">  </span>c <span class="op">*</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>h_prime) { </a>
-<a class="sourceLine" id="cb276-18" data-line-number="18">        gamma &lt;-<span class="st"> </span>d <span class="op">*</span><span class="st"> </span>gamma </a>
-<a class="sourceLine" id="cb276-19" data-line-number="19">        par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</a>
-<a class="sourceLine" id="cb276-20" data-line-number="20">      }</a>
-<a class="sourceLine" id="cb276-21" data-line-number="21">     par &lt;-<span class="st"> </span>par1 </a>
-<a class="sourceLine" id="cb276-22" data-line-number="22">    }</a>
-<a class="sourceLine" id="cb276-23" data-line-number="23">  par</a>
-<a class="sourceLine" id="cb276-24" data-line-number="24">}</a></code></pre></div>
+<div class="sourceCode" id="cb305"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb305-1" data-line-number="1">Newton &lt;-<span class="st"> </span><span class="cf">function</span>(par, </a>
+<a class="sourceLine" id="cb305-2" data-line-number="2">                   <span class="dt">d =</span> <span class="fl">0.8</span>, </a>
+<a class="sourceLine" id="cb305-3" data-line-number="3">                   <span class="dt">c =</span> <span class="fl">0.1</span>, </a>
+<a class="sourceLine" id="cb305-4" data-line-number="4">                   <span class="dt">gamma0 =</span> <span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb305-5" data-line-number="5">                   <span class="dt">epsilon =</span> <span class="fl">1e-10</span>, </a>
+<a class="sourceLine" id="cb305-6" data-line-number="6">                   <span class="dt">cb =</span> <span class="ot">NULL</span>) {</a>
+<a class="sourceLine" id="cb305-7" data-line-number="7">    <span class="cf">repeat</span> {</a>
+<a class="sourceLine" id="cb305-8" data-line-number="8">      value &lt;-<span class="st"> </span><span class="kw">H</span>(par)</a>
+<a class="sourceLine" id="cb305-9" data-line-number="9">      grad &lt;-<span class="st"> </span><span class="kw">grad_H</span>(par)</a>
+<a class="sourceLine" id="cb305-10" data-line-number="10">      <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(cb)) <span class="kw">cb</span>()</a>
+<a class="sourceLine" id="cb305-11" data-line-number="11">      <span class="cf">if</span>(<span class="kw">sum</span>(grad<span class="op">^</span><span class="dv">2</span>) <span class="op">&lt;=</span><span class="st"> </span>epsilon) <span class="cf">break</span></a>
+<a class="sourceLine" id="cb305-12" data-line-number="12">      Hessian &lt;-<span class="st"> </span><span class="kw">Hessian_H</span>(par) </a>
+<a class="sourceLine" id="cb305-13" data-line-number="13">      rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span><span class="kw">drop</span>(<span class="kw">solve</span>(Hessian, grad)) </a>
+<a class="sourceLine" id="cb305-14" data-line-number="14">      gamma &lt;-<span class="st"> </span>gamma0</a>
+<a class="sourceLine" id="cb305-15" data-line-number="15">      par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</a>
+<a class="sourceLine" id="cb305-16" data-line-number="16">      h_prime &lt;-<span class="st"> </span><span class="kw">t</span>(grad) <span class="op">%*%</span><span class="st"> </span>rho </a>
+<a class="sourceLine" id="cb305-17" data-line-number="17">      <span class="cf">while</span>(<span class="kw">H</span>(par1) <span class="op">&gt;</span><span class="st"> </span>value <span class="op">+</span><span class="st">  </span>c <span class="op">*</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>h_prime) { </a>
+<a class="sourceLine" id="cb305-18" data-line-number="18">        gamma &lt;-<span class="st"> </span>d <span class="op">*</span><span class="st"> </span>gamma </a>
+<a class="sourceLine" id="cb305-19" data-line-number="19">        par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</a>
+<a class="sourceLine" id="cb305-20" data-line-number="20">      }</a>
+<a class="sourceLine" id="cb305-21" data-line-number="21">     par &lt;-<span class="st"> </span>par1 </a>
+<a class="sourceLine" id="cb305-22" data-line-number="22">    }</a>
+<a class="sourceLine" id="cb305-23" data-line-number="23">  par</a>
+<a class="sourceLine" id="cb305-24" data-line-number="24">}</a></code></pre></div>
 <div id="poisson-regression" class="section level3">
 <h3><span class="header-section-number">7.3.1</span> Poisson regression</h3>
 <p>It requires the implementation of the Hessian matrix.</p>
-<div class="sourceCode" id="cb277"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb277-1" data-line-number="1">Hessian_H &lt;-<span class="st"> </span><span class="cf">function</span>(beta)</a>
-<a class="sourceLine" id="cb277-2" data-line-number="2">  (<span class="kw">crossprod</span>(X, <span class="kw">drop</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">*</span><span class="st"> </span>X)) <span class="op">/</span><span class="st"> </span><span class="kw">nrow</span>(X)</a></code></pre></div>
-<div class="sourceCode" id="cb278"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb278-1" data-line-number="1">Newton_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb278-2" data-line-number="2">pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> Newton_tracer<span class="op">$</span>trace)</a></code></pre></div>
+<div class="sourceCode" id="cb306"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb306-1" data-line-number="1">Hessian_H &lt;-<span class="st"> </span><span class="cf">function</span>(beta)</a>
+<a class="sourceLine" id="cb306-2" data-line-number="2">  (<span class="kw">crossprod</span>(X, <span class="kw">drop</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">*</span><span class="st"> </span>X)) <span class="op">/</span><span class="st"> </span><span class="kw">nrow</span>(X)</a></code></pre></div>
+<div class="sourceCode" id="cb307"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb307-1" data-line-number="1">Newton_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb307-2" data-line-number="2">pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">cb =</span> Newton_tracer<span class="op">$</span>trace)</a></code></pre></div>
 <pre><code>## n = 1: value = 1; h_prime = NA; gamma = NA; 
 ## n = 2: value = -14.8327; h_prime = -4140.563; gamma = 0.022518; 
 ## n = 3: value = -64.81635; h_prime = -402.9847; gamma = 0.262144; 
@@ -357,29 +360,29 @@ is a descent direction whenever <span class="math inline">\(B_n\)</span> is a po
 ## n = 8: value = -128.5873; h_prime = -0.1647034; gamma = 1; 
 ## n = 9: value = -128.5894; h_prime = -0.004159696; gamma = 1; 
 ## n = 10: value = -128.5895; h_prime = -3.288913e-06; gamma = 1;</code></pre>
-<div class="sourceCode" id="cb280"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb280-1" data-line-number="1"><span class="kw">range</span>(pois_Newton <span class="op">-</span><span class="st"> </span>pois_model<span class="op">$</span>coefficients)</a></code></pre></div>
+<div class="sourceCode" id="cb309"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb309-1" data-line-number="1"><span class="kw">range</span>(pois_Newton <span class="op">-</span><span class="st"> </span>pois_model<span class="op">$</span>coefficients)</a></code></pre></div>
 <pre><code>## [1] -4.979404e-10  1.298776e-06</code></pre>
-<div class="sourceCode" id="cb282"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb282-1" data-line-number="1"><span class="kw">H</span>(pois_Newton)</a></code></pre></div>
+<div class="sourceCode" id="cb311"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb311-1" data-line-number="1"><span class="kw">H</span>(pois_Newton)</a></code></pre></div>
 <pre><code>## [1] -128.58945047446988497</code></pre>
-<div class="sourceCode" id="cb284"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb284-1" data-line-number="1"><span class="kw">H</span>(<span class="kw">coefficients</span>(pois_model))</a></code></pre></div>
+<div class="sourceCode" id="cb313"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb313-1" data-line-number="1"><span class="kw">H</span>(<span class="kw">coefficients</span>(pois_model))</a></code></pre></div>
 <pre><code>## [1] -128.58945047447093657</code></pre>
-<div class="sourceCode" id="cb286"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb286-1" data-line-number="1"><span class="kw">summary</span>(Newton_tracer)</a></code></pre></div>
+<div class="sourceCode" id="cb315"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb315-1" data-line-number="1"><span class="kw">summary</span>(Newton_tracer)</a></code></pre></div>
 <pre><code>##         value       h_prime    gamma .time
 ## 1     1.00000            NA       NA 0.000
-## 2   -14.83270 -4.140563e+03 0.022518 0.174
-## 3   -64.81635 -4.029847e+02 0.262144 0.342
-## 4  -111.33647 -7.636275e+01 1.000000 0.503
-## 5  -124.24937 -2.104160e+01 1.000000 0.669
-## 6  -127.71116 -5.652483e+00 1.000000 0.838
-## 7  -128.49729 -1.332600e+00 1.000000 1.017
-## 8  -128.58733 -1.647034e-01 1.000000 1.193
-## 9  -128.58945 -4.159696e-03 1.000000 1.360
-## 10 -128.58945 -3.288913e-06 1.000000 1.526</code></pre>
+## 2   -14.83270 -4.140563e+03 0.022518 0.182
+## 3   -64.81635 -4.029847e+02 0.262144 0.351
+## 4  -111.33647 -7.636275e+01 1.000000 0.511
+## 5  -124.24937 -2.104160e+01 1.000000 0.679
+## 6  -127.71116 -5.652483e+00 1.000000 0.845
+## 7  -128.49729 -1.332600e+00 1.000000 1.009
+## 8  -128.58733 -1.647034e-01 1.000000 1.171
+## 9  -128.58945 -4.159696e-03 1.000000 1.330
+## 10 -128.58945 -3.288913e-06 1.000000 1.495</code></pre>
 <p>The R function <code>glm.fit</code> uses a Newton algorithm (without backtracking)
 and is about a factor five faster on this example.</p>
-<div class="sourceCode" id="cb288"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb288-1" data-line-number="1"><span class="kw">system.time</span>(<span class="kw">glm.fit</span>(X, y, <span class="dt">family =</span> <span class="kw">poisson</span>()))</a></code></pre></div>
+<div class="sourceCode" id="cb317"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb317-1" data-line-number="1"><span class="kw">system.time</span>(<span class="kw">glm.fit</span>(X, y, <span class="dt">family =</span> <span class="kw">poisson</span>()))</a></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   0.377   0.003   0.380</code></pre>
+##   0.382   0.003   0.390</code></pre>
 <p>One should be careful when comparing run times for different optimization
 algorithms, but in this case they have achieved about the same precision
 with <code>glm.fit</code> even obtaining the smallest negative log-likelihood value.</p>
@@ -393,14 +396,14 @@ algorithm that requires the computation of the full Hessian in each
 iteration.</p>
 <p>We will only consider the application of the BFGS algorithm via the
 implementation in the R function <code>optim</code>.</p>
-<div class="sourceCode" id="cb290"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb290-1" data-line-number="1"><span class="kw">system.time</span>(</a>
-<a class="sourceLine" id="cb290-2" data-line-number="2">  pois_BFGS &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), H, grad_H, </a>
-<a class="sourceLine" id="cb290-3" data-line-number="3">               <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)))</a></code></pre></div>
+<div class="sourceCode" id="cb319"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb319-1" data-line-number="1"><span class="kw">system.time</span>(</a>
+<a class="sourceLine" id="cb319-2" data-line-number="2">  pois_BFGS &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), H, grad_H, </a>
+<a class="sourceLine" id="cb319-3" data-line-number="3">               <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)))</a></code></pre></div>
 <pre><code>##    user  system elapsed 
 ##   0.432   0.134   0.567</code></pre>
-<div class="sourceCode" id="cb292"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb292-1" data-line-number="1"><span class="kw">range</span>(pois_BFGS<span class="op">$</span>par <span class="op">-</span><span class="st"> </span><span class="kw">coefficients</span>(pois_model))</a></code></pre></div>
+<div class="sourceCode" id="cb321"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb321-1" data-line-number="1"><span class="kw">range</span>(pois_BFGS<span class="op">$</span>par <span class="op">-</span><span class="st"> </span><span class="kw">coefficients</span>(pois_model))</a></code></pre></div>
 <pre><code>## [1] -0.00954968  0.08481093</code></pre>
-<div class="sourceCode" id="cb294"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb294-1" data-line-number="1">pois_BFGS[<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;counts&quot;</span>)]</a></code></pre></div>
+<div class="sourceCode" id="cb323"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb323-1" data-line-number="1">pois_BFGS[<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;counts&quot;</span>)]</a></code></pre></div>
 <pre><code>## $value
 ## [1] -128.5894
 ## 
@@ -419,43 +422,43 @@ entries are zero),
 and if we convert it into a sparse matrix, all the matrix-vector products
 will be more run time efficient. Sparse matrices are implemented in the
 R package Matrix.</p>
-<div class="sourceCode" id="cb296"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb296-1" data-line-number="1"><span class="kw">library</span>(Matrix)</a></code></pre></div>
-<div class="sourceCode" id="cb297"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb297-1" data-line-number="1">X &lt;-<span class="st"> </span><span class="kw">Matrix</span>(X)</a></code></pre></div>
+<div class="sourceCode" id="cb325"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb325-1" data-line-number="1"><span class="kw">library</span>(Matrix)</a></code></pre></div>
+<div class="sourceCode" id="cb326"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb326-1" data-line-number="1">X &lt;-<span class="st"> </span><span class="kw">Matrix</span>(X)</a></code></pre></div>
 <p>Without changing any other code, we get an immediate
 run time improvement using e.g. <code>optim</code> and the BFGS algorithm.</p>
-<div class="sourceCode" id="cb298"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb298-1" data-line-number="1"><span class="kw">system.time</span>(</a>
-<a class="sourceLine" id="cb298-2" data-line-number="2">  pois_BFGS_sparse &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), H, grad_H, </a>
-<a class="sourceLine" id="cb298-3" data-line-number="3">                            <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>))</a>
-<a class="sourceLine" id="cb298-4" data-line-number="4">)</a></code></pre></div>
+<div class="sourceCode" id="cb327"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb327-1" data-line-number="1"><span class="kw">system.time</span>(</a>
+<a class="sourceLine" id="cb327-2" data-line-number="2">  pois_BFGS_sparse &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), H, grad_H, </a>
+<a class="sourceLine" id="cb327-3" data-line-number="3">                            <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>))</a>
+<a class="sourceLine" id="cb327-4" data-line-number="4">)</a></code></pre></div>
 <pre><code>##    user  system elapsed 
 ##   0.130   0.001   0.137</code></pre>
 <p>We should in real applications avoid constructing a dense intermediate
 model matrix as a step toward constructing a sparse model matrix. This
 is possible by constructing the sparse model matrix directly using
 a function from the R package MatrixModels.</p>
-<div class="sourceCode" id="cb300"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb300-1" data-line-number="1"><span class="kw">library</span>(MatrixModels)</a>
-<a class="sourceLine" id="cb300-2" data-line-number="2">X &lt;-<span class="st"> </span><span class="kw">model.Matrix</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, </a>
-<a class="sourceLine" id="cb300-3" data-line-number="3">                   <span class="dt">data =</span> vegetables, <span class="dt">sparse =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb300-4" data-line-number="4"><span class="kw">class</span>(X)</a></code></pre></div>
+<div class="sourceCode" id="cb329"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb329-1" data-line-number="1"><span class="kw">library</span>(MatrixModels)</a>
+<a class="sourceLine" id="cb329-2" data-line-number="2">X &lt;-<span class="st"> </span><span class="kw">model.Matrix</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb329-3" data-line-number="3">                   <span class="dt">data =</span> vegetables, <span class="dt">sparse =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb329-4" data-line-number="4"><span class="kw">class</span>(X)</a></code></pre></div>
 <pre><code>## [1] &quot;dsparseModelMatrix&quot;
 ## attr(,&quot;package&quot;)
 ## [1] &quot;MatrixModels&quot;</code></pre>
 <p>The Newton implementation benefits enormously from using sparse matrices
 because the bottleneck is the computation of the Hessian.</p>
-<div class="sourceCode" id="cb302"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb302-1" data-line-number="1">Newton_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">0</span>)</a>
-<a class="sourceLine" id="cb302-2" data-line-number="2">pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">trace =</span> Newton_tracer<span class="op">$</span>trace)</a>
-<a class="sourceLine" id="cb302-3" data-line-number="3"><span class="kw">summary</span>(Newton_tracer)</a></code></pre></div>
-<pre><code>##         value       h_prime    gamma .time
-## 1     1.00000            NA       NA 0.000
-## 2   -14.83270 -4.140563e+03 0.022518 0.008
-## 3   -64.81635 -4.029847e+02 0.262144 0.012
-## 4  -111.33647 -7.636275e+01 1.000000 0.016
-## 5  -124.24937 -2.104160e+01 1.000000 0.019
-## 6  -127.71116 -5.652483e+00 1.000000 0.021
-## 7  -128.49729 -1.332600e+00 1.000000 0.024
-## 8  -128.58733 -1.647034e-01 1.000000 0.028
-## 9  -128.58945 -4.159696e-03 1.000000 0.031
-## 10 -128.58945 -3.288913e-06 1.000000 0.033</code></pre>
+<div class="sourceCode" id="cb331"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb331-1" data-line-number="1">Newton_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb331-2" data-line-number="2">pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), <span class="dt">cb =</span> Newton_tracer<span class="op">$</span>trace)</a>
+<a class="sourceLine" id="cb331-3" data-line-number="3"><span class="kw">summary</span>(Newton_tracer)</a></code></pre></div>
+<pre><code>##         value       h_prime    gamma       .time
+## 1     1.00000            NA       NA 0.000000000
+## 2   -14.83270 -4.140563e+03 0.022518 0.006868809
+## 3   -64.81635 -4.029847e+02 0.262144 0.010553398
+## 4  -111.33647 -7.636275e+01 1.000000 0.014166521
+## 5  -124.24937 -2.104160e+01 1.000000 0.018492287
+## 6  -127.71116 -5.652483e+00 1.000000 0.022800168
+## 7  -128.49729 -1.332600e+00 1.000000 0.026549507
+## 8  -128.58733 -1.647034e-01 1.000000 0.029513555
+## 9  -128.58945 -4.159696e-03 1.000000 0.032280885
+## 10 -128.58945 -3.288913e-06 1.000000 0.035821398</code></pre>
 <p>Run time efficiency is not the only argument for using sparse matrices as they are
 also more memory efficient. It is memory (and time) inefficient to use dense intermediates,
 and for truly large scale problems impossible. Using sparse model matrices
@@ -463,8 +466,8 @@ for regression models allows us to work with larger models that have
 more variables, more factor levels and more observations than if we use dense
 model matrices. For the Poisson regression model the memory used by either representation
 can be found.</p>
-<div class="sourceCode" id="cb304"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb304-1" data-line-number="1"><span class="kw">object.size</span>(X)</a>
-<a class="sourceLine" id="cb304-2" data-line-number="2"><span class="kw">object.size</span>(<span class="kw">as.matrix</span>(X))</a></code></pre></div>
+<div class="sourceCode" id="cb333"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb333-1" data-line-number="1"><span class="kw">object.size</span>(X)</a>
+<a class="sourceLine" id="cb333-2" data-line-number="2"><span class="kw">object.size</span>(<span class="kw">as.matrix</span>(X))</a></code></pre></div>
 <pre><code>## Sparse matrix memory usage:
 ## 123440 bytes
 ## Dense matrix memory usage:

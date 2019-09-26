@@ -205,7 +205,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
 <li class="chapter" data-level="4" data-path="univariate-random-variables.html"><a href="univariate-random-variables.html"><i class="fa fa-check"></i><b>4</b> Univariate random variables</a><ul>
-<li class="chapter" data-level="4.1" data-path="pseudo-random-numbers.html"><a href="pseudo-random-numbers.html"><i class="fa fa-check"></i><b>4.1</b> Pseudo random numbers</a></li>
+<li class="chapter" data-level="4.1" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html"><i class="fa fa-check"></i><b>4.1</b> Pseudorandom number generators</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html#implementing-a-pseudorandom-number-generator"><i class="fa fa-check"></i><b>4.1.1</b> Implementing a pseudorandom number generator</a></li>
+<li class="chapter" data-level="4.1.2" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html#pseudorandom-number-packages"><i class="fa fa-check"></i><b>4.1.2</b> Pseudorandom number packages</a></li>
+</ul></li>
 <li class="chapter" data-level="4.2" data-path="transformation-techniques.html"><a href="transformation-techniques.html"><i class="fa fa-check"></i><b>4.2</b> Transformation techniques</a><ul>
 <li class="chapter" data-level="4.2.1" data-path="transformation-techniques.html"><a href="transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
 </ul></li>
@@ -365,29 +368,29 @@ the mixture weight <span class="math inline">\(p = P(Z = 1) \in (0, 1)\)</span>,
 and the two variances <span class="math inline">\(\sigma_1, \sigma_2 &gt; 0\)</span>. This is <em>not</em> the parametrization
 using canonical exponential family parameters, which we return to below. First
 we will simply simulate random variables from this model.</p>
-<div class="sourceCode" id="cb239"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb239-1" data-line-number="1">sigma1 &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb239-2" data-line-number="2">sigma2 &lt;-<span class="st"> </span><span class="dv">2</span></a>
-<a class="sourceLine" id="cb239-3" data-line-number="3">mu1 &lt;-<span class="st"> </span><span class="fl">-0.5</span></a>
-<a class="sourceLine" id="cb239-4" data-line-number="4">mu2 &lt;-<span class="st"> </span><span class="dv">4</span></a>
-<a class="sourceLine" id="cb239-5" data-line-number="5">p &lt;-<span class="st"> </span><span class="fl">0.5</span></a>
-<a class="sourceLine" id="cb239-6" data-line-number="6">n &lt;-<span class="st"> </span><span class="dv">5000</span></a>
-<a class="sourceLine" id="cb239-7" data-line-number="7">z &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="ot">TRUE</span>, <span class="ot">FALSE</span>), n, <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p))</a>
-<a class="sourceLine" id="cb239-8" data-line-number="8"><span class="co">## Conditional simulation from the mixture components</span></a>
-<a class="sourceLine" id="cb239-9" data-line-number="9">y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
-<a class="sourceLine" id="cb239-10" data-line-number="10">n1 &lt;-<span class="st"> </span><span class="kw">sum</span>(z)</a>
-<a class="sourceLine" id="cb239-11" data-line-number="11">y[z] &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n1, mu1, sigma1)</a>
-<a class="sourceLine" id="cb239-12" data-line-number="12">y[<span class="op">!</span>z] &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n <span class="op">-</span><span class="st"> </span>n1, mu2, sigma2)</a></code></pre></div>
+<div class="sourceCode" id="cb268"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb268-1" data-line-number="1">sigma1 &lt;-<span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb268-2" data-line-number="2">sigma2 &lt;-<span class="st"> </span><span class="dv">2</span></a>
+<a class="sourceLine" id="cb268-3" data-line-number="3">mu1 &lt;-<span class="st"> </span><span class="fl">-0.5</span></a>
+<a class="sourceLine" id="cb268-4" data-line-number="4">mu2 &lt;-<span class="st"> </span><span class="dv">4</span></a>
+<a class="sourceLine" id="cb268-5" data-line-number="5">p &lt;-<span class="st"> </span><span class="fl">0.5</span></a>
+<a class="sourceLine" id="cb268-6" data-line-number="6">n &lt;-<span class="st"> </span><span class="dv">5000</span></a>
+<a class="sourceLine" id="cb268-7" data-line-number="7">z &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="ot">TRUE</span>, <span class="ot">FALSE</span>), n, <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p))</a>
+<a class="sourceLine" id="cb268-8" data-line-number="8"><span class="co">## Conditional simulation from the mixture components</span></a>
+<a class="sourceLine" id="cb268-9" data-line-number="9">y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
+<a class="sourceLine" id="cb268-10" data-line-number="10">n1 &lt;-<span class="st"> </span><span class="kw">sum</span>(z)</a>
+<a class="sourceLine" id="cb268-11" data-line-number="11">y[z] &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n1, mu1, sigma1)</a>
+<a class="sourceLine" id="cb268-12" data-line-number="12">y[<span class="op">!</span>z] &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n <span class="op">-</span><span class="st"> </span>n1, mu2, sigma2)</a></code></pre></div>
 <p>The simulation above generated 5000 samples from a two-component
 Gaussian mixture model with mixture distributions <span class="math inline">\(\mathcal{N}(-0.5, 1)\)</span>
 and <span class="math inline">\(\mathcal{N}(4, 4)\)</span>, and with each component having weight <span class="math inline">\(0.5\)</span>.
 This gives a bimodal distribution as illustrated by the histogram on Figure
 <a href="finite-mixture-models.html#fig:mixture-gaus-histogram">6.1</a>.</p>
-<div class="sourceCode" id="cb240"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb240-1" data-line-number="1">yy &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="op">-</span><span class="dv">3</span>, <span class="dv">11</span>, <span class="fl">0.1</span>)</a>
-<a class="sourceLine" id="cb240-2" data-line-number="2">dens &lt;-<span class="st"> </span>p <span class="op">*</span><span class="st"> </span><span class="kw">dnorm</span>(yy, mu1, sigma1) <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span><span class="kw">dnorm</span>(yy, mu2, sigma2)</a>
-<a class="sourceLine" id="cb240-3" data-line-number="3"><span class="kw">ggplot</span>(<span class="dt">mapping =</span> <span class="kw">aes</span>(y, ..density..)) <span class="op">+</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb240-4" data-line-number="4"><span class="st">  </span><span class="kw">geom_histogram</span>(<span class="dt">bins =</span> <span class="dv">20</span>) <span class="op">+</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb240-5" data-line-number="5"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(yy, dens), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">size =</span> <span class="dv">1</span>) <span class="op">+</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb240-6" data-line-number="6"><span class="st">  </span><span class="kw">stat_density</span>(<span class="dt">bw =</span> <span class="st">&quot;SJ&quot;</span>, <span class="dt">geom=</span><span class="st">&quot;line&quot;</span>, <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">size =</span> <span class="dv">1</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb269"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb269-1" data-line-number="1">yy &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="op">-</span><span class="dv">3</span>, <span class="dv">11</span>, <span class="fl">0.1</span>)</a>
+<a class="sourceLine" id="cb269-2" data-line-number="2">dens &lt;-<span class="st"> </span>p <span class="op">*</span><span class="st"> </span><span class="kw">dnorm</span>(yy, mu1, sigma1) <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span><span class="kw">dnorm</span>(yy, mu2, sigma2)</a>
+<a class="sourceLine" id="cb269-3" data-line-number="3"><span class="kw">ggplot</span>(<span class="dt">mapping =</span> <span class="kw">aes</span>(y, ..density..)) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb269-4" data-line-number="4"><span class="st">  </span><span class="kw">geom_histogram</span>(<span class="dt">bins =</span> <span class="dv">20</span>) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb269-5" data-line-number="5"><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(yy, dens), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">size =</span> <span class="dv">1</span>) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb269-6" data-line-number="6"><span class="st">  </span><span class="kw">stat_density</span>(<span class="dt">bw =</span> <span class="st">&quot;SJ&quot;</span>, <span class="dt">geom=</span><span class="st">&quot;line&quot;</span>, <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">size =</span> <span class="dv">1</span>)</a></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:mixture-gaus-histogram"></span>
 <img src="CSwR_files/figure-html/mixture-gaus-histogram-1.png" alt="Histogram and density estimate (red) of data simulated from a two-component Gaussian mixture distribution. The true mixture distribution has " width="70%" />
 <p class="caption">
@@ -444,34 +447,34 @@ We won’t be able to tell the difference from observing only <span class="math 
 implementations of ways to simulate from the mixture model. We compare empirical
 means and variances to the theoretical values to test if all the implementations
 actually simulate from the Gaussian mixture model.</p>
-<div class="sourceCode" id="cb241"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb241-1" data-line-number="1"><span class="co">## Mean</span></a>
-<a class="sourceLine" id="cb241-2" data-line-number="2">mu &lt;-<span class="st"> </span>p <span class="op">*</span><span class="st"> </span>mu1 <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span>mu2</a>
-<a class="sourceLine" id="cb241-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb241-4" data-line-number="4"><span class="co">## Variance </span></a>
-<a class="sourceLine" id="cb241-5" data-line-number="5">sigmasq &lt;-<span class="st"> </span>p <span class="op">*</span><span class="st"> </span>sigma1<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span>sigma2<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb241-6" data-line-number="6"><span class="st">  </span>p <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span><span class="op">-</span>p)<span class="op">*</span>(mu1<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span>mu2<span class="op">^</span><span class="dv">2</span> <span class="op">-</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>mu1 <span class="op">*</span><span class="st"> </span>mu2)</a>
-<a class="sourceLine" id="cb241-7" data-line-number="7"></a>
-<a class="sourceLine" id="cb241-8" data-line-number="8"><span class="co">## Simulation using the selection formulation via &#39;ifelse&#39;</span></a>
-<a class="sourceLine" id="cb241-9" data-line-number="9">y2 &lt;-<span class="st"> </span><span class="kw">ifelse</span>(z, <span class="kw">rnorm</span>(n, mu1, sigma1), <span class="kw">rnorm</span>(n, mu2, sigma2))</a>
-<a class="sourceLine" id="cb241-10" data-line-number="10"></a>
-<a class="sourceLine" id="cb241-11" data-line-number="11"><span class="co">## Yet another way of simulating from a mixture model</span></a>
-<a class="sourceLine" id="cb241-12" data-line-number="12"><span class="co">## using arithmetic instead of &#39;ifelse&#39; for the selection </span></a>
-<a class="sourceLine" id="cb241-13" data-line-number="13"><span class="co">## and with Y_1 and Y_2 actually being dependent</span></a>
-<a class="sourceLine" id="cb241-14" data-line-number="14">y3 &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n)</a>
-<a class="sourceLine" id="cb241-15" data-line-number="15">y3 &lt;-<span class="st"> </span>z <span class="op">*</span><span class="st"> </span>(sigma1 <span class="op">*</span><span class="st"> </span>y3 <span class="op">+</span><span class="st"> </span>mu1) <span class="op">+</span><span class="st"> </span>(<span class="op">!</span>z) <span class="op">*</span><span class="st"> </span>(sigma2 <span class="op">*</span><span class="st"> </span>y3 <span class="op">+</span><span class="st"> </span>mu2)</a>
-<a class="sourceLine" id="cb241-16" data-line-number="16"></a>
-<a class="sourceLine" id="cb241-17" data-line-number="17"><span class="co">## Returning to the definition again, this last method simulates conditionally </span></a>
-<a class="sourceLine" id="cb241-18" data-line-number="18"><span class="co">## from the mixture components via transformation of an underlying Gaussian</span></a>
-<a class="sourceLine" id="cb241-19" data-line-number="19"><span class="co">## variable with mean 0 and variance 1</span></a>
-<a class="sourceLine" id="cb241-20" data-line-number="20">y4 &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n)</a>
-<a class="sourceLine" id="cb241-21" data-line-number="21">y4[z] &lt;-<span class="st"> </span>sigma1 <span class="op">*</span><span class="st"> </span>y4[z] <span class="op">+</span><span class="st"> </span>mu1</a>
-<a class="sourceLine" id="cb241-22" data-line-number="22">y4[<span class="op">!</span>z] &lt;-<span class="st"> </span>sigma2 <span class="op">*</span><span class="st"> </span>y4[<span class="op">!</span>z] <span class="op">+</span><span class="st"> </span>mu2</a>
-<a class="sourceLine" id="cb241-23" data-line-number="23"></a>
-<a class="sourceLine" id="cb241-24" data-line-number="24"><span class="co">## Tests</span></a>
-<a class="sourceLine" id="cb241-25" data-line-number="25"><span class="kw">data.frame</span>(<span class="dt">mean =</span> <span class="kw">c</span>(mu, <span class="kw">mean</span>(y), <span class="kw">mean</span>(y2), <span class="kw">mean</span>(y3), <span class="kw">mean</span>(y4)),</a>
-<a class="sourceLine" id="cb241-26" data-line-number="26">      <span class="dt">variance =</span> <span class="kw">c</span>(sigmasq, <span class="kw">var</span>(y), <span class="kw">var</span>(y2), <span class="kw">var</span>(y3), <span class="kw">var</span>(y4)), </a>
-<a class="sourceLine" id="cb241-27" data-line-number="27">      <span class="dt">row.names =</span> <span class="kw">c</span>(<span class="st">&quot;true&quot;</span>, <span class="st">&quot;conditional&quot;</span>, <span class="st">&quot;ifelse&quot;</span>, <span class="st">&quot;arithmetic&quot;</span>, </a>
-<a class="sourceLine" id="cb241-28" data-line-number="28">                    <span class="st">&quot;conditional2&quot;</span> ))</a></code></pre></div>
+<div class="sourceCode" id="cb270"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb270-1" data-line-number="1"><span class="co">## Mean</span></a>
+<a class="sourceLine" id="cb270-2" data-line-number="2">mu &lt;-<span class="st"> </span>p <span class="op">*</span><span class="st"> </span>mu1 <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span>mu2</a>
+<a class="sourceLine" id="cb270-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb270-4" data-line-number="4"><span class="co">## Variance </span></a>
+<a class="sourceLine" id="cb270-5" data-line-number="5">sigmasq &lt;-<span class="st"> </span>p <span class="op">*</span><span class="st"> </span>sigma1<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span>sigma2<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb270-6" data-line-number="6"><span class="st">  </span>p <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span><span class="op">-</span>p)<span class="op">*</span>(mu1<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span>mu2<span class="op">^</span><span class="dv">2</span> <span class="op">-</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>mu1 <span class="op">*</span><span class="st"> </span>mu2)</a>
+<a class="sourceLine" id="cb270-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb270-8" data-line-number="8"><span class="co">## Simulation using the selection formulation via &#39;ifelse&#39;</span></a>
+<a class="sourceLine" id="cb270-9" data-line-number="9">y2 &lt;-<span class="st"> </span><span class="kw">ifelse</span>(z, <span class="kw">rnorm</span>(n, mu1, sigma1), <span class="kw">rnorm</span>(n, mu2, sigma2))</a>
+<a class="sourceLine" id="cb270-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb270-11" data-line-number="11"><span class="co">## Yet another way of simulating from a mixture model</span></a>
+<a class="sourceLine" id="cb270-12" data-line-number="12"><span class="co">## using arithmetic instead of &#39;ifelse&#39; for the selection </span></a>
+<a class="sourceLine" id="cb270-13" data-line-number="13"><span class="co">## and with Y_1 and Y_2 actually being dependent</span></a>
+<a class="sourceLine" id="cb270-14" data-line-number="14">y3 &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n)</a>
+<a class="sourceLine" id="cb270-15" data-line-number="15">y3 &lt;-<span class="st"> </span>z <span class="op">*</span><span class="st"> </span>(sigma1 <span class="op">*</span><span class="st"> </span>y3 <span class="op">+</span><span class="st"> </span>mu1) <span class="op">+</span><span class="st"> </span>(<span class="op">!</span>z) <span class="op">*</span><span class="st"> </span>(sigma2 <span class="op">*</span><span class="st"> </span>y3 <span class="op">+</span><span class="st"> </span>mu2)</a>
+<a class="sourceLine" id="cb270-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb270-17" data-line-number="17"><span class="co">## Returning to the definition again, this last method simulates conditionally </span></a>
+<a class="sourceLine" id="cb270-18" data-line-number="18"><span class="co">## from the mixture components via transformation of an underlying Gaussian</span></a>
+<a class="sourceLine" id="cb270-19" data-line-number="19"><span class="co">## variable with mean 0 and variance 1</span></a>
+<a class="sourceLine" id="cb270-20" data-line-number="20">y4 &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n)</a>
+<a class="sourceLine" id="cb270-21" data-line-number="21">y4[z] &lt;-<span class="st"> </span>sigma1 <span class="op">*</span><span class="st"> </span>y4[z] <span class="op">+</span><span class="st"> </span>mu1</a>
+<a class="sourceLine" id="cb270-22" data-line-number="22">y4[<span class="op">!</span>z] &lt;-<span class="st"> </span>sigma2 <span class="op">*</span><span class="st"> </span>y4[<span class="op">!</span>z] <span class="op">+</span><span class="st"> </span>mu2</a>
+<a class="sourceLine" id="cb270-23" data-line-number="23"></a>
+<a class="sourceLine" id="cb270-24" data-line-number="24"><span class="co">## Tests</span></a>
+<a class="sourceLine" id="cb270-25" data-line-number="25"><span class="kw">data.frame</span>(<span class="dt">mean =</span> <span class="kw">c</span>(mu, <span class="kw">mean</span>(y), <span class="kw">mean</span>(y2), <span class="kw">mean</span>(y3), <span class="kw">mean</span>(y4)),</a>
+<a class="sourceLine" id="cb270-26" data-line-number="26">      <span class="dt">variance =</span> <span class="kw">c</span>(sigmasq, <span class="kw">var</span>(y), <span class="kw">var</span>(y2), <span class="kw">var</span>(y3), <span class="kw">var</span>(y4)), </a>
+<a class="sourceLine" id="cb270-27" data-line-number="27">      <span class="dt">row.names =</span> <span class="kw">c</span>(<span class="st">&quot;true&quot;</span>, <span class="st">&quot;conditional&quot;</span>, <span class="st">&quot;ifelse&quot;</span>, <span class="st">&quot;arithmetic&quot;</span>, </a>
+<a class="sourceLine" id="cb270-28" data-line-number="28">                    <span class="st">&quot;conditional2&quot;</span> ))</a></code></pre></div>
 <pre><code>##                  mean variance
 ## true         1.750000 7.562500
 ## conditional  1.728195 7.381843

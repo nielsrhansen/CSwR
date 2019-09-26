@@ -4,11 +4,11 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>4.1 Pseudo random numbers | Computational Statistics with R</title>
+  <title>4.1 Pseudorandom number generators | Computational Statistics with R</title>
   <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   <meta name="generator" content="bookdown 0.13 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="4.1 Pseudo random numbers | Computational Statistics with R" />
+  <meta property="og:title" content="4.1 Pseudorandom number generators | Computational Statistics with R" />
   <meta property="og:type" content="book" />
   
   
@@ -16,7 +16,7 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="4.1 Pseudo random numbers | Computational Statistics with R" />
+  <meta name="twitter:title" content="4.1 Pseudorandom number generators | Computational Statistics with R" />
   
   <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   
@@ -205,7 +205,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
 <li class="chapter" data-level="4" data-path="univariate-random-variables.html"><a href="univariate-random-variables.html"><i class="fa fa-check"></i><b>4</b> Univariate random variables</a><ul>
-<li class="chapter" data-level="4.1" data-path="pseudo-random-numbers.html"><a href="pseudo-random-numbers.html"><i class="fa fa-check"></i><b>4.1</b> Pseudo random numbers</a></li>
+<li class="chapter" data-level="4.1" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html"><i class="fa fa-check"></i><b>4.1</b> Pseudorandom number generators</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html#implementing-a-pseudorandom-number-generator"><i class="fa fa-check"></i><b>4.1.1</b> Implementing a pseudorandom number generator</a></li>
+<li class="chapter" data-level="4.1.2" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html#pseudorandom-number-packages"><i class="fa fa-check"></i><b>4.1.2</b> Pseudorandom number packages</a></li>
+</ul></li>
 <li class="chapter" data-level="4.2" data-path="transformation-techniques.html"><a href="transformation-techniques.html"><i class="fa fa-check"></i><b>4.2</b> Transformation techniques</a><ul>
 <li class="chapter" data-level="4.2.1" data-path="transformation-techniques.html"><a href="transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
 </ul></li>
@@ -300,125 +303,355 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="pseudo-random-numbers" class="section level2">
-<h2><span class="header-section-number">4.1</span> Pseudo random numbers</h2>
+<div id="pseudorandom-number-generators" class="section level2">
+<h2><span class="header-section-number">4.1</span> Pseudorandom number generators</h2>
 <p>Most simulation algorithms are based on algorithms for generating
-<em>pseudo random</em> uniformly distributed variables on <span class="math inline">\((0, 1)\)</span>. They arise from
+<em>pseudorandom</em> uniformly distributed variables in <span class="math inline">\((0, 1)\)</span>. They arise from
 deterministic integer sequences initiated by a <em>seed</em>. A classical
-example of a pseudo random integer generator is known as a
+example of a pseudorandom integer generator is the
 linear congruential generator. A sequence of numbers from
 this generator is given iteratively by
 <span class="math display">\[x_{n+1} = (a x_n + c)  \text{ mod m}\]</span>
-for integer parameters <span class="math inline">\(a\)</span>, <span class="math inline">\(c\)</span> and <span class="math inline">\(m\)</span>. The value of <span class="math inline">\(x_1\)</span> is a
-number between <span class="math inline">\(0\)</span> and <span class="math inline">\(m - 1\)</span> known as the seed, and the resulting
+for integer parameters <span class="math inline">\(a\)</span>, <span class="math inline">\(c\)</span> and <span class="math inline">\(m\)</span>. The seed <span class="math inline">\(x_1\)</span> is a
+number between <span class="math inline">\(0\)</span> and <span class="math inline">\(m - 1\)</span>, and the resulting
 sequence is in the set <span class="math inline">\(\{0, \ldots, m - 1\}\)</span>. The ANSI C standard specifies
 the choices <span class="math inline">\(m = 2^{31}\)</span>, <span class="math inline">\(a = 1,103,515,245\)</span> and <span class="math inline">\(c = 12,345\)</span>. The generator
-is simple to understand and implement, but the linear congruential generator
-has been superseded by much better generators.</p>
-<p>Though the linear congruential generator has become obsolete, it shares the
-general form of most pseudo random number generators. Given a finite state space
-<span class="math inline">\(\mathcal{Z}\)</span> and a one-to-one map <span class="math inline">\(f : \mathcal{Z} \to \mathcal{Z}\)</span> the
-generator produces a sequence in <span class="math inline">\(\mathcal{Z}\)</span> iteratively by
-<span class="math display">\[\mathbf{z}_n = f(\mathbf{z}_{n-1})\]</span>
-starting with a seed <span class="math inline">\(\mathbf{z}_1 \in \mathcal{Z}\)</span>. Pseudo random integers
-are typically obtained as
+is simple to understand and implement but has been superseded by much better
+generators.</p>
+<p>Pseudorandom number generators are generally defined in terms of a finite state space
+<span class="math inline">\(\mathcal{Z}\)</span> and a one-to-one map <span class="math inline">\(f : \mathcal{Z} \to \mathcal{Z}\)</span>. The
+generator produces a sequence in <span class="math inline">\(\mathcal{Z}\)</span> iteratively from the
+seed <span class="math inline">\(\mathbf{z}_1 \in \mathcal{Z}\)</span> by
+<span class="math display">\[\mathbf{z}_n = f(\mathbf{z}_{n-1}).\]</span>
+Pseudorandom integers are typically obtained as
 <span class="math display">\[x_n = h(\mathbf{z}_n)\]</span>
 for a transformation <span class="math inline">\(h : \mathcal{Z} \mapsto \mathbb{Z}\)</span>. If the
 image of <span class="math inline">\(h\)</span> is in the set <span class="math inline">\(\{0, 1, \ldots, 2^{w} - 1\}\)</span> of <span class="math inline">\(w\)</span>-bit integers,
-pseudo random uniform numbers in <span class="math inline">\([0, 1)\)</span> are typically obtained as
+pseudorandom numbers in <span class="math inline">\([0, 1)\)</span> are typically obtained as
 <span class="math display">\[x_n = 2^{-w} h(\mathbf{z}_n).\]</span></p>
-<p>In R (v. 3.6.0), the default pseudo random number generator is the 32-bit
+<p>In R (3.6.0), the default pseudorandom number generator is the 32-bit
 <em>Mersenne Twister</em>, which generates integers in the range
 <span class="math display">\[\{0, 1, \ldots, 2^{32} -1\}.\]</span> The state space is
 <span class="math display">\[\mathcal{Z} =  \{0, 1, \ldots, 2^{32} -1\}^{624},\]</span>
-that is, a state is a 624 dimensional vector of 32-bit integers. The function <span class="math inline">\(f\)</span> is
-of the form
+that is, a state is a 624 dimensional vector of 32-bit integers.
+The function <span class="math inline">\(f\)</span> is of the form
 <span class="math display">\[f(\mathbf{z}) = (z_2, z_3, \ldots, z_{623}, f_{624}(z_1, z_2, z_{m + 1})),\]</span>
-for <span class="math inline">\(1 \leq m &lt; 624\)</span>. The standard choice <span class="math inline">\(m = 397\)</span> is used in the
-R implementation. The function <span class="math inline">\(f_{624}\)</span> is a bit complicated, it includes
+for <span class="math inline">\(1 \leq m &lt; 624\)</span>, and <span class="math inline">\(h\)</span> is a function of <span class="math inline">\(z_{624}\)</span> only.
+The standard choice <span class="math inline">\(m = 397\)</span> is used in the R implementation.
+The function <span class="math inline">\(f_{624}\)</span> is a bit complicated, it includes
 what is known as the <em>twist transformation</em>, and it requires
-additional parameters, including an <span class="math inline">\(r = 31\)</span>. The function <span class="math inline">\(h\)</span> is a function of
-<span class="math inline">\(z_{624}\)</span> only. The name of this generator
-partially derives from the fact that
-<span class="math display">\[2^{32 \times 624 - 31} - 1 = 2^{19937} - 1\]</span>
-is a Mersenne prime, and this (large) prime number is also the period of the generator.
-Moreover, all combinations of consecutive integers up to dimension 623
-occur equally often in a period, and empirical tests of the generator
-demonstrate that it has good statistical properties.</p>
+additional parameters. The period of the generator
+is the astronomical number
+<span class="math display">\[2^{32 \times 624 - 31} - 1 = 2^{19937} - 1,\]</span>
+which is a Mersenne prime.
+Moreover, all combinations of consecutive integers
+up to dimension 623 occur equally often in a period, and empirical tests of the
+generator demonstrate that it has good statistical properties, though it
+is known to fail some tests.</p>
 <p>In R you can set the seed using the function <code>set.seed</code> that takes an
 integer argument and produces an element in the state space. The argument
 given to <code>set.seed</code> is not the actual seed, and <code>set.seed</code> computes a
-valid seed for any pseudo random number generator that R is using
+valid seed for any pseudorandom number generator that R is using,
 whether it is the Mersenne Twister or not. Thus the use of <code>set.seed</code> is
-the safe and recommended way of setting a set.</p>
-<p>The actual seed is stored in the vector <code>.Random.seed</code> together with some
-additional information. Its first entry, <code>.Random.seed[1]</code>, encodes the
-pseudo random number generator as well as the generator for
-Gaussian variables and discrete uniform variables that R is using. This
+the safe and recommended way of setting a seed.</p>
+<p>The actual seed (together with some additional information) can be accessed
+via the vector <code>.Random.seed</code>. Its first entry, <code>.Random.seed[1]</code>, encodes the
+pseudorandom number generator used as well as the generator for
+Gaussian variables and discrete uniform variables. This
 information is decoded by <code>RNGkind()</code>.</p>
 <div class="sourceCode" id="cb121"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb121-1" data-line-number="1"><span class="kw">RNGkind</span>()</a></code></pre></div>
 <pre><code>## [1] &quot;Mersenne-Twister&quot; &quot;Inversion&quot;        &quot;Rejection&quot;</code></pre>
 <p>For the Mersenne Twister,
 <code>.Random.seed[3:626]</code> contains the vector in the state space, while
 <code>.Random.seed[2]</code> contains the “current position” in the state vector.
-The implementation of the Mersenne Twister does 624 updates of the
-state vector at a time and then runs through those values one at a time
-before the next update. This is equivalent to but more efficient then
+The implementation needs a position variable because it does 624 updates of the
+state vector at a time and then runs through those values sequentially
+before the next update. This is equivalent to but more efficient than
 e.g. implementing the position shifts explicitly as in the definition of <span class="math inline">\(f\)</span> above.</p>
-<div class="sourceCode" id="cb123"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb123-1" data-line-number="1"><span class="kw">set.seed</span>(<span class="dv">27112015</span>)        <span class="co">## Computes a new seed from an integer</span></a>
-<a class="sourceLine" id="cb123-2" data-line-number="2">oldseed &lt;-<span class="st"> </span>.Random.seed   <span class="co">## The actual seed</span></a>
-<a class="sourceLine" id="cb123-3" data-line-number="3">oldseed[<span class="dv">1</span>]                <span class="co">## Encoding generators used, will stay fixed</span></a></code></pre></div>
+<div class="sourceCode" id="cb123"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb123-1" data-line-number="1"><span class="kw">set.seed</span>(<span class="dv">27112015</span>)           <span class="co">## Computes a new seed from an integer</span></a>
+<a class="sourceLine" id="cb123-2" data-line-number="2">oldseed &lt;-<span class="st"> </span>.Random.seed[<span class="op">-</span><span class="dv">1</span>]  <span class="co">## The actual seed</span></a>
+<a class="sourceLine" id="cb123-3" data-line-number="3">.Random.seed[<span class="dv">1</span>]              <span class="co">## Encoding of generators used, will stay fixed</span></a></code></pre></div>
 <pre><code>## [1] 10403</code></pre>
-<div class="sourceCode" id="cb125"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb125-1" data-line-number="1">oldseed[<span class="dv">2</span>]                <span class="co">## Start position after the seed has been set is 624</span></a></code></pre></div>
+<div class="sourceCode" id="cb125"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb125-1" data-line-number="1">.Random.seed[<span class="dv">2</span>]              <span class="co">## Start position after the seed has been set is 624</span></a></code></pre></div>
 <pre><code>## [1] 624</code></pre>
 <div class="sourceCode" id="cb127"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb127-1" data-line-number="1">tmp &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>)</a>
 <a class="sourceLine" id="cb127-2" data-line-number="2">tmp</a></code></pre></div>
 <pre><code>## [1] 0.7793288</code></pre>
 <p>Every time a random number is generated, e.g. by <code>runif</code> above, the same underlying
-sequence of pseudo random numbers is used, and the state vector stored in
+sequence of pseudorandom numbers is used, and the state vector stored in
 <code>.Random.seed</code> is updated accordingly.</p>
 <div class="sourceCode" id="cb129"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb129-1" data-line-number="1"><span class="kw">head</span>(oldseed, <span class="dv">5</span>)</a></code></pre></div>
-<pre><code>## [1]       10403         624 -1660633125 -1167670944  1031453153</code></pre>
-<div class="sourceCode" id="cb131"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb131-1" data-line-number="1"><span class="kw">head</span>(.Random.seed, <span class="dv">5</span>)    <span class="co">## The state vector and position has been updated</span></a></code></pre></div>
-<pre><code>## [1]       10403           1  -696993996 -1035426662  -378189083</code></pre>
+<pre><code>## [1]         624 -1660633125 -1167670944  1031453153   815285806</code></pre>
+<div class="sourceCode" id="cb131"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb131-1" data-line-number="1"><span class="kw">head</span>(.Random.seed[<span class="op">-</span><span class="dv">1</span>], <span class="dv">5</span>)     <span class="co">## The state vector and position has been updated</span></a></code></pre></div>
+<pre><code>## [1]           1  -696993996 -1035426662  -378189083  -745352065</code></pre>
 <div class="sourceCode" id="cb133"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb133-1" data-line-number="1"><span class="kw">c</span>(tmp, <span class="kw">runif</span>(<span class="dv">1</span>))          </a></code></pre></div>
 <pre><code>## [1] 0.7793288 0.5613179</code></pre>
-<div class="sourceCode" id="cb135"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb135-1" data-line-number="1"><span class="kw">head</span>(.Random.seed, <span class="dv">5</span>)    <span class="co">## The state vector has not changed, only the position</span></a></code></pre></div>
-<pre><code>## [1]       10403           2  -696993996 -1035426662  -378189083</code></pre>
-<p>Resetting the seed will restart the pseudo random number generator with the
+<div class="sourceCode" id="cb135"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb135-1" data-line-number="1"><span class="kw">head</span>(.Random.seed[<span class="op">-</span><span class="dv">1</span>], <span class="dv">5</span>)     <span class="co">## The state vector has not changed, only the position</span></a></code></pre></div>
+<pre><code>## [1]           2  -696993996 -1035426662  -378189083  -745352065</code></pre>
+<p>Resetting the seed will restart the pseudorandom number generator with the
 same seed and result in the same sequence of random numbers.</p>
 <div class="sourceCode" id="cb137"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb137-1" data-line-number="1"><span class="kw">set.seed</span>(<span class="dv">27112015</span>)</a>
-<a class="sourceLine" id="cb137-2" data-line-number="2"><span class="kw">head</span>(.Random.seed, <span class="dv">5</span>)</a></code></pre></div>
-<pre><code>## [1]       10403         624 -1660633125 -1167670944  1031453153</code></pre>
-<div class="sourceCode" id="cb139"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb139-1" data-line-number="1"><span class="kw">head</span>(oldseed, <span class="dv">5</span>)                   <span class="co">## Same as current .Random.seed</span></a></code></pre></div>
-<pre><code>## [1]       10403         624 -1660633125 -1167670944  1031453153</code></pre>
-<div class="sourceCode" id="cb141"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb141-1" data-line-number="1"><span class="kw">identical</span>(oldseed, .Random.seed)</a></code></pre></div>
-<pre><code>## [1] TRUE</code></pre>
-<div class="sourceCode" id="cb143"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb143-1" data-line-number="1"><span class="kw">runif</span>(<span class="dv">1</span>)                            <span class="co">## Same as tmp</span></a></code></pre></div>
+<a class="sourceLine" id="cb137-2" data-line-number="2"><span class="kw">head</span>(.Random.seed[<span class="op">-</span><span class="dv">1</span>], <span class="dv">5</span>)</a></code></pre></div>
+<pre><code>## [1]         624 -1660633125 -1167670944  1031453153   815285806</code></pre>
+<div class="sourceCode" id="cb139"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb139-1" data-line-number="1"><span class="kw">head</span>(oldseed, <span class="dv">5</span>)             <span class="co">## Same as current .Random.seed</span></a></code></pre></div>
+<pre><code>## [1]         624 -1660633125 -1167670944  1031453153   815285806</code></pre>
+<div class="sourceCode" id="cb141"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb141-1" data-line-number="1"><span class="kw">runif</span>(<span class="dv">1</span>)                     <span class="co">## Same as tmp</span></a></code></pre></div>
 <pre><code>## [1] 0.7793288</code></pre>
-<p>Note that <code>runif</code> includes a fix to prevent the algorithm from returning 0, and
-uniform random variables generated by <code>runif</code> are therefore guaranteed to be in
-<span class="math inline">\((0, 1)\)</span>.</p>
+<p>Note that when using any of the standard R generators, any value of <span class="math inline">\(0\)</span> or <span class="math inline">\(1\)</span>
+returned by the underlying pseudorandom uniform generator is
+adjusted to be in <span class="math inline">\((0,1)\)</span>. Thus uniform random variables are guaranteed to be
+in <span class="math inline">\((0, 1)\)</span>.</p>
 <p>Some of the random number generators implemented in R use more than one
-pseudo random number per variable. This is, for instance, the case when we simulate
+pseudorandom number per variable. This is, for instance, the case when we simulate
 Gamma distributed random variables.</p>
-<div class="sourceCode" id="cb145"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb145-1" data-line-number="1"><span class="kw">set.seed</span>(<span class="dv">27112015</span>)</a>
-<a class="sourceLine" id="cb145-2" data-line-number="2"><span class="kw">rgamma</span>(<span class="dv">1</span>, <span class="dv">1</span>)             <span class="co">## A single Gamma distributed random number</span></a></code></pre></div>
+<div class="sourceCode" id="cb143"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb143-1" data-line-number="1"><span class="kw">set.seed</span>(<span class="dv">27112015</span>)</a>
+<a class="sourceLine" id="cb143-2" data-line-number="2"><span class="kw">rgamma</span>(<span class="dv">1</span>, <span class="dv">1</span>)                 <span class="co">## A single Gamma distributed random number</span></a></code></pre></div>
 <pre><code>## [1] 1.192619</code></pre>
-<div class="sourceCode" id="cb147"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb147-1" data-line-number="1"><span class="kw">head</span>(.Random.seed, <span class="dv">5</span>)    <span class="co">## Position changed to 2</span></a></code></pre></div>
-<pre><code>## [1]       10403           2  -696993996 -1035426662  -378189083</code></pre>
-<div class="sourceCode" id="cb149"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb149-1" data-line-number="1"><span class="kw">rgamma</span>(<span class="dv">1</span>, <span class="dv">1</span>)             <span class="co">## A single Gamma distributed random number</span></a></code></pre></div>
+<div class="sourceCode" id="cb145"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb145-1" data-line-number="1"><span class="kw">head</span>(.Random.seed[<span class="op">-</span><span class="dv">1</span>], <span class="dv">5</span>)    <span class="co">## Position changed to 2</span></a></code></pre></div>
+<pre><code>## [1]           2  -696993996 -1035426662  -378189083  -745352065</code></pre>
+<div class="sourceCode" id="cb147"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb147-1" data-line-number="1"><span class="kw">rgamma</span>(<span class="dv">1</span>, <span class="dv">1</span>)                 <span class="co">## A single Gamma distributed random number</span></a></code></pre></div>
 <pre><code>## [1] 0.2794622</code></pre>
-<div class="sourceCode" id="cb151"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb151-1" data-line-number="1"><span class="kw">head</span>(.Random.seed, <span class="dv">5</span>)    <span class="co">## Position changed to 5</span></a></code></pre></div>
-<pre><code>## [1]       10403           5  -696993996 -1035426662  -378189083</code></pre>
-<p>In the example above, generation of the first variable used two pseudo random
-numbers, while the second used three pseudo random numbers. The detailed
-explanation is given in Section @ref(#reject-samp), where it is shown
+<div class="sourceCode" id="cb149"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb149-1" data-line-number="1"><span class="kw">head</span>(.Random.seed[<span class="op">-</span><span class="dv">1</span>], <span class="dv">5</span>)    <span class="co">## Position changed to 5</span></a></code></pre></div>
+<pre><code>## [1]           5  -696993996 -1035426662  -378189083  -745352065</code></pre>
+<p>In the example above, the first Gamma variable required two pseudorandom
+numbers, while the second required three pseudorandom numbers. The detailed
+explanation is given in Section <a href="reject-samp.html#reject-samp">4.3</a>, where it is shown
 how to generate random variables from the Gamma distribution via
-rejection sampling. This requires as a minimum two pseudo random numbers
+rejection sampling. This requires as a minimum two pseudorandom numbers
 for every Gamma variable generated.</p>
-<p>It is a research field to develop pseudo random number generators, see <code>?RNG</code>
-in R for the algorithms available.</p>
+<div id="implementing-a-pseudorandom-number-generator" class="section level3">
+<h3><span class="header-section-number">4.1.1</span> Implementing a pseudorandom number generator</h3>
+<p>The development of high quality pseudorandom number generators is a
+research field in itself. This is particularly true if one needs
+theoretical guarantees for randomized algorithms or cryptographically
+secure generators. For scientific computations and
+simulations correct statistical properties, reproducibility and speed are
+more important than cryptographic security, but even so, it is not trivial
+to invent a good generator, and the field is still developing. For a
+generator to be seriously considered, its mathematical properties should
+be well understood, and it should pass (most) tests in standardized
+test suites such as <a href="http://simul.iro.umontreal.ca/testu01/tu01.html">TestU01</a>
+<span class="citation">L’Ecuyer and Simard (<a href="#ref-LEcuyer:2007">2007</a>)</span>.</p>
+<p>R provides a couple of alternatives to the Mersenne Twister,
+see <code>?RNG</code>, but there is no compelling reason to switch to any of those for ordinary
+use. They are mostly availabel for historical reasons.
+One exception is the L’Ecuyer-CMRG generator, which is useful when
+independent pseudorandom sequences are needed for parallel computations.</p>
+<p>Though the Mersenne Twister is a widely used pseudorandom number generator
+it has <a href="http://www.pcg-random.org/other-rngs.html">well known shortcomings</a>.
+There are high quality alternatives that are simpler and faster, such
+as the family of <a href="https://en.wikipedia.org/wiki/Xorshift">shift-register generators</a>
+and their variations, but they are not currently available from the base R package.</p>
+<p>Shift-register generators are based on linear transformations of the bit
+representation of integers. Three particular transformations are typically
+composed; the <span class="math inline">\(\mathrm{Lshift}\)</span> and <span class="math inline">\(\mathrm{Rshift}\)</span> operators and the
+bitwise <span class="math inline">\(\mathrm{xor}\)</span> operator. Let <span class="math inline">\(z = [z_{31}, z_{30}, \ldots, z_0]\)</span>
+with <span class="math inline">\(z_i \in \{0, 1\}\)</span> denote the bit
+representation of a 32-bit (unsigned) integer <span class="math inline">\(z\)</span> (ordered from most significant
+bit to least significant bit). That is,
+<span class="math display">\[z = z_{31} 2^{31} + z_{30} 2^{30} + \ldots + z_2 2^3 + z_1 2^{1} + z_0.\]</span>
+Then the left shift operator is defined as
+<span class="math display">\[\mathrm{Lshift}(z) = [z_{30}, z_{29}, \ldots, z_0, 0],\]</span>
+and the right shift operator is defined as
+<span class="math display">\[\mathrm{Rshift}(z) = [0, z_{31}, z_{30}, \ldots, z_1].\]</span>
+The bitwise xor operator is defined as
+<span class="math display">\[\mathrm{xor}(z, z&#39;) = [\mathrm{xor}(z_{31},z_{31}&#39;) , 
+\mathrm{xor}(z_{30}, z_{30}&#39;), \ldots, \mathrm{xor}(z_0, z_0&#39;)]\]</span>
+where <span class="math inline">\(\mathrm{xor}(0, 0) = \mathrm{xor}(1, 1) = 0\)</span> and
+<span class="math inline">\(\mathrm{xor}(1, 0) = \mathrm{xor}(0, 1) = 1\)</span>. Thus a transformation could
+be of the form
+<span class="math display">\[\mathrm{xor}(z, \mathrm{Rshift}^2(z)) = [\mathrm{xor}(z_{31}, 0) , 
+\mathrm{xor}(z_{30}, 0), \mathrm{xor}(z_{29}, z_{31}), \ldots, \mathrm{xor}(z_0, z_2)].\]</span></p>
+<p>One example of a shift-register based generator is Marsaglia’s <a href="https://en.wikipedia.org/wiki/Xorshift#xorwow">xorwow</a>
+algorithm, <span class="citation">Marsaglia (<a href="#ref-Marsaglia:2003">2003</a>)</span>. In addition to the shift and xor operations, the output of
+this generator is perturbed by a sequence of integers with period <span class="math inline">\(2^{32}\)</span>.
+The state space of the generator is
+<span class="math display">\[\{0, 1, \ldots, 2^{32} -1\}^{5}\]</span>
+with
+<span class="math display">\[f(\mathbf{z}) = (z_1 + 362437 \ (\mathrm{mod}\ 2^{32}),
+f_1(z_5, z_2), z_2, z_3, z_4),\]</span>
+and
+<span class="math display">\[h(\mathbf{z}) = 2^{-32} (z_1 + z_2).\]</span>
+The number 362437 is Masaglia’s choice for generating what he calls a
+Weyl sequence, but any odd number will do. The function <span class="math inline">\(f_1\)</span> is given as
+<span class="math display">\[f_1(z, z&#39;) = \mathrm{xor}(\mathrm{xor}(z, \mathrm{Rshift}^2(z)), \mathrm{xor}(z&#39;, \mathrm{xor}(\mathrm{Lshift}^4(z&#39;), \mathrm{Lshift}(\mathrm{xor}(z, \mathrm{Rshift}^2(z)))))).\]</span></p>
+<p>This may look intimidating, but all the operations are very elementary.
+Take the number <span class="math inline">\(z = 123456\)</span>, say, then the intermediate value
+<span class="math inline">\(\overline{z} = \mathrm{xor}(z, \mathrm{Rshift}^2(z))\)</span> is computed as follows:</p>
+<p><span class="math display">\[
+\begin{array}{ll}
+z &amp; \texttt{00000000 00000001 11100010 01000000} \\
+\mathrm{Rshift}^2(z) &amp; \texttt{00000000 00000000 01111000 10010000} \\
+\hline
+\mathrm{xor} &amp; \texttt{00000000 00000001 10011010 11010000}
+\end{array}
+\]</span></p>
+<p>And if <span class="math inline">\(z&#39; = 87654321\)</span> the value of <span class="math inline">\(f_1(z, z&#39;)\)</span> is computed like this:</p>
+<p><span class="math display">\[
+\begin{array}{ll}
+\mathrm{Lshift}^4(z&#39;) &amp; \texttt{01010011 10010111 11111011 00010000} \\
+\mathrm{Lshift}(\overline{z}) &amp; \texttt{00000000 00000011 00110101 10100000} \\
+\hline
+\mathrm{xor} &amp; \texttt{01010011 10010100 11001110 10110000} \\
+z&#39; &amp; \texttt{00000101 00111001 01111111 10110001} \\
+\hline
+\mathrm{xor} &amp; \texttt{01010110 10101101 10110001 00000001} \\
+\overline{z} &amp; \texttt{00000000 00000001 10011010 11010000} \\
+\hline
+ \mathrm{xor} &amp; \texttt{01010110 10101100 00101011 11010001}
+\end{array}
+\]</span></p>
+<p>Converted back to a 32-bit integer, the result is <span class="math inline">\(f_1(z, z&#39;) = 1454123985\)</span>.
+The shift and xor operations are tedious to do by hand but extremely fast on
+modern computer architectures, and shift-register based generators are some
+of the fastest generators with good statistical properties.</p>
+<p>To make R use the xorwow generator we need to implement it as a user supplied
+generator. This requires writing the C code that implements the generator,
+compiling the code into a shared object file, loading it into
+R with the <code>dyn.load</code> function, and finally calling <code>RNGkind(&quot;user&quot;)</code>
+to make R use this pseudorandom number generator. See <code>?Random.user</code>
+for some details and an example.</p>
+<p>Using the Rcpp package, and <code>sourceCpp</code>, in particular, is usually much preferred
+over manual compiling and loading. However, in this case we need to make
+functions available to the internals of R rather than exporting functions to be
+callable from the R console. That is, nothing needs to be exported from C/C++.
+If nothing is exported, <code>sourceCpp</code> will actually not load the shared object
+file, so we need to trick <code>sourceCpp</code> to do so anyway. In the implementation
+below we achive this by simply exporting a direct interface to the xorwow generator.</p>
+<div class="sourceCode" id="cb151"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb151-1" data-line-number="1"><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></a>
+<a class="sourceLine" id="cb151-2" data-line-number="2"><span class="pp">#include </span><span class="im">&lt;R_ext/Random.h&gt;</span></a>
+<a class="sourceLine" id="cb151-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb151-4" data-line-number="4"><span class="co">/* The Random.h header file contains the function declarations for the functions </span></a>
+<a class="sourceLine" id="cb151-5" data-line-number="5"><span class="co"> that R rely on internally for a user defined generator, and it also defines </span></a>
+<a class="sourceLine" id="cb151-6" data-line-number="6"><span class="co"> the type Int32 as an unsigned int. */</span></a>
+<a class="sourceLine" id="cb151-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb151-8" data-line-number="8"><span class="at">static</span> Int32 z[<span class="dv">5</span>];     <span class="co">// The state vector </span></a>
+<a class="sourceLine" id="cb151-9" data-line-number="9"><span class="at">static</span> <span class="dt">double</span> res;</a>
+<a class="sourceLine" id="cb151-10" data-line-number="10"><span class="at">static</span> <span class="dt">int</span> nseed = <span class="dv">5</span>;  <span class="co">// Length of the state vector</span></a>
+<a class="sourceLine" id="cb151-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb151-12" data-line-number="12"><span class="co">// Implementation of xorwow from Marsaglia&#39;s &quot;Xorshift RNGs&quot; </span></a>
+<a class="sourceLine" id="cb151-13" data-line-number="13"><span class="co">// modified so as to return a double in [0, 1). The &#39;&gt;&gt;&#39; and &#39;&lt;&lt;&#39; </span></a>
+<a class="sourceLine" id="cb151-14" data-line-number="14"><span class="co">// operators in C are bitwise right and left shift operators, and </span></a>
+<a class="sourceLine" id="cb151-15" data-line-number="15"><span class="co">// the caret, &#39;^&#39;, is the xor operator. </span></a>
+<a class="sourceLine" id="cb151-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb151-17" data-line-number="17"><span class="dt">double</span> * user_unif_rand()</a>
+<a class="sourceLine" id="cb151-18" data-line-number="18">{ </a>
+<a class="sourceLine" id="cb151-19" data-line-number="19">  Int32 t = z[<span class="dv">4</span>];</a>
+<a class="sourceLine" id="cb151-20" data-line-number="20">  Int32 s = z[<span class="dv">1</span>];</a>
+<a class="sourceLine" id="cb151-21" data-line-number="21">  z[<span class="dv">0</span>] += <span class="dv">362437</span>;</a>
+<a class="sourceLine" id="cb151-22" data-line-number="22">  z[<span class="dv">4</span>] = z[<span class="dv">3</span>];</a>
+<a class="sourceLine" id="cb151-23" data-line-number="23">  z[<span class="dv">3</span>] = z[<span class="dv">2</span>];</a>
+<a class="sourceLine" id="cb151-24" data-line-number="24">  z[<span class="dv">2</span>] = s;</a>
+<a class="sourceLine" id="cb151-25" data-line-number="25">  <span class="co">// Right shift t by 2, then bitwise xor between t and its shift</span></a>
+<a class="sourceLine" id="cb151-26" data-line-number="26">  t ^= t &gt;&gt; <span class="dv">2</span>;  </a>
+<a class="sourceLine" id="cb151-27" data-line-number="27">  <span class="co">// Left shift t by 1 and s by 4, xor them, xor with s and xor with t</span></a>
+<a class="sourceLine" id="cb151-28" data-line-number="28">  t ^= s ^ (s &lt;&lt; <span class="dv">4</span>) ^ (t &lt;&lt; <span class="dv">1</span>);</a>
+<a class="sourceLine" id="cb151-29" data-line-number="29">  z[<span class="dv">1</span>] = t;</a>
+<a class="sourceLine" id="cb151-30" data-line-number="30">  res = (z[<span class="dv">0</span>] + t) * <span class="fl">2.32830643653869e-10</span>;</a>
+<a class="sourceLine" id="cb151-31" data-line-number="31">  <span class="cf">return</span> &amp;res;</a>
+<a class="sourceLine" id="cb151-32" data-line-number="32">}</a>
+<a class="sourceLine" id="cb151-33" data-line-number="33"></a>
+<a class="sourceLine" id="cb151-34" data-line-number="34"><span class="co">// A seed initializer using Marsaglia&#39;s congruential PRNG</span></a>
+<a class="sourceLine" id="cb151-35" data-line-number="35"></a>
+<a class="sourceLine" id="cb151-36" data-line-number="36"><span class="dt">void</span>  user_unif_init(Int32 seed_in) { </a>
+<a class="sourceLine" id="cb151-37" data-line-number="37">  z[<span class="dv">0</span>] = seed_in;</a>
+<a class="sourceLine" id="cb151-38" data-line-number="38">  z[<span class="dv">1</span>] = <span class="dv">69069</span> * z[<span class="dv">0</span>] + <span class="dv">1</span>;</a>
+<a class="sourceLine" id="cb151-39" data-line-number="39">  z[<span class="dv">2</span>] = <span class="dv">69069</span> * z[<span class="dv">1</span>] + <span class="dv">1</span>;</a>
+<a class="sourceLine" id="cb151-40" data-line-number="40">  z[<span class="dv">3</span>] = <span class="dv">69069</span> * z[<span class="dv">2</span>] + <span class="dv">1</span>;</a>
+<a class="sourceLine" id="cb151-41" data-line-number="41">  z[<span class="dv">4</span>] = <span class="dv">69069</span> * z[<span class="dv">3</span>] + <span class="dv">1</span>;</a>
+<a class="sourceLine" id="cb151-42" data-line-number="42">}</a>
+<a class="sourceLine" id="cb151-43" data-line-number="43"></a>
+<a class="sourceLine" id="cb151-44" data-line-number="44"><span class="co">// Two functions to make &#39;.Random.seed&#39; in R reflect the state vector</span></a>
+<a class="sourceLine" id="cb151-45" data-line-number="45"></a>
+<a class="sourceLine" id="cb151-46" data-line-number="46"><span class="dt">int</span> * user_unif_nseed() { <span class="cf">return</span> &amp;nseed; }</a>
+<a class="sourceLine" id="cb151-47" data-line-number="47"><span class="dt">int</span> * user_unif_seedloc() { <span class="cf">return</span> (<span class="dt">int</span> *) &amp;z; }</a>
+<a class="sourceLine" id="cb151-48" data-line-number="48"></a>
+<a class="sourceLine" id="cb151-49" data-line-number="49"><span class="co">// Wrapper to make &#39;user_unif_rand&#39; callable from R</span></a>
+<a class="sourceLine" id="cb151-50" data-line-number="50"><span class="dt">double</span> xor_runif() {</a>
+<a class="sourceLine" id="cb151-51" data-line-number="51">  <span class="cf">return</span> *user_unif_rand();</a>
+<a class="sourceLine" id="cb151-52" data-line-number="52">}</a>
+<a class="sourceLine" id="cb151-53" data-line-number="53"></a>
+<a class="sourceLine" id="cb151-54" data-line-number="54"><span class="co">// This module will export two functions to be directly available from R.</span></a>
+<a class="sourceLine" id="cb151-55" data-line-number="55"><span class="co">// Note: if nothing is exported, `sourceCpp` will not load the shared </span></a>
+<a class="sourceLine" id="cb151-56" data-line-number="56"><span class="co">// object file generated by the compilation of the code, and </span></a>
+<a class="sourceLine" id="cb151-57" data-line-number="57"><span class="co">// &#39;user_unif_rand&#39; will not become available to the internals of R. </span></a>
+<a class="sourceLine" id="cb151-58" data-line-number="58">RCPP_MODULE(xorwow) {</a>
+<a class="sourceLine" id="cb151-59" data-line-number="59">  Rcpp::function(<span class="st">&quot;xor_set.seed&quot;</span>, &amp;user_unif_init, <span class="st">&quot;Seeds Masaglia&#39;s xorwow&quot;</span>);</a>
+<a class="sourceLine" id="cb151-60" data-line-number="60">  Rcpp::function(<span class="st">&quot;xor_runif&quot;</span>, &amp;xor_runif, <span class="st">&quot;A uniform from Masaglia&#39;s xorwow&quot;</span>);</a>
+<a class="sourceLine" id="cb151-61" data-line-number="61">}</a></code></pre></div>
+<p>We first test the direct interface to the xorwow algorithm.</p>
+<div class="sourceCode" id="cb152"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb152-1" data-line-number="1"><span class="kw">xor_set.seed</span>(<span class="dv">3573076633</span>)</a>
+<a class="sourceLine" id="cb152-2" data-line-number="2"><span class="kw">xor_runif</span>()</a></code></pre></div>
+<pre><code>## [1] 0.9090892</code></pre>
+<p>Then we set R’s pseudorandom number generator to be our user supplied
+generator.</p>
+<div class="sourceCode" id="cb154"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb154-1" data-line-number="1">default_prng &lt;-<span class="st"> </span><span class="kw">RNGkind</span>(<span class="st">&quot;user&quot;</span>)</a></code></pre></div>
+<p>All R’s standard random number generators will after the call <code>RNGkind(&quot;user&quot;)</code>
+rely on the user provided generator, in this case the xorwow generator.
+Note that R does an “initial scrambling” of the argument given to <code>set.seed</code>
+before it is passed on to our user defined initializer. This
+scrambling turns 24102019 used below into 3573076633 used above.</p>
+<div class="sourceCode" id="cb155"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb155-1" data-line-number="1"><span class="kw">set.seed</span>(<span class="dv">24102019</span>)</a>
+<a class="sourceLine" id="cb155-2" data-line-number="2">.Random.seed[<span class="op">-</span><span class="dv">1</span>]  <span class="co">## The state vector as seeded </span></a></code></pre></div>
+<pre><code>## [1] -721890663    9136518 -310030769 1191753796  194708085</code></pre>
+<div class="sourceCode" id="cb157"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb157-1" data-line-number="1"><span class="kw">runif</span>(<span class="dv">1</span>)          <span class="co">## As above since same unscrambled seed is used</span></a></code></pre></div>
+<pre><code>## [1] 0.9090892</code></pre>
+<div class="sourceCode" id="cb159"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb159-1" data-line-number="1">.Random.seed[<span class="op">-</span><span class="dv">1</span>]  <span class="co">## The state vector after one update</span></a></code></pre></div>
+<pre><code>## [1] -721528226  331069150    9136518 -310030769 1191753796</code></pre>
+<p>The code above shows the state vector of the xorwow algorithm when seeded
+by the <code>user_unif_init</code> function, and it also shows the
+update to the state vector after a single iteration of the xorwow algorithm.</p>
+<p>Though the xorwow algorithm is fast and simple, a benchmark study (not shown)
+reveals that using xorwow instead of the Mersenne Twister doesn’t impact the
+run time in a notable way when using e.g. <code>runif</code>. The generator is simply
+not the bottleneck. As the implementation
+of xorwow above is experimental and has not been throughly tested, we will
+not rely on it and quickly reset the random number generator to its default value.</p>
+<div class="sourceCode" id="cb161"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb161-1" data-line-number="1"><span class="co">## Resetting the generator to the default</span></a>
+<a class="sourceLine" id="cb161-2" data-line-number="2"><span class="kw">RNGkind</span>(default_prng[<span class="dv">1</span>])</a></code></pre></div>
+</div>
+<div id="pseudorandom-number-packages" class="section level3">
+<h3><span class="header-section-number">4.1.2</span> Pseudorandom number packages</h3>
+<p>To benefit from the recent developments in pseudorandom number generators
+we can turn to R packages such as the <a href="https://CRAN.R-project.org/package=dqrng">dqrng</a>
+package. It implements pcg64 from the <a href="http://www.pcg-random.org">PCG family</a> of
+generators as well as <a href="http://prng.di.unimi.it">Xoroshiro128+ and Xoshiro256+</a>
+that are shift-register algorithms. Xoroshiro128+ is the default and other
+generators can be chosen using <code>dqRNGkind</code>. The usage of generators from dqrng
+is similar to the usage of base R generators.</p>
+<div class="sourceCode" id="cb162"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb162-1" data-line-number="1"><span class="kw">library</span>(dqrng)</a>
+<a class="sourceLine" id="cb162-2" data-line-number="2"><span class="kw">dqset.seed</span>(<span class="dv">24102019</span>)</a>
+<a class="sourceLine" id="cb162-3" data-line-number="3"><span class="kw">dqrunif</span>(<span class="dv">1</span>)</a></code></pre></div>
+<pre><code>## [1] 0.6172152</code></pre>
+<p>Using the generators from dqrng does not interfere with the base R generators
+as the state vectors are completely separated.</p>
+<p>In addition to uniform pseudorandom variables generated by <code>dqrunif</code> the
+dqrng package can generate exponential (<code>dqrexp</code>) and Gaussian (<code>dqrnorm</code>)
+random variables as well as uniform discrete distributions (<code>dqsample</code> and
+<code>dqsample.int</code>). All based on the fast pseudorandom integer generators that
+the package includes. In addition, the package has a C++ interface that makes it
+possible to use its generators in compiled code as well.</p>
+<div class="sourceCode" id="cb164"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb164-1" data-line-number="1"><span class="kw">microbenchmark</span>(</a>
+<a class="sourceLine" id="cb164-2" data-line-number="2">  <span class="kw">runif</span>(<span class="fl">1e6</span>),</a>
+<a class="sourceLine" id="cb164-3" data-line-number="3">  <span class="kw">dqrunif</span>(<span class="fl">1e6</span>)</a>
+<a class="sourceLine" id="cb164-4" data-line-number="4">)</a></code></pre></div>
+<pre><code>## Unit: milliseconds
+##            expr  min   lq mean median   uq max neval
+##    runif(1e+06) 24.6 26.3 28.3   27.4 30.0  35   100
+##  dqrunif(1e+06)  3.4  4.1  5.6    4.4  8.5  11   100</code></pre>
+<p>As the benchmark above shows, <code>dqrunif</code> is about six times faster than
+<code>runif</code> when generating one million variables. The other generators provided
+by the dqrng package show similar improvements over the base R generators.</p>
+</div>
+</div>
+<h3>References</h3>
+<div id="refs" class="references">
+<div id="ref-LEcuyer:2007">
+<p>L’Ecuyer, Pierre, and Richard Simard. 2007. “TestU01: A c Library for Empirical Testing of Random Number Generators.” <em>ACM Trans. Math. Softw.</em> 33 (4). New York, NY, USA: ACM: 22:1–22:40. <a href="https://doi.org/10.1145/1268776.1268777">https://doi.org/10.1145/1268776.1268777</a>.</p>
+</div>
+<div id="ref-Marsaglia:2003">
+<p>Marsaglia, George. 2003. “Xorshift Rngs.” <em>Journal of Statistical Software</em> 8 (14): 1–6. <a href="https://doi.org/10.18637/jss.v008.i14">https://doi.org/10.18637/jss.v008.i14</a>.</p>
+</div>
 </div>
             </section>
 

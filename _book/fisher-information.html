@@ -205,7 +205,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
 <li class="chapter" data-level="4" data-path="univariate-random-variables.html"><a href="univariate-random-variables.html"><i class="fa fa-check"></i><b>4</b> Univariate random variables</a><ul>
-<li class="chapter" data-level="4.1" data-path="pseudo-random-numbers.html"><a href="pseudo-random-numbers.html"><i class="fa fa-check"></i><b>4.1</b> Pseudo random numbers</a></li>
+<li class="chapter" data-level="4.1" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html"><i class="fa fa-check"></i><b>4.1</b> Pseudorandom number generators</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html#implementing-a-pseudorandom-number-generator"><i class="fa fa-check"></i><b>4.1.1</b> Implementing a pseudorandom number generator</a></li>
+<li class="chapter" data-level="4.1.2" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html#pseudorandom-number-packages"><i class="fa fa-check"></i><b>4.1.2</b> Pseudorandom number packages</a></li>
+</ul></li>
 <li class="chapter" data-level="4.2" data-path="transformation-techniques.html"><a href="transformation-techniques.html"><i class="fa fa-check"></i><b>4.2</b> Transformation techniques</a><ul>
 <li class="chapter" data-level="4.2.1" data-path="transformation-techniques.html"><a href="transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
 </ul></li>
@@ -361,34 +364,34 @@ three different possible terms in the sum. The implementation
 works directly on the tabulated data by computing all the three possible
 terms and then forming a weighted sum according to the number of times each
 term is present.</p>
-<div class="sourceCode" id="cb318"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb318-1" data-line-number="1">empFisher &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, grad, <span class="dt">center =</span> <span class="ot">FALSE</span>) {</a>
-<a class="sourceLine" id="cb318-2" data-line-number="2">  grad_MLE &lt;-<span class="st"> </span><span class="dv">0</span> <span class="co">## is supposed to be 0 in the MLE</span></a>
-<a class="sourceLine" id="cb318-3" data-line-number="3">  <span class="cf">if</span> (center) </a>
-<a class="sourceLine" id="cb318-4" data-line-number="4">     grad_MLE &lt;-<span class="st">  </span><span class="kw">grad</span>(par, x) <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(x)</a>
-<a class="sourceLine" id="cb318-5" data-line-number="5">   grad1 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</a>
-<a class="sourceLine" id="cb318-6" data-line-number="6">   grad2 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</a>
-<a class="sourceLine" id="cb318-7" data-line-number="7">   grad3 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</a>
-<a class="sourceLine" id="cb318-8" data-line-number="8">   x[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad1) <span class="op">%*%</span><span class="st"> </span>grad1 <span class="op">+</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb318-9" data-line-number="9"><span class="st">     </span>x[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad2) <span class="op">%*%</span><span class="st"> </span>grad2 <span class="op">+</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb318-10" data-line-number="10"><span class="st">     </span>x[<span class="dv">3</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad3) <span class="op">%*%</span><span class="st"> </span>grad3 </a>
-<a class="sourceLine" id="cb318-11" data-line-number="11">}</a></code></pre></div>
+<div class="sourceCode" id="cb347"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb347-1" data-line-number="1">empFisher &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, grad, <span class="dt">center =</span> <span class="ot">FALSE</span>) {</a>
+<a class="sourceLine" id="cb347-2" data-line-number="2">  grad_MLE &lt;-<span class="st"> </span><span class="dv">0</span> <span class="co">## is supposed to be 0 in the MLE</span></a>
+<a class="sourceLine" id="cb347-3" data-line-number="3">  <span class="cf">if</span> (center) </a>
+<a class="sourceLine" id="cb347-4" data-line-number="4">     grad_MLE &lt;-<span class="st">  </span><span class="kw">grad</span>(par, x) <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(x)</a>
+<a class="sourceLine" id="cb347-5" data-line-number="5">   grad1 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</a>
+<a class="sourceLine" id="cb347-6" data-line-number="6">   grad2 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</a>
+<a class="sourceLine" id="cb347-7" data-line-number="7">   grad3 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</a>
+<a class="sourceLine" id="cb347-8" data-line-number="8">   x[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad1) <span class="op">%*%</span><span class="st"> </span>grad1 <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb347-9" data-line-number="9"><span class="st">     </span>x[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad2) <span class="op">%*%</span><span class="st"> </span>grad2 <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb347-10" data-line-number="10"><span class="st">     </span>x[<span class="dv">3</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad3) <span class="op">%*%</span><span class="st"> </span>grad3 </a>
+<a class="sourceLine" id="cb347-11" data-line-number="11">}</a></code></pre></div>
 <p>We test the implementation with and without centering and compare
 the result to a numerically computed hessian using <code>optimHess</code> (it is
 possible to get <code>optim</code> to compute the Hessian numerically in the minimizer
 as a final step, but <code>optimHess</code> does this computation separately).</p>
-<div class="sourceCode" id="cb319"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb319-1" data-line-number="1"><span class="co">## The gradient of Q (equivalently the log-likelihood) was </span></a>
-<a class="sourceLine" id="cb319-2" data-line-number="2"><span class="co">## implemented earlier as &#39;grad_loglik&#39;.</span></a>
-<a class="sourceLine" id="cb319-3" data-line-number="3">grad &lt;-<span class="st"> </span><span class="cf">function</span>(par, x) <span class="kw">grad_loglik</span>(par, x, prob, Dprob, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</a>
-<a class="sourceLine" id="cb319-4" data-line-number="4"><span class="kw">empFisher</span>(phat, <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), grad)</a></code></pre></div>
+<div class="sourceCode" id="cb348"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb348-1" data-line-number="1"><span class="co">## The gradient of Q (equivalently the log-likelihood) was </span></a>
+<a class="sourceLine" id="cb348-2" data-line-number="2"><span class="co">## implemented earlier as &#39;grad_loglik&#39;.</span></a>
+<a class="sourceLine" id="cb348-3" data-line-number="3">grad &lt;-<span class="st"> </span><span class="cf">function</span>(par, x) <span class="kw">grad_loglik</span>(par, x, prob, Dprob, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</a>
+<a class="sourceLine" id="cb348-4" data-line-number="4"><span class="kw">empFisher</span>(phat, <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), grad)</a></code></pre></div>
 <pre><code>##           [,1]     [,2]
 ## [1,] 18487.558 1384.626
 ## [2,]  1384.626 6816.612</code></pre>
-<div class="sourceCode" id="cb321"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb321-1" data-line-number="1"><span class="kw">empFisher</span>(phat, <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), grad, <span class="dt">center =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb350"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb350-1" data-line-number="1"><span class="kw">empFisher</span>(phat, <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), grad, <span class="dt">center =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
 <pre><code>##           [,1]     [,2]
 ## [1,] 18487.558 1384.626
 ## [2,]  1384.626 6816.612</code></pre>
-<div class="sourceCode" id="cb323"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb323-1" data-line-number="1"><span class="kw">optimHess</span>(phat, loglik, grad_loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </a>
-<a class="sourceLine" id="cb323-2" data-line-number="2">          <span class="dt">prob =</span> prob, <span class="dt">Dprob =</span> Dprob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</a></code></pre></div>
+<div class="sourceCode" id="cb352"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb352-1" data-line-number="1"><span class="kw">optimHess</span>(phat, loglik, grad_loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </a>
+<a class="sourceLine" id="cb352-2" data-line-number="2">          <span class="dt">prob =</span> prob, <span class="dt">Dprob =</span> Dprob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</a></code></pre></div>
 <pre><code>##           [,1]     [,2]
 ## [1,] 18490.938 1384.629
 ## [2,]  1384.629 6816.769</code></pre>
@@ -428,21 +431,21 @@ is not computable either. It can, however, be shown that</p>
 its Jacobian, <span class="math inline">\(D_{\theta} \Phi(\hat{\theta})\)</span>, can be computed via numerical
 differentiation once we have implemented <span class="math inline">\(\Phi\)</span>. We also need the
 hessian of the map <span class="math inline">\(Q\)</span>, which we implement as an R function as well.</p>
-<div class="sourceCode" id="cb325"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb325-1" data-line-number="1">Q &lt;-<span class="st"> </span><span class="cf">function</span>(p, pp, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), group) {</a>
-<a class="sourceLine" id="cb325-2" data-line-number="2">  p[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>p[<span class="dv">2</span>]</a>
-<a class="sourceLine" id="cb325-3" data-line-number="3">  pp[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>pp[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>pp[<span class="dv">2</span>]</a>
-<a class="sourceLine" id="cb325-4" data-line-number="4">  <span class="op">-</span><span class="st"> </span>(x[group] <span class="op">*</span><span class="st"> </span><span class="kw">prob</span>(pp) <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(<span class="kw">prob</span>(pp), group)[group]) <span class="op">%*%</span><span class="st"> </span><span class="kw">log</span>(<span class="kw">prob</span>(p))</a>
-<a class="sourceLine" id="cb325-5" data-line-number="5">}</a></code></pre></div>
+<div class="sourceCode" id="cb354"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb354-1" data-line-number="1">Q &lt;-<span class="st"> </span><span class="cf">function</span>(p, pp, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), group) {</a>
+<a class="sourceLine" id="cb354-2" data-line-number="2">  p[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>p[<span class="dv">2</span>]</a>
+<a class="sourceLine" id="cb354-3" data-line-number="3">  pp[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>pp[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>pp[<span class="dv">2</span>]</a>
+<a class="sourceLine" id="cb354-4" data-line-number="4">  <span class="op">-</span><span class="st"> </span>(x[group] <span class="op">*</span><span class="st"> </span><span class="kw">prob</span>(pp) <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(<span class="kw">prob</span>(pp), group)[group]) <span class="op">%*%</span><span class="st"> </span><span class="kw">log</span>(<span class="kw">prob</span>(p))</a>
+<a class="sourceLine" id="cb354-5" data-line-number="5">}</a></code></pre></div>
 <p>The R package numDeriv contains functions that compute numerical derivatives.</p>
-<div class="sourceCode" id="cb326"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb326-1" data-line-number="1"><span class="kw">library</span>(numDeriv)</a></code></pre></div>
+<div class="sourceCode" id="cb355"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb355-1" data-line-number="1"><span class="kw">library</span>(numDeriv)</a></code></pre></div>
 <p>The Hessian of <span class="math inline">\(Q\)</span> can be computed using this package.</p>
-<div class="sourceCode" id="cb327"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb327-1" data-line-number="1">iY &lt;-<span class="st"> </span><span class="kw">hessian</span>(Q, phat, <span class="dt">pp =</span> phat, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</a></code></pre></div>
+<div class="sourceCode" id="cb356"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb356-1" data-line-number="1">iY &lt;-<span class="st"> </span><span class="kw">hessian</span>(Q, phat, <span class="dt">pp =</span> phat, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</a></code></pre></div>
 <p>Supplemented EM can then be implemented by computing the Jacobian of
 <span class="math inline">\(\Phi\)</span> using numDeriv as well.</p>
-<div class="sourceCode" id="cb328"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb328-1" data-line-number="1">Phi &lt;-<span class="st"> </span><span class="cf">function</span>(pp) <span class="kw">MStep</span>(<span class="kw">EStep</span>(pp, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>)))</a>
-<a class="sourceLine" id="cb328-2" data-line-number="2">DPhi &lt;-<span class="st"> </span><span class="kw">jacobian</span>(Phi, phat)  <span class="co">## Using numDeriv function &#39;jacobian&#39;</span></a>
-<a class="sourceLine" id="cb328-3" data-line-number="3">iX &lt;-<span class="st"> </span>(<span class="kw">diag</span>(<span class="dv">1</span>, <span class="dv">2</span>) <span class="op">-</span><span class="st"> </span><span class="kw">t</span>(DPhi)) <span class="op">%*%</span><span class="st"> </span>iY</a>
-<a class="sourceLine" id="cb328-4" data-line-number="4">iX</a></code></pre></div>
+<div class="sourceCode" id="cb357"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb357-1" data-line-number="1">Phi &lt;-<span class="st"> </span><span class="cf">function</span>(pp) <span class="kw">MStep</span>(<span class="kw">EStep</span>(pp, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>)))</a>
+<a class="sourceLine" id="cb357-2" data-line-number="2">DPhi &lt;-<span class="st"> </span><span class="kw">jacobian</span>(Phi, phat)  <span class="co">## Using numDeriv function &#39;jacobian&#39;</span></a>
+<a class="sourceLine" id="cb357-3" data-line-number="3">iX &lt;-<span class="st"> </span>(<span class="kw">diag</span>(<span class="dv">1</span>, <span class="dv">2</span>) <span class="op">-</span><span class="st"> </span><span class="kw">t</span>(DPhi)) <span class="op">%*%</span><span class="st"> </span>iY</a>
+<a class="sourceLine" id="cb357-4" data-line-number="4">iX</a></code></pre></div>
 <pre><code>##           [,1]     [,2]
 ## [1,] 18487.558 1384.626
 ## [2,]  1384.626 6816.612</code></pre>
@@ -459,12 +462,12 @@ interesting identity</p>
 <p>The last formula above explicitly gives the asymptotic variance for the incomplete
 observation <span class="math inline">\(X\)</span> as the asymptotic variance for the complete observation <span class="math inline">\(Y\)</span> plus
 a correction term.</p>
-<div class="sourceCode" id="cb330"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb330-1" data-line-number="1">iYinv &lt;-<span class="st"> </span><span class="kw">solve</span>(iY)</a>
-<a class="sourceLine" id="cb330-2" data-line-number="2">iYinv <span class="op">+</span><span class="st"> </span>iYinv <span class="op">%*%</span><span class="st"> </span><span class="kw">t</span>(<span class="kw">solve</span>(<span class="kw">diag</span>(<span class="dv">1</span>, <span class="dv">2</span>) <span class="op">-</span><span class="st"> </span>DPhi, DPhi))</a></code></pre></div>
+<div class="sourceCode" id="cb359"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb359-1" data-line-number="1">iYinv &lt;-<span class="st"> </span><span class="kw">solve</span>(iY)</a>
+<a class="sourceLine" id="cb359-2" data-line-number="2">iYinv <span class="op">+</span><span class="st"> </span>iYinv <span class="op">%*%</span><span class="st"> </span><span class="kw">t</span>(<span class="kw">solve</span>(<span class="kw">diag</span>(<span class="dv">1</span>, <span class="dv">2</span>) <span class="op">-</span><span class="st"> </span>DPhi, DPhi))</a></code></pre></div>
 <pre><code>##               [,1]          [,2]
 ## [1,]  5.492602e-05 -1.115686e-05
 ## [2,] -1.115686e-05  1.489667e-04</code></pre>
-<div class="sourceCode" id="cb332"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb332-1" data-line-number="1"><span class="kw">solve</span>(iX) <span class="co">## SEM-based, but different use of inversion</span></a></code></pre></div>
+<div class="sourceCode" id="cb361"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb361-1" data-line-number="1"><span class="kw">solve</span>(iX) <span class="co">## SEM-based, but different use of inversion</span></a></code></pre></div>
 <pre><code>##               [,1]          [,2]
 ## [1,]  5.492602e-05 -1.115686e-05
 ## [2,] -1.115686e-05  1.489667e-04</code></pre>

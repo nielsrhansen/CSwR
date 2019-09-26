@@ -4,11 +4,11 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>6.3 Regression models | Computational Statistics with R</title>
+  <title>9.1 Stochastic gradient algorithms | Computational Statistics with R</title>
   <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   <meta name="generator" content="bookdown 0.13 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="6.3 Regression models | Computational Statistics with R" />
+  <meta property="og:title" content="9.1 Stochastic gradient algorithms | Computational Statistics with R" />
   <meta property="og:type" content="book" />
   
   
@@ -16,7 +16,7 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="6.3 Regression models | Computational Statistics with R" />
+  <meta name="twitter:title" content="9.1 Stochastic gradient algorithms | Computational Statistics with R" />
   
   <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   
@@ -30,8 +30,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="multinomial-models.html"/>
-<link rel="next" href="finite-mixture-models.html"/>
+<link rel="prev" href="StochOpt.html"/>
+<link rel="next" href="stochastic-em-algorithms.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
@@ -205,10 +205,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
 <li class="chapter" data-level="4" data-path="univariate-random-variables.html"><a href="univariate-random-variables.html"><i class="fa fa-check"></i><b>4</b> Univariate random variables</a><ul>
-<li class="chapter" data-level="4.1" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html"><i class="fa fa-check"></i><b>4.1</b> Pseudorandom number generators</a><ul>
-<li class="chapter" data-level="4.1.1" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html#implementing-a-pseudorandom-number-generator"><i class="fa fa-check"></i><b>4.1.1</b> Implementing a pseudorandom number generator</a></li>
-<li class="chapter" data-level="4.1.2" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html#pseudorandom-number-packages"><i class="fa fa-check"></i><b>4.1.2</b> Pseudorandom number packages</a></li>
-</ul></li>
+<li class="chapter" data-level="4.1" data-path="pseudo-random-numbers.html"><a href="pseudo-random-numbers.html"><i class="fa fa-check"></i><b>4.1</b> Pseudo random numbers</a></li>
 <li class="chapter" data-level="4.2" data-path="transformation-techniques.html"><a href="transformation-techniques.html"><i class="fa fa-check"></i><b>4.2</b> Transformation techniques</a><ul>
 <li class="chapter" data-level="4.2.1" data-path="transformation-techniques.html"><a href="transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
 </ul></li>
@@ -285,6 +282,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="8.3" data-path="fisher-information.html"><a href="fisher-information.html"><i class="fa fa-check"></i><b>8.3</b> Fisher information</a></li>
 <li class="chapter" data-level="8.4" data-path="revisiting-gaussian-mixtures.html"><a href="revisiting-gaussian-mixtures.html"><i class="fa fa-check"></i><b>8.4</b> Revisiting Gaussian mixtures</a></li>
 </ul></li>
+<li class="chapter" data-level="9" data-path="StochOpt.html"><a href="StochOpt.html"><i class="fa fa-check"></i><b>9</b> Stochastic Optimization</a><ul>
+<li class="chapter" data-level="9.1" data-path="stochastic-gradient-algorithms.html"><a href="stochastic-gradient-algorithms.html"><i class="fa fa-check"></i><b>9.1</b> Stochastic gradient algorithms</a></li>
+<li class="chapter" data-level="9.2" data-path="stochastic-em-algorithms.html"><a href="stochastic-em-algorithms.html"><i class="fa fa-check"></i><b>9.2</b> Stochastic EM algorithms</a></li>
+<li class="chapter" data-level="9.3" data-path="stochastic-gradient-em-algorithm.html"><a href="stochastic-gradient-em-algorithm.html"><i class="fa fa-check"></i><b>9.3</b> Stochastic gradient EM algorithm</a></li>
+</ul></li>
 <li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
 </ul>
 
@@ -303,137 +305,19 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="regression" class="section level2">
-<h2><span class="header-section-number">6.3</span> Regression models</h2>
-<p>Regression models are models of one variable, called the response,
-conditionally on one or more other variables, called the predictors.
-Typically we use models that assume conditional independence of the responses
-given the predictors, and a particularly convenient class of regression
-models is based on exponential families.</p>
-<p>If we let <span class="math inline">\(y_i \in \mathbb{R}\)</span> denote the <span class="math inline">\(i\)</span>th response and <span class="math inline">\(x_i \in \mathbb{R}^p\)</span>
-the <span class="math inline">\(i\)</span>th predictor we can consider the exponential family of models with joint density
-<span class="math display">\[f(\mathbf{y} \mid \mathbf{X}, \beta) = \prod_{i=1}^n e^{\theta^T t_i(y_i \mid x_i) - \log \varphi_i(\theta)}\]</span>
-for suitably chosen base measures. Here
-<span class="math display">\[\mathbf{X} = \left( \begin{array}{c} x_1^T \\ x_2^T \\ \vdots \\ x_{n-1}^T \\ x_n^T \end{array} \right)\]</span>
-is called the <em>model matrix</em> and is an <span class="math inline">\(n \times p\)</span> matrix.</p>
-
-<div class="example">
-<p><span id="exm:poisson-regression" class="example"><strong>Example 6.3  </strong></span>If <span class="math inline">\(y_i \in \mathbb{N}_0\)</span> are counts we often use a Poisson regression model
-with point probabilities (density w.r.t. counting measure)
-<span class="math display">\[p_i(y_i \mid x_i) = e^{-\mu(x_i)} \frac{\mu(x_i)^{y_i}}{y_i!}.\]</span>
-If the mean depends on the predictors in a log-linear way, <span class="math inline">\(\log(\mu(x_i)) = x_i^T \beta\)</span>,
-then
-<span class="math display">\[p_i(y_i \mid x_i) = e^{\beta^T x_i y_i - \exp( x_i^T \beta)} \frac{1}{y_i!}.\]</span>
-The factor <span class="math inline">\(1/y_i!\)</span> can be absorbed into the base measure, and we recognize
-this Poisson regression model as an exponential family with sufficient statistics
-<span class="math display">\[t_i(y_i) = x_i y_i\]</span>
-and
-<span class="math display">\[\log \varphi_i(\beta) =  \exp( x_i^T \beta).\]</span></p>
-<p>To implement numerical optimization algorithms for computing the
-maximum-likelihood estimate we note that
-<span class="math display">\[t(\mathbf{y}) = \sum_{i=1}^n x_i y_i = \mathbf{X}^T \mathbf{y} \quad \text{and} \quad
-\kappa(\beta) = \sum_{i=1}^n e^{x_i^T \beta},\]</span>
-that
-<span class="math display">\[\nabla \kappa(\beta) = \sum_{i=1}^n x_i e^{x_i^T \beta},\]</span>
-and that
-<span class="math display">\[D^2 \kappa(\beta) = \sum_{i=1}^n x_i x_i^T e^{x_i^T \beta} = \mathbf{X}^T \mathbf{W}(\beta) \mathbf{X}\]</span>
-where <span class="math inline">\(\mathbf{W}(\beta)\)</span> is a diagonal matrix with <span class="math inline">\(\mathbf{W}(\beta)_{ii} = \exp(x_i^T \beta).\)</span>
-All these formulas follow directly from the general formulas for exponential
-families.</p>
-</div>
-
-<p>To illustrate the use of a Poisson regression model we consider
-the following data set from a major Swedish supermarket chain. It contains
-the number of bags of frozen vegetables sold in a given week in a given store
-under a marketing campaign. A predicted number of items sold in a normal week
-(without a campaign) based on historic sales is included. It is of interest to
-recalibrate this number to give a good prediction of the number of items
-actually sold.</p>
-<div class="sourceCode" id="cb259"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb259-1" data-line-number="1">vegetables &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/vegetables.csv&quot;</span>, <span class="dt">col_types =</span> <span class="kw">cols</span>(<span class="dt">store =</span> <span class="st">&quot;c&quot;</span>))</a></code></pre></div>
-<div class="sourceCode" id="cb260"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb260-1" data-line-number="1"><span class="kw">summary</span>(vegetables)</a></code></pre></div>
-<pre><code>##       sale          normalSale        store          
-##  Min.   :  1.00   Min.   :  0.20   Length:1066       
-##  1st Qu.: 12.00   1st Qu.:  4.20   Class :character  
-##  Median : 21.00   Median :  7.25   Mode  :character  
-##  Mean   : 40.29   Mean   : 11.72                     
-##  3rd Qu.: 40.00   3rd Qu.: 12.25                     
-##  Max.   :571.00   Max.   :102.00</code></pre>
-<p>It is natural to model the number of sold items using a Poisson regression
-model, and we will consider the following simple log-linear model:</p>
-<p><span class="math display">\[\log(E(\text{sale} \mid \text{normalSale})) = \beta_0 + \beta_1 \log(\text{normalSale}).\]</span></p>
-<p>This is an example of an exponential family regression model as above with
-a Poisson response distribution. It is a standard regression model that can
-be fitted to data using the <code>glm</code> function and using the formula interface
-to specify how the response should depend on the normal sale. The model is
-fitted by computing the maximum-likelihood estimate of the two parameters
-<span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span>.</p>
-<div class="sourceCode" id="cb262"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb262-1" data-line-number="1">pois_model_null &lt;-<span class="st"> </span><span class="kw">glm</span>(sale <span class="op">~</span><span class="st"> </span><span class="kw">log</span>(normalSale), </a>
-<a class="sourceLine" id="cb262-2" data-line-number="2">                       <span class="dt">data =</span> vegetables, </a>
-<a class="sourceLine" id="cb262-3" data-line-number="3">                       <span class="dt">family =</span> poisson)   <span class="co">## A Poisson regression model</span></a></code></pre></div>
-<div class="sourceCode" id="cb263"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb263-1" data-line-number="1"><span class="kw">summary</span>(pois_model_null)</a></code></pre></div>
-<pre><code>## 
-## Call:
-## glm(formula = sale ~ log(normalSale), family = poisson, data = vegetables)
-## 
-## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -16.218   -2.677   -0.864    1.324   21.730  
-## 
-## Coefficients:
-##                 Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)        1.461      0.015    97.2   &lt;2e-16 ***
-## log(normalSale)    0.922      0.005   184.4   &lt;2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## (Dispersion parameter for poisson family taken to be 1)
-## 
-##     Null deviance: 51177  on 1065  degrees of freedom
-## Residual deviance: 17502  on 1064  degrees of freedom
-## AIC: 22823
-## 
-## Number of Fisher Scoring iterations: 5</code></pre>
-<p>The fitted model of the expected sale as a function of the normal sale, <span class="math inline">\(x\)</span>, is<br />
-<span class="math display">\[x \mapsto e^{1.46 + 0.92 \times \log(x)} = (4.31 \times x^{-0.08}) \times x.\]</span>
-This model roughly predicts a four-fold increase of the sale during a
-campaign, though the effect decays with increasing <span class="math inline">\(x\)</span>. If the normal
-sale is 10 items the factor is <span class="math inline">\(4.31 \times 10^{-0.08} = 3.58\)</span>, and if
-the normal sale is 100 items the factor reduces to <span class="math inline">\(4.31 \times 100^{-0.08} = 2.98\)</span>.</p>
-<p>We are not entirely satisfied with this model. It is fitted across all
-stores in the data set, and it is not obvious that the same effect should
-apply across all stores. Thus we would like to fit a model of the form</p>
-<p><span class="math display">\[\log(E(\text{sale})) = \beta_{\text{store}} + \beta_1 \log(\text{normalSale})\]</span></p>
-<p>instead. Fortunately, this is also straightforward using <code>glm</code>.</p>
-<div class="sourceCode" id="cb265"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb265-1" data-line-number="1"><span class="co">## Note, variable store is a factor! The &#39;intercept&#39; is removed </span></a>
-<a class="sourceLine" id="cb265-2" data-line-number="2"><span class="co">## in the formula to obtain a parametrization as above. </span></a>
-<a class="sourceLine" id="cb265-3" data-line-number="3">pois_model &lt;-<span class="st"> </span><span class="kw">glm</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, </a>
-<a class="sourceLine" id="cb265-4" data-line-number="4">                  <span class="dt">data =</span> vegetables, </a>
-<a class="sourceLine" id="cb265-5" data-line-number="5">                  <span class="dt">family =</span> poisson)</a></code></pre></div>
-<p>We will not print all the individual store effects as there are 352
-individual stores.</p>
-<div class="sourceCode" id="cb266"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb266-1" data-line-number="1"><span class="kw">summary</span>(pois_model)<span class="op">$</span>coefficients[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">353</span>), ]</a></code></pre></div>
-<pre><code>##                 Estimate Std. Error z value   Pr(&gt;|z|)
-## store1            2.7182    0.12756  21.309 9.416e-101
-## store10           4.2954    0.12043  35.668 1.254e-278
-## store100          3.4866    0.12426  28.060 3.055e-173
-## store101          3.3007    0.11791  27.993 1.989e-172
-## log(normalSale)   0.2025    0.03127   6.474  9.536e-11</code></pre>
-<p>We should note that the coefficient of <span class="math inline">\(\log(\text{normalSale})\)</span> has
-changed considerably, and the model is a somewhat different model now
-for the individual stores.</p>
-<p>From a computational viewpoint the most important thing that has changed is
-that the number of parameters has increased a lot. In the first and simple
-model there are two parameters. In the second model there are 353 parameters.
-Computing the maximum-likelihood estimate is a considerably more difficult
-problem in the second case.</p>
+<div id="stochastic-gradient-algorithms" class="section level2">
+<h2><span class="header-section-number">9.1</span> Stochastic gradient algorithms</h2>
+<p><span class="math display">\[\begin{equation}
+H(\theta) = \sum_{i=1}^n h_i(\theta)
+\end{equation}\]</span></p>
 </div>
             </section>
 
           </div>
         </div>
       </div>
-<a href="multinomial-models.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="finite-mixture-models.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="StochOpt.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="stochastic-em-algorithms.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>

@@ -205,7 +205,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
 <li class="chapter" data-level="4" data-path="univariate-random-variables.html"><a href="univariate-random-variables.html"><i class="fa fa-check"></i><b>4</b> Univariate random variables</a><ul>
-<li class="chapter" data-level="4.1" data-path="pseudo-random-numbers.html"><a href="pseudo-random-numbers.html"><i class="fa fa-check"></i><b>4.1</b> Pseudo random numbers</a></li>
+<li class="chapter" data-level="4.1" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html"><i class="fa fa-check"></i><b>4.1</b> Pseudorandom number generators</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html#implementing-a-pseudorandom-number-generator"><i class="fa fa-check"></i><b>4.1.1</b> Implementing a pseudorandom number generator</a></li>
+<li class="chapter" data-level="4.1.2" data-path="pseudorandom-number-generators.html"><a href="pseudorandom-number-generators.html#pseudorandom-number-packages"><i class="fa fa-check"></i><b>4.1.2</b> Pseudorandom number packages</a></li>
+</ul></li>
 <li class="chapter" data-level="4.2" data-path="transformation-techniques.html"><a href="transformation-techniques.html"><i class="fa fa-check"></i><b>4.2</b> Transformation techniques</a><ul>
 <li class="chapter" data-level="4.2.1" data-path="transformation-techniques.html"><a href="transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
 </ul></li>
@@ -410,26 +413,26 @@ proposal <span class="math inline">\(Y \sim g\)</span> can therefore be carried 
 by testing if a uniformly distributed random variable <span class="math inline">\(U\)</span> on <span class="math inline">\((0,1)\)</span>
 satisfies
 <span class="math display">\[U &gt; e^{\kappa(\cos(Y) - 1)}.\]</span></p>
-<div class="sourceCode" id="cb137"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb137-1" data-line-number="1">vMsim_slow &lt;-<span class="st"> </span><span class="cf">function</span>(n, kappa) {</a>
-<a class="sourceLine" id="cb137-2" data-line-number="2">  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
-<a class="sourceLine" id="cb137-3" data-line-number="3">  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {</a>
-<a class="sourceLine" id="cb137-4" data-line-number="4">    reject &lt;-<span class="st"> </span><span class="ot">TRUE</span></a>
-<a class="sourceLine" id="cb137-5" data-line-number="5">    <span class="cf">while</span>(reject) {</a>
-<a class="sourceLine" id="cb137-6" data-line-number="6">      y0 &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>, <span class="op">-</span><span class="st"> </span>pi, pi)</a>
-<a class="sourceLine" id="cb137-7" data-line-number="7">      u &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb137-8" data-line-number="8">      reject &lt;-<span class="st"> </span>u <span class="op">&gt;</span><span class="st"> </span><span class="kw">exp</span>(kappa <span class="op">*</span><span class="st"> </span>(<span class="kw">cos</span>(y0) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))</a>
-<a class="sourceLine" id="cb137-9" data-line-number="9">    }</a>
-<a class="sourceLine" id="cb137-10" data-line-number="10">    y[i] &lt;-<span class="st"> </span>y0</a>
-<a class="sourceLine" id="cb137-11" data-line-number="11">  }</a>
-<a class="sourceLine" id="cb137-12" data-line-number="12">  y</a>
-<a class="sourceLine" id="cb137-13" data-line-number="13">}</a></code></pre></div>
-<div class="sourceCode" id="cb138"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb138-1" data-line-number="1">f &lt;-<span class="st"> </span><span class="cf">function</span>(x, k) <span class="kw">exp</span>(k <span class="op">*</span><span class="st"> </span><span class="kw">cos</span>(x)) <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi <span class="op">*</span><span class="st"> </span><span class="kw">besselI</span>(k, <span class="dv">0</span>))</a>
-<a class="sourceLine" id="cb138-2" data-line-number="2">x &lt;-<span class="st"> </span><span class="kw">vMsim_slow</span>(<span class="dv">100000</span>, <span class="fl">0.5</span>)</a>
-<a class="sourceLine" id="cb138-3" data-line-number="3"><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb138-4" data-line-number="4"><span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="fl">0.5</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb138-5" data-line-number="5">x &lt;-<span class="st"> </span><span class="kw">vMsim_slow</span>(<span class="dv">100000</span>, <span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb138-6" data-line-number="6"><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb138-7" data-line-number="7"><span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="dv">2</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb166"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb166-1" data-line-number="1">vMsim_slow &lt;-<span class="st"> </span><span class="cf">function</span>(n, kappa) {</a>
+<a class="sourceLine" id="cb166-2" data-line-number="2">  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
+<a class="sourceLine" id="cb166-3" data-line-number="3">  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {</a>
+<a class="sourceLine" id="cb166-4" data-line-number="4">    reject &lt;-<span class="st"> </span><span class="ot">TRUE</span></a>
+<a class="sourceLine" id="cb166-5" data-line-number="5">    <span class="cf">while</span>(reject) {</a>
+<a class="sourceLine" id="cb166-6" data-line-number="6">      y0 &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>, <span class="op">-</span><span class="st"> </span>pi, pi)</a>
+<a class="sourceLine" id="cb166-7" data-line-number="7">      u &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb166-8" data-line-number="8">      reject &lt;-<span class="st"> </span>u <span class="op">&gt;</span><span class="st"> </span><span class="kw">exp</span>(kappa <span class="op">*</span><span class="st"> </span>(<span class="kw">cos</span>(y0) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb166-9" data-line-number="9">    }</a>
+<a class="sourceLine" id="cb166-10" data-line-number="10">    y[i] &lt;-<span class="st"> </span>y0</a>
+<a class="sourceLine" id="cb166-11" data-line-number="11">  }</a>
+<a class="sourceLine" id="cb166-12" data-line-number="12">  y</a>
+<a class="sourceLine" id="cb166-13" data-line-number="13">}</a></code></pre></div>
+<div class="sourceCode" id="cb167"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb167-1" data-line-number="1">f &lt;-<span class="st"> </span><span class="cf">function</span>(x, k) <span class="kw">exp</span>(k <span class="op">*</span><span class="st"> </span><span class="kw">cos</span>(x)) <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi <span class="op">*</span><span class="st"> </span><span class="kw">besselI</span>(k, <span class="dv">0</span>))</a>
+<a class="sourceLine" id="cb167-2" data-line-number="2">x &lt;-<span class="st"> </span><span class="kw">vMsim_slow</span>(<span class="dv">100000</span>, <span class="fl">0.5</span>)</a>
+<a class="sourceLine" id="cb167-3" data-line-number="3"><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb167-4" data-line-number="4"><span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="fl">0.5</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb167-5" data-line-number="5">x &lt;-<span class="st"> </span><span class="kw">vMsim_slow</span>(<span class="dv">100000</span>, <span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb167-6" data-line-number="6"><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb167-7" data-line-number="7"><span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="dv">2</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:vMsim"></span>
 <img src="CSwR_files/figure-html/vMsim-1.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right). The true densities (blue) are added to the plots." width="49%" /><img src="CSwR_files/figure-html/vMsim-2.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right). The true densities (blue) are added to the plots." width="49%" />
 <p class="caption">
@@ -439,15 +442,15 @@ Figure 4.1: Histograms of 100,000 simulated data points from von Mises distribut
 
 <p>Figure <a href="reject-samp.html#fig:vMsim">4.1</a> confirms that the implementation simulates
 from the von Mises distribution.</p>
-<div class="sourceCode" id="cb139"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb139-1" data-line-number="1"><span class="kw">system.time</span>(<span class="kw">vMsim_slow</span>(<span class="dv">100000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>))</a></code></pre></div>
+<div class="sourceCode" id="cb168"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb168-1" data-line-number="1"><span class="kw">system.time</span>(<span class="kw">vMsim_slow</span>(<span class="dv">100000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>))</a></code></pre></div>
 <pre><code>##    user  system elapsed 
 ##   2.545   0.715   3.265</code></pre>
 <p>Though the implementation can easily simulate 100,000 variables in a couple of
 seconds, it might still be possible to improve it. To investigate what most
 of the run time is spent on we use the line profiling tool as implemented in
 the profvis package.</p>
-<div class="sourceCode" id="cb141"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb141-1" data-line-number="1"><span class="kw">library</span>(profvis)</a>
-<a class="sourceLine" id="cb141-2" data-line-number="2"><span class="kw">profvis</span>(<span class="kw">vMsim_slow</span>(<span class="dv">10000</span>, <span class="dv">5</span>))</a></code></pre></div>
+<div class="sourceCode" id="cb170"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb170-1" data-line-number="1"><span class="kw">library</span>(profvis)</a>
+<a class="sourceLine" id="cb170-2" data-line-number="2"><span class="kw">profvis</span>(<span class="kw">vMsim_slow</span>(<span class="dv">10000</span>, <span class="dv">5</span>))</a></code></pre></div>
 <p><img src="figures/vMsim-profile.png" width="90%" style="display: block; margin: auto;" /></p>
 <p>The <a href="https://cswr.nrhstat.org/figures/vMsim-profile.html">profiling result</a> shows that almost all the time
 is spent on simulating uniformly distributed random variables. It is, perhaps,
@@ -467,23 +470,23 @@ wrapper of the random number generator that will cache a suitable amount
 of random variables. This function will take care of some bookkeeping
 and variables can then be extracted as needed. This also nicely
 illustrates a use of <a href="http://adv-r.had.co.nz/Functional-programming.html#closures">closures and a function factory</a>.</p>
-<div class="sourceCode" id="cb142"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb142-1" data-line-number="1">rng_stream &lt;-<span class="st"> </span><span class="cf">function</span>(m, rng, ...) {</a>
-<a class="sourceLine" id="cb142-2" data-line-number="2">  args &lt;-<span class="st"> </span><span class="kw">list</span>(...)</a>
-<a class="sourceLine" id="cb142-3" data-line-number="3">  cache &lt;-<span class="st"> </span><span class="kw">do.call</span>(rng, <span class="kw">c</span>(m, args))</a>
-<a class="sourceLine" id="cb142-4" data-line-number="4">  j &lt;-<span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb142-5" data-line-number="5">  fact &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb142-6" data-line-number="6">  next_rn &lt;-<span class="st"> </span><span class="cf">function</span>(<span class="dt">r =</span> m) {</a>
-<a class="sourceLine" id="cb142-7" data-line-number="7">    j &lt;&lt;-<span class="st"> </span>j <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb142-8" data-line-number="8">    <span class="cf">if</span>(j <span class="op">&gt;</span><span class="st"> </span>m) {</a>
-<a class="sourceLine" id="cb142-9" data-line-number="9">      <span class="cf">if</span>(fact <span class="op">==</span><span class="st"> </span><span class="dv">1</span> <span class="op">&amp;&amp;</span><span class="st"> </span>r <span class="op">&lt;</span><span class="st"> </span>m) fact &lt;&lt;-<span class="st"> </span>m <span class="op">/</span><span class="st"> </span>(m <span class="op">-</span><span class="st"> </span>r)</a>
-<a class="sourceLine" id="cb142-10" data-line-number="10">      m &lt;&lt;-<span class="st"> </span><span class="kw">floor</span>(fact <span class="op">*</span><span class="st"> </span>(r <span class="op">+</span><span class="st"> </span><span class="dv">1</span>))</a>
-<a class="sourceLine" id="cb142-11" data-line-number="11">      cache &lt;&lt;-<span class="st"> </span><span class="kw">do.call</span>(rng, <span class="kw">c</span>(m, args))</a>
-<a class="sourceLine" id="cb142-12" data-line-number="12">      j &lt;&lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb142-13" data-line-number="13">    }</a>
-<a class="sourceLine" id="cb142-14" data-line-number="14">    cache[j] </a>
-<a class="sourceLine" id="cb142-15" data-line-number="15">  }</a>
-<a class="sourceLine" id="cb142-16" data-line-number="16">  next_rn</a>
-<a class="sourceLine" id="cb142-17" data-line-number="17">}</a></code></pre></div>
+<div class="sourceCode" id="cb171"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb171-1" data-line-number="1">rng_stream &lt;-<span class="st"> </span><span class="cf">function</span>(m, rng, ...) {</a>
+<a class="sourceLine" id="cb171-2" data-line-number="2">  args &lt;-<span class="st"> </span><span class="kw">list</span>(...)</a>
+<a class="sourceLine" id="cb171-3" data-line-number="3">  cache &lt;-<span class="st"> </span><span class="kw">do.call</span>(rng, <span class="kw">c</span>(m, args))</a>
+<a class="sourceLine" id="cb171-4" data-line-number="4">  j &lt;-<span class="st"> </span><span class="dv">0</span></a>
+<a class="sourceLine" id="cb171-5" data-line-number="5">  fact &lt;-<span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb171-6" data-line-number="6">  next_rn &lt;-<span class="st"> </span><span class="cf">function</span>(<span class="dt">r =</span> m) {</a>
+<a class="sourceLine" id="cb171-7" data-line-number="7">    j &lt;&lt;-<span class="st"> </span>j <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb171-8" data-line-number="8">    <span class="cf">if</span>(j <span class="op">&gt;</span><span class="st"> </span>m) {</a>
+<a class="sourceLine" id="cb171-9" data-line-number="9">      <span class="cf">if</span>(fact <span class="op">==</span><span class="st"> </span><span class="dv">1</span> <span class="op">&amp;&amp;</span><span class="st"> </span>r <span class="op">&lt;</span><span class="st"> </span>m) fact &lt;&lt;-<span class="st"> </span>m <span class="op">/</span><span class="st"> </span>(m <span class="op">-</span><span class="st"> </span>r)</a>
+<a class="sourceLine" id="cb171-10" data-line-number="10">      m &lt;&lt;-<span class="st"> </span><span class="kw">floor</span>(fact <span class="op">*</span><span class="st"> </span>(r <span class="op">+</span><span class="st"> </span><span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb171-11" data-line-number="11">      cache &lt;&lt;-<span class="st"> </span><span class="kw">do.call</span>(rng, <span class="kw">c</span>(m, args))</a>
+<a class="sourceLine" id="cb171-12" data-line-number="12">      j &lt;&lt;-<span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb171-13" data-line-number="13">    }</a>
+<a class="sourceLine" id="cb171-14" data-line-number="14">    cache[j] </a>
+<a class="sourceLine" id="cb171-15" data-line-number="15">  }</a>
+<a class="sourceLine" id="cb171-16" data-line-number="16">  next_rn</a>
+<a class="sourceLine" id="cb171-17" data-line-number="17">}</a></code></pre></div>
 <p>The implementation above is a function that returns a function. The returned
 function, <code>next_rn</code> comes with its own environment, where it stores the
 cached variables and extracts and returns one variable whenever called.
@@ -494,32 +497,32 @@ then it generates the estimated number of variables needed. This may be
 repeated a couple of times.</p>
 <p>We can then reimplement <code>vMsim</code> using <code>rng_stream</code>. For later usage we add the
 possibility of printing out some tracing information.</p>
-<div class="sourceCode" id="cb143"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb143-1" data-line-number="1">vMsim &lt;-<span class="st"> </span><span class="cf">function</span>(n, kappa, <span class="dt">trace =</span> <span class="ot">FALSE</span>) {</a>
-<a class="sourceLine" id="cb143-2" data-line-number="2">  count &lt;-<span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb143-3" data-line-number="3">  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
-<a class="sourceLine" id="cb143-4" data-line-number="4">  y0 &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, runif, <span class="op">-</span><span class="st"> </span>pi, pi)</a>
-<a class="sourceLine" id="cb143-5" data-line-number="5">  u &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, runif)</a>
-<a class="sourceLine" id="cb143-6" data-line-number="6">  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {</a>
-<a class="sourceLine" id="cb143-7" data-line-number="7">    reject &lt;-<span class="st"> </span><span class="ot">TRUE</span></a>
-<a class="sourceLine" id="cb143-8" data-line-number="8">    <span class="cf">while</span>(reject) {</a>
-<a class="sourceLine" id="cb143-9" data-line-number="9">      count &lt;-<span class="st"> </span>count <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb143-10" data-line-number="10">      z &lt;-<span class="st"> </span><span class="kw">y0</span>(n <span class="op">-</span><span class="st"> </span>i)</a>
-<a class="sourceLine" id="cb143-11" data-line-number="11">      reject &lt;-<span class="st"> </span><span class="kw">u</span>(n <span class="op">-</span><span class="st"> </span>i) <span class="op">&gt;</span><span class="st"> </span><span class="kw">exp</span>(kappa <span class="op">*</span><span class="st"> </span>(<span class="kw">cos</span>(z) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))</a>
-<a class="sourceLine" id="cb143-12" data-line-number="12">    }</a>
-<a class="sourceLine" id="cb143-13" data-line-number="13">    y[i] &lt;-<span class="st"> </span>z</a>
-<a class="sourceLine" id="cb143-14" data-line-number="14">  }</a>
-<a class="sourceLine" id="cb143-15" data-line-number="15">  <span class="cf">if</span>(trace)</a>
-<a class="sourceLine" id="cb143-16" data-line-number="16">    <span class="kw">cat</span>(<span class="st">&quot;kappa =&quot;</span>, kappa, <span class="st">&quot;:&quot;</span>, (count <span class="op">-</span><span class="st"> </span>n)<span class="op">/</span><span class="st"> </span>count, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)  <span class="co">## Rejection frequency</span></a>
-<a class="sourceLine" id="cb143-17" data-line-number="17">  y</a>
-<a class="sourceLine" id="cb143-18" data-line-number="18">}</a></code></pre></div>
+<div class="sourceCode" id="cb172"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb172-1" data-line-number="1">vMsim &lt;-<span class="st"> </span><span class="cf">function</span>(n, kappa, <span class="dt">trace =</span> <span class="ot">FALSE</span>) {</a>
+<a class="sourceLine" id="cb172-2" data-line-number="2">  count &lt;-<span class="st"> </span><span class="dv">0</span></a>
+<a class="sourceLine" id="cb172-3" data-line-number="3">  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
+<a class="sourceLine" id="cb172-4" data-line-number="4">  y0 &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, runif, <span class="op">-</span><span class="st"> </span>pi, pi)</a>
+<a class="sourceLine" id="cb172-5" data-line-number="5">  u &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, runif)</a>
+<a class="sourceLine" id="cb172-6" data-line-number="6">  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {</a>
+<a class="sourceLine" id="cb172-7" data-line-number="7">    reject &lt;-<span class="st"> </span><span class="ot">TRUE</span></a>
+<a class="sourceLine" id="cb172-8" data-line-number="8">    <span class="cf">while</span>(reject) {</a>
+<a class="sourceLine" id="cb172-9" data-line-number="9">      count &lt;-<span class="st"> </span>count <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb172-10" data-line-number="10">      z &lt;-<span class="st"> </span><span class="kw">y0</span>(n <span class="op">-</span><span class="st"> </span>i)</a>
+<a class="sourceLine" id="cb172-11" data-line-number="11">      reject &lt;-<span class="st"> </span><span class="kw">u</span>(n <span class="op">-</span><span class="st"> </span>i) <span class="op">&gt;</span><span class="st"> </span><span class="kw">exp</span>(kappa <span class="op">*</span><span class="st"> </span>(<span class="kw">cos</span>(z) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb172-12" data-line-number="12">    }</a>
+<a class="sourceLine" id="cb172-13" data-line-number="13">    y[i] &lt;-<span class="st"> </span>z</a>
+<a class="sourceLine" id="cb172-14" data-line-number="14">  }</a>
+<a class="sourceLine" id="cb172-15" data-line-number="15">  <span class="cf">if</span>(trace)</a>
+<a class="sourceLine" id="cb172-16" data-line-number="16">    <span class="kw">cat</span>(<span class="st">&quot;kappa =&quot;</span>, kappa, <span class="st">&quot;:&quot;</span>, (count <span class="op">-</span><span class="st"> </span>n)<span class="op">/</span><span class="st"> </span>count, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)  <span class="co">## Rejection frequency</span></a>
+<a class="sourceLine" id="cb172-17" data-line-number="17">  y</a>
+<a class="sourceLine" id="cb172-18" data-line-number="18">}</a></code></pre></div>
 <p>We should, of course, remember to test that the new implementation still
 generates variables from the von Mises distribution.</p>
-<div class="sourceCode" id="cb144"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb144-1" data-line-number="1">x &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="fl">0.5</span>)</a>
-<a class="sourceLine" id="cb144-2" data-line-number="2"><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb144-3" data-line-number="3"><span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="fl">0.5</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb144-4" data-line-number="4">x &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb144-5" data-line-number="5"><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb144-6" data-line-number="6"><span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="dv">2</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb173"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb173-1" data-line-number="1">x &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="fl">0.5</span>)</a>
+<a class="sourceLine" id="cb173-2" data-line-number="2"><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb173-3" data-line-number="3"><span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="fl">0.5</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb173-4" data-line-number="4">x &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb173-5" data-line-number="5"><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb173-6" data-line-number="6"><span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="dv">2</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:vMsim2"></span>
 <img src="CSwR_files/figure-html/vMsim2-1.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using vectorized generation of random variables." width="49%" /><img src="CSwR_files/figure-html/vMsim2-2.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using vectorized generation of random variables." width="49%" />
 <p class="caption">
@@ -529,7 +532,7 @@ Figure 4.2: Histograms of 100,000 simulated data points from von Mises distribut
 
 <p>Then we can compare the run time of this new implementation to the
 run time of the first implementation.</p>
-<div class="sourceCode" id="cb145"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb145-1" data-line-number="1"><span class="kw">system.time</span>(<span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>))</a></code></pre></div>
+<div class="sourceCode" id="cb174"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb174-1" data-line-number="1"><span class="kw">system.time</span>(<span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>))</a></code></pre></div>
 <pre><code>##    user  system elapsed 
 ##   0.573   0.002   0.576</code></pre>
 <p>As we see from the time estimate above, using a vectorized call of <code>runif</code>
@@ -548,23 +551,23 @@ rejections there will be. We can, however, benefit from the ideas in <code>rng_s
 on how to estimate the fraction of acceptances from a first round, which can be
 used for subsequent simulations. This is done in the following fully
 vectorized R implementation.</p>
-<div class="sourceCode" id="cb147"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb147-1" data-line-number="1">vMsim_vec &lt;-<span class="st"> </span><span class="cf">function</span>(n, kappa) {</a>
-<a class="sourceLine" id="cb147-2" data-line-number="2">  fact &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb147-3" data-line-number="3">  j &lt;-<span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb147-4" data-line-number="4">  l &lt;-<span class="st"> </span><span class="dv">0</span>  <span class="co">## The number of accepted samples</span></a>
-<a class="sourceLine" id="cb147-5" data-line-number="5">  y &lt;-<span class="st"> </span><span class="kw">list</span>()</a>
-<a class="sourceLine" id="cb147-6" data-line-number="6">  <span class="cf">while</span>(l <span class="op">&lt;</span><span class="st"> </span>n) {</a>
-<a class="sourceLine" id="cb147-7" data-line-number="7">    m &lt;-<span class="st"> </span><span class="kw">floor</span>(fact <span class="op">*</span><span class="st"> </span>(n <span class="op">-</span><span class="st"> </span>l))  <span class="co">## equals n the first time</span></a>
-<a class="sourceLine" id="cb147-8" data-line-number="8">    y0 &lt;-<span class="st"> </span><span class="kw">runif</span>(m, <span class="op">-</span><span class="st"> </span>pi, pi)</a>
-<a class="sourceLine" id="cb147-9" data-line-number="9">    u &lt;-<span class="st"> </span><span class="kw">runif</span>(m)</a>
-<a class="sourceLine" id="cb147-10" data-line-number="10">    accept &lt;-<span class="st"> </span>u <span class="op">&lt;=</span><span class="st"> </span><span class="kw">exp</span>(kappa <span class="op">*</span><span class="st"> </span>(<span class="kw">cos</span>(y0) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))</a>
-<a class="sourceLine" id="cb147-11" data-line-number="11">    l &lt;-<span class="st"> </span>l <span class="op">+</span><span class="st"> </span><span class="kw">sum</span>(accept)</a>
-<a class="sourceLine" id="cb147-12" data-line-number="12">    y[[j]] &lt;-<span class="st"> </span>y0[accept]</a>
-<a class="sourceLine" id="cb147-13" data-line-number="13">    j &lt;-<span class="st"> </span>j <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb147-14" data-line-number="14">    <span class="cf">if</span>(fact <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) fact &lt;-<span class="st"> </span>n <span class="op">/</span><span class="st"> </span>l</a>
-<a class="sourceLine" id="cb147-15" data-line-number="15">  }</a>
-<a class="sourceLine" id="cb147-16" data-line-number="16">  <span class="kw">unlist</span>(y)[<span class="dv">1</span><span class="op">:</span>n]</a>
-<a class="sourceLine" id="cb147-17" data-line-number="17">}</a></code></pre></div>
+<div class="sourceCode" id="cb176"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb176-1" data-line-number="1">vMsim_vec &lt;-<span class="st"> </span><span class="cf">function</span>(n, kappa) {</a>
+<a class="sourceLine" id="cb176-2" data-line-number="2">  fact &lt;-<span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb176-3" data-line-number="3">  j &lt;-<span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb176-4" data-line-number="4">  l &lt;-<span class="st"> </span><span class="dv">0</span>  <span class="co">## The number of accepted samples</span></a>
+<a class="sourceLine" id="cb176-5" data-line-number="5">  y &lt;-<span class="st"> </span><span class="kw">list</span>()</a>
+<a class="sourceLine" id="cb176-6" data-line-number="6">  <span class="cf">while</span>(l <span class="op">&lt;</span><span class="st"> </span>n) {</a>
+<a class="sourceLine" id="cb176-7" data-line-number="7">    m &lt;-<span class="st"> </span><span class="kw">floor</span>(fact <span class="op">*</span><span class="st"> </span>(n <span class="op">-</span><span class="st"> </span>l))  <span class="co">## equals n the first time</span></a>
+<a class="sourceLine" id="cb176-8" data-line-number="8">    y0 &lt;-<span class="st"> </span><span class="kw">runif</span>(m, <span class="op">-</span><span class="st"> </span>pi, pi)</a>
+<a class="sourceLine" id="cb176-9" data-line-number="9">    u &lt;-<span class="st"> </span><span class="kw">runif</span>(m)</a>
+<a class="sourceLine" id="cb176-10" data-line-number="10">    accept &lt;-<span class="st"> </span>u <span class="op">&lt;=</span><span class="st"> </span><span class="kw">exp</span>(kappa <span class="op">*</span><span class="st"> </span>(<span class="kw">cos</span>(y0) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb176-11" data-line-number="11">    l &lt;-<span class="st"> </span>l <span class="op">+</span><span class="st"> </span><span class="kw">sum</span>(accept)</a>
+<a class="sourceLine" id="cb176-12" data-line-number="12">    y[[j]] &lt;-<span class="st"> </span>y0[accept]</a>
+<a class="sourceLine" id="cb176-13" data-line-number="13">    j &lt;-<span class="st"> </span>j <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb176-14" data-line-number="14">    <span class="cf">if</span>(fact <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) fact &lt;-<span class="st"> </span>n <span class="op">/</span><span class="st"> </span>l</a>
+<a class="sourceLine" id="cb176-15" data-line-number="15">  }</a>
+<a class="sourceLine" id="cb176-16" data-line-number="16">  <span class="kw">unlist</span>(y)[<span class="dv">1</span><span class="op">:</span>n]</a>
+<a class="sourceLine" id="cb176-17" data-line-number="17">}</a></code></pre></div>
 <p>The implementation above incrementally grows a list, whose entries contain
 vectors of accepted samples. It is usually not advisable to dynamically
 grow objects (vectors or list), as this will lead to a lot of memory
@@ -574,22 +577,22 @@ few entries, and it is inconsequential that it is grown dynamically.</p>
 <p>Finally, a C++ implementation via Rcpp is given below where the random variables are
 then again generated one at a time via the C-interface to R’s random number
 generators. There is no (substantial) overhead of doing so in C++.</p>
-<div class="sourceCode" id="cb148"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb148-1" data-line-number="1"><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></a>
-<a class="sourceLine" id="cb148-2" data-line-number="2"><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</a>
-<a class="sourceLine" id="cb148-3" data-line-number="3"><span class="co">// [[Rcpp::export]]</span></a>
-<a class="sourceLine" id="cb148-4" data-line-number="4">NumericVector vMsim_cpp(<span class="dt">int</span> n, <span class="dt">double</span> kappa) {</a>
-<a class="sourceLine" id="cb148-5" data-line-number="5">  NumericVector y(n);</a>
-<a class="sourceLine" id="cb148-6" data-line-number="6">  <span class="dt">double</span> y0;</a>
-<a class="sourceLine" id="cb148-7" data-line-number="7">  <span class="dt">bool</span> reject;</a>
-<a class="sourceLine" id="cb148-8" data-line-number="8">  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; n; ++i) {</a>
-<a class="sourceLine" id="cb148-9" data-line-number="9">    <span class="cf">do</span> {</a>
-<a class="sourceLine" id="cb148-10" data-line-number="10">      y0 = R::runif(- M_PI, M_PI);</a>
-<a class="sourceLine" id="cb148-11" data-line-number="11">      reject = R::runif(<span class="dv">0</span>, <span class="dv">1</span>) &gt; exp(kappa * (cos(y0) - <span class="dv">1</span>));</a>
-<a class="sourceLine" id="cb148-12" data-line-number="12">    } <span class="cf">while</span>(reject);</a>
-<a class="sourceLine" id="cb148-13" data-line-number="13">    y[i] = y0;</a>
-<a class="sourceLine" id="cb148-14" data-line-number="14">  }</a>
-<a class="sourceLine" id="cb148-15" data-line-number="15">  <span class="cf">return</span> y;</a>
-<a class="sourceLine" id="cb148-16" data-line-number="16">}</a></code></pre></div>
+<div class="sourceCode" id="cb177"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb177-1" data-line-number="1"><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></a>
+<a class="sourceLine" id="cb177-2" data-line-number="2"><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</a>
+<a class="sourceLine" id="cb177-3" data-line-number="3"><span class="co">// [[Rcpp::export]]</span></a>
+<a class="sourceLine" id="cb177-4" data-line-number="4">NumericVector vMsim_cpp(<span class="dt">int</span> n, <span class="dt">double</span> kappa) {</a>
+<a class="sourceLine" id="cb177-5" data-line-number="5">  NumericVector y(n);</a>
+<a class="sourceLine" id="cb177-6" data-line-number="6">  <span class="dt">double</span> y0;</a>
+<a class="sourceLine" id="cb177-7" data-line-number="7">  <span class="dt">bool</span> reject;</a>
+<a class="sourceLine" id="cb177-8" data-line-number="8">  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; n; ++i) {</a>
+<a class="sourceLine" id="cb177-9" data-line-number="9">    <span class="cf">do</span> {</a>
+<a class="sourceLine" id="cb177-10" data-line-number="10">      y0 = R::runif(- M_PI, M_PI);</a>
+<a class="sourceLine" id="cb177-11" data-line-number="11">      reject = R::runif(<span class="dv">0</span>, <span class="dv">1</span>) &gt; exp(kappa * (cos(y0) - <span class="dv">1</span>));</a>
+<a class="sourceLine" id="cb177-12" data-line-number="12">    } <span class="cf">while</span>(reject);</a>
+<a class="sourceLine" id="cb177-13" data-line-number="13">    y[i] = y0;</a>
+<a class="sourceLine" id="cb177-14" data-line-number="14">  }</a>
+<a class="sourceLine" id="cb177-15" data-line-number="15">  <span class="cf">return</span> y;</a>
+<a class="sourceLine" id="cb177-16" data-line-number="16">}</a></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:vMsim3"></span>
 <img src="CSwR_files/figure-html/vMsim3-1.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom)." width="49%" /><img src="CSwR_files/figure-html/vMsim3-2.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom)." width="49%" /><img src="CSwR_files/figure-html/vMsim3-3.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom)." width="49%" /><img src="CSwR_files/figure-html/vMsim3-4.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom)." width="49%" />
 <p class="caption">
@@ -602,15 +605,15 @@ and the fast R implementation,
 and confirms that the implementations do simulate from the von Mises distribution.
 We conclude by measurering the run time of the implementations using
 <code>system.time</code> and a combined microbenchmark of all four different implementations.</p>
-<div class="sourceCode" id="cb149"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb149-1" data-line-number="1"><span class="kw">system.time</span>(<span class="kw">vMsim_cpp</span>(<span class="dv">100000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>))</a></code></pre></div>
+<div class="sourceCode" id="cb178"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb178-1" data-line-number="1"><span class="kw">system.time</span>(<span class="kw">vMsim_cpp</span>(<span class="dv">100000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>))</a></code></pre></div>
 <pre><code>##    user  system elapsed 
 ##   0.047   0.000   0.047</code></pre>
-<div class="sourceCode" id="cb151"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb151-1" data-line-number="1"><span class="kw">microbenchmark</span>(</a>
-<a class="sourceLine" id="cb151-2" data-line-number="2">  <span class="kw">vMsim_slow</span>(<span class="dv">1000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>),</a>
-<a class="sourceLine" id="cb151-3" data-line-number="3">  <span class="kw">vMsim</span>(<span class="dv">1000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>),</a>
-<a class="sourceLine" id="cb151-4" data-line-number="4">  <span class="kw">vMsim_vec</span>(<span class="dv">1000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>),</a>
-<a class="sourceLine" id="cb151-5" data-line-number="5">  <span class="kw">vMsim_cpp</span>(<span class="dv">1000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>)</a>
-<a class="sourceLine" id="cb151-6" data-line-number="6">)</a></code></pre></div>
+<div class="sourceCode" id="cb180"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb180-1" data-line-number="1"><span class="kw">microbenchmark</span>(</a>
+<a class="sourceLine" id="cb180-2" data-line-number="2">  <span class="kw">vMsim_slow</span>(<span class="dv">1000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>),</a>
+<a class="sourceLine" id="cb180-3" data-line-number="3">  <span class="kw">vMsim</span>(<span class="dv">1000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>),</a>
+<a class="sourceLine" id="cb180-4" data-line-number="4">  <span class="kw">vMsim_vec</span>(<span class="dv">1000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>),</a>
+<a class="sourceLine" id="cb180-5" data-line-number="5">  <span class="kw">vMsim_cpp</span>(<span class="dv">1000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>)</a>
+<a class="sourceLine" id="cb180-6" data-line-number="6">)</a></code></pre></div>
 <pre><code>## Unit: microseconds
 ##                         expr   min    lq  mean median    uq    max neval
 ##  vMsim_slow(1000, kappa = 5) 16610 18807 24588  19903 20738 100044   100
@@ -656,36 +659,36 @@ gamma distributed. The rejection sampler is otherwise implemented as for
 the non-vectorized von Mises distribution. To investigate rejection probabilities below
 we additionally implement the possibility of printing out some tracing
 information.</p>
-<div class="sourceCode" id="cb153"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb153-1" data-line-number="1"><span class="co">## r &gt;= 1 </span></a>
-<a class="sourceLine" id="cb153-2" data-line-number="2">tfun &lt;-<span class="st"> </span><span class="cf">function</span>(y, a) {</a>
-<a class="sourceLine" id="cb153-3" data-line-number="3">  b &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">3</span> <span class="op">*</span><span class="st"> </span><span class="kw">sqrt</span>(a))</a>
-<a class="sourceLine" id="cb153-4" data-line-number="4">  (y <span class="op">&gt;</span><span class="st"> </span><span class="dv">-1</span><span class="op">/</span>b) <span class="op">*</span><span class="st"> </span>a <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>b <span class="op">*</span><span class="st"> </span>y)<span class="op">^</span><span class="dv">3</span>  <span class="co">## 0 when y &lt;= -1/b</span></a>
-<a class="sourceLine" id="cb153-5" data-line-number="5">}</a>
-<a class="sourceLine" id="cb153-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb153-7" data-line-number="7">qfun &lt;-<span class="st"> </span><span class="cf">function</span>(y, r) {</a>
-<a class="sourceLine" id="cb153-8" data-line-number="8">  a &lt;-<span class="st"> </span>r <span class="op">-</span><span class="st"> </span><span class="dv">1</span><span class="op">/</span><span class="dv">3</span></a>
-<a class="sourceLine" id="cb153-9" data-line-number="9">  tval &lt;-<span class="st"> </span><span class="kw">tfun</span>(y, a)</a>
-<a class="sourceLine" id="cb153-10" data-line-number="10">  <span class="kw">exp</span>(a <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(tval <span class="op">/</span><span class="st"> </span>a) <span class="op">-</span><span class="st"> </span>tval <span class="op">+</span><span class="st"> </span>a)</a>
-<a class="sourceLine" id="cb153-11" data-line-number="11">}</a>
-<a class="sourceLine" id="cb153-12" data-line-number="12"></a>
-<a class="sourceLine" id="cb153-13" data-line-number="13">gammasim &lt;-<span class="st"> </span><span class="cf">function</span>(n, r, <span class="dt">trace =</span> <span class="ot">FALSE</span>) {</a>
-<a class="sourceLine" id="cb153-14" data-line-number="14">  count &lt;-<span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb153-15" data-line-number="15">  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
-<a class="sourceLine" id="cb153-16" data-line-number="16">  y0 &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, rnorm)</a>
-<a class="sourceLine" id="cb153-17" data-line-number="17">  u &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, runif)</a>
-<a class="sourceLine" id="cb153-18" data-line-number="18">  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {</a>
-<a class="sourceLine" id="cb153-19" data-line-number="19">    reject &lt;-<span class="st"> </span><span class="ot">TRUE</span></a>
-<a class="sourceLine" id="cb153-20" data-line-number="20">    <span class="cf">while</span>(reject) {</a>
-<a class="sourceLine" id="cb153-21" data-line-number="21">      count &lt;-<span class="st"> </span>count <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb153-22" data-line-number="22">      z &lt;-<span class="st"> </span><span class="kw">y0</span>(n <span class="op">-</span><span class="st"> </span>i)</a>
-<a class="sourceLine" id="cb153-23" data-line-number="23">      reject &lt;-<span class="st"> </span><span class="kw">u</span>(n <span class="op">-</span><span class="st"> </span>i) <span class="op">&gt;</span><span class="st"> </span><span class="kw">qfun</span>(z, r) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(z<span class="op">^</span><span class="dv">2</span><span class="op">/</span><span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb153-24" data-line-number="24">    }</a>
-<a class="sourceLine" id="cb153-25" data-line-number="25">    y[i] &lt;-<span class="st"> </span>z</a>
-<a class="sourceLine" id="cb153-26" data-line-number="26">  }</a>
-<a class="sourceLine" id="cb153-27" data-line-number="27">  <span class="cf">if</span>(trace)</a>
-<a class="sourceLine" id="cb153-28" data-line-number="28">    <span class="kw">cat</span>(<span class="st">&quot;r =&quot;</span>, r, <span class="st">&quot;:&quot;</span>, (count <span class="op">-</span><span class="st"> </span>n)<span class="op">/</span><span class="st"> </span>count, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)  <span class="co">## Rejection frequency</span></a>
-<a class="sourceLine" id="cb153-29" data-line-number="29">  <span class="kw">tfun</span>(y, r <span class="op">-</span><span class="st"> </span><span class="dv">1</span><span class="op">/</span><span class="dv">3</span>)</a>
-<a class="sourceLine" id="cb153-30" data-line-number="30">}</a></code></pre></div>
+<div class="sourceCode" id="cb182"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb182-1" data-line-number="1"><span class="co">## r &gt;= 1 </span></a>
+<a class="sourceLine" id="cb182-2" data-line-number="2">tfun &lt;-<span class="st"> </span><span class="cf">function</span>(y, a) {</a>
+<a class="sourceLine" id="cb182-3" data-line-number="3">  b &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">3</span> <span class="op">*</span><span class="st"> </span><span class="kw">sqrt</span>(a))</a>
+<a class="sourceLine" id="cb182-4" data-line-number="4">  (y <span class="op">&gt;</span><span class="st"> </span><span class="dv">-1</span><span class="op">/</span>b) <span class="op">*</span><span class="st"> </span>a <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>b <span class="op">*</span><span class="st"> </span>y)<span class="op">^</span><span class="dv">3</span>  <span class="co">## 0 when y &lt;= -1/b</span></a>
+<a class="sourceLine" id="cb182-5" data-line-number="5">}</a>
+<a class="sourceLine" id="cb182-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb182-7" data-line-number="7">qfun &lt;-<span class="st"> </span><span class="cf">function</span>(y, r) {</a>
+<a class="sourceLine" id="cb182-8" data-line-number="8">  a &lt;-<span class="st"> </span>r <span class="op">-</span><span class="st"> </span><span class="dv">1</span><span class="op">/</span><span class="dv">3</span></a>
+<a class="sourceLine" id="cb182-9" data-line-number="9">  tval &lt;-<span class="st"> </span><span class="kw">tfun</span>(y, a)</a>
+<a class="sourceLine" id="cb182-10" data-line-number="10">  <span class="kw">exp</span>(a <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(tval <span class="op">/</span><span class="st"> </span>a) <span class="op">-</span><span class="st"> </span>tval <span class="op">+</span><span class="st"> </span>a)</a>
+<a class="sourceLine" id="cb182-11" data-line-number="11">}</a>
+<a class="sourceLine" id="cb182-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb182-13" data-line-number="13">gammasim &lt;-<span class="st"> </span><span class="cf">function</span>(n, r, <span class="dt">trace =</span> <span class="ot">FALSE</span>) {</a>
+<a class="sourceLine" id="cb182-14" data-line-number="14">  count &lt;-<span class="st"> </span><span class="dv">0</span></a>
+<a class="sourceLine" id="cb182-15" data-line-number="15">  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</a>
+<a class="sourceLine" id="cb182-16" data-line-number="16">  y0 &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, rnorm)</a>
+<a class="sourceLine" id="cb182-17" data-line-number="17">  u &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, runif)</a>
+<a class="sourceLine" id="cb182-18" data-line-number="18">  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {</a>
+<a class="sourceLine" id="cb182-19" data-line-number="19">    reject &lt;-<span class="st"> </span><span class="ot">TRUE</span></a>
+<a class="sourceLine" id="cb182-20" data-line-number="20">    <span class="cf">while</span>(reject) {</a>
+<a class="sourceLine" id="cb182-21" data-line-number="21">      count &lt;-<span class="st"> </span>count <span class="op">+</span><span class="st"> </span><span class="dv">1</span></a>
+<a class="sourceLine" id="cb182-22" data-line-number="22">      z &lt;-<span class="st"> </span><span class="kw">y0</span>(n <span class="op">-</span><span class="st"> </span>i)</a>
+<a class="sourceLine" id="cb182-23" data-line-number="23">      reject &lt;-<span class="st"> </span><span class="kw">u</span>(n <span class="op">-</span><span class="st"> </span>i) <span class="op">&gt;</span><span class="st"> </span><span class="kw">qfun</span>(z, r) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(z<span class="op">^</span><span class="dv">2</span><span class="op">/</span><span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb182-24" data-line-number="24">    }</a>
+<a class="sourceLine" id="cb182-25" data-line-number="25">    y[i] &lt;-<span class="st"> </span>z</a>
+<a class="sourceLine" id="cb182-26" data-line-number="26">  }</a>
+<a class="sourceLine" id="cb182-27" data-line-number="27">  <span class="cf">if</span>(trace)</a>
+<a class="sourceLine" id="cb182-28" data-line-number="28">    <span class="kw">cat</span>(<span class="st">&quot;r =&quot;</span>, r, <span class="st">&quot;:&quot;</span>, (count <span class="op">-</span><span class="st"> </span>n)<span class="op">/</span><span class="st"> </span>count, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)  <span class="co">## Rejection frequency</span></a>
+<a class="sourceLine" id="cb182-29" data-line-number="29">  <span class="kw">tfun</span>(y, r <span class="op">-</span><span class="st"> </span><span class="dv">1</span><span class="op">/</span><span class="dv">3</span>)</a>
+<a class="sourceLine" id="cb182-30" data-line-number="30">}</a></code></pre></div>
 <p>We test the implementation by simulating <span class="math inline">\(100,000\)</span> values
 with parameters <span class="math inline">\(r = 8\)</span> as well as <span class="math inline">\(r = 1\)</span> and compare the resulting histograms
 to the respective theoretical densities.</p>
@@ -702,10 +705,10 @@ A very tight envelope will lead to fewer rejections, while a loose envelope will
 lead to many rejections. Using the tracing option as implemented we obtain
 estimates of the rejection probability and thus a quantification of
 how tight the envelope is.</p>
-<div class="sourceCode" id="cb154"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb154-1" data-line-number="1">y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">16</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb154-2" data-line-number="2">y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">8</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb154-3" data-line-number="3">y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">4</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb154-4" data-line-number="4">y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">1</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb183"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb183-1" data-line-number="1">y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">16</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb183-2" data-line-number="2">y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">8</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb183-3" data-line-number="3">y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">4</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb183-4" data-line-number="4">y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">1</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
 <pre><code>## r = 16 : 0.001836621 
 ## r = 8 : 0.003606943 
 ## r = 4 : 0.007798702 
