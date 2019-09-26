@@ -1,0 +1,176 @@
+# Stochastic Optimization {#StochOpt}
+
+Numerical optimization involves different tradeoffs such as
+an *exploration-exploitation* tradeoff. 
+On the one hand, the objective function must be thoroughly explored
+to build an adequate model of it. On the other hand, the model should be 
+exploited so as to find the minimum quickly. Another tradeoff is between 
+the accuracy of the model and the time it takes to compute with it. 
+
+The optimization algorithms considered in Chapters \@ref{numopt} and \@ref{em}
+work on all available data and take deterministic steps in each iteration. 
+The models are based on accurate local computations of derivatives that can be 
+demanding to compute for large data sets. Moreover, the algorithms 
+greedily exploit the local model obtained from derivatives, but they do 
+little exploration.
+
+By including randomness into optimization algorithms it is 
+possible to lower the computational costs and make the algorithms more 
+exploratory. This can be done in various ways. Classical examples of stochastic 
+optimization algorithms are simulated annealing and evolutionary algorithms that 
+incorporate randomness into the iterative steps with the purpose of exploring 
+the objective function better than a deterministic algorithm is able to. In 
+particular, to avoid getting stuck in a local minimum. Stochastic gradient 
+descent is another example, which compute descent directions from  
+approximate gradients using random subsets of the data. 
+
+The literature on stochastic optimization is huge, and this chapter will 
+only cover a few examples of particular relevance to statistics. Stochastic 
+gradient descent has recently become the standard solution for large 
+scale optimization. In situations ..  
+The stochastic EM algorithm is a useful variation on the EM algorithm that 
+replaces the computation of conditional expectations by samples from the 
+conditional distribution. The two algorithms may beneficially be combined 
+into the stochastic gradient EM algorithm 
+
+
+
+
+
+## Stochastic gradient algorithms
+
+\begin{equation}
+H(\theta) = \sum_{i=1}^n h_i(\theta)
+\end{equation}
+
+An oscillating signal.
+
+```{r sim_oscilation}
+n <- 1000
+alpha <- 1
+beta <- 10
+
+f <- function(x, par)
+ par[1] * cos(par[2] * x)
+
+df <- function(x, par)
+  cbind(cos(par[2] * x), - par[1] * x * sin(par[2] * x))
+
+
+osc <- tibble(
+  t = seq(0, 5, length.out = n),
+  f = f(t, c(alpha, beta)),
+  y = f + rnorm(n, sd = 0.1)
+)    
+
+qplot(t, y, data = osc) + 
+  geom_line(aes(y = f), color = "blue")
+
+
+```
+
+
+```{r}
+
+Loss <- function(data, f, df) {
+  force(data)
+  loss <- function(par) {
+    mean((data$y - f(data$t, par))^2)
+  }
+  gradient <- function(par) {
+    df <- df(data$t, par)
+    dq <- - 2 * (data$y - f(data$t, par)) 
+    as.vector(dq %*% df) / nrow(data)
+  }
+  gradient_h <- function(par, i) {
+    df <- df(data$t[i], par)
+    dq <- - 2 * (data$y[i] - f(data$t[i], par)) 
+    as.vector(dq %*% df) / length(i)
+  }
+  list(loss, gradient, gradient_h)
+}
+
+c(H, grad_H, grad_h) %<-% Loss(osc, f, df)
+
+
+```
+
+```{r}
+alpha_seq <- seq(0, 2, 0.01)
+beta_seq <- seq(8, 12, 0.01)
+Heval <- outer(alpha_seq, beta_seq, Vectorize(function(a, b) H(c(a, b))))
+filled.contour(alpha_seq, beta_seq, Heval, nlevels = 30, col = viridis(30))
+```
+
+```{r}
+library(plotly)
+plot_ly(x = ~beta_seq, y = ~alpha_seq, z = ~Heval, colors = viridis(100)) %>% add_surface() %>% 
+  layout(scene = list(aspectmode = "manual", aspectratio = list(x=1, y=1, z=1)))
+```
+
+```{r}
+GD_tracer <- tracer(c("value", "h_prime", "gamma"), N = 1)
+GD(c(2, 9.1),  gamma = 0.1, cb = GD_tracer$trace)
+```
+
+
+```{r}
+GD_tracer <- tracer(c("value", "h_prime", "gamma"), N = 1)
+GD(c(alpha, beta), epsilon = 1e-8, cb = GD_tracer$trace)
+```
+
+
+### Implementation
+
+
+```{r SGD}
+SGD <- function(par, 
+                H,
+                grad_h,
+                n,           ## Sample size
+                mbn = 50,    ## Mini-batch size
+                gamma = 0.1, ## Learning rate
+                epsilon = 1e-4, 
+                n_iter_no_change = 5, 
+                cb = NULL) {
+  value <- H(par)
+  m <- floor(n / mbn)
+  nr_change <- 0
+  repeat {
+    samp <- sample(n)
+    for(j in 0:(m-1)) {
+      i <-  samp[(j * mbn + 1):(j * mbn + mbn)]
+      par <- par - gamma * grad_h(par, i)
+    }
+    value0 <- H(par)
+    if(!is.null(cb)) cb()
+    ## Convergence criterion based on relative change 
+    if((value - value0) <= epsilon * (value + epsilon)) {
+      iter_no_change <- iter_no_change + 1
+    } else {
+      iter_no_change <- 0
+    }
+    if(iter_no_change == n_iter_no_change) break
+    value <- min(value0, value)
+  }
+  par
+}
+```
+
+
+```{r}
+SGD_tracer <- tracer(c("value", "value0", "grad_h"), expr = expression(grad_h <- grad_h(par, i)), N = 1)
+SGD(c(2, 9.2), H, grad_h, n_iter_no_change = 10, n = n, cb = SGD_tracer$trace)
+```
+
+
+## Stochastic EM algorithms
+
+## Stochastic gradient EM algorithm
+
+
+
+
+
+
+
