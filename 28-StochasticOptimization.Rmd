@@ -39,6 +39,13 @@ into the stochastic gradient EM algorithm
 
 ## Stochastic gradient algorithms
 
+```{r}
+library(tidyverse)
+library(zeallot)
+library(plotly)
+```
+
+
 \begin{equation}
 H(\theta) = \sum_{i=1}^n h_i(\theta)
 \end{equation}
@@ -96,7 +103,7 @@ c(H, grad_H, grad_h) %<-% Loss(osc, f, df)
 ```
 
 ```{r}
-alpha_seq <- seq(0, 2, 0.01)
+alpha_seq <- seq(-2, 2, 0.01)
 beta_seq <- seq(8, 12, 0.01)
 Heval <- outer(alpha_seq, beta_seq, Vectorize(function(a, b) H(c(a, b))))
 filled.contour(alpha_seq, beta_seq, Heval, nlevels = 30, col = viridis(30))
@@ -160,8 +167,67 @@ SGD <- function(par,
 
 ```{r}
 SGD_tracer <- tracer(c("value", "value0", "grad_h"), expr = expression(grad_h <- grad_h(par, i)), N = 1)
-SGD(c(2, 9.2), H, grad_h, n_iter_no_change = 10, n = n, cb = SGD_tracer$trace)
+SGD(c(2, 9), H, grad_h, n_iter_no_change = 10, n = n, cb = SGD_tracer$trace)
 ```
+
+
+
+```{r SGD}
+ADAM <- function(par, 
+                 H,
+                 grad_h,
+                 n,           ## Sample size
+                 mbn = 50,    ## Mini-batch size
+                 gamma = 0.1, ## Learning rate
+                 beta1 = 0.9,
+                 beta2 = 0.999,
+                 eta = 1e-8,
+                 epsilon = 1e-4, 
+                 n_iter_no_change = 5, 
+                 cb = NULL) {
+  value <- H(par)
+  m <- floor(n / mbn)
+  nr_change <- 0
+  beta1_t <- beta1
+  beta2_t <- beta2
+  moment <- v <- 0
+  repeat {
+    samp <- sample(n)
+    for(j in 0:(m-1)) {
+      i <-  samp[(j * mbn + 1):(j * mbn + mbn)]
+      grad <- grad_h(par, i)
+      moment <- beta1 * moment + (1 - beta1) * grad
+      v <- beta2 * v + (1 - beta2) * grad * grad
+      beta1_t <- beta1_t * beta1
+      beta2_t <- beta2_t * beta2
+      mhat <- moment / (1 - beta1_t)
+      vhat <- v / (1 - beta2_t)
+      par <- par - gamma * mhat / (sqrt(vhat) + eta)
+    }
+    value0 <- H(par)
+    if(!is.null(cb)) cb()
+    ## Convergence criterion based on relative change 
+    if((value - value0) <= epsilon * (value + epsilon)) {
+      iter_no_change <- iter_no_change + 1
+    } else {
+      iter_no_change <- 0
+    }
+    if(iter_no_change == n_iter_no_change) break
+    value <- min(value0, value)
+  }
+  par
+}
+```
+
+
+
+```{r}
+ADAM_tracer <- tracer(c("value", "value0", "grad_h"), 
+                      expr = expression(grad_h <- grad_h(par, i)), N = 1)
+ADAM(c(2, 9), H, grad_h, gamma = 0.1, n_iter_no_change = 10, n = n, cb = ADAM_tracer$trace)
+```
+
+
 
 
 ## Stochastic EM algorithms
