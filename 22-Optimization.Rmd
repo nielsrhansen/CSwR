@@ -219,7 +219,7 @@ That is, $\|\theta_n - \theta_{\infty}\| \to 0$ with at least geometric rate $c 
 To discuss how fast numerical optimization algorithms converge in general, 
 there is a refined notion of asymptotic convergence *order* as well as 
 *rate*. We say that the algorithm has asymptotic convergence order $q$ with 
-asymptotic rate $r$ if 
+asymptotic rate $r \in (0, 1)$ if 
 $$\lim_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|^q} = r.$$
 If the order is $q = 1$ we say that the convergence is linear, if $q = 2$
 we say that the convergence is quadratic and so on. If 
@@ -529,17 +529,31 @@ a trace function, and it monitors the internal state during evaluation
 of the function without interrupting evaluation. 
 
 ```{r tracer}
-## Function `tracer` constructs a tracer object containing a `trace` function
-## that can be passed as an argument to other functions that support a callback
-## function as argument. Arguments are
+## Function 'tracer' constructs a tracer object containing a 'trace' and 
+## a 'get' function. The 'trace' function can print object values from its
+## calling environment (the parent frame) when evaluated, and it can also 
+## store those object values in a local list. The time between 'trace' calls
+## can be recorded as well. It is measured by the 'hires_time' function from the 
+## bench package. The 'get' function can subsequently access the traced values
+## in the list, though the user will typically do so via the S3 methods 'print' 
+## or 'summary' below.
+## 
+## The call of the 'trace' function can be manually inserted into the body of 
+## any function, it can be inserted using 'base::trace', or it can be passed
+## as an argument to any function with a callback argument. 
 ##
-## object: a character vector of names of the objects in the evaluation 
-##         environment that are traced.
-## N:      a numeric specifying if and how often trace information is printed. 
-##         N = 1 (default) means every iteration. N = 0 means never.
-## save:   a logical value. Should the trace information be saved or just 
-##         printed.
-## time:   a logical value. Should run time information be save.
+## Arguments of 'tracer' are:
+##
+## object: a character vector of names of the objects in the calling 
+##         environment of the 'trace' function that are to be traced. Objects 
+##         created by the 'expr' argument can be traced. 
+## N:      an integer specifying if and how often trace information is printed. 
+##         N = 0 means never, and otherwise trace information is printed every 
+##         N-th iteration. N = 1 is the default.
+## save:   a logical value. Sets if the trace information is saved.
+## time:   a logical value. Sets if run time information is saved.
+## expr:   an expression that will be evaluated in the calling environment 
+##         of the 'trace' function.
 ## ...:    other arguments passed to `format` for printing.
 
 tracer <- function(objects = NULL, N = 1, save = TRUE, time = TRUE, expr = NULL, ...) {
@@ -547,6 +561,7 @@ tracer <- function(objects = NULL, N = 1, save = TRUE, time = TRUE, expr = NULL,
   values_save <- list()
   last_time <- bench::hires_time()
   trace <- function() {
+    time_diff <- bench::hires_time() - last_time
     if(is.expression(expr))
       eval(expr, envir = parent.frame())
     if(is.null(objects))
@@ -556,14 +571,14 @@ tracer <- function(objects = NULL, N = 1, save = TRUE, time = TRUE, expr = NULL,
     if(N && (n == 1 || n %% N == 0))
       cat("n = ", n, ": ",  paste(names(values), " = ", format(values, ...), 
                                   "; ", sep = ""), "\n", sep = "")
-    if(save)
-      if(time) {
-        time_diff <- bench::hires_time() - last_time
+    if(save) {
+      if(time)
         values[[".time"]] <- time_diff
-        last_time <<- bench::hires_time()
-      }
-    values_save[[n]] <<- values
+      values_save[[n]] <<- values
+    }
     n <<- n + 1
+    last_time <<- bench::hires_time()
+    invisible(NULL)
   }
   get <- function(simplify = FALSE) {
     if(simplify) {
@@ -646,7 +661,7 @@ GD_tracer[377]
 ```
 
 
-```{r GD-trace-plot, echo=FALSE, fig.cap="Gradient norm (top) and value of the negative log-likelihood (bottom) above the limit value $H(\\theta_{\\infty})$. The straight line is fitted to the data points except the first ten using least squares, and the rate is computed from this estimate and reported per ms.", dependson="GD-tracer", out.width="100%", fig.width=8, fig.height=3}
+```{r GD-trace-plot, echo=FALSE, fig.cap="Gradient norm (left) and value of the negative log-likelihood (right) above the limit value $H(\\theta_{\\infty})$. The straight line is fitted to the data points except the first ten using least squares, and the rate is computed from this estimate and reported per ms.", dependson="GD-trace", out.width="100%", fig.width=8, fig.height=3}
 trace_GD <- summary(GD_tracer)
 
 rate1 <- exp(coef(lm(log(h_prime) ~ I(1000 * .time), data = trace_GD, subset = 11:nrow(trace_GD))))[2]
@@ -656,7 +671,7 @@ p1 <- ggplot(data = trace_GD, aes(x = 1000 * .time, y = sqrt(h_prime))) +
   scale_y_log10("Gradient norm") +
   xlab("Time (ms)") + 
   geom_smooth(method = "lm", se = FALSE, method.args = list(subset = 11:nrow(trace_GD))) + 
-  geom_text(aes(x = 60, y = 10, label = paste("rate:", round(rate1, 3), "per ms")), data = data.frame())
+  geom_text(aes(x = 50, y = 10, label = paste("rate:", round(rate1, 3), "per ms")), data = data.frame())
 
 value_Inf <- H(coefficients(pois_model_null))
 rate2 <- exp(coef(lm(log(value - value_Inf) ~ I(1000 * .time), data = trace_GD, subset = 11:nrow(trace_GD))))[2]
@@ -666,7 +681,7 @@ p2 <- ggplot(data = trace_GD, aes(x = 1000 * .time, y = value - value_Inf)) +
   scale_y_log10(expression(Value - Value[infinity])) +
   xlab("Time (ms)") + 
   geom_smooth(method = "lm", se = FALSE, method.args = list(subset = 11:nrow(trace_GD))) + 
-  geom_text(aes(x = 60, y = 1, label = paste("rate:", round(rate2, 3), "per ms")), data = data.frame())
+  geom_text(aes(x = 50, y = 10, label = paste("rate:", round(rate2, 3), "per ms")), data = data.frame())
 
 grid.arrange(p1, p2, ncol = 2)
 ```
@@ -759,7 +774,7 @@ p3 <- ggplot(data = trace_CG, aes(x = 1000 * .time, y = sqrt(grad_norm_sq))) +
   scale_y_log10("Gradient norm") +
   xlab("") + 
   geom_smooth(method = "lm", se = FALSE, method.args = list(subset = 11:nrow(trace_CG))) + 
-  geom_text(aes(x = 60, y = 10, label = paste("rate:", round(rate3, 3), "per ms")), data = data.frame())
+  geom_text(aes(x = 45, y = 10, label = paste("rate:", round(rate3, 3), "per ms")), data = data.frame())
 
 value_Inf <- H(coefficients(pois_model_null))
 rate4 <- exp(coef(lm(log(value - value_Inf) ~ I(1000 * .time), data = trace_CG, subset = 11:nrow(trace_CG))))[2]
@@ -769,10 +784,10 @@ p4 <- ggplot(data = trace_CG, aes(x = 1000 * .time, y = value - value_Inf)) +
   scale_y_log10(expression(Value - Value[infinity])) +
   xlab("Time (ms)") + 
   geom_smooth(method = "lm", se = FALSE, method.args = list(subset = 11:nrow(trace_CG))) + 
-  geom_text(aes(x = 60, y = 10, label = paste("rate:", round(rate4, 3), "per ms")), data = data.frame())
+  geom_text(aes(x = 45, y = 10, label = paste("rate:", round(rate4, 3), "per ms")), data = data.frame())
 
-cc1 <- coord_cartesian(xlim = c(0, 90), ylim = c(1e-4, 100))
-cc2 <- coord_cartesian(xlim = c(0, 90), ylim = c(1e-10, 100))
+cc1 <- coord_cartesian(xlim = c(0, 70), ylim = c(1e-4, 100))
+cc2 <- coord_cartesian(xlim = c(0, 70), ylim = c(1e-10, 100))
 grid.arrange(p1 + cc1 + ggtitle("Gradient descent") + xlab(""), 
              p3 + cc1 + ggtitle("Conjugate gradient"), 
              p2 + cc2, p4 + cc2, nrow = 2)
