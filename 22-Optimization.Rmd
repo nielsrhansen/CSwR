@@ -22,7 +22,7 @@ data, and the more data we have the more computationally demanding
 it is to evaluate $H$ and its derivatives. There are exceptions, though, 
 when a sufficient statistic can be computed upfront. Additionally, high precision in
 the computed (local) minimizer is rarely needed. If the numerical 
-precision is already orders of magnitudes smaller than the statistical 
+error is already orders of magnitudes smaller than the statistical 
 uncertainty of the parameter estimate being computed, further 
 optimization will not make a difference in any relevant way. 
 
@@ -65,7 +65,7 @@ One could hope for
 $$\theta_n \rightarrow \text{arg min}_{\theta} H(\theta)$$
 for $n \to \infty$, but much less can typically be guaranteed. First, 
 the global minimizer may not exist or it may not be unique, in which 
-case the convergence itself is ambiguous. Second, $\theta_n$
+case the convergence itself is undefined or ambiguous. Second, $\theta_n$
 can in general only be shown to converge to a *local* minimizer if anything. 
 Third, $\theta_n$ may not even converge, but $H(\theta_n)$
 may still converge to a local minimum. 
@@ -185,10 +185,11 @@ for a constant $c \in [0,1)$ (using any norm), then $\Phi$ has a unique
 fixed point and $\Phi^{\circ n}(\theta_0)$ converges to that fixed point for 
 any starting point $\theta_0 \in \Theta$. 
 
-We will show that $\Phi_{\nabla}$ is a contraction under the assumption
-that the eigenvalues of $D^2H(\theta)$ for all $\theta$ are contained in an interval $[l, L]$ 
-with $0 < l \leq L$. If $\theta, \theta' \in \Theta$ we find by Taylor's theorem 
-that 
+We will show that $\Phi_{\nabla}$ is a contraction on $\mathrm{lev}(\theta_0)$
+under the assumption that the eigenvalues of $D^2H(\theta)$ for all 
+$\theta \in \mathrm{lev}(\theta_0)$ are contained in an interval $[l, L]$ 
+with $0 < l \leq L$. If $\theta, \theta' \in \mathrm{lev}(\theta_0)$ we find 
+by Taylor's theorem that 
 $$\nabla H(\theta) = \nabla H(\theta') + D^2H(\tilde{\theta})(\theta - \theta')$$
 for some $\tilde{\theta}$ on the line between $\theta$ and $\theta'$. 
 For the gradient descent map this gives that
@@ -205,10 +206,22 @@ For the gradient descent map this gives that
 
 since the eigenvalues of $I - \frac{1}{L+1} D^2H(\tilde{\theta})$ are all between 
 $1 - L/(L + 1)$ and $1 - l/(L+1)$. This shows that $\Phi_{\nabla}$ is a 
-contraction with $c = 1 - l/(L + 1) < 1$, and it provides an alternative proof,
+contraction on $\mathrm{lev}(\theta_0)$ with $c = 1 - l/(L + 1) < 1$. 
+This provides an alternative proof,
 via Banach's fixed point theorem, of convergence of the gradient descent algorithm 
 in Example \@ref(exm:grad-descent) for a *strongly* convex $H$ with uniformly 
 bounded Hessian.
+
+The number $c$ quantifies how fast the iterations converge toward the fixed point.
+The smaller $c$ is, the faster is the convergence. Details are given in the next section, 
+but it is worth noticing here that $c = 1 - l/(L + 1)$ is independent of the 
+dimension of $\Theta$ for given bounds $l$ and $L$. It way also be 
+worth noticing that $\kappa = (L + 1) / l$ is an upper bound on the 
+[conditioning number](https://en.wikipedia.org/wiki/Condition_number#Matrices)
+of the matrix $D^2H(\theta)$ uniformly in $\theta \in \mathrm{lev}(\theta_0)$. 
+A large conditioning number of the second derivative indicates that the graph 
+of $H$ looks like a narrow ravine, this will force $\kappa^{-1}$ to be small,
+thus $c$ to be close to one and the convergence to be slow. 
 
 ### Convergence rate
 
@@ -276,7 +289,7 @@ All the stopping criteria considered here depend on choosing a *tolerance parame
 $\varepsilon > 0$. 
 
 **Small relative descent:** Stop when 
-$$H(\theta_{n-1}) - H(\theta_n) \leq \varepsilon (H(\theta_n) + \varepsilon).$$
+$$H(\theta_{n-1}) - H(\theta_n) \leq \varepsilon (|H(\theta_n)| + \varepsilon).$$
 The reason for this formulation, and in particular the added $\varepsilon$ 
 on the right hand side, is for the criterion to be well behaved even if $H(\theta_n)$
 comes close to zero. 

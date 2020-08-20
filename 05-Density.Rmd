@@ -529,8 +529,8 @@ This functional and vectorized solution is also
 a bit closer to the mathematical notation with 
 e.g. the sum sign $\Sigma$ being mapped directly to the `sum` function
 instead of the incremental addition in the for-loop. For 
-these specific implementations these differences are nuances 
-and preferences may be more subjective and aesthetic than substantial. 
+these specific implementations these differences are mostly
+aesthetic nuances and preferences may be more subjective than substantial. 
 
 To make a qualified choice between the implementations we should
 investigate if they differ in terms of run time and memory consumption, and 
@@ -587,18 +587,20 @@ kern_bench <- microbenchmark(
 
 The result stored in `kern_bench` is a data frame with two columns. The first 
 contains the R expressions evaluated, and the second is the evaluation 
-time measured in nanoseconds. The data frame has 100 rows as each expression 
-by default is evaluated 100 times, but this can be changed using the `times` 
-argument to `microbenchmark`. It may not be immediately obvious that `kern_bench` 
-is a data frame, because when you print it the results are automatically summarized,
-but the actual data structure is revealed by the R function `str`.
+time measured in nanoseconds. Each of the four expressions were evaluated 100 times, 
+and the data frame thus has 400 rows. The `times` argument to `microbenchmark` 
+can be used to change the number of evaluations per expression if needed.
+
+It may not be immediately obvious that `kern_bench` 
+is a data frame, because printing will automatically summarize the 
+data, but the actual data structure is revealed by the R function `str`.
 
 ```{r bench-str, dependson="kern-bench"}
 str(kern_bench)
 ```
 
-A total of 400 evaluations are done for the above benchmark, and these 
-evaluations are done in a random order by default. Measuring evaluation time on a 
+A total of 400 evaluations were done for the above benchmark, and `microbenchmark`  
+does the evaluations in a random order by default. Measuring evaluation time on a 
 complex system like a modern computer is an empirical science, and 
 the order of evaluation can potentially affect the results as the 
 conditions for the evaluation change over time. The purpose of the 
@@ -673,8 +675,8 @@ kern_benchmarks$m <- factor(
 
 ggplot(kern_benchmarks, aes(x = n, y = time, color = fun)) + 
   geom_abline(intercept = 15, slope = 1, color = "gray", linetype = 2) +
-  stat_summary(fun.y = "median", geom = "line") + 
-  stat_summary(fun.y = "median", geom = "point") + 
+  stat_summary(fun = "median", geom = "line") + 
+  stat_summary(fun = "median", geom = "point") + 
   facet_wrap(~ m) + 
   scale_x_continuous(trans = "log2") + 
   scale_y_continuous("Time (ms)", trans = "log2", 
@@ -687,7 +689,7 @@ ggplot(kern_benchmarks, aes(x = n, y = time, color = fun)) +
 Figure \@ref(fig:kern-bench-fig) shows median run times for an experiment with 
 28 combinations of parameters for each of the four different implementations 
 yielding a total of 112 different R expressions being benchmarked. The number of replications 
-for each expression was set to 40. Again we are confirmed that `kernDens` 
+for each expression was set to 40. The results confirm that `kernDens` 
 is substantially slower than the vectorized implementations for all combinations 
 of $n$ and $m$. However, Figure \@ref(fig:kern-bench-fig) also reveals a new 
 pattern; `kernDens_outer` appears to scale with $n$ in a slightly different way 

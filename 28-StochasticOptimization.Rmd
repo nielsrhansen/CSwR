@@ -20,221 +20,219 @@ exploratory. This can be done in various ways. Classical examples of stochastic
 optimization algorithms are simulated annealing and evolutionary algorithms that 
 incorporate randomness into the iterative steps with the purpose of exploring 
 the objective function better than a deterministic algorithm is able to. In 
-particular, to avoid getting stuck in a local minimum. Stochastic gradient 
-descent is another example, which compute descent directions from  
-approximate gradients using random subsets of the data. 
+particular, to avoid getting stuck in saddle points and to escape local minimum. 
+Stochastic gradient descent is another example, which compute descent directions 
+from approximate gradients using random subsets of the data. 
 
 The literature on stochastic optimization is huge, and this chapter will 
 only cover a few examples of particular relevance to statistics. Stochastic 
 gradient descent has recently become the standard solution for large 
 scale optimization. In situations ..  
-The stochastic EM algorithm is a useful variation on the EM algorithm that 
-replaces the computation of conditional expectations by samples from the 
-conditional distribution. The two algorithms may beneficially be combined 
-into the stochastic gradient EM algorithm 
-
-
-
-
 
 ## Stochastic gradient algorithms
 
-```{r}
-library(tidyverse)
-library(zeallot)
-library(plotly)
-```
+Before introducing stochastic gradient descent algorithms it is beneficial 
+to introduce a general framework of objective functions defined via expected 
+loss. 
 
+###
 
-\begin{equation}
-H(\theta) = \sum_{i=1}^n h_i(\theta)
-\end{equation}
+We will consider observations from the sample 
+space $\mathcal{X}$, and we will be interested in estimating parameters 
+from the parameter space $\Theta$. A loss function 
+$$L : \mathcal{X} \times \Theta \to \mathbb{R}$$
+is fixed throughout, and we will be interested in minimizing the expected 
+loss, that is, minimizing 
+$$H(\theta) = E(L(X, \theta)).$$
+Of course, it is implicitly understood that the expectation is finite 
+for all $\theta$. 
 
-An oscillating signal.
-
-```{r sim_oscilation}
-n <- 1000
-alpha <- 1
-beta <- 10
-
-f <- function(x, par)
- par[1] * cos(par[2] * x)
-
-df <- function(x, par)
-  cbind(cos(par[2] * x), - par[1] * x * sin(par[2] * x))
-
-
-osc <- tibble(
-  t = seq(0, 5, length.out = n),
-  f = f(t, c(alpha, beta)),
-  y = f + rnorm(n, sd = 0.1)
-)    
-
-qplot(t, y, data = osc) + 
-  geom_line(aes(y = f), color = "blue")
+```{example, least-squares}
+Suppose that $X = (Y, Z)$ with $Y$ a real valued random variable, and 
+that $\mu(Z, \theta)$ denotes a parametrized mean value depending on $Z$. 
+Then the mean squared error is defined in terms of the squared error loss as
+$$\mathrm{MSE}(\theta) = \frac{1}{2} E (Y - \mu(Z, \theta))^2.$$
+That is, the loss function is the squared error loss 
+$L((y,z), \theta) = \frac{1}{2} (y - \mu(z, \theta))^2$. 
+From the definition it follows that 
+$$2 \mathrm{MSE}(\theta) =  E(Y - E(Y \mid Z))^2 + E (E(Y\mid Z) - \mu(Z, \theta))^2,$$
+where the first term does not depend upon $\theta$. Thus minimizing the 
+mean squared error is the same as finding a $\theta$ with $\mu(Z, \theta)$
+being the optimal approximation of $E(Y \mid Z)$ in a squared error sense.
 
 
 ```
 
+Note how the link between the distribution of $X$ and the parameter is defined 
+in the example above by the choice of loss function. There is no upfront 
+assumption that $E(Y\mid Z) = \mu(Z, \theta_0)$ for some "true" $\theta_0$, but 
+if there is such a $\theta_0$, it will clearly be a minimizer. 
 
-```{r}
+The mean squared error is suitable when we model the (conditional) mean of $Y$. 
+Other loss functions include the "check loss" functions used for 
+[quantile regression](https://en.wikipedia.org/wiki/Quantile_regression#Quantiles).
+The absolute value loss is a special case suitable for modeling the (conditional) 
+median. The example below introduces the log-likelihood loss that is suitable 
+for a parametrized family of distributions.
 
-Loss <- function(data, f, df) {
-  force(data)
-  loss <- function(par) {
-    mean((data$y - f(data$t, par))^2)
-  }
-  gradient <- function(par) {
-    df <- df(data$t, par)
-    dq <- - 2 * (data$y - f(data$t, par)) 
-    as.vector(dq %*% df) / nrow(data)
-  }
-  gradient_h <- function(par, i) {
-    df <- df(data$t[i], par)
-    dq <- - 2 * (data$y[i] - f(data$t[i], par)) 
-    as.vector(dq %*% df) / length(i)
-  }
-  list(loss, gradient, gradient_h)
+```{example, log-likelihood}
+Suppose that $f_{\theta}$ denotes a density on $\mathcal{X}$ parametrized by $\theta$. 
+Then the cross-entropy is defined in terms of the log-likelihood loss as 
+$$H(\theta) = - E \log(f_{\theta}(X)).$$
+Thus the loss function is $L(x, \theta) = - \log f_{\theta}(x)$$. 
+If the distribution of $X$ has density $f^0$ then 
+\begin{align*}
+H(\theta) & = - E \log(f^0(X)) - E \log(f_{\theta}(X)/f^0(X)) \\
+& = H(f^0) + D(f_0 \ || \ f_{\theta})
+\end{align*}
+where the first term is the entropy of $f^0$, and the second is the 
+Kullback-Leibler divergence of $f_{\theta}$ from $f^0$. 
+Note that the entropy does not depend upon $\theta$ and thus minimizing
+the cross-entropy is the same as finding a $\theta$ with $f_{\theta}$ 
+being the optimal approximation of $f^0$ in a Kullback-Leibler sense. 
+
+
+```
+
+Within the abstract framework above the objective is to minimize a theoretical
+objective function defined, via the expectation operator, in terms of the 
+distribution of $X$. In practice, this distribution is unknown and  
+replaced by a surrogate, most often the empirical distribution of a particular
+dataset. That is, we replace $H(\theta)$ by 
+$$H_N(\theta) = \frac{1}{N} \sum_{i=1}^N L(X_i, \theta).$$
+Minimizing $H_N$ as a surrogate of minimizing $H$ has become known as 
+[empirical risk minimization](https://en.wikipedia.org/wiki/Empirical_risk_minimization).
+Minimizing $H_N$ with $N$ fixed is also known as *batch learning* as opposed 
+to *online learning*, which broadly covers algorithms for minimizing $H$ by 
+sequentially considering data points one-by-one. 
+
+### Online stochastic gradient descent
+
+The classical stochastic gradient 
+descent algorithm is an example of an online 
+learning algorithm.
+It is based on the simple observation that if we can 
+interchange differentiation and expectation then
+$$\nabla H(\theta) = E \nabla_{\theta} L(X, \theta),$$
+thus if $X_1, X_2, \ldots$ form an i.i.d. sequence then $\nabla_{\theta} L(X_i, \theta)$ 
+is unbiased as an estimate of the gradient of $H$ for any $\theta$ and any $i$. 
+With inspiration from gradient descent algorithms it is natural to suggest 
+stochastic parameter updates of the form 
+$$\theta_{n + 1} = \theta_n - \gamma_n \nabla_{\theta} L(X_{n+1}, \theta_n)$$
+starting from some initial value $\theta_0$. The (deterministic) sequence of 
+step size parameters $\gamma_n \geq 0$ are known collectively 
+as the *learning rate*.
+
+```{theorem, SGD-conv} 
+Under assumption ?? (Lipschitz gradient, strong convexity) 
+on $L$, $\theta_n$ converges in probability (almost surely?) toward 
+the global minimizer $\theta^*$ if 
+$$\sum_{n=1}^{\infty} \gamma_n^2 < \infty \quad \text{and} \quad 
+\sum_{n=1}^{\infty} \gamma_n = \infty.$$
+```
+
+From the above result, convergence of the algorithm 
+is guaranteed if the learning rate, $\gamma_n$, converges to 0 but 
+does so sufficiently slowly. The precise way that the learning 
+rate dacays is known as the *decay schedule*, and a 
+three-parameter family of decay schedules that satisfy the conditions 
+above is given by 
+$$\gamma_n = \gamma_0 \frac{K}{K + n^a}$$
+for some initial learning rate $\gamma_0 > 0$ and constants $K > 0$ and 
+$a \in (0.5, 1]$. The following example of online Poisson regression
+illustrates the general ideas.
+
+```{example, online-pois-SGD}
+In this example $Y_i \mid Z_i \sim \mathrm{Pois(e^{\beta_0 + \beta_1 Z_i})}$ 
+for $\beta = (\beta_0, \beta_1)^T$ the parameter vector. 
+For the sake of generating $Z_i$-s 
+we will let them be uniformly distributed in $(-1, 1)$, but this assumption 
+plays no role otherwise. 
+
+The conditional mean of $Y_i$ given $Z_i$ is 
+$$\mu(Z_i, \beta) = e^{\beta_0 + \beta_1 Z_i}$$
+and we will consider the squared error loss as well as the log-likelihood loss. 
+First, we observe that 
+$$\nabla  \mu(Z_i, \beta) =  \mu(Z_i, \beta) 
+\left( \begin{array}{c} 1 \\ Z_i \end{array} \right),$$
+  which for the squared error loss gives the gradient 
+$$\nabla \frac{1}{2} (Y_i - \mu(Z_i, \beta) )^2 = 
+  \mu(Z_i, \beta) (\mu(Z_i, \beta) - Y_i) \left( \begin{array}{c} 1 \\ Z_i \end{array} \right).$$ 
+For the log-likelihood loss we find the gradient 
+$$\nabla \left[ \mu(Z_i, \beta) - Y_i \log(\mu(Z_i, \beta)) \right] = 
+  (\mu(Z_i, \beta) - Y_i) 
+\left( \begin{array}{c} 1 \\ Z_i \end{array} \right).$$
+
+```
+
+To clearly emulate the online nature of the algoritm, the implementation below
+generates the observations sequentially in the for-loop. 
+
+```{r online_poisson_SGD}
+N <- 2000
+beta = c(2, 3)
+mu <- function(z, beta) exp(beta[1] + beta[2] * z)
+beta_SE <- vector("list", N)
+beta_LL <- vector("list", N)
+gamma0 <- 0.0002
+gamma1 <- 0.02
+K <- 100
+
+beta_SE[[1]] <- beta_LL[[1]] <- c(1, 1)
+for(i in 2:N) {
+  ## Data
+  z <- runif(1, -1, 1)
+  y <- rpois(1, mu(z, beta))
+  ## Decay schedule update
+  schedule <-  K / (K + i)
+  ## Squared error update
+  mu_old <- mu(z, beta_SE[[i - 1]])
+  beta_SE[[i]] <- beta_SE[[i - 1]]  - 
+    gamma0 * schedule * mu_old * (mu_old - y) * c(1, z)
+  ## Log-likelihood update
+  mu_old <- mu(z, beta_LL[[i - 1]])
+  beta_LL[[i]] <- beta_LL[[i - 1]]  - 
+    gamma1 * schedule * (mu_old - y) * c(1, z)
 }
 
-c(H, grad_H, grad_h) %<-% Loss(osc, f, df)
+beta_SE <- cbind(as.data.frame(do.call(rbind, beta_SE)),
+                 data.frame(iteration = 1:N, loss = "squared error"))
 
+beta_all <- rbind(
+  cbind(as.data.frame(do.call(rbind, beta_LL)),
+        data.frame(iteration = 1:N, loss = "log-likelihood")),
+  beta_SE)
 
-```
-
-```{r}
-alpha_seq <- seq(-2, 2, 0.01)
-beta_seq <- seq(8, 12, 0.01)
-Heval <- outer(alpha_seq, beta_seq, Vectorize(function(a, b) H(c(a, b))))
-filled.contour(alpha_seq, beta_seq, Heval, nlevels = 30, col = viridis(30))
-```
-
-```{r}
-library(plotly)
-plot_ly(x = ~beta_seq, y = ~alpha_seq, z = ~Heval, colors = viridis(100)) %>% add_surface() %>% 
-  layout(scene = list(aspectmode = "manual", aspectratio = list(x=1, y=1, z=1)))
-```
-
-```{r}
-GD_tracer <- tracer(c("value", "h_prime", "gamma"), N = 1)
-GD(c(2, 9.1),  gamma = 0.1, cb = GD_tracer$trace)
+colnames(beta_all)[1:2] <- c("beta0", "beta1")
 ```
 
 
-```{r}
-GD_tracer <- tracer(c("value", "h_prime", "gamma"), N = 1)
-GD(c(alpha, beta), epsilon = 1e-8, cb = GD_tracer$trace)
-```
+```{r, echo=FALSE, dependson="online_poisson_SGD"}
+ggplot(beta_all, aes(iteration, beta0, color = loss)) + 
+  geom_point() +
+  geom_hline(yintercept = beta[1]) + 
+  ylim(c(0, 4))
 
-
-### Implementation
-
-
-```{r SGD}
-SGD <- function(par, 
-                H,
-                grad_h,
-                n,           ## Sample size
-                mbn = 50,    ## Mini-batch size
-                gamma = 0.1, ## Learning rate
-                epsilon = 1e-4, 
-                n_iter_no_change = 5, 
-                cb = NULL) {
-  value <- H(par)
-  m <- floor(n / mbn)
-  nr_change <- 0
-  repeat {
-    samp <- sample(n)
-    for(j in 0:(m-1)) {
-      i <-  samp[(j * mbn + 1):(j * mbn + mbn)]
-      par <- par - gamma * grad_h(par, i)
-    }
-    value0 <- H(par)
-    if(!is.null(cb)) cb()
-    ## Convergence criterion based on relative change 
-    if((value - value0) <= epsilon * (value + epsilon)) {
-      iter_no_change <- iter_no_change + 1
-    } else {
-      iter_no_change <- 0
-    }
-    if(iter_no_change == n_iter_no_change) break
-    value <- min(value0, value)
-  }
-  par
-}
-```
-
-
-```{r}
-SGD_tracer <- tracer(c("value", "value0", "grad_h"), expr = expression(grad_h <- grad_h(par, i)), N = 1)
-SGD(c(2, 9), H, grad_h, n_iter_no_change = 10, n = n, cb = SGD_tracer$trace)
+ggplot(beta_all, aes(iteration, beta1, color = loss)) + 
+  geom_point() +
+  geom_hline(yintercept = beta[2]) + 
+  ylim(c(0, 5))
 ```
 
 
 
-```{r SGD}
-ADAM <- function(par, 
-                 H,
-                 grad_h,
-                 n,           ## Sample size
-                 mbn = 50,    ## Mini-batch size
-                 gamma = 0.1, ## Learning rate
-                 beta1 = 0.9,
-                 beta2 = 0.999,
-                 eta = 1e-8,
-                 epsilon = 1e-4, 
-                 n_iter_no_change = 5, 
-                 cb = NULL) {
-  value <- H(par)
-  m <- floor(n / mbn)
-  nr_change <- 0
-  beta1_t <- beta1
-  beta2_t <- beta2
-  moment <- v <- 0
-  repeat {
-    samp <- sample(n)
-    for(j in 0:(m-1)) {
-      i <-  samp[(j * mbn + 1):(j * mbn + mbn)]
-      grad <- grad_h(par, i)
-      moment <- beta1 * moment + (1 - beta1) * grad
-      v <- beta2 * v + (1 - beta2) * grad * grad
-      beta1_t <- beta1_t * beta1
-      beta2_t <- beta2_t * beta2
-      mhat <- moment / (1 - beta1_t)
-      vhat <- v / (1 - beta2_t)
-      par <- par - gamma * mhat / (sqrt(vhat) + eta)
-    }
-    value0 <- H(par)
-    if(!is.null(cb)) cb()
-    ## Convergence criterion based on relative change 
-    if((value - value0) <= epsilon * (value + epsilon)) {
-      iter_no_change <- iter_no_change + 1
-    } else {
-      iter_no_change <- 0
-    }
-    if(iter_no_change == n_iter_no_change) break
-    value <- min(value0, value)
-  }
-  par
-}
-```
+### Stochastic gradient descent
 
-
-
-```{r}
-ADAM_tracer <- tracer(c("value", "value0", "grad_h"), 
-                      expr = expression(grad_h <- grad_h(par, i)), N = 1)
-ADAM(c(2, 9), H, grad_h, gamma = 0.1, n_iter_no_change = 10, n = n, cb = ADAM_tracer$trace)
-```
+A characteristic of most online algorithms is that they don't store data and any 
+data point is used once and then forgotten. 
 
 
 
 
-## Stochastic EM algorithms
-
-## Stochastic gradient EM algorithm
 
 
+
+## Nonlinear least squares
 
 
 
