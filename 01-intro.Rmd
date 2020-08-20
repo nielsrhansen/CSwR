@@ -1,24 +1,5 @@
 # Introduction {#intro}
 
-```{r extra, include=FALSE}
-source("CSwR_extra.R")
-library(ggplot2)
-library("magrittr")
-knitr::opts_chunk$set(cache = TRUE, dev.args = list(bg = 'transparent'), 
-                      fig.align = "center", fig.pos="h", cache.lazy = TRUE,
-                      out.width = "70%")
-theme_replace(plot.background = element_rect(fill = NA, color = NA))
-```
-
-```{r error_hook, cache=FALSE, echo=FALSE}
-library(knitr)
-hook_error = knit_hooks$get('error')
-knit_hooks$set(error = function(x, options) {
-  x <- strwrap(x)
-  hook_error(x, options)
-})
-```
-
 Computational statistics is about turning theory and methods into algorithms and 
 actual numerical computations with data. It is about solving real computational
 problems that arise when we visualize, analyze and model data. 
@@ -42,8 +23,9 @@ computational statistics happens when the methodology is to be implemented,
 that is, when formulas, algorithms and pseudo code are transformed into actual 
 code and statistical software. It is during this transition that a number of 
 practical challenges reveal themselves, such as actual run time and 
-memory usage, the limitations of finite precision arithmetic, and the practical 
-value of suboptimal or approximate but sufficiently accurate solutions.
+memory usage, the limitations of finite precision arithmetic, and the 
+value of approximate solutions that may be theoretically suboptimal but 
+sufficiently accurate for any pratical purpose.
 
 Statistical software development also requires some basic software engineering 
 skills and knowledge of the most common programming paradigms. Implementing a 
@@ -52,15 +34,14 @@ statistical software for others to use is something quite different. This book
 is *not* an introduction to statistical software development as such, but the 
 process of developing good software plays a prominent role. Thus solutions 
 are not presented as code that magically manifests itself, but code is 
-developed and analyzed in cycles that resemble how real software 
+developed and analyzed in cycles that resemble how software 
 development takes place. 
 
 There is a notable practical and experimental component to software 
 development. However important theoretical considerations are regarding 
 correctness and complexity of algorithms, say, the actual code has to strike 
 a balance between generality, readability, efficiency, accuracy, ease of usage 
-and ease 
-of development among other things. Finding a good balance requires that 
+and ease of development among other things. Finding a good balance requires that 
 one is able to reason about benefits and deficiencies of different 
 implementations. It is a major point of this book that such reasoning should
 rely on experiments and empirical facts and not speculations. 
@@ -70,11 +51,12 @@ basic knowledge of R programming. While RStudio is not a requirement for
 most of the book, it is a recommendable IDE (integrated development environment)
 for R, which offers a convenient framework for developing, benchmarking, 
 profiling, testing, documenting and experimenting with statistical software.
-The excellent book [Advanced R](http://adv-r.had.co.nz) by Hadley Wickham
-is recommended as a 
-companion book covering R programming in detail. In fact, direct references 
-to that book are given whenever further explanations on e.g. functional 
-programming or object oriented programming in R are required. 
+Appendix \@ref(app:R) covers some basic and important aspects of R programming
+and can serve as a survey and quick reference. For
+an in-depth treatment of R as a programming language the reader is referred 
+to [Advanced R](https://adv-r.hadley.nz/) by Hadley Wickham. In fact, direct 
+references to that book are given for detailed explanations of R programming
+language concepts such as functional programming and object oriented programming.
 
 This book is organized into three parts on *smoothing*, *Monte Carlo methods*
 and *optimization*. Each part is introduced in the following
@@ -83,11 +65,11 @@ are related to each other and how they are related to some main trends and
 challenges in contemporary computational statistics. In this introduction, 
 several R functions from various packages are used to illustrate how smoothing,
 simulation of random variables and optimization play roles in statistics. 
-If you have no intention of moving beyond the role of a data analyst that rely 
-on already implemented solutions, you can stop reading after the introduction. 
-The remaining part of the book is about
-the development of such solutions at a deeper level and not how to use 
-high-level interfaces to the plethora of already existing implementations.
+Thus the introduction relies largely on already implemented solutions, and some 
+data analysts will never want to move beyond that use of R. However, the 
+remaining part of the book is written for those who want to move on and learn
+how to develop their own solutions and not just how to use interfaces to the plethora 
+of already existing implementations.
 
 ## Smoothing {#intro-smooth}
 
@@ -101,7 +83,7 @@ There are two related but slightly different approaches. Either we attempt to es
 a smooth density of the observed variables, or we attempt to estimate a smooth 
 conditional density of one variable given others. The latter can in principle
 be done by computing the conditional density from a smooth estimate of the 
-joint distribution. Thus it appears that we really just need a way of 
+joint density. Thus it appears that we really just need a way of 
 computing smooth density estimates. In practice it may, however, be better 
 to solve the conditional smoothing problem directly instead of solving a 
 strictly more complicated problem. This is particularly so, if 
@@ -227,7 +209,7 @@ Histograms produced by ggplot2 have a non adaptive default number of bins equal
 to 30 (number of breaks equal to 31), which is different from `hist` that uses
 [Sturges' formula](https://en.wikipedia.org/wiki/Histogram#Sturges'_formula)
 $$\text{number of breaks} = \lceil \log_2(n) + 1 \rceil$$
-with $n$ the number of samples in the data set. In addition, this number is 
+with $n$ the number of observations in the data set. In addition, this number is 
 further modified by
 the function `pretty` that generates "nice" breaks, which results in 14 breaks
 for the angle data. For easier comparison, the number of bins used by 
@@ -245,9 +227,10 @@ may have a slightly different appearance, but the estimated density obtained by
 
 ### Changing the defaults
 
-Note that the range of the angle data is known to be $(-\pi, \pi]$, which neither
+The range of the angle data is known to be $(-\pi, \pi]$, which neither
 the histogram nor the density smoother take advantage of. The `pretty` function, 
-for instance, chooses breaks in $-3$ and $3$, which results in the two extreme 
+used by `hist` chooses, for instance, breaks in $-3$ and $3$, which results in 
+the two extreme 
 bars in the histogram to be misleading. Note also that for the $\psi$-angle 
 it appears that the defaults result in oversmoothing of the density 
 estimate. That is, the density is more 
@@ -290,8 +273,9 @@ Figure
 that can be obtained by changing the defaults of `density`. The breaks for 
 the histogram have also been chosen manually to make sure that they match 
 the range of the data. Note, in particular, that Sheather-Jones bandwidth 
-selection appears to work better than the default for this example. This is generally the 
-case for multimodal distributions, where the default tends to oversmooth. 
+selection appears to work better than the default bandwidth for this example. 
+This is generally the 
+case for multimodal distributions, where the default bandwidth tends to oversmooth. 
 Note also that the choice of bandwidth is far more consequential than
 the choice of kernel, the latter mostly affecting how wiggly the density 
 estimate is locally. 
@@ -361,7 +345,7 @@ p
 ```
 
 The Ramachandran plot in Figure \@ref(fig:bidens2) shows how structural constraints
-of a protein, such as steric effects, induces a non-standard bivariate distribution
+of a protein, such as steric effects, induce a non-standard bivariate distribution
 of $(\phi, \psi)$-angles. 
 
 ### Large scale smoothing
@@ -652,6 +636,10 @@ and we can then use Monte Carlo integration to compute whatever
 probability or integral w.r.t. the distribution of the statistic that we are 
 interested in. 
 
+### Large scale Monte Carlo methods
+
+
+
 ## Optimization
 
 This section illustrates how a mixture of von Mises distributions to the 
@@ -681,6 +669,8 @@ density(phipsi$psi, bw = "SJ", cut = 0) %>%
 curve(dvM(x, vM_fit$theta, vM_fit$alpha[1]), -pi, pi, 
       add = TRUE, col = "blue", lwd = 2)
 ```
+
+### Large scale optimization
 
 ## Exercises
 
