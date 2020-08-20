@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>4.3 Rejection sampling | Computational Statistics with R</title>
+  <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  <meta name="generator" content="bookdown 0.20 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="4.3 Rejection sampling | Computational Statistics with R" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="4.3 Rejection sampling | Computational Statistics with R" />
+  
+  <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  
+
+<meta name="author" content="Niels Richard Hansen" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="4-2-transformation-techniques.html"/>
+<link rel="next" href="4-4-adaptive.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<script src="libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+
+
+<style type="text/css">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Computational Statistics with R</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="1" data-path="1-intro.html"><a href="1-intro.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
+<li class="chapter" data-level="1.1" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html"><i class="fa fa-check"></i><b>1.1</b> Smoothing</a><ul>
+<li class="chapter" data-level="1.1.1" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#intro-angles"><i class="fa fa-check"></i><b>1.1.1</b> Angle distributions in proteins</a></li>
+<li class="chapter" data-level="1.1.2" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#using-ggplot2"><i class="fa fa-check"></i><b>1.1.2</b> Using ggplot2</a></li>
+<li class="chapter" data-level="1.1.3" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#changing-the-defaults"><i class="fa fa-check"></i><b>1.1.3</b> Changing the defaults</a></li>
+<li class="chapter" data-level="1.1.4" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#multivariate-smoothing"><i class="fa fa-check"></i><b>1.1.4</b> Multivariate methods</a></li>
+<li class="chapter" data-level="1.1.5" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#large-scale-smoothing"><i class="fa fa-check"></i><b>1.1.5</b> Large scale smoothing</a></li>
+</ul></li>
+<li class="chapter" data-level="1.2" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html"><i class="fa fa-check"></i><b>1.2</b> Monte Carlo Methods</a><ul>
+<li class="chapter" data-level="1.2.1" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#vM"><i class="fa fa-check"></i><b>1.2.1</b> Univariate von Mises distributions</a></li>
+<li class="chapter" data-level="1.2.2" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#mixtures-of-von-mises-distributions"><i class="fa fa-check"></i><b>1.2.2</b> Mixtures of von Mises distributions</a></li>
+<li class="chapter" data-level="1.2.3" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#large-scale-monte-carlo-methods"><i class="fa fa-check"></i><b>1.2.3</b> Large scale Monte Carlo methods</a></li>
+</ul></li>
+<li class="chapter" data-level="1.3" data-path="1-3-optimization.html"><a href="1-3-optimization.html"><i class="fa fa-check"></i><b>1.3</b> Optimization</a><ul>
+<li class="chapter" data-level="1.3.1" data-path="1-3-optimization.html"><a href="1-3-optimization.html#the-em-algorithm"><i class="fa fa-check"></i><b>1.3.1</b> The EM-algorithm</a></li>
+<li class="chapter" data-level="1.3.2" data-path="1-3-optimization.html"><a href="1-3-optimization.html#large-scale-optimization"><i class="fa fa-check"></i><b>1.3.2</b> Large scale optimization</a></li>
+</ul></li>
+<li class="chapter" data-level="1.4" data-path="1-4-exercises.html"><a href="1-4-exercises.html"><i class="fa fa-check"></i><b>1.4</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#r-training-exercises"><i class="fa fa-check"></i>R training exercises</a></li>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#histograms-with-non-equidistant-breaks"><i class="fa fa-check"></i>Histograms with non-equidistant breaks</a></li>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#functions-and-functional-programming"><i class="fa fa-check"></i>Functions and functional programming</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part I: Smoothing</b></span></li>
+<li class="chapter" data-level="2" data-path="2-density.html"><a href="2-density.html"><i class="fa fa-check"></i><b>2</b> Density estimation</a><ul>
+<li class="chapter" data-level="2.1" data-path="2-1-unidens.html"><a href="2-1-unidens.html"><i class="fa fa-check"></i><b>2.1</b> Univariate density estimation</a><ul>
+<li class="chapter" data-level="2.1.1" data-path="2-1-unidens.html"><a href="2-1-unidens.html#likelihood"><i class="fa fa-check"></i><b>2.1.1</b> Likelihood considerations</a></li>
+<li class="chapter" data-level="2.1.2" data-path="2-1-unidens.html"><a href="2-1-unidens.html#sieves"><i class="fa fa-check"></i><b>2.1.2</b> Method of sieves</a></li>
+<li class="chapter" data-level="2.1.3" data-path="2-1-unidens.html"><a href="2-1-unidens.html#basis-density"><i class="fa fa-check"></i><b>2.1.3</b> Basis expansions</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html"><i class="fa fa-check"></i><b>2.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="2.2.1" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#implementation"><i class="fa fa-check"></i><b>2.2.1</b> Implementation</a></li>
+<li class="chapter" data-level="2.2.2" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#benchmarking"><i class="fa fa-check"></i><b>2.2.2</b> Benchmarking</a></li>
+</ul></li>
+<li class="chapter" data-level="2.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html"><i class="fa fa-check"></i><b>2.3</b> Bandwidth selection</a><ul>
+<li class="chapter" data-level="2.3.1" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#rectangular"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
+<li class="chapter" data-level="2.3.2" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#ise-mise-and-mse-for-kernel-estimators"><i class="fa fa-check"></i><b>2.3.2</b> ISE, MISE and MSE for kernel estimators</a></li>
+<li class="chapter" data-level="2.3.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#plug-in-estimation-of-the-oracle-bandwidth"><i class="fa fa-check"></i><b>2.3.3</b> Plug-in estimation of the oracle bandwidth</a></li>
+<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>2.4</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="2-4-exercises.html"><a href="2-4-exercises.html"><i class="fa fa-check"></i>Kernel density estimation</a></li>
+<li class="chapter" data-level="" data-path="2-4-exercises.html"><a href="2-4-exercises.html#benchmarking-1"><i class="fa fa-check"></i>Benchmarking</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="3-bivariate.html"><a href="3-bivariate.html"><i class="fa fa-check"></i><b>3</b> Bivariate smoothing</a><ul>
+<li class="chapter" data-level="3.1" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html"><i class="fa fa-check"></i><b>3.1</b> Nearest neighbor smoothers</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#linear-smoothers"><i class="fa fa-check"></i><b>3.1.1</b> Linear smoothers</a></li>
+<li class="chapter" data-level="3.1.2" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#implementing-the-running-mean"><i class="fa fa-check"></i><b>3.1.2</b> Implementing the running mean</a></li>
+<li class="chapter" data-level="3.1.3" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#choose-k-by-cross-validation"><i class="fa fa-check"></i><b>3.1.3</b> Choose <span class="math inline">\(k\)</span> by cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html#nadarayawatson-kernel-smoothing"><i class="fa fa-check"></i><b>3.2.1</b> Nadaraya–Watson kernel smoothing</a></li>
+<li class="chapter" data-level="3.2.2" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html#local-regression-smoothers"><i class="fa fa-check"></i><b>3.2.2</b> Local regression smoothers</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="3-3-sparse-linear-algebra.html"><a href="3-3-sparse-linear-algebra.html"><i class="fa fa-check"></i><b>3.3</b> Sparse linear algebra</a></li>
+<li class="chapter" data-level="3.4" data-path="3-4-onb.html"><a href="3-4-onb.html"><i class="fa fa-check"></i><b>3.4</b> Orthogonal basis expansions</a><ul>
+<li class="chapter" data-level="3.4.1" data-path="3-4-onb.html"><a href="3-4-onb.html#polynomial-expansions"><i class="fa fa-check"></i><b>3.4.1</b> Polynomial expansions</a></li>
+<li class="chapter" data-level="3.4.2" data-path="3-4-onb.html"><a href="3-4-onb.html#fourier-expansions"><i class="fa fa-check"></i><b>3.4.2</b> Fourier expansions</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="3-5-splines.html"><a href="3-5-splines.html"><i class="fa fa-check"></i><b>3.5</b> Splines</a><ul>
+<li class="chapter" data-level="3.5.1" data-path="3-5-splines.html"><a href="3-5-splines.html#smoothing-splines"><i class="fa fa-check"></i><b>3.5.1</b> Smoothing splines</a></li>
+<li class="chapter" data-level="3.5.2" data-path="3-5-splines.html"><a href="3-5-splines.html#splines-in-r"><i class="fa fa-check"></i><b>3.5.2</b> Splines in R</a></li>
+<li class="chapter" data-level="3.5.3" data-path="3-5-splines.html"><a href="3-5-splines.html#efficient-splines"><i class="fa fa-check"></i><b>3.5.3</b> Efficient computation with splines</a></li>
+</ul></li>
+<li class="chapter" data-level="3.6" data-path="3-6-gaussian-processes.html"><a href="3-6-gaussian-processes.html"><i class="fa fa-check"></i><b>3.6</b> Gaussian processes</a></li>
+<li class="chapter" data-level="3.7" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html"><i class="fa fa-check"></i><b>3.7</b> The Kalman filter</a><ul>
+<li class="chapter" data-level="3.7.1" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#ar1-example"><i class="fa fa-check"></i><b>3.7.1</b> AR(1)-example</a></li>
+<li class="chapter" data-level="3.7.2" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#the-kalman-smoother"><i class="fa fa-check"></i><b>3.7.2</b> The Kalman smoother</a></li>
+<li class="chapter" data-level="3.7.3" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#implementation"><i class="fa fa-check"></i><b>3.7.3</b> Implementation</a></li>
+<li class="chapter" data-level="3.7.4" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#the-kalman-filter-1"><i class="fa fa-check"></i><b>3.7.4</b> The Kalman filter</a></li>
+</ul></li>
+<li class="chapter" data-level="3.8" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>3.8</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="3-8-exercises.html"><a href="3-8-exercises.html"><i class="fa fa-check"></i>Nearest neighbors</a></li>
+<li class="chapter" data-level="" data-path="3-8-exercises.html"><a href="3-8-exercises.html#kernel-estimators"><i class="fa fa-check"></i>Kernel estimators</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
+<li class="chapter" data-level="4" data-path="4-univariate-random-variables.html"><a href="4-univariate-random-variables.html"><i class="fa fa-check"></i><b>4</b> Univariate random variables</a><ul>
+<li class="chapter" data-level="4.1" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html"><i class="fa fa-check"></i><b>4.1</b> Pseudorandom number generators</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html#implementing-a-pseudorandom-number-generator"><i class="fa fa-check"></i><b>4.1.1</b> Implementing a pseudorandom number generator</a></li>
+<li class="chapter" data-level="4.1.2" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html#pseudorandom-number-packages"><i class="fa fa-check"></i><b>4.1.2</b> Pseudorandom number packages</a></li>
+</ul></li>
+<li class="chapter" data-level="4.2" data-path="4-2-transformation-techniques.html"><a href="4-2-transformation-techniques.html"><i class="fa fa-check"></i><b>4.2</b> Transformation techniques</a><ul>
+<li class="chapter" data-level="4.2.1" data-path="4-2-transformation-techniques.html"><a href="4-2-transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.3" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html"><i class="fa fa-check"></i><b>4.3</b> Rejection sampling</a><ul>
+<li class="chapter" data-level="4.3.1" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html#vMsim"><i class="fa fa-check"></i><b>4.3.1</b> von Mises distribution</a></li>
+<li class="chapter" data-level="4.3.2" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.2</b> Gamma distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.4" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html"><i class="fa fa-check"></i><b>4.4</b> Adaptive envelopes</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html#beta-distribution"><i class="fa fa-check"></i><b>4.4.1</b> Beta distribution</a></li>
+<li class="chapter" data-level="4.4.2" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html#von-mises-distribution"><i class="fa fa-check"></i><b>4.4.2</b> von Mises distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="4-5-exercises.html"><a href="4-5-exercises.html"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="5-mci.html"><a href="5-mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
+<li class="chapter" data-level="5.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html"><i class="fa fa-check"></i><b>5.1</b> Assessment</a><ul>
+<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#using-the-central-limit-theorem"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
+<li class="chapter" data-level="5.1.2" data-path="5-1-assessment.html"><a href="5-1-assessment.html#concentration-inequalities"><i class="fa fa-check"></i><b>5.1.2</b> Concentration inequalities</a></li>
+<li class="chapter" data-level="5.1.3" data-path="5-1-assessment.html"><a href="5-1-assessment.html#exponential-tail-bound-for-gamma-distributed-variables"><i class="fa fa-check"></i><b>5.1.3</b> Exponential tail bound for Gamma distributed variables</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html"><i class="fa fa-check"></i><b>5.2</b> Importance sampling</a><ul>
+<li class="chapter" data-level="5.2.1" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#unknown-normalization-constants"><i class="fa fa-check"></i><b>5.2.1</b> Unknown normalization constants</a></li>
+<li class="chapter" data-level="5.2.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#hd-int"><i class="fa fa-check"></i><b>5.2.2</b> Computing a high-dimensional integral</a></li>
+</ul></li>
+<li class="chapter" data-level="5.3" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part III: Optimization</b></span></li>
+<li class="chapter" data-level="6" data-path="6-four-examples.html"><a href="6-four-examples.html"><i class="fa fa-check"></i><b>6</b> Four Examples</a><ul>
+<li class="chapter" data-level="6.1" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html"><i class="fa fa-check"></i><b>6.1</b> Exponential families</a><ul>
+<li class="chapter" data-level="6.1.1" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#full-exponential-families"><i class="fa fa-check"></i><b>6.1.1</b> Full exponential families</a></li>
+<li class="chapter" data-level="6.1.2" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>6.1.2</b> Exponential family Bayesian networks</a></li>
+<li class="chapter" data-level="6.1.3" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>6.1.3</b> Likelihood computations</a></li>
+<li class="chapter" data-level="6.1.4" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>6.1.4</b> Curved exponential families</a></li>
+</ul></li>
+<li class="chapter" data-level="6.2" data-path="6-2-multinomial-models.html"><a href="6-2-multinomial-models.html"><i class="fa fa-check"></i><b>6.2</b> Multinomial models</a><ul>
+<li class="chapter" data-level="6.2.1" data-path="6-2-multinomial-models.html"><a href="6-2-multinomial-models.html#pep-moth"><i class="fa fa-check"></i><b>6.2.1</b> Peppered Moths</a></li>
+</ul></li>
+<li class="chapter" data-level="6.3" data-path="6-3-regression.html"><a href="6-3-regression.html"><i class="fa fa-check"></i><b>6.3</b> Regression models</a></li>
+<li class="chapter" data-level="6.4" data-path="6-4-finite-mixture-models.html"><a href="6-4-finite-mixture-models.html"><i class="fa fa-check"></i><b>6.4</b> Finite mixture models</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="6-4-finite-mixture-models.html"><a href="6-4-finite-mixture-models.html#Gaus-mix-ex"><i class="fa fa-check"></i><b>6.4.1</b> Gaussian mixtures</a></li>
+</ul></li>
+<li class="chapter" data-level="6.5" data-path="6-5-mixed-models.html"><a href="6-5-mixed-models.html"><i class="fa fa-check"></i><b>6.5</b> Mixed models</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="7-numopt.html"><a href="7-numopt.html"><i class="fa fa-check"></i><b>7</b> Numerical optimization</a><ul>
+<li class="chapter" data-level="7.1" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html"><i class="fa fa-check"></i><b>7.1</b> Algorithms and convergence</a><ul>
+<li class="chapter" data-level="7.1.1" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#descent-algorithms"><i class="fa fa-check"></i><b>7.1.1</b> Descent algorithms</a></li>
+<li class="chapter" data-level="7.1.2" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#maps-and-fixed-points"><i class="fa fa-check"></i><b>7.1.2</b> Maps and fixed points</a></li>
+<li class="chapter" data-level="7.1.3" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#convergence-rate"><i class="fa fa-check"></i><b>7.1.3</b> Convergence rate</a></li>
+<li class="chapter" data-level="7.1.4" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#stopping-criteria"><i class="fa fa-check"></i><b>7.1.4</b> Stopping criteria</a></li>
+</ul></li>
+<li class="chapter" data-level="7.2" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html"><i class="fa fa-check"></i><b>7.2</b> Descent direction algorithms</a><ul>
+<li class="chapter" data-level="7.2.1" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#line-search"><i class="fa fa-check"></i><b>7.2.1</b> Line search</a></li>
+<li class="chapter" data-level="7.2.2" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#gradient-descent"><i class="fa fa-check"></i><b>7.2.2</b> Gradient descent</a></li>
+<li class="chapter" data-level="7.2.3" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>7.2.3</b> Conjugate gradients</a></li>
+<li class="chapter" data-level="7.2.4" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#pep-moth-descent"><i class="fa fa-check"></i><b>7.2.4</b> Peppered Moths</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html"><i class="fa fa-check"></i><b>7.3</b> Newton-type algorithms</a><ul>
+<li class="chapter" data-level="7.3.1" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>7.3.1</b> Poisson regression</a></li>
+<li class="chapter" data-level="7.3.2" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>7.3.2</b> Quasi-Newton algorithms</a></li>
+<li class="chapter" data-level="7.3.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>7.3.3</b> Sparsity</a></li>
+</ul></li>
+<li class="chapter" data-level="7.4" data-path="7-4-misc-.html"><a href="7-4-misc-.html"><i class="fa fa-check"></i><b>7.4</b> Misc.</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="8-em.html"><a href="8-em.html"><i class="fa fa-check"></i><b>8</b> Expectation maximization algorithms</a><ul>
+<li class="chapter" data-level="8.1" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html"><i class="fa fa-check"></i><b>8.1</b> Basic properties</a><ul>
+<li class="chapter" data-level="8.1.1" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#incomplete-data-likelihood"><i class="fa fa-check"></i><b>8.1.1</b> Incomplete data likelihood</a></li>
+<li class="chapter" data-level="8.1.2" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#monotonicity-of-the-em-algorithm"><i class="fa fa-check"></i><b>8.1.2</b> Monotonicity of the EM algorithm</a></li>
+<li class="chapter" data-level="8.1.3" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#peppered-moths"><i class="fa fa-check"></i><b>8.1.3</b> Peppered moths</a></li>
+</ul></li>
+<li class="chapter" data-level="8.2" data-path="8-2-EM-exp.html"><a href="8-2-EM-exp.html"><i class="fa fa-check"></i><b>8.2</b> Exponential families</a></li>
+<li class="chapter" data-level="8.3" data-path="8-3-fisher-information.html"><a href="8-3-fisher-information.html"><i class="fa fa-check"></i><b>8.3</b> Fisher information</a></li>
+<li class="chapter" data-level="8.4" data-path="8-4-revisiting-gaussian-mixtures.html"><a href="8-4-revisiting-gaussian-mixtures.html"><i class="fa fa-check"></i><b>8.4</b> Revisiting Gaussian mixtures</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="9-StochOpt.html"><a href="9-StochOpt.html"><i class="fa fa-check"></i><b>9</b> Stochastic Optimization</a><ul>
+<li class="chapter" data-level="9.1" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html"><i class="fa fa-check"></i><b>9.1</b> Stochastic gradient algorithms</a><ul>
+<li class="chapter" data-level="9.1.1" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#section"><i class="fa fa-check"></i><b>9.1.1</b> </a></li>
+<li class="chapter" data-level="9.1.2" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#online-stochastic-gradient-descent"><i class="fa fa-check"></i><b>9.1.2</b> Online stochastic gradient descent</a></li>
+<li class="chapter" data-level="9.1.3" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#stochastic-gradient-descent"><i class="fa fa-check"></i><b>9.1.3</b> Stochastic gradient descent</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="9-2-nonlinear-least-squares.html"><a href="9-2-nonlinear-least-squares.html"><i class="fa fa-check"></i><b>9.2</b> Nonlinear least squares</a></li>
+</ul></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="A-app-R.html"><a href="A-app-R.html"><i class="fa fa-check"></i><b>A</b> R programming</a></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Computational Statistics with R</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="reject-samp" class="section level2">
+<h2><span class="header-section-number">4.3</span> Rejection sampling</h2>
+<p>This section deals with a general algorithm for simulating variables
+from a distribution with density <span class="math inline">\(f\)</span>. We call <span class="math inline">\(f\)</span> the target density
+and the corresponding distribution is called the target distribution.
+The idea is to simulate <em>proposals</em> from a different distribution
+with density <span class="math inline">\(g\)</span> (the proposal distribution) and then according to
+a criterion decide to accept or reject the proposals. It is assumed
+throughout that the proposal density <span class="math inline">\(g\)</span> is a density fulfilling that</p>
+<p><span class="math display" id="eq:gfnull">\[\begin{equation}
+g(x) = 0 \Rightarrow f(x) = 0.
+\tag{4.1}
+\end{equation}\]</span></p>
+<p>Let <span class="math inline">\(Y_1, Y_2, \ldots\)</span> be i.i.d. with density <span class="math inline">\(g\)</span> on <span class="math inline">\(\mathbb{R}\)</span> and <span class="math inline">\(U_1, U_2, \ldots\)</span>
+be i.i.d. uniformly distributed on <span class="math inline">\((0,1)\)</span> and independent of the <span class="math inline">\(Y_i\)</span>s. Define
+<span class="math display">\[T(\mathbf{Y}, \mathbf{U}) = Y_{\sigma}\]</span>
+with
+<span class="math display">\[\sigma = \inf\{n \geq 1 \mid U_n \leq \alpha f(Y_n) / g(Y_n)\},\]</span>
+for <span class="math inline">\(\alpha \in (0, 1]\)</span> and <span class="math inline">\(f\)</span> a density. Rejection sampling then consists
+of simulating independent pairs <span class="math inline">\((Y_n, U_n)\)</span> as long as we <em>reject</em> the
+proposals <span class="math inline">\(Y_n\)</span> sampled from <span class="math inline">\(g\)</span>,
+that is, as long as
+<span class="math display">\[U_n &gt; \alpha f(Y_n) / g(Y_n).\]</span>
+The first time we <em>accept</em> a proposal is <span class="math inline">\(\sigma\)</span>, and then we stop the
+sampling and return the proposal <span class="math inline">\(Y_{\sigma}\)</span>. The result is, indeed,
+a sample from the distribution with density <span class="math inline">\(f\)</span> as the following theorem states.</p>
+
+
+<div class="theorem">
+<p><span id="thm:reject" class="theorem"><strong>Theorem 4.2  </strong></span>If <span class="math inline">\(\alpha f(y) \leq g(y)\)</span> for all <span class="math inline">\(y \in \mathbb{R}\)</span> and <span class="math inline">\(\alpha &gt; 0\)</span>
+then the distribution of <span class="math inline">\(Y_{\sigma}\)</span> has density <span class="math inline">\(f\)</span>.</p>
+</div>
+
+
+<div class="proof">
+<p> <span class="proof"><em>Proof. </em></span> Note that <span class="math inline">\(g\)</span> automatically fulfills <a href="4-3-reject-samp.html#eq:gfnull">(4.1)</a>. The formal proof decomposes
+the event <span class="math inline">\((Y_{\sigma} \leq y)\)</span> according to the value of <span class="math inline">\(\sigma\)</span> as follows</p>
+<p><span class="math display">\[\begin{align}
+P(Y_{\sigma} \leq y) &amp; = \sum_{n = 1}^{\infty} P(Y_{n} \leq y, \ \sigma = n) \\
+&amp; = \sum_{n = 1}^{\infty} P(Y_{n} \leq y, \ U_n \leq \alpha f(Y_n) / g(Y_n)) P(\sigma &gt; n - 1) \\
+&amp; = P(Y_{1} \leq y, \ U_1 \leq \alpha f(Y_1) / g(Y_1)) \sum_{n = 1}^{\infty} P(\sigma &gt; n - 1).
+\end{align}\]</span></p>
+<p>By independence of the pairs <span class="math inline">\((Y_n, U_n)\)</span> we find that
+<span class="math display">\[P(\sigma &gt; n - 1) = p^{(n-1)}\]</span>
+where <span class="math inline">\(p = P(U_1 &gt; \alpha f(Y_1) / g(Y_1))\)</span>, and
+<span class="math display">\[\sum_{n = 1}^{\infty} P(\sigma &gt; n - 1) = \sum_{n = 1}^{\infty} p^{(n-1)} = \frac{1}{1 - p}.\]</span></p>
+<p>We further find using Tonelli’s theorem that</p>
+<p><span class="math display">\[\begin{align}
+P(Y_{1} \leq y, \ U_1 \leq \alpha f(Y_1) / g(Y_1)) &amp; = \int_{-\infty}^y \alpha \frac{f(z)}{g(z)} g(z) \mathrm{d}z \\
+&amp; = \alpha \int_{-\infty}^y f(z) \mathrm{d} z.
+\end{align}\]</span></p>
+<p>It also follows from this, by taking <span class="math inline">\(y = \infty\)</span>, that <span class="math inline">\(1 - p = \alpha\)</span>,
+and we conclude that
+<span class="math display">\[P(Y_{\sigma} \leq y) = \int_{-\infty}^y f(z) \mathrm{d} z,\]</span>
+and the density for the distribution of <span class="math inline">\(Y_{\sigma}\)</span> is, indeed, <span class="math inline">\(f\)</span>.</p>
+</div>
+
+<p>Note that if <span class="math inline">\(\alpha f \leq g\)</span> for <em>densities</em> <span class="math inline">\(f\)</span> and <span class="math inline">\(g\)</span>, then
+<span class="math display">\[\alpha = \int \alpha f(x) \mathrm{d}x \leq \int g(x) \mathrm{d}x = 1,\]</span>
+whence it follows automatically that <span class="math inline">\(\alpha \leq 1\)</span> whenever <span class="math inline">\(\alpha f\)</span> is
+dominated by <span class="math inline">\(g\)</span>. The function <span class="math inline">\(g/\alpha\)</span> is called the <em>envelope</em> of <span class="math inline">\(f\)</span>.
+The tighter the envelope, the smaller is the probability of rejecting
+a sample from <span class="math inline">\(g\)</span>, and this is quantified explicitly by <span class="math inline">\(\alpha\)</span> as <span class="math inline">\(1 - \alpha\)</span>
+is the rejection probability. Thus <span class="math inline">\(\alpha\)</span> should preferably be as close to
+one as possible.</p>
+<p>If <span class="math inline">\(f(y) = c q(y)\)</span> and <span class="math inline">\(g(y) = d p(y)\)</span> for (unknown) normalizing constants
+<span class="math inline">\(c, d &gt; 0\)</span> and <span class="math inline">\(\alpha&#39; q \leq p\)</span> for <span class="math inline">\(\alpha&#39; &gt; 0\)</span> then
+<span class="math display">\[\underbrace{\left(\frac{\alpha&#39; d}{c}\right)}_{= \alpha} \ f \leq g.\]</span>
+The constant <span class="math inline">\(\alpha&#39;\)</span> may be larger than 1, but from the argument above
+we know that <span class="math inline">\(\alpha \leq 1\)</span>, and Theorem <a href="4-3-reject-samp.html#thm:reject">4.2</a> gives that
+<span class="math inline">\(Y_{\sigma}\)</span> has distribution with density <span class="math inline">\(f\)</span>. It appears that we need to
+compute the normalizing constants to implement rejection sampling. However,
+observe that
+<span class="math display">\[u \leq \frac{\alpha f(y)}{g(y)} \Leftrightarrow u \leq \frac{\alpha&#39; q(y)}{p(y)},\]</span>
+whence rejection sampling can actually be implemented with knowledge
+of the unnormalized densities and <span class="math inline">\(\alpha&#39;\)</span> only and without computing <span class="math inline">\(c\)</span> or <span class="math inline">\(d\)</span>.
+This is one great advantage of rejection sampling. We should
+note, though, that when we don’t know the normalizing constants, <span class="math inline">\(\alpha&#39;\)</span> does not tell
+us anything about how tight the envelope is, and thus how small the rejection
+probability is.</p>
+<p>Given two functions <span class="math inline">\(q\)</span> and <span class="math inline">\(p\)</span>, how do we then find <span class="math inline">\(\alpha&#39;\)</span> so that
+<span class="math inline">\(\alpha&#39; q \leq p\)</span>? Consider the function
+<span class="math display">\[y \mapsto \frac{p(y)}{q(y)}\]</span>
+for <span class="math inline">\(q(y) &gt; 0\)</span>. If this function is lower bounded by a value strictly larger than
+zero, we can take
+<span class="math display">\[\alpha&#39; = \inf_{y: q(y) &gt; 0} \frac{p(y)}{q(y)} &gt; 0.\]</span>
+We can in practice often find this value by minimizing <span class="math inline">\(p(y)/q(y)\)</span>. If
+the minimum is zero, there is no <span class="math inline">\(\alpha&#39;\)</span>, and <span class="math inline">\(p\)</span> cannot be
+used to construct an envelope. If the minimum is strictly positive
+it is the best possible choice of <span class="math inline">\(\alpha&#39;\)</span>.</p>
+<div id="vMsim" class="section level3">
+<h3><span class="header-section-number">4.3.1</span> von Mises distribution</h3>
+<p>Recall the <a href="1-2-monte-carlo-methods.html#vM">von Mises distribution</a> from Section <a href="1-2-monte-carlo-methods.html#vM">1.2.1</a>. It is a
+distribution on <span class="math inline">\((-\pi, \pi]\)</span> with density
+<span class="math display">\[f(x) \propto e^{\kappa \cos(x - \mu)}\]</span>
+for parameters <span class="math inline">\(\kappa &gt; 0\)</span> and <span class="math inline">\(\mu \in (-\pi, \pi]\)</span>. Clearly, <span class="math inline">\(\mu\)</span> is a
+location parameter, and we fix <span class="math inline">\(\mu = 0\)</span> in the following. Simulating random variables
+with <span class="math inline">\(\mu \neq 0\)</span> can be achieved by (wrapped) translation of variables
+with <span class="math inline">\(\mu = 0\)</span>.</p>
+<p>Thus the target density is <span class="math inline">\(f(x) \propto e^{\kappa \cos(x)}\)</span>. In this section
+we will use the uniform distribution on <span class="math inline">\((-\pi, \pi)\)</span> as proposal distribution.
+It has constant density <span class="math inline">\(g(x) = (2\pi)^{-1}\)</span>, but all we need is, in fact, that
+<span class="math inline">\(g(x) \propto 1\)</span>. Since <span class="math inline">\(x \mapsto 1 / \exp(\kappa \cos(x)) = \exp(-\kappa \cos(x))\)</span> attains its
+minimum <span class="math inline">\(\exp(-\kappa)\)</span> for <span class="math inline">\(x = 0\)</span>, we find that
+<span class="math display">\[\alpha&#39; e^{\kappa \cos(x)} = e^{\kappa(\cos(x) - 1)} \leq 1,\]</span>
+with <span class="math inline">\(\alpha&#39; = \exp(-\kappa)\)</span>. The rejection test of the
+proposal <span class="math inline">\(Y \sim g\)</span> can therefore be carried out
+by testing if a uniformly distributed random variable <span class="math inline">\(U\)</span> on <span class="math inline">\((0,1)\)</span>
+satisfies
+<span class="math display">\[U &gt; e^{\kappa(\cos(Y) - 1)}.\]</span></p>
+<div class="sourceCode" id="cb167"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb167-1"><a href="4-3-reject-samp.html#cb167-1"></a>vMsim_slow &lt;-<span class="st"> </span><span class="cf">function</span>(n, kappa) {</span>
+<span id="cb167-2"><a href="4-3-reject-samp.html#cb167-2"></a>  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</span>
+<span id="cb167-3"><a href="4-3-reject-samp.html#cb167-3"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {</span>
+<span id="cb167-4"><a href="4-3-reject-samp.html#cb167-4"></a>    reject &lt;-<span class="st"> </span><span class="ot">TRUE</span></span>
+<span id="cb167-5"><a href="4-3-reject-samp.html#cb167-5"></a>    <span class="cf">while</span>(reject) {</span>
+<span id="cb167-6"><a href="4-3-reject-samp.html#cb167-6"></a>      y0 &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>, <span class="op">-</span><span class="st"> </span>pi, pi)</span>
+<span id="cb167-7"><a href="4-3-reject-samp.html#cb167-7"></a>      u &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>)</span>
+<span id="cb167-8"><a href="4-3-reject-samp.html#cb167-8"></a>      reject &lt;-<span class="st"> </span>u <span class="op">&gt;</span><span class="st"> </span><span class="kw">exp</span>(kappa <span class="op">*</span><span class="st"> </span>(<span class="kw">cos</span>(y0) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))</span>
+<span id="cb167-9"><a href="4-3-reject-samp.html#cb167-9"></a>    }</span>
+<span id="cb167-10"><a href="4-3-reject-samp.html#cb167-10"></a>    y[i] &lt;-<span class="st"> </span>y0</span>
+<span id="cb167-11"><a href="4-3-reject-samp.html#cb167-11"></a>  }</span>
+<span id="cb167-12"><a href="4-3-reject-samp.html#cb167-12"></a>  y</span>
+<span id="cb167-13"><a href="4-3-reject-samp.html#cb167-13"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb168"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb168-1"><a href="4-3-reject-samp.html#cb168-1"></a>f &lt;-<span class="st"> </span><span class="cf">function</span>(x, k) <span class="kw">exp</span>(k <span class="op">*</span><span class="st"> </span><span class="kw">cos</span>(x)) <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi <span class="op">*</span><span class="st"> </span><span class="kw">besselI</span>(k, <span class="dv">0</span>))</span>
+<span id="cb168-2"><a href="4-3-reject-samp.html#cb168-2"></a>x &lt;-<span class="st"> </span><span class="kw">vMsim_slow</span>(<span class="dv">100000</span>, <span class="fl">0.5</span>)</span>
+<span id="cb168-3"><a href="4-3-reject-samp.html#cb168-3"></a><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb168-4"><a href="4-3-reject-samp.html#cb168-4"></a><span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="fl">0.5</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb168-5"><a href="4-3-reject-samp.html#cb168-5"></a>x &lt;-<span class="st"> </span><span class="kw">vMsim_slow</span>(<span class="dv">100000</span>, <span class="dv">2</span>)</span>
+<span id="cb168-6"><a href="4-3-reject-samp.html#cb168-6"></a><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb168-7"><a href="4-3-reject-samp.html#cb168-7"></a><span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="dv">2</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:vMsim"></span>
+<img src="CSwR_files/figure-html/vMsim-1.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right). The true densities (blue) are added to the plots." width="49%" /><img src="CSwR_files/figure-html/vMsim-2.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right). The true densities (blue) are added to the plots." width="49%" />
+<p class="caption">
+Figure 4.1: Histograms of 100,000 simulated data points from von Mises distributions with parameters <span class="math inline">\(\kappa = 0.5\)</span> (left) and <span class="math inline">\(\kappa = 2\)</span> (right). The true densities (blue) are added to the plots.
+</p>
+</div>
+
+<p>Figure <a href="4-3-reject-samp.html#fig:vMsim">4.1</a> confirms that the implementation simulates
+from the von Mises distribution.</p>
+<div class="sourceCode" id="cb169"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb169-1"><a href="4-3-reject-samp.html#cb169-1"></a><span class="kw">system.time</span>(<span class="kw">vMsim_slow</span>(<span class="dv">100000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>))</span></code></pre></div>
+<pre><code>##    user  system elapsed 
+##   2.667   0.907   3.538</code></pre>
+<p>Though the implementation can easily simulate 100,000 variables in a couple of
+seconds, it might still be possible to improve it. To investigate what most
+of the run time is spent on we use the line profiling tool as implemented in
+the profvis package.</p>
+<div class="sourceCode" id="cb171"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb171-1"><a href="4-3-reject-samp.html#cb171-1"></a><span class="kw">library</span>(profvis)</span>
+<span id="cb171-2"><a href="4-3-reject-samp.html#cb171-2"></a><span class="kw">profvis</span>(<span class="kw">vMsim_slow</span>(<span class="dv">10000</span>, <span class="dv">5</span>))</span></code></pre></div>
+<p><img src="figures/vMsim-profile.png" width="90%" style="display: block; margin: auto;" /></p>
+<p>The <a href="https://cswr.nrhstat.org/figures/vMsim-profile.html">profiling result</a> shows that almost all the time
+is spent on simulating uniformly distributed random variables. It is, perhaps,
+expected that this should take some time, but that it takes so much more time
+than computing the ratio, say, used for the rejection test is a bit surprising.
+What might be even more surprising is the large amount of memory allocation
+and deallocation associated with the simulation of the variables.</p>
+<p>The culprit is <code>runif</code> that has some overhead associated with each call.
+The function performs much better if called once to return a vector than
+if called repeatedly as above to return just single numbers. We could
+rewrite the rejection sampler to make better use of <code>runif</code>, but it would
+make the code a bit more complicated because we don’t know upfront
+how many uniform variables we need. This will introduce some bookkeeping
+that it is possible to abstract away from the implementation of any
+rejection sampler. Therefore we implement a generic
+wrapper of the random number generator that will cache a suitable amount
+of random variables. This function will take care of some bookkeeping
+and variables can then be extracted as needed. This also nicely
+illustrates a use of <a href="http://adv-r.had.co.nz/Functional-programming.html#closures">closures and a function factory</a>.</p>
+<div class="sourceCode" id="cb172"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb172-1"><a href="4-3-reject-samp.html#cb172-1"></a>rng_stream &lt;-<span class="st"> </span><span class="cf">function</span>(m, rng, ...) {</span>
+<span id="cb172-2"><a href="4-3-reject-samp.html#cb172-2"></a>  args &lt;-<span class="st"> </span><span class="kw">list</span>(...)</span>
+<span id="cb172-3"><a href="4-3-reject-samp.html#cb172-3"></a>  cache &lt;-<span class="st"> </span><span class="kw">do.call</span>(rng, <span class="kw">c</span>(m, args))</span>
+<span id="cb172-4"><a href="4-3-reject-samp.html#cb172-4"></a>  j &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb172-5"><a href="4-3-reject-samp.html#cb172-5"></a>  fact &lt;-<span class="st"> </span><span class="dv">1</span></span>
+<span id="cb172-6"><a href="4-3-reject-samp.html#cb172-6"></a>  next_rn &lt;-<span class="st"> </span><span class="cf">function</span>(<span class="dt">r =</span> m) {</span>
+<span id="cb172-7"><a href="4-3-reject-samp.html#cb172-7"></a>    j &lt;&lt;-<span class="st"> </span>j <span class="op">+</span><span class="st"> </span><span class="dv">1</span></span>
+<span id="cb172-8"><a href="4-3-reject-samp.html#cb172-8"></a>    <span class="cf">if</span>(j <span class="op">&gt;</span><span class="st"> </span>m) {</span>
+<span id="cb172-9"><a href="4-3-reject-samp.html#cb172-9"></a>      <span class="cf">if</span>(fact <span class="op">==</span><span class="st"> </span><span class="dv">1</span> <span class="op">&amp;&amp;</span><span class="st"> </span>r <span class="op">&lt;</span><span class="st"> </span>m) fact &lt;&lt;-<span class="st"> </span>m <span class="op">/</span><span class="st"> </span>(m <span class="op">-</span><span class="st"> </span>r)</span>
+<span id="cb172-10"><a href="4-3-reject-samp.html#cb172-10"></a>      m &lt;&lt;-<span class="st"> </span><span class="kw">floor</span>(fact <span class="op">*</span><span class="st"> </span>(r <span class="op">+</span><span class="st"> </span><span class="dv">1</span>))</span>
+<span id="cb172-11"><a href="4-3-reject-samp.html#cb172-11"></a>      cache &lt;&lt;-<span class="st"> </span><span class="kw">do.call</span>(rng, <span class="kw">c</span>(m, args))</span>
+<span id="cb172-12"><a href="4-3-reject-samp.html#cb172-12"></a>      j &lt;&lt;-<span class="st"> </span><span class="dv">1</span></span>
+<span id="cb172-13"><a href="4-3-reject-samp.html#cb172-13"></a>    }</span>
+<span id="cb172-14"><a href="4-3-reject-samp.html#cb172-14"></a>    cache[j] </span>
+<span id="cb172-15"><a href="4-3-reject-samp.html#cb172-15"></a>  }</span>
+<span id="cb172-16"><a href="4-3-reject-samp.html#cb172-16"></a>  next_rn</span>
+<span id="cb172-17"><a href="4-3-reject-samp.html#cb172-17"></a>}</span></code></pre></div>
+<p>The implementation above is a function that returns a function. The returned
+function, <code>next_rn</code> comes with its own environment, where it stores the
+cached variables and extracts and returns one variable whenever called.
+It generates a new vector of random variables
+whenever it “runs out”. The first time it does so, the function estimates a
+factor of how many variables is needed in total based on the argument <code>r</code>, and
+then it generates the estimated number of variables needed. This may be
+repeated a couple of times.</p>
+<p>We can then reimplement <code>vMsim</code> using <code>rng_stream</code>. For later usage we add the
+possibility of printing out some tracing information.</p>
+<div class="sourceCode" id="cb173"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb173-1"><a href="4-3-reject-samp.html#cb173-1"></a>vMsim &lt;-<span class="st"> </span><span class="cf">function</span>(n, kappa, <span class="dt">trace =</span> <span class="ot">FALSE</span>) {</span>
+<span id="cb173-2"><a href="4-3-reject-samp.html#cb173-2"></a>  count &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb173-3"><a href="4-3-reject-samp.html#cb173-3"></a>  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</span>
+<span id="cb173-4"><a href="4-3-reject-samp.html#cb173-4"></a>  y0 &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, runif, <span class="op">-</span><span class="st"> </span>pi, pi)</span>
+<span id="cb173-5"><a href="4-3-reject-samp.html#cb173-5"></a>  u &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, runif)</span>
+<span id="cb173-6"><a href="4-3-reject-samp.html#cb173-6"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {</span>
+<span id="cb173-7"><a href="4-3-reject-samp.html#cb173-7"></a>    reject &lt;-<span class="st"> </span><span class="ot">TRUE</span></span>
+<span id="cb173-8"><a href="4-3-reject-samp.html#cb173-8"></a>    <span class="cf">while</span>(reject) {</span>
+<span id="cb173-9"><a href="4-3-reject-samp.html#cb173-9"></a>      count &lt;-<span class="st"> </span>count <span class="op">+</span><span class="st"> </span><span class="dv">1</span></span>
+<span id="cb173-10"><a href="4-3-reject-samp.html#cb173-10"></a>      z &lt;-<span class="st"> </span><span class="kw">y0</span>(n <span class="op">-</span><span class="st"> </span>i)</span>
+<span id="cb173-11"><a href="4-3-reject-samp.html#cb173-11"></a>      reject &lt;-<span class="st"> </span><span class="kw">u</span>(n <span class="op">-</span><span class="st"> </span>i) <span class="op">&gt;</span><span class="st"> </span><span class="kw">exp</span>(kappa <span class="op">*</span><span class="st"> </span>(<span class="kw">cos</span>(z) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))</span>
+<span id="cb173-12"><a href="4-3-reject-samp.html#cb173-12"></a>    }</span>
+<span id="cb173-13"><a href="4-3-reject-samp.html#cb173-13"></a>    y[i] &lt;-<span class="st"> </span>z</span>
+<span id="cb173-14"><a href="4-3-reject-samp.html#cb173-14"></a>  }</span>
+<span id="cb173-15"><a href="4-3-reject-samp.html#cb173-15"></a>  <span class="cf">if</span>(trace)</span>
+<span id="cb173-16"><a href="4-3-reject-samp.html#cb173-16"></a>    <span class="kw">cat</span>(<span class="st">&quot;kappa =&quot;</span>, kappa, <span class="st">&quot;:&quot;</span>, (count <span class="op">-</span><span class="st"> </span>n)<span class="op">/</span><span class="st"> </span>count, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)  <span class="co">## Rejection frequency</span></span>
+<span id="cb173-17"><a href="4-3-reject-samp.html#cb173-17"></a>  y</span>
+<span id="cb173-18"><a href="4-3-reject-samp.html#cb173-18"></a>}</span></code></pre></div>
+<p>We should, of course, remember to test that the new implementation still
+generates variables from the von Mises distribution.</p>
+<div class="sourceCode" id="cb174"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb174-1"><a href="4-3-reject-samp.html#cb174-1"></a>x &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="fl">0.5</span>)</span>
+<span id="cb174-2"><a href="4-3-reject-samp.html#cb174-2"></a><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb174-3"><a href="4-3-reject-samp.html#cb174-3"></a><span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="fl">0.5</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb174-4"><a href="4-3-reject-samp.html#cb174-4"></a>x &lt;-<span class="st"> </span><span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="dv">2</span>)</span>
+<span id="cb174-5"><a href="4-3-reject-samp.html#cb174-5"></a><span class="kw">hist</span>(x, <span class="dt">breaks =</span> <span class="kw">seq</span>(<span class="op">-</span>pi, pi, <span class="dt">length.out =</span> <span class="dv">20</span>), <span class="dt">prob =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb174-6"><a href="4-3-reject-samp.html#cb174-6"></a><span class="kw">curve</span>(<span class="kw">f</span>(x, <span class="dv">2</span>), <span class="op">-</span>pi, pi, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>, <span class="dt">add =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:vMsim2"></span>
+<img src="CSwR_files/figure-html/vMsim2-1.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using vectorized generation of random variables." width="49%" /><img src="CSwR_files/figure-html/vMsim2-2.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using vectorized generation of random variables." width="49%" />
+<p class="caption">
+Figure 4.2: Histograms of 100,000 simulated data points from von Mises distributions with parameters <span class="math inline">\(\kappa = 0.5\)</span> (left) and <span class="math inline">\(\kappa = 2\)</span> (right), simulated using vectorized generation of random variables.
+</p>
+</div>
+
+<p>Then we can compare the run time of this new implementation to the
+run time of the first implementation.</p>
+<div class="sourceCode" id="cb175"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb175-1"><a href="4-3-reject-samp.html#cb175-1"></a><span class="kw">system.time</span>(<span class="kw">vMsim</span>(<span class="dv">100000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>))</span></code></pre></div>
+<pre><code>##    user  system elapsed 
+##   1.011   0.446   1.419</code></pre>
+<p>As we see from the time estimate above, using a vectorized call of <code>runif</code>
+reduces the run time by a factor 4-5. It is possible to get a further factor 2-3
+run time improvement (not shown) by implementing the computations done by
+<code>rng_stream</code> directly inside <code>vMsim</code>. However, we prioritize here to have
+modular code so that we can reuse <code>rng_stream</code> for other rejection samplers without
+repeating code. A pure R implementation based on a loop will never be able to
+compete with a C++ implementation anyway when the accept-reject step is such a
+simple computation.</p>
+<p>In fact, to write a pure R function that is run time efficient, we need to
+turn the entire rejection sampler into a vectorized computation. That is,
+it is not just the generation of random numbers that need to be vectorized.
+There is no way around some form of loop as we don’t known upfront how many
+rejections there will be. We can, however, benefit from the ideas in <code>rng_stream</code>
+on how to estimate the fraction of acceptances from a first round, which can be
+used for subsequent simulations. This is done in the following fully
+vectorized R implementation.</p>
+<div class="sourceCode" id="cb177"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb177-1"><a href="4-3-reject-samp.html#cb177-1"></a>vMsim_vec &lt;-<span class="st"> </span><span class="cf">function</span>(n, kappa) {</span>
+<span id="cb177-2"><a href="4-3-reject-samp.html#cb177-2"></a>  fact &lt;-<span class="st"> </span><span class="dv">1</span></span>
+<span id="cb177-3"><a href="4-3-reject-samp.html#cb177-3"></a>  j &lt;-<span class="st"> </span><span class="dv">1</span></span>
+<span id="cb177-4"><a href="4-3-reject-samp.html#cb177-4"></a>  l &lt;-<span class="st"> </span><span class="dv">0</span>  <span class="co">## The number of accepted samples</span></span>
+<span id="cb177-5"><a href="4-3-reject-samp.html#cb177-5"></a>  y &lt;-<span class="st"> </span><span class="kw">list</span>()</span>
+<span id="cb177-6"><a href="4-3-reject-samp.html#cb177-6"></a>  <span class="cf">while</span>(l <span class="op">&lt;</span><span class="st"> </span>n) {</span>
+<span id="cb177-7"><a href="4-3-reject-samp.html#cb177-7"></a>    m &lt;-<span class="st"> </span><span class="kw">floor</span>(fact <span class="op">*</span><span class="st"> </span>(n <span class="op">-</span><span class="st"> </span>l))  <span class="co">## equals n the first time</span></span>
+<span id="cb177-8"><a href="4-3-reject-samp.html#cb177-8"></a>    y0 &lt;-<span class="st"> </span><span class="kw">runif</span>(m, <span class="op">-</span><span class="st"> </span>pi, pi)</span>
+<span id="cb177-9"><a href="4-3-reject-samp.html#cb177-9"></a>    u &lt;-<span class="st"> </span><span class="kw">runif</span>(m)</span>
+<span id="cb177-10"><a href="4-3-reject-samp.html#cb177-10"></a>    accept &lt;-<span class="st"> </span>u <span class="op">&lt;=</span><span class="st"> </span><span class="kw">exp</span>(kappa <span class="op">*</span><span class="st"> </span>(<span class="kw">cos</span>(y0) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))</span>
+<span id="cb177-11"><a href="4-3-reject-samp.html#cb177-11"></a>    l &lt;-<span class="st"> </span>l <span class="op">+</span><span class="st"> </span><span class="kw">sum</span>(accept)</span>
+<span id="cb177-12"><a href="4-3-reject-samp.html#cb177-12"></a>    y[[j]] &lt;-<span class="st"> </span>y0[accept]</span>
+<span id="cb177-13"><a href="4-3-reject-samp.html#cb177-13"></a>    j &lt;-<span class="st"> </span>j <span class="op">+</span><span class="st"> </span><span class="dv">1</span></span>
+<span id="cb177-14"><a href="4-3-reject-samp.html#cb177-14"></a>    <span class="cf">if</span>(fact <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) fact &lt;-<span class="st"> </span>n <span class="op">/</span><span class="st"> </span>l</span>
+<span id="cb177-15"><a href="4-3-reject-samp.html#cb177-15"></a>  }</span>
+<span id="cb177-16"><a href="4-3-reject-samp.html#cb177-16"></a>  <span class="kw">unlist</span>(y)[<span class="dv">1</span><span class="op">:</span>n]</span>
+<span id="cb177-17"><a href="4-3-reject-samp.html#cb177-17"></a>}</span></code></pre></div>
+<p>The implementation above incrementally grows a list, whose entries contain
+vectors of accepted samples. It is usually not advisable to dynamically
+grow objects (vectors or list), as this will lead to a lot of memory
+allocation, copying and deallocation. Thus it is better to initialize a vector
+of the correct size upfront. In this particular case the list will only contain
+few entries, and it is inconsequential that it is grown dynamically.</p>
+<p>Finally, a C++ implementation via Rcpp is given below where the random variables are
+then again generated one at a time via the C-interface to R’s random number
+generators. There is no (substantial) overhead of doing so in C++.</p>
+<div class="sourceCode" id="cb178"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb178-1"><a href="4-3-reject-samp.html#cb178-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
+<span id="cb178-2"><a href="4-3-reject-samp.html#cb178-2"></a><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</span>
+<span id="cb178-3"><a href="4-3-reject-samp.html#cb178-3"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb178-4"><a href="4-3-reject-samp.html#cb178-4"></a>NumericVector vMsim_cpp(<span class="dt">int</span> n, <span class="dt">double</span> kappa) {</span>
+<span id="cb178-5"><a href="4-3-reject-samp.html#cb178-5"></a>  NumericVector y(n);</span>
+<span id="cb178-6"><a href="4-3-reject-samp.html#cb178-6"></a>  <span class="dt">double</span> y0;</span>
+<span id="cb178-7"><a href="4-3-reject-samp.html#cb178-7"></a>  <span class="dt">bool</span> reject;</span>
+<span id="cb178-8"><a href="4-3-reject-samp.html#cb178-8"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; n; ++i) {</span>
+<span id="cb178-9"><a href="4-3-reject-samp.html#cb178-9"></a>    <span class="cf">do</span> {</span>
+<span id="cb178-10"><a href="4-3-reject-samp.html#cb178-10"></a>      y0 = R::runif(- M_PI, M_PI);</span>
+<span id="cb178-11"><a href="4-3-reject-samp.html#cb178-11"></a>      reject = R::runif(<span class="dv">0</span>, <span class="dv">1</span>) &gt; exp(kappa * (cos(y0) - <span class="dv">1</span>));</span>
+<span id="cb178-12"><a href="4-3-reject-samp.html#cb178-12"></a>    } <span class="cf">while</span>(reject);</span>
+<span id="cb178-13"><a href="4-3-reject-samp.html#cb178-13"></a>    y[i] = y0;</span>
+<span id="cb178-14"><a href="4-3-reject-samp.html#cb178-14"></a>  }</span>
+<span id="cb178-15"><a href="4-3-reject-samp.html#cb178-15"></a>  <span class="cf">return</span> y;</span>
+<span id="cb178-16"><a href="4-3-reject-samp.html#cb178-16"></a>}</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:vMsim3"></span>
+<img src="CSwR_files/figure-html/vMsim3-1.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom)." width="49%" /><img src="CSwR_files/figure-html/vMsim3-2.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom)." width="49%" /><img src="CSwR_files/figure-html/vMsim3-3.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom)." width="49%" /><img src="CSwR_files/figure-html/vMsim3-4.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom)." width="49%" />
+<p class="caption">
+Figure 4.3: Histograms of 100,000 simulated data points from von Mises distributions with parameters <span class="math inline">\(\kappa = 0.5\)</span> (left) and <span class="math inline">\(\kappa = 2\)</span> (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom).
+</p>
+</div>
+
+<p>Figure <a href="4-3-reject-samp.html#fig:vMsim3">4.3</a> shows the results from testing the C++ implementation
+and the fast R implementation,
+and confirms that the implementations do simulate from the von Mises distribution.
+We conclude by measuring the run time of the implementations using
+<code>system.time</code> and a combined microbenchmark of all four different implementations.</p>
+<div class="sourceCode" id="cb179"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb179-1"><a href="4-3-reject-samp.html#cb179-1"></a><span class="kw">system.time</span>(<span class="kw">vMsim_cpp</span>(<span class="dv">100000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>))</span></code></pre></div>
+<pre><code>##    user  system elapsed 
+##   0.043   0.001   0.037</code></pre>
+<div class="sourceCode" id="cb181"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb181-1"><a href="4-3-reject-samp.html#cb181-1"></a><span class="kw">microbenchmark</span>(</span>
+<span id="cb181-2"><a href="4-3-reject-samp.html#cb181-2"></a>  <span class="kw">vMsim_slow</span>(<span class="dv">1000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>),</span>
+<span id="cb181-3"><a href="4-3-reject-samp.html#cb181-3"></a>  <span class="kw">vMsim</span>(<span class="dv">1000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>),</span>
+<span id="cb181-4"><a href="4-3-reject-samp.html#cb181-4"></a>  <span class="kw">vMsim_vec</span>(<span class="dv">1000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>),</span>
+<span id="cb181-5"><a href="4-3-reject-samp.html#cb181-5"></a>  <span class="kw">vMsim_cpp</span>(<span class="dv">1000</span>, <span class="dt">kappa =</span> <span class="dv">5</span>)</span>
+<span id="cb181-6"><a href="4-3-reject-samp.html#cb181-6"></a>)</span></code></pre></div>
+<pre><code>## Unit: microseconds
+##                         expr   min    lq  mean median    uq   max neval
+##  vMsim_slow(1000, kappa = 5) 18931 20501 26569  21546 24968 85607   100
+##       vMsim(1000, kappa = 5)  6533  7068  7761   7458  8228 11449   100
+##   vMsim_vec(1000, kappa = 5)   442   516   586    568   627  1151   100
+##   vMsim_cpp(1000, kappa = 5)   313   335   369    350   398   553   100</code></pre>
+<p>The C++ implementation is only a factor 1.5 faster than the fully
+vectorized R implementation, while it is around a factor 15 faster
+than the loop-based <code>vMsim</code> and a factor 85 or so faster than the
+first implementation <code>vMsim_slow</code>. Rejection sampling is a good example
+of an algorithm for which a naive loop-based R implementation
+performs rather poorly in terms of run time, while a completely vectorized
+implementation is competitive with an Rcpp implementation.</p>
+</div>
+<div id="gamma-distribution" class="section level3">
+<h3><span class="header-section-number">4.3.2</span> Gamma distribution</h3>
+<p>It may be possible to find a suitable envelope of the density for the
+gamma distribution on <span class="math inline">\((0, \infty)\)</span>, but it turns out that there is a
+very efficient rejection sampler of a non-standard distribution that
+can be transformed into a gamma distribution by a simple transformation.</p>
+<p>Let <span class="math inline">\(t(y) = a(1 + by)^3\)</span> for <span class="math inline">\(y \in (-b^{-1}, \infty)\)</span>, then <span class="math inline">\(t(Y) \sim \Gamma(r,1)\)</span> if <span class="math inline">\(r \geq 1\)</span>
+and <span class="math inline">\(Y\)</span> has density
+<span class="math display">\[f(y) \propto t(y)^{r-1}t&#39;(y) e^{-t(y)} = e^{(r-1)\log t(y) + \log t&#39;(y) - t(y)}.\]</span></p>
+<p>The proof of this follows from a simple univariate density transformation theorem,
+but see also the original paper <span class="citation">Marsaglia and Tsang (<a href="#ref-Marsaglia:2000" role="doc-biblioref">2000</a>)</span> that proposed the rejection
+sampler discussed in this section. The density <span class="math inline">\(f\)</span> will be the <em>target density</em>
+for a rejection sampler.</p>
+<p>With
+<span class="math display">\[f(y) \propto e^{(r-1)\log t(y) + \log t&#39;(y) - t(y)},\]</span>
+<span class="math inline">\(a = r - 1/3\)</span> and <span class="math inline">\(b = 1/(3 \sqrt{a})\)</span>
+<span class="math display">\[f(y) \propto e^{a \log t(y)/a - t(y) + a \log a} \propto \underbrace{e^{a \log t(y)/a - t(y) + a}}_{q(y)}.\]</span></p>
+<p>An analysis of <span class="math inline">\(w(y) := - y^2/2 - \log q(y)\)</span> shows that it is convex on <span class="math inline">\((-b^{-1}, \infty)\)</span>
+and it attains its minimum in <span class="math inline">\(0\)</span> with <span class="math inline">\(w(0) = 0\)</span>, whence
+<span class="math display">\[q(y) \leq e^{-y^2/2}.\]</span>
+This gives us an envelope expressed in terms of unnormalized densities
+with <span class="math inline">\(\alpha&#39; = 1\)</span>.</p>
+<p>The implementation of a rejection sampler based on this analysis is relatively
+straightforward. The rejection sampler will simulate from the distribution
+with density <span class="math inline">\(f\)</span> by simulating from the Gaussian distribution (the envelope).
+For the rejection step we need to implement <span class="math inline">\(q\)</span>. Finally, we also need
+to implement <span class="math inline">\(t\)</span> to transform the result from the rejection sampler to be
+gamma distributed. The rejection sampler is otherwise implemented as for
+the non-vectorized von Mises distribution. To investigate rejection probabilities below
+we additionally implement the possibility of printing out some tracing
+information.</p>
+<div class="sourceCode" id="cb183"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb183-1"><a href="4-3-reject-samp.html#cb183-1"></a><span class="co">## r &gt;= 1 </span></span>
+<span id="cb183-2"><a href="4-3-reject-samp.html#cb183-2"></a>tfun &lt;-<span class="st"> </span><span class="cf">function</span>(y, a) {</span>
+<span id="cb183-3"><a href="4-3-reject-samp.html#cb183-3"></a>  b &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">3</span> <span class="op">*</span><span class="st"> </span><span class="kw">sqrt</span>(a))</span>
+<span id="cb183-4"><a href="4-3-reject-samp.html#cb183-4"></a>  (y <span class="op">&gt;</span><span class="st"> </span><span class="dv">-1</span><span class="op">/</span>b) <span class="op">*</span><span class="st"> </span>a <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>b <span class="op">*</span><span class="st"> </span>y)<span class="op">^</span><span class="dv">3</span>  <span class="co">## 0 when y &lt;= -1/b</span></span>
+<span id="cb183-5"><a href="4-3-reject-samp.html#cb183-5"></a>}</span>
+<span id="cb183-6"><a href="4-3-reject-samp.html#cb183-6"></a></span>
+<span id="cb183-7"><a href="4-3-reject-samp.html#cb183-7"></a>qfun &lt;-<span class="st"> </span><span class="cf">function</span>(y, r) {</span>
+<span id="cb183-8"><a href="4-3-reject-samp.html#cb183-8"></a>  a &lt;-<span class="st"> </span>r <span class="op">-</span><span class="st"> </span><span class="dv">1</span><span class="op">/</span><span class="dv">3</span></span>
+<span id="cb183-9"><a href="4-3-reject-samp.html#cb183-9"></a>  tval &lt;-<span class="st"> </span><span class="kw">tfun</span>(y, a)</span>
+<span id="cb183-10"><a href="4-3-reject-samp.html#cb183-10"></a>  <span class="kw">exp</span>(a <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(tval <span class="op">/</span><span class="st"> </span>a) <span class="op">-</span><span class="st"> </span>tval <span class="op">+</span><span class="st"> </span>a)</span>
+<span id="cb183-11"><a href="4-3-reject-samp.html#cb183-11"></a>}</span>
+<span id="cb183-12"><a href="4-3-reject-samp.html#cb183-12"></a></span>
+<span id="cb183-13"><a href="4-3-reject-samp.html#cb183-13"></a>gammasim &lt;-<span class="st"> </span><span class="cf">function</span>(n, r, <span class="dt">trace =</span> <span class="ot">FALSE</span>) {</span>
+<span id="cb183-14"><a href="4-3-reject-samp.html#cb183-14"></a>  count &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb183-15"><a href="4-3-reject-samp.html#cb183-15"></a>  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</span>
+<span id="cb183-16"><a href="4-3-reject-samp.html#cb183-16"></a>  y0 &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, rnorm)</span>
+<span id="cb183-17"><a href="4-3-reject-samp.html#cb183-17"></a>  u &lt;-<span class="st"> </span><span class="kw">rng_stream</span>(n, runif)</span>
+<span id="cb183-18"><a href="4-3-reject-samp.html#cb183-18"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>n) {</span>
+<span id="cb183-19"><a href="4-3-reject-samp.html#cb183-19"></a>    reject &lt;-<span class="st"> </span><span class="ot">TRUE</span></span>
+<span id="cb183-20"><a href="4-3-reject-samp.html#cb183-20"></a>    <span class="cf">while</span>(reject) {</span>
+<span id="cb183-21"><a href="4-3-reject-samp.html#cb183-21"></a>      count &lt;-<span class="st"> </span>count <span class="op">+</span><span class="st"> </span><span class="dv">1</span></span>
+<span id="cb183-22"><a href="4-3-reject-samp.html#cb183-22"></a>      z &lt;-<span class="st"> </span><span class="kw">y0</span>(n <span class="op">-</span><span class="st"> </span>i)</span>
+<span id="cb183-23"><a href="4-3-reject-samp.html#cb183-23"></a>      reject &lt;-<span class="st"> </span><span class="kw">u</span>(n <span class="op">-</span><span class="st"> </span>i) <span class="op">&gt;</span><span class="st"> </span><span class="kw">qfun</span>(z, r) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(z<span class="op">^</span><span class="dv">2</span><span class="op">/</span><span class="dv">2</span>)</span>
+<span id="cb183-24"><a href="4-3-reject-samp.html#cb183-24"></a>    }</span>
+<span id="cb183-25"><a href="4-3-reject-samp.html#cb183-25"></a>    y[i] &lt;-<span class="st"> </span>z</span>
+<span id="cb183-26"><a href="4-3-reject-samp.html#cb183-26"></a>  }</span>
+<span id="cb183-27"><a href="4-3-reject-samp.html#cb183-27"></a>  <span class="cf">if</span>(trace)</span>
+<span id="cb183-28"><a href="4-3-reject-samp.html#cb183-28"></a>    <span class="kw">cat</span>(<span class="st">&quot;r =&quot;</span>, r, <span class="st">&quot;:&quot;</span>, (count <span class="op">-</span><span class="st"> </span>n)<span class="op">/</span><span class="st"> </span>count, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)  <span class="co">## Rejection frequency</span></span>
+<span id="cb183-29"><a href="4-3-reject-samp.html#cb183-29"></a>  <span class="kw">tfun</span>(y, r <span class="op">-</span><span class="st"> </span><span class="dv">1</span><span class="op">/</span><span class="dv">3</span>)</span>
+<span id="cb183-30"><a href="4-3-reject-samp.html#cb183-30"></a>}</span></code></pre></div>
+<p>We test the implementation by simulating <span class="math inline">\(100,000\)</span> values
+with parameters <span class="math inline">\(r = 8\)</span> as well as <span class="math inline">\(r = 1\)</span> and compare the resulting histograms
+to the respective theoretical densities.</p>
+<div class="figure" style="text-align: center"><span id="fig:gammaBench"></span>
+<img src="CSwR_files/figure-html/gammaBench-1.png" alt="Histograms of simulated gamma distributed variables with shape parameters $r = 8$ (left) and $r = 1$ (right) with corresponding theoretical densities (blue)." width="49%" /><img src="CSwR_files/figure-html/gammaBench-2.png" alt="Histograms of simulated gamma distributed variables with shape parameters $r = 8$ (left) and $r = 1$ (right) with corresponding theoretical densities (blue)." width="49%" />
+<p class="caption">
+Figure 4.4: Histograms of simulated gamma distributed variables with shape parameters <span class="math inline">\(r = 8\)</span> (left) and <span class="math inline">\(r = 1\)</span> (right) with corresponding theoretical densities (blue).
+</p>
+</div>
+<p>Though this is only a simple and informal test, it indicates that the implementation
+correctly simulates from the gamma distribution.</p>
+<p>Rejection sampling can be computationally expensive if many samples are rejected.
+A very tight envelope will lead to fewer rejections, while a loose envelope will
+lead to many rejections. Using the tracing option as implemented we obtain
+estimates of the rejection probability and thus a quantification of
+how tight the envelope is.</p>
+<div class="sourceCode" id="cb184"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb184-1"><a href="4-3-reject-samp.html#cb184-1"></a>y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">16</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb184-2"><a href="4-3-reject-samp.html#cb184-2"></a>y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">8</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb184-3"><a href="4-3-reject-samp.html#cb184-3"></a>y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">4</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb184-4"><a href="4-3-reject-samp.html#cb184-4"></a>y &lt;-<span class="st"> </span><span class="kw">gammasim</span>(<span class="dv">100000</span>, <span class="dv">1</span>, <span class="dt">trace =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<pre><code>## r = 16 : 0.00161738 
+## r = 8 : 0.003745915 
+## r = 4 : 0.007966033 
+## r = 1 : 0.04789108</code></pre>
+<p>We observe that the rejection frequencies are small with <span class="math inline">\(r = 1\)</span> being the
+worst case with around 5% rejections. For the other cases the rejection
+frequencies are all below 1%, thus rejection is rare.</p>
+<p>A visual comparison of <span class="math inline">\(q\)</span> to the (unnormalized) Gaussian density also
+shows that the two (unnormalized) densities are very close except
+in the tails where there is very little probability mass.</p>
+<div class="figure" style="text-align: center"><span id="fig:densComparison"></span>
+<img src="CSwR_files/figure-html/densComparison-1.png" alt="Comparisons of the Gaussian proposal (red) and the target density (blue) used for eventually simulating gamma distributed variables via a transformation." width="100%" />
+<p class="caption">
+Figure 4.5: Comparisons of the Gaussian proposal (red) and the target density (blue) used for eventually simulating gamma distributed variables via a transformation.
+</p>
+</div>
+</div>
+</div>
+<h3>References</h3>
+<div id="refs" class="references">
+<div id="ref-Marsaglia:2000">
+<p>Marsaglia, George, and Wai Wan Tsang. 2000. “A Simple Method for Generating Gamma Variables.” <em>ACM Trans. Math. Softw.</em> 26 (3): 363–72. <a href="https://doi.org/10.1145/358407.358414">https://doi.org/10.1145/358407.358414</a>.</p>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="4-2-transformation-techniques.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="4-4-adaptive.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"toc": {
+"collapse": "section"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>5.3 Network failure | Computational Statistics with R</title>
+  <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  <meta name="generator" content="bookdown 0.20 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="5.3 Network failure | Computational Statistics with R" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="5.3 Network failure | Computational Statistics with R" />
+  
+  <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  
+
+<meta name="author" content="Niels Richard Hansen" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="5-2-importance-sampling.html"/>
+<link rel="next" href="6-four-examples.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<script src="libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+
+
+<style type="text/css">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Computational Statistics with R</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="1" data-path="1-intro.html"><a href="1-intro.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
+<li class="chapter" data-level="1.1" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html"><i class="fa fa-check"></i><b>1.1</b> Smoothing</a><ul>
+<li class="chapter" data-level="1.1.1" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#intro-angles"><i class="fa fa-check"></i><b>1.1.1</b> Angle distributions in proteins</a></li>
+<li class="chapter" data-level="1.1.2" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#using-ggplot2"><i class="fa fa-check"></i><b>1.1.2</b> Using ggplot2</a></li>
+<li class="chapter" data-level="1.1.3" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#changing-the-defaults"><i class="fa fa-check"></i><b>1.1.3</b> Changing the defaults</a></li>
+<li class="chapter" data-level="1.1.4" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#multivariate-smoothing"><i class="fa fa-check"></i><b>1.1.4</b> Multivariate methods</a></li>
+<li class="chapter" data-level="1.1.5" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#large-scale-smoothing"><i class="fa fa-check"></i><b>1.1.5</b> Large scale smoothing</a></li>
+</ul></li>
+<li class="chapter" data-level="1.2" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html"><i class="fa fa-check"></i><b>1.2</b> Monte Carlo Methods</a><ul>
+<li class="chapter" data-level="1.2.1" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#vM"><i class="fa fa-check"></i><b>1.2.1</b> Univariate von Mises distributions</a></li>
+<li class="chapter" data-level="1.2.2" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#mixtures-of-von-mises-distributions"><i class="fa fa-check"></i><b>1.2.2</b> Mixtures of von Mises distributions</a></li>
+<li class="chapter" data-level="1.2.3" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#large-scale-monte-carlo-methods"><i class="fa fa-check"></i><b>1.2.3</b> Large scale Monte Carlo methods</a></li>
+</ul></li>
+<li class="chapter" data-level="1.3" data-path="1-3-optimization.html"><a href="1-3-optimization.html"><i class="fa fa-check"></i><b>1.3</b> Optimization</a><ul>
+<li class="chapter" data-level="1.3.1" data-path="1-3-optimization.html"><a href="1-3-optimization.html#the-em-algorithm"><i class="fa fa-check"></i><b>1.3.1</b> The EM-algorithm</a></li>
+<li class="chapter" data-level="1.3.2" data-path="1-3-optimization.html"><a href="1-3-optimization.html#large-scale-optimization"><i class="fa fa-check"></i><b>1.3.2</b> Large scale optimization</a></li>
+</ul></li>
+<li class="chapter" data-level="1.4" data-path="1-4-exercises.html"><a href="1-4-exercises.html"><i class="fa fa-check"></i><b>1.4</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#r-training-exercises"><i class="fa fa-check"></i>R training exercises</a></li>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#histograms-with-non-equidistant-breaks"><i class="fa fa-check"></i>Histograms with non-equidistant breaks</a></li>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#functions-and-functional-programming"><i class="fa fa-check"></i>Functions and functional programming</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part I: Smoothing</b></span></li>
+<li class="chapter" data-level="2" data-path="2-density.html"><a href="2-density.html"><i class="fa fa-check"></i><b>2</b> Density estimation</a><ul>
+<li class="chapter" data-level="2.1" data-path="2-1-unidens.html"><a href="2-1-unidens.html"><i class="fa fa-check"></i><b>2.1</b> Univariate density estimation</a><ul>
+<li class="chapter" data-level="2.1.1" data-path="2-1-unidens.html"><a href="2-1-unidens.html#likelihood"><i class="fa fa-check"></i><b>2.1.1</b> Likelihood considerations</a></li>
+<li class="chapter" data-level="2.1.2" data-path="2-1-unidens.html"><a href="2-1-unidens.html#sieves"><i class="fa fa-check"></i><b>2.1.2</b> Method of sieves</a></li>
+<li class="chapter" data-level="2.1.3" data-path="2-1-unidens.html"><a href="2-1-unidens.html#basis-density"><i class="fa fa-check"></i><b>2.1.3</b> Basis expansions</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html"><i class="fa fa-check"></i><b>2.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="2.2.1" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#implementation"><i class="fa fa-check"></i><b>2.2.1</b> Implementation</a></li>
+<li class="chapter" data-level="2.2.2" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#benchmarking"><i class="fa fa-check"></i><b>2.2.2</b> Benchmarking</a></li>
+</ul></li>
+<li class="chapter" data-level="2.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html"><i class="fa fa-check"></i><b>2.3</b> Bandwidth selection</a><ul>
+<li class="chapter" data-level="2.3.1" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#rectangular"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
+<li class="chapter" data-level="2.3.2" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#ise-mise-and-mse-for-kernel-estimators"><i class="fa fa-check"></i><b>2.3.2</b> ISE, MISE and MSE for kernel estimators</a></li>
+<li class="chapter" data-level="2.3.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#plug-in-estimation-of-the-oracle-bandwidth"><i class="fa fa-check"></i><b>2.3.3</b> Plug-in estimation of the oracle bandwidth</a></li>
+<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>2.4</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="2-4-exercises.html"><a href="2-4-exercises.html"><i class="fa fa-check"></i>Kernel density estimation</a></li>
+<li class="chapter" data-level="" data-path="2-4-exercises.html"><a href="2-4-exercises.html#benchmarking-1"><i class="fa fa-check"></i>Benchmarking</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="3-bivariate.html"><a href="3-bivariate.html"><i class="fa fa-check"></i><b>3</b> Bivariate smoothing</a><ul>
+<li class="chapter" data-level="3.1" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html"><i class="fa fa-check"></i><b>3.1</b> Nearest neighbor smoothers</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#linear-smoothers"><i class="fa fa-check"></i><b>3.1.1</b> Linear smoothers</a></li>
+<li class="chapter" data-level="3.1.2" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#implementing-the-running-mean"><i class="fa fa-check"></i><b>3.1.2</b> Implementing the running mean</a></li>
+<li class="chapter" data-level="3.1.3" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#choose-k-by-cross-validation"><i class="fa fa-check"></i><b>3.1.3</b> Choose <span class="math inline">\(k\)</span> by cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html#nadarayawatson-kernel-smoothing"><i class="fa fa-check"></i><b>3.2.1</b> Nadaraya–Watson kernel smoothing</a></li>
+<li class="chapter" data-level="3.2.2" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html#local-regression-smoothers"><i class="fa fa-check"></i><b>3.2.2</b> Local regression smoothers</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="3-3-sparse-linear-algebra.html"><a href="3-3-sparse-linear-algebra.html"><i class="fa fa-check"></i><b>3.3</b> Sparse linear algebra</a></li>
+<li class="chapter" data-level="3.4" data-path="3-4-onb.html"><a href="3-4-onb.html"><i class="fa fa-check"></i><b>3.4</b> Orthogonal basis expansions</a><ul>
+<li class="chapter" data-level="3.4.1" data-path="3-4-onb.html"><a href="3-4-onb.html#polynomial-expansions"><i class="fa fa-check"></i><b>3.4.1</b> Polynomial expansions</a></li>
+<li class="chapter" data-level="3.4.2" data-path="3-4-onb.html"><a href="3-4-onb.html#fourier-expansions"><i class="fa fa-check"></i><b>3.4.2</b> Fourier expansions</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="3-5-splines.html"><a href="3-5-splines.html"><i class="fa fa-check"></i><b>3.5</b> Splines</a><ul>
+<li class="chapter" data-level="3.5.1" data-path="3-5-splines.html"><a href="3-5-splines.html#smoothing-splines"><i class="fa fa-check"></i><b>3.5.1</b> Smoothing splines</a></li>
+<li class="chapter" data-level="3.5.2" data-path="3-5-splines.html"><a href="3-5-splines.html#splines-in-r"><i class="fa fa-check"></i><b>3.5.2</b> Splines in R</a></li>
+<li class="chapter" data-level="3.5.3" data-path="3-5-splines.html"><a href="3-5-splines.html#efficient-splines"><i class="fa fa-check"></i><b>3.5.3</b> Efficient computation with splines</a></li>
+</ul></li>
+<li class="chapter" data-level="3.6" data-path="3-6-gaussian-processes.html"><a href="3-6-gaussian-processes.html"><i class="fa fa-check"></i><b>3.6</b> Gaussian processes</a></li>
+<li class="chapter" data-level="3.7" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html"><i class="fa fa-check"></i><b>3.7</b> The Kalman filter</a><ul>
+<li class="chapter" data-level="3.7.1" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#ar1-example"><i class="fa fa-check"></i><b>3.7.1</b> AR(1)-example</a></li>
+<li class="chapter" data-level="3.7.2" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#the-kalman-smoother"><i class="fa fa-check"></i><b>3.7.2</b> The Kalman smoother</a></li>
+<li class="chapter" data-level="3.7.3" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#implementation"><i class="fa fa-check"></i><b>3.7.3</b> Implementation</a></li>
+<li class="chapter" data-level="3.7.4" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#the-kalman-filter-1"><i class="fa fa-check"></i><b>3.7.4</b> The Kalman filter</a></li>
+</ul></li>
+<li class="chapter" data-level="3.8" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>3.8</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="3-8-exercises.html"><a href="3-8-exercises.html"><i class="fa fa-check"></i>Nearest neighbors</a></li>
+<li class="chapter" data-level="" data-path="3-8-exercises.html"><a href="3-8-exercises.html#kernel-estimators"><i class="fa fa-check"></i>Kernel estimators</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
+<li class="chapter" data-level="4" data-path="4-univariate-random-variables.html"><a href="4-univariate-random-variables.html"><i class="fa fa-check"></i><b>4</b> Univariate random variables</a><ul>
+<li class="chapter" data-level="4.1" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html"><i class="fa fa-check"></i><b>4.1</b> Pseudorandom number generators</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html#implementing-a-pseudorandom-number-generator"><i class="fa fa-check"></i><b>4.1.1</b> Implementing a pseudorandom number generator</a></li>
+<li class="chapter" data-level="4.1.2" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html#pseudorandom-number-packages"><i class="fa fa-check"></i><b>4.1.2</b> Pseudorandom number packages</a></li>
+</ul></li>
+<li class="chapter" data-level="4.2" data-path="4-2-transformation-techniques.html"><a href="4-2-transformation-techniques.html"><i class="fa fa-check"></i><b>4.2</b> Transformation techniques</a><ul>
+<li class="chapter" data-level="4.2.1" data-path="4-2-transformation-techniques.html"><a href="4-2-transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.3" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html"><i class="fa fa-check"></i><b>4.3</b> Rejection sampling</a><ul>
+<li class="chapter" data-level="4.3.1" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html#vMsim"><i class="fa fa-check"></i><b>4.3.1</b> von Mises distribution</a></li>
+<li class="chapter" data-level="4.3.2" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.2</b> Gamma distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.4" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html"><i class="fa fa-check"></i><b>4.4</b> Adaptive envelopes</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html#beta-distribution"><i class="fa fa-check"></i><b>4.4.1</b> Beta distribution</a></li>
+<li class="chapter" data-level="4.4.2" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html#von-mises-distribution"><i class="fa fa-check"></i><b>4.4.2</b> von Mises distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="4-5-exercises.html"><a href="4-5-exercises.html"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="5-mci.html"><a href="5-mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
+<li class="chapter" data-level="5.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html"><i class="fa fa-check"></i><b>5.1</b> Assessment</a><ul>
+<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#using-the-central-limit-theorem"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
+<li class="chapter" data-level="5.1.2" data-path="5-1-assessment.html"><a href="5-1-assessment.html#concentration-inequalities"><i class="fa fa-check"></i><b>5.1.2</b> Concentration inequalities</a></li>
+<li class="chapter" data-level="5.1.3" data-path="5-1-assessment.html"><a href="5-1-assessment.html#exponential-tail-bound-for-gamma-distributed-variables"><i class="fa fa-check"></i><b>5.1.3</b> Exponential tail bound for Gamma distributed variables</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html"><i class="fa fa-check"></i><b>5.2</b> Importance sampling</a><ul>
+<li class="chapter" data-level="5.2.1" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#unknown-normalization-constants"><i class="fa fa-check"></i><b>5.2.1</b> Unknown normalization constants</a></li>
+<li class="chapter" data-level="5.2.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#hd-int"><i class="fa fa-check"></i><b>5.2.2</b> Computing a high-dimensional integral</a></li>
+</ul></li>
+<li class="chapter" data-level="5.3" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part III: Optimization</b></span></li>
+<li class="chapter" data-level="6" data-path="6-four-examples.html"><a href="6-four-examples.html"><i class="fa fa-check"></i><b>6</b> Four Examples</a><ul>
+<li class="chapter" data-level="6.1" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html"><i class="fa fa-check"></i><b>6.1</b> Exponential families</a><ul>
+<li class="chapter" data-level="6.1.1" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#full-exponential-families"><i class="fa fa-check"></i><b>6.1.1</b> Full exponential families</a></li>
+<li class="chapter" data-level="6.1.2" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>6.1.2</b> Exponential family Bayesian networks</a></li>
+<li class="chapter" data-level="6.1.3" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>6.1.3</b> Likelihood computations</a></li>
+<li class="chapter" data-level="6.1.4" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>6.1.4</b> Curved exponential families</a></li>
+</ul></li>
+<li class="chapter" data-level="6.2" data-path="6-2-multinomial-models.html"><a href="6-2-multinomial-models.html"><i class="fa fa-check"></i><b>6.2</b> Multinomial models</a><ul>
+<li class="chapter" data-level="6.2.1" data-path="6-2-multinomial-models.html"><a href="6-2-multinomial-models.html#pep-moth"><i class="fa fa-check"></i><b>6.2.1</b> Peppered Moths</a></li>
+</ul></li>
+<li class="chapter" data-level="6.3" data-path="6-3-regression.html"><a href="6-3-regression.html"><i class="fa fa-check"></i><b>6.3</b> Regression models</a></li>
+<li class="chapter" data-level="6.4" data-path="6-4-finite-mixture-models.html"><a href="6-4-finite-mixture-models.html"><i class="fa fa-check"></i><b>6.4</b> Finite mixture models</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="6-4-finite-mixture-models.html"><a href="6-4-finite-mixture-models.html#Gaus-mix-ex"><i class="fa fa-check"></i><b>6.4.1</b> Gaussian mixtures</a></li>
+</ul></li>
+<li class="chapter" data-level="6.5" data-path="6-5-mixed-models.html"><a href="6-5-mixed-models.html"><i class="fa fa-check"></i><b>6.5</b> Mixed models</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="7-numopt.html"><a href="7-numopt.html"><i class="fa fa-check"></i><b>7</b> Numerical optimization</a><ul>
+<li class="chapter" data-level="7.1" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html"><i class="fa fa-check"></i><b>7.1</b> Algorithms and convergence</a><ul>
+<li class="chapter" data-level="7.1.1" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#descent-algorithms"><i class="fa fa-check"></i><b>7.1.1</b> Descent algorithms</a></li>
+<li class="chapter" data-level="7.1.2" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#maps-and-fixed-points"><i class="fa fa-check"></i><b>7.1.2</b> Maps and fixed points</a></li>
+<li class="chapter" data-level="7.1.3" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#convergence-rate"><i class="fa fa-check"></i><b>7.1.3</b> Convergence rate</a></li>
+<li class="chapter" data-level="7.1.4" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#stopping-criteria"><i class="fa fa-check"></i><b>7.1.4</b> Stopping criteria</a></li>
+</ul></li>
+<li class="chapter" data-level="7.2" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html"><i class="fa fa-check"></i><b>7.2</b> Descent direction algorithms</a><ul>
+<li class="chapter" data-level="7.2.1" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#line-search"><i class="fa fa-check"></i><b>7.2.1</b> Line search</a></li>
+<li class="chapter" data-level="7.2.2" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#gradient-descent"><i class="fa fa-check"></i><b>7.2.2</b> Gradient descent</a></li>
+<li class="chapter" data-level="7.2.3" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>7.2.3</b> Conjugate gradients</a></li>
+<li class="chapter" data-level="7.2.4" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#pep-moth-descent"><i class="fa fa-check"></i><b>7.2.4</b> Peppered Moths</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html"><i class="fa fa-check"></i><b>7.3</b> Newton-type algorithms</a><ul>
+<li class="chapter" data-level="7.3.1" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>7.3.1</b> Poisson regression</a></li>
+<li class="chapter" data-level="7.3.2" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>7.3.2</b> Quasi-Newton algorithms</a></li>
+<li class="chapter" data-level="7.3.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>7.3.3</b> Sparsity</a></li>
+</ul></li>
+<li class="chapter" data-level="7.4" data-path="7-4-misc-.html"><a href="7-4-misc-.html"><i class="fa fa-check"></i><b>7.4</b> Misc.</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="8-em.html"><a href="8-em.html"><i class="fa fa-check"></i><b>8</b> Expectation maximization algorithms</a><ul>
+<li class="chapter" data-level="8.1" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html"><i class="fa fa-check"></i><b>8.1</b> Basic properties</a><ul>
+<li class="chapter" data-level="8.1.1" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#incomplete-data-likelihood"><i class="fa fa-check"></i><b>8.1.1</b> Incomplete data likelihood</a></li>
+<li class="chapter" data-level="8.1.2" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#monotonicity-of-the-em-algorithm"><i class="fa fa-check"></i><b>8.1.2</b> Monotonicity of the EM algorithm</a></li>
+<li class="chapter" data-level="8.1.3" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#peppered-moths"><i class="fa fa-check"></i><b>8.1.3</b> Peppered moths</a></li>
+</ul></li>
+<li class="chapter" data-level="8.2" data-path="8-2-EM-exp.html"><a href="8-2-EM-exp.html"><i class="fa fa-check"></i><b>8.2</b> Exponential families</a></li>
+<li class="chapter" data-level="8.3" data-path="8-3-fisher-information.html"><a href="8-3-fisher-information.html"><i class="fa fa-check"></i><b>8.3</b> Fisher information</a></li>
+<li class="chapter" data-level="8.4" data-path="8-4-revisiting-gaussian-mixtures.html"><a href="8-4-revisiting-gaussian-mixtures.html"><i class="fa fa-check"></i><b>8.4</b> Revisiting Gaussian mixtures</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="9-StochOpt.html"><a href="9-StochOpt.html"><i class="fa fa-check"></i><b>9</b> Stochastic Optimization</a><ul>
+<li class="chapter" data-level="9.1" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html"><i class="fa fa-check"></i><b>9.1</b> Stochastic gradient algorithms</a><ul>
+<li class="chapter" data-level="9.1.1" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#section"><i class="fa fa-check"></i><b>9.1.1</b> </a></li>
+<li class="chapter" data-level="9.1.2" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#online-stochastic-gradient-descent"><i class="fa fa-check"></i><b>9.1.2</b> Online stochastic gradient descent</a></li>
+<li class="chapter" data-level="9.1.3" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#stochastic-gradient-descent"><i class="fa fa-check"></i><b>9.1.3</b> Stochastic gradient descent</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="9-2-nonlinear-least-squares.html"><a href="9-2-nonlinear-least-squares.html"><i class="fa fa-check"></i><b>9.2</b> Nonlinear least squares</a></li>
+</ul></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="A-app-R.html"><a href="A-app-R.html"><i class="fa fa-check"></i><b>A</b> R programming</a></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Computational Statistics with R</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="network-failure" class="section level2">
+<h2><span class="header-section-number">5.3</span> Network failure</h2>
+<p>Consider the following network consisting of ten nodes and with some of
+the nodes connected.</p>
+<p><img src="figures/networkfig.png" width="85%" style="display: block; margin: auto;" /></p>
+<p>The network could be a computer network with ten computers. The different
+connections (edges) may “fail” independently with probability <span class="math inline">\(p\)</span>, and the question
+we will take an interest in is what is the probability that node 1 and
+node 10 become disconnected?</p>
+<p>The network of nodes can be represented as a graph adjacency matrix <span class="math inline">\(A\)</span> such
+that <span class="math inline">\(A_{ij} = 1\)</span> if and only if there is an edge between <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span> (and <span class="math inline">\(A_{ij} = 0\)</span>
+otherwise).</p>
+<div class="sourceCode" id="cb207"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb207-1"><a href="5-3-network-failure.html#cb207-1"></a>A  <span class="co">## Graph adjacency matrix</span></span></code></pre></div>
+<pre><code>##       [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
+##  [1,]    0    1    0    1    1    0    0    0    0     0
+##  [2,]    1    0    1    0    0    1    0    0    0     0
+##  [3,]    0    1    0    0    0    1    1    1    0     1
+##  [4,]    1    0    0    0    1    0    0    1    0     0
+##  [5,]    1    0    0    1    0    0    0    1    1     0
+##  [6,]    0    1    1    0    0    0    1    0    0     1
+##  [7,]    0    0    1    0    0    1    0    0    0     1
+##  [8,]    0    0    1    1    1    0    0    0    1     0
+##  [9,]    0    0    0    0    1    0    0    1    0     1
+## [10,]    0    0    1    0    0    1    1    0    1     0</code></pre>
+<p>To compute the probability that 1 and 10 become disconnected by Monte Carlo
+integration, we need to sample (sub)graphs by randomly removing some of the
+edges. This is implemented using the upper triangular part of the (symmetric)
+adjacency matrix.</p>
+<div class="sourceCode" id="cb209"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb209-1"><a href="5-3-network-failure.html#cb209-1"></a>simNet &lt;-<span class="st"> </span><span class="cf">function</span>(Aup, p) {</span>
+<span id="cb209-2"><a href="5-3-network-failure.html#cb209-2"></a>  ones &lt;-<span class="st"> </span><span class="kw">which</span>(Aup <span class="op">==</span><span class="st"> </span><span class="dv">1</span>)</span>
+<span id="cb209-3"><a href="5-3-network-failure.html#cb209-3"></a>  Aup[ones] &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="kw">length</span>(ones), </span>
+<span id="cb209-4"><a href="5-3-network-failure.html#cb209-4"></a>                      <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p))</span>
+<span id="cb209-5"><a href="5-3-network-failure.html#cb209-5"></a>  Aup <span class="op">+</span><span class="st"> </span><span class="kw">t</span>(Aup)</span>
+<span id="cb209-6"><a href="5-3-network-failure.html#cb209-6"></a>}</span></code></pre></div>
+<p>It is fairly fast to sample even a large number of random graphs this way.</p>
+<div class="sourceCode" id="cb210"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb210-1"><a href="5-3-network-failure.html#cb210-1"></a>Aup &lt;-<span class="st"> </span>A</span>
+<span id="cb210-2"><a href="5-3-network-failure.html#cb210-2"></a>Aup[<span class="kw">lower.tri</span>(Aup)] &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb210-3"><a href="5-3-network-failure.html#cb210-3"></a><span class="kw">system.time</span>(<span class="kw">replicate</span>(<span class="fl">1e5</span>, {<span class="kw">simNet</span>(Aup, <span class="fl">0.5</span>); <span class="ot">NULL</span>}))</span></code></pre></div>
+<pre><code>##    user  system elapsed 
+##   2.145   0.417   2.282</code></pre>
+<p>The second function we need to implement checks network connectivity.
+It relies on the fact that there is a path from node 1 to node 10 consisting
+of <span class="math inline">\(k\)</span> edges if and only if <span class="math inline">\(A^k_{1,10} &gt; 0\)</span>. We see directly that such a
+path needs to consist of at least <span class="math inline">\(k = 3\)</span> edges. Also, we don’t need to
+check paths with more than <span class="math inline">\(k = 9\)</span> edges as they will contain the same node
+multiple times and can thus be shortened.</p>
+<div class="sourceCode" id="cb212"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb212-1"><a href="5-3-network-failure.html#cb212-1"></a>disconAB &lt;-<span class="st"> </span><span class="cf">function</span>(A) {</span>
+<span id="cb212-2"><a href="5-3-network-failure.html#cb212-2"></a>  k &lt;-<span class="st"> </span><span class="dv">3</span></span>
+<span id="cb212-3"><a href="5-3-network-failure.html#cb212-3"></a>  Apow &lt;-<span class="st"> </span>A <span class="op">%*%</span><span class="st"> </span>A <span class="op">%*%</span><span class="st"> </span>A <span class="co">## A%^%3</span></span>
+<span id="cb212-4"><a href="5-3-network-failure.html#cb212-4"></a>  <span class="cf">while</span>(Apow[<span class="dv">1</span>, <span class="dv">10</span>] <span class="op">==</span><span class="st"> </span><span class="dv">0</span> <span class="op">&amp;</span><span class="st"> </span>k <span class="op">&lt;</span><span class="st"> </span><span class="dv">9</span>) {</span>
+<span id="cb212-5"><a href="5-3-network-failure.html#cb212-5"></a>    Apow &lt;-<span class="st"> </span>Apow <span class="op">%*%</span><span class="st"> </span>A</span>
+<span id="cb212-6"><a href="5-3-network-failure.html#cb212-6"></a>    k &lt;-<span class="st"> </span>k <span class="op">+</span><span class="st"> </span><span class="dv">1</span>    </span>
+<span id="cb212-7"><a href="5-3-network-failure.html#cb212-7"></a>  }</span>
+<span id="cb212-8"><a href="5-3-network-failure.html#cb212-8"></a>  Apow[<span class="dv">1</span>, <span class="dv">10</span>] <span class="op">==</span><span class="st"> </span><span class="dv">0</span>  <span class="co">## TRUE if 1 and 10 are not connected</span></span>
+<span id="cb212-9"><a href="5-3-network-failure.html#cb212-9"></a>}</span></code></pre></div>
+<p>Estimating probability of nodes 1 and 10 being disconnected using Monte Carlo integration.</p>
+<div class="sourceCode" id="cb213"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb213-1"><a href="5-3-network-failure.html#cb213-1"></a>seed &lt;-<span class="st"> </span><span class="dv">27092016</span></span>
+<span id="cb213-2"><a href="5-3-network-failure.html#cb213-2"></a><span class="kw">set.seed</span>(seed)</span>
+<span id="cb213-3"><a href="5-3-network-failure.html#cb213-3"></a>n &lt;-<span class="st"> </span><span class="fl">1e5</span></span>
+<span id="cb213-4"><a href="5-3-network-failure.html#cb213-4"></a>tmp &lt;-<span class="st"> </span><span class="kw">replicate</span>(n, <span class="kw">disconAB</span>(<span class="kw">simNet</span>(Aup, <span class="fl">0.05</span>)))</span>
+<span id="cb213-5"><a href="5-3-network-failure.html#cb213-5"></a>muhat &lt;-<span class="st"> </span><span class="kw">mean</span>(tmp)</span></code></pre></div>
+<p>As this is a (random) approximation, we should report not only the Monte Carlo
+estimate but also the confidence interval. Since the estimate is an average of
+0-1-variables, we can estimate the variance, <span class="math inline">\(\sigma^2\)</span>, of the individual terms
+using that <span class="math inline">\(\sigma^2 = \mu (1 - \mu)\)</span>.</p>
+<div class="sourceCode" id="cb214"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb214-1"><a href="5-3-network-failure.html#cb214-1"></a>muhat <span class="op">+</span><span class="st"> </span><span class="fl">1.96</span> <span class="op">*</span><span class="st"> </span><span class="kw">sqrt</span>(muhat <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>muhat) <span class="op">/</span><span class="st"> </span>n) <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)</span></code></pre></div>
+<pre><code>## [1] 0.0002257328 0.0003400000 0.0004542672</code></pre>
+<p>To implement importance sampling we note that the point probabilities
+(density w.r.t. counting measure) for sampling 18 independent 0-1-variables
+<span class="math inline">\(x = (x_1, \ldots, x_{18})\)</span> with <span class="math inline">\(P(X_i = 0) = p\)</span> is</p>
+<p><span class="math display">\[f_p(x) = p^b (1- p)^{18-b}\]</span></p>
+<p>where <span class="math inline">\(b = 18 - \sum_{i=1}^{18} x_i\)</span>. The implementation computes
+the weights when sampling using probability <span class="math inline">\(p_0\)</span> (density <span class="math inline">\(g = f_{p_0}\)</span>)
+instead of <span class="math inline">\(p\)</span>, and the weights are only computed if the graph is disconnected.</p>
+<div class="sourceCode" id="cb216"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb216-1"><a href="5-3-network-failure.html#cb216-1"></a>impw &lt;-<span class="st"> </span><span class="cf">function</span>(Aup, A0, p0, p) {</span>
+<span id="cb216-2"><a href="5-3-network-failure.html#cb216-2"></a>  w &lt;-<span class="st"> </span><span class="kw">disconAB</span>(A0)</span>
+<span id="cb216-3"><a href="5-3-network-failure.html#cb216-3"></a>  <span class="cf">if</span> (w) {</span>
+<span id="cb216-4"><a href="5-3-network-failure.html#cb216-4"></a>    b &lt;-<span class="st"> </span><span class="dv">18</span> <span class="op">-</span><span class="st"> </span><span class="kw">sum</span>(Aup[A0 <span class="op">==</span><span class="st"> </span><span class="dv">1</span>])</span>
+<span id="cb216-5"><a href="5-3-network-failure.html#cb216-5"></a>    w &lt;-<span class="st"> </span>((<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p0))<span class="op">^</span><span class="dv">18</span> <span class="op">*</span><span class="st"> </span></span>
+<span id="cb216-6"><a href="5-3-network-failure.html#cb216-6"></a><span class="st">      </span>(p <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p0) <span class="op">/</span><span class="st"> </span>(p0 <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p)))<span class="op">^</span>b</span>
+<span id="cb216-7"><a href="5-3-network-failure.html#cb216-7"></a>  }</span>
+<span id="cb216-8"><a href="5-3-network-failure.html#cb216-8"></a>  <span class="kw">as.numeric</span>(w)</span>
+<span id="cb216-9"><a href="5-3-network-failure.html#cb216-9"></a>}</span></code></pre></div>
+<p>The implementation uses the formula</p>
+<p><span class="math display">\[
+w(x) = \frac{f_p(x)}{f_{p_0}(x)} = \frac{p^b (1- p)^{18-b}}{p_0^b (1- p_0)^{18-b}} = 
+\left(\frac{1- p}{1- p_0}\right)^{18} \left(\frac{p (1- p_0)}{p_0 (1- p)}\right)^b.
+\]</span></p>
+<div class="sourceCode" id="cb217"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb217-1"><a href="5-3-network-failure.html#cb217-1"></a><span class="kw">set.seed</span>(seed)</span>
+<span id="cb217-2"><a href="5-3-network-failure.html#cb217-2"></a>tmp &lt;-<span class="st"> </span><span class="kw">replicate</span>(n, <span class="kw">impw</span>(Aup, <span class="kw">simNet</span>(Aup, <span class="fl">0.2</span>), <span class="fl">0.2</span>, <span class="fl">0.05</span>))</span>
+<span id="cb217-3"><a href="5-3-network-failure.html#cb217-3"></a>muhatIS &lt;-<span class="st"> </span><span class="kw">mean</span>(tmp)</span></code></pre></div>
+<p>Confidence interval using empirical variance estimate <span class="math inline">\(\hat{\sigma}^2\)</span>.</p>
+<div class="sourceCode" id="cb218"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb218-1"><a href="5-3-network-failure.html#cb218-1"></a>muhatIS <span class="op">+</span><span class="st"> </span><span class="fl">1.96</span> <span class="op">*</span><span class="st"> </span><span class="kw">sd</span>(tmp) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n) <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)</span></code></pre></div>
+<pre><code>## [1] 0.0002619838 0.0002960900 0.0003301962</code></pre>
+<div class="sourceCode" id="cb220"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb220-1"><a href="5-3-network-failure.html#cb220-1"></a><span class="kw">c</span>(<span class="kw">sd</span>(tmp), <span class="kw">sqrt</span>(muhat <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>muhat))) <span class="co">## The two standard deviations</span></span></code></pre></div>
+<pre><code>## [1] 0.005502716 0.018435954</code></pre>
+<p>The ratio of variances is estimated as</p>
+<div class="sourceCode" id="cb222"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb222-1"><a href="5-3-network-failure.html#cb222-1"></a>muhat <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>muhat) <span class="op">/</span><span class="st"> </span><span class="kw">var</span>(tmp)</span></code></pre></div>
+<pre><code>## [1] 11.22476</code></pre>
+<p>We need around 11 times more naive samples
+when compared to importance sampling to obtain the same precision.
+A benchmark will show that the extra computing time for importance sampling is small compared
+to the reduction of variance.
+It is worth the coding effort if used repeatedly, but not
+if it is a one-off computation.</p>
+<p>The graph is small enough for complete enumeration and thus the computation
+of an exact solution. There are <span class="math inline">\(2^{18} = 262,144\)</span> different networks with
+any number of the edges failing, so complete enumeration is possible. To
+systematically walk through each possible combinations of edges failing,
+we use the function <code>intToBits</code> that convert an integer to its binary
+representation for integers from 0 to 262,143. This is a quick and convenient
+way of representing all the different fail and non-fail combinations
+for the edges.</p>
+<div class="sourceCode" id="cb224"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb224-1"><a href="5-3-network-failure.html#cb224-1"></a>ones &lt;-<span class="st"> </span><span class="kw">which</span>(Aup <span class="op">==</span><span class="st"> </span><span class="dv">1</span>)</span>
+<span id="cb224-2"><a href="5-3-network-failure.html#cb224-2"></a>p &lt;-<span class="st"> </span><span class="fl">0.05</span></span>
+<span id="cb224-3"><a href="5-3-network-failure.html#cb224-3"></a>prob &lt;-<span class="st"> </span><span class="kw">numeric</span>(<span class="dv">2</span><span class="op">^</span><span class="dv">18</span>)</span>
+<span id="cb224-4"><a href="5-3-network-failure.html#cb224-4"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">0</span><span class="op">:</span>(<span class="dv">2</span><span class="op">^</span><span class="dv">18</span> <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)) {</span>
+<span id="cb224-5"><a href="5-3-network-failure.html#cb224-5"></a>  on &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">intToBits</span>(i)[<span class="dv">1</span><span class="op">:</span><span class="dv">18</span>])</span>
+<span id="cb224-6"><a href="5-3-network-failure.html#cb224-6"></a>  nr &lt;-<span class="st"> </span><span class="kw">sum</span>(on)</span>
+<span id="cb224-7"><a href="5-3-network-failure.html#cb224-7"></a>  Atmp &lt;-<span class="st"> </span>Aup</span>
+<span id="cb224-8"><a href="5-3-network-failure.html#cb224-8"></a>  Atmp[ones] &lt;-<span class="st"> </span>on</span>
+<span id="cb224-9"><a href="5-3-network-failure.html#cb224-9"></a>  <span class="cf">if</span>(<span class="kw">disconAB</span>(Atmp <span class="op">+</span><span class="st"> </span><span class="kw">t</span>(Atmp)))</span>
+<span id="cb224-10"><a href="5-3-network-failure.html#cb224-10"></a>    prob[i <span class="op">+</span><span class="st"> </span><span class="dv">1</span>] &lt;-<span class="st"> </span>p<span class="op">^</span>(<span class="dv">18</span> <span class="op">-</span><span class="st"> </span>nr) <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p)<span class="op">^</span>nr</span>
+<span id="cb224-11"><a href="5-3-network-failure.html#cb224-11"></a>}</span></code></pre></div>
+<p>The probability of nodes 1 and 10 disconnected can then be computed as
+follows.</p>
+<div class="sourceCode" id="cb225"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb225-1"><a href="5-3-network-failure.html#cb225-1"></a><span class="kw">sum</span>(prob)</span></code></pre></div>
+<pre><code>## [1] 0.000288295</code></pre>
+<p>This number should be compared to the estimates computed above. For a more complete
+comparison, we have used importance sampling with edge fail probability
+ranging from 0.1 to 0.4, see Figure <a href="5-3-network-failure.html#fig:networkImp">5.4</a>. The results
+show that a failure probability of 0.2 is close to optimal in terms of
+giving an importance sampling estimate with minimal variance. For smaller
+values, the event that 1 and 10 become disconnected is too rare, and for
+larger values the importance weights become too variable. A choice of 0.2
+strikes a good balance.</p>
+
+<div class="figure" style="text-align: center"><span id="fig:networkImp"></span>
+<img src="CSwR_files/figure-html/networkImp-1.png" alt="Confidence intervals for importance sampling estimates of network nodes 1 and 10 being disconnected under independent edge failures with probability 0.05. The red line is the true probability computed by complete enumeration." width="70%" />
+<p class="caption">
+Figure 5.4: Confidence intervals for importance sampling estimates of network nodes 1 and 10 being disconnected under independent edge failures with probability 0.05. The red line is the true probability computed by complete enumeration.
+</p>
+</div>
+<div id="object-oriented-implementation" class="section level3">
+<h3><span class="header-section-number">5.3.1</span> Object oriented implementation</h3>
+<div class="sourceCode" id="cb227"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb227-1"><a href="5-3-network-failure.html#cb227-1"></a>network &lt;-<span class="st"> </span><span class="cf">function</span>(A, p) {</span>
+<span id="cb227-2"><a href="5-3-network-failure.html#cb227-2"></a>  Aup &lt;-<span class="st"> </span>A</span>
+<span id="cb227-3"><a href="5-3-network-failure.html#cb227-3"></a>  Aup[<span class="kw">lower.tri</span>(Aup)] &lt;-<span class="st"> </span><span class="dv">0</span> </span>
+<span id="cb227-4"><a href="5-3-network-failure.html#cb227-4"></a>  ones &lt;-<span class="st"> </span><span class="kw">which</span>((Aup <span class="op">==</span><span class="st"> </span><span class="dv">1</span>))</span>
+<span id="cb227-5"><a href="5-3-network-failure.html#cb227-5"></a>  <span class="kw">structure</span>(<span class="kw">list</span>(<span class="dt">A =</span> A, <span class="dt">Aup =</span> Aup, <span class="dt">ones =</span> ones, <span class="dt">p =</span> p), </span>
+<span id="cb227-6"><a href="5-3-network-failure.html#cb227-6"></a>            <span class="dt">class =</span> <span class="st">&quot;network&quot;</span>)</span>
+<span id="cb227-7"><a href="5-3-network-failure.html#cb227-7"></a>}</span>
+<span id="cb227-8"><a href="5-3-network-failure.html#cb227-8"></a>myNet &lt;-<span class="st"> </span><span class="kw">network</span>(A, <span class="dt">p =</span> <span class="fl">0.05</span>)</span>
+<span id="cb227-9"><a href="5-3-network-failure.html#cb227-9"></a><span class="kw">str</span>(myNet)</span></code></pre></div>
+<pre><code>## List of 4
+##  $ A   : num [1:10, 1:10] 0 1 0 1 1 0 0 0 0 0 ...
+##  $ Aup : num [1:10, 1:10] 0 0 0 0 0 0 0 0 0 0 ...
+##  $ ones: int [1:18] 11 22 31 41 44 52 53 63 66 73 ...
+##  $ p   : num 0.05
+##  - attr(*, &quot;class&quot;)= chr &quot;network&quot;</code></pre>
+<p>Generic functions.</p>
+<div class="sourceCode" id="cb229"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb229-1"><a href="5-3-network-failure.html#cb229-1"></a>sim &lt;-<span class="st"> </span><span class="cf">function</span>(x, ...)</span>
+<span id="cb229-2"><a href="5-3-network-failure.html#cb229-2"></a>  <span class="kw">UseMethod</span>(<span class="st">&quot;sim&quot;</span>)</span>
+<span id="cb229-3"><a href="5-3-network-failure.html#cb229-3"></a>failure &lt;-<span class="st"> </span><span class="cf">function</span>(x, ...)</span>
+<span id="cb229-4"><a href="5-3-network-failure.html#cb229-4"></a>  <span class="kw">UseMethod</span>(<span class="st">&quot;failure&quot;</span>)</span></code></pre></div>
+<p>The first method.</p>
+<div class="sourceCode" id="cb230"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb230-1"><a href="5-3-network-failure.html#cb230-1"></a>sim.network &lt;-<span class="st"> </span><span class="cf">function</span>(x) {</span>
+<span id="cb230-2"><a href="5-3-network-failure.html#cb230-2"></a>  Aup &lt;-<span class="st"> </span>x<span class="op">$</span>Aup</span>
+<span id="cb230-3"><a href="5-3-network-failure.html#cb230-3"></a>  Aup[x<span class="op">$</span>ones] &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="kw">length</span>(x<span class="op">$</span>ones), </span>
+<span id="cb230-4"><a href="5-3-network-failure.html#cb230-4"></a>                        <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(x<span class="op">$</span>p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>x<span class="op">$</span>p))</span>
+<span id="cb230-5"><a href="5-3-network-failure.html#cb230-5"></a>  Aup <span class="op">+</span><span class="st"> </span><span class="kw">t</span>(Aup)</span>
+<span id="cb230-6"><a href="5-3-network-failure.html#cb230-6"></a>}</span></code></pre></div>
+<p>And the second method.</p>
+<div class="sourceCode" id="cb231"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb231-1"><a href="5-3-network-failure.html#cb231-1"></a>failure.network &lt;-<span class="st"> </span><span class="cf">function</span>(x, n, <span class="dt">p0 =</span> <span class="ot">NULL</span>) {</span>
+<span id="cb231-2"><a href="5-3-network-failure.html#cb231-2"></a>  <span class="cf">if</span> (<span class="kw">is.null</span>(p0)) { <span class="co">## Naive simulation</span></span>
+<span id="cb231-3"><a href="5-3-network-failure.html#cb231-3"></a>    tmp &lt;-<span class="st"> </span><span class="kw">replicate</span>(n, <span class="kw">disconAB</span>(<span class="kw">sim</span>(x)))</span>
+<span id="cb231-4"><a href="5-3-network-failure.html#cb231-4"></a>    muhat &lt;-<span class="st"> </span><span class="kw">mean</span>(tmp)</span>
+<span id="cb231-5"><a href="5-3-network-failure.html#cb231-5"></a>    se &lt;-<span class="st"> </span><span class="kw">sqrt</span>(muhat <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>muhat) <span class="op">/</span><span class="st"> </span>n)</span>
+<span id="cb231-6"><a href="5-3-network-failure.html#cb231-6"></a>  } <span class="cf">else</span> { <span class="co">## Importance sampling</span></span>
+<span id="cb231-7"><a href="5-3-network-failure.html#cb231-7"></a>    p &lt;-<span class="st"> </span>x<span class="op">$</span>p</span>
+<span id="cb231-8"><a href="5-3-network-failure.html#cb231-8"></a>    x<span class="op">$</span>p &lt;-<span class="st"> </span>p0</span>
+<span id="cb231-9"><a href="5-3-network-failure.html#cb231-9"></a>    tmp &lt;-<span class="st"> </span><span class="kw">replicate</span>(n, <span class="kw">impw</span>(x<span class="op">$</span>Aup, <span class="kw">sim</span>(x), p0, p))</span>
+<span id="cb231-10"><a href="5-3-network-failure.html#cb231-10"></a>    se &lt;-<span class="st"> </span><span class="kw">sd</span>(tmp) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n)</span>
+<span id="cb231-11"><a href="5-3-network-failure.html#cb231-11"></a>    muhat &lt;-<span class="st"> </span><span class="kw">mean</span>(tmp)</span>
+<span id="cb231-12"><a href="5-3-network-failure.html#cb231-12"></a>  } </span>
+<span id="cb231-13"><a href="5-3-network-failure.html#cb231-13"></a>  value &lt;-<span class="st"> </span>muhat <span class="op">+</span><span class="st"> </span><span class="fl">1.96</span> <span class="op">*</span><span class="st"> </span>se <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)  </span>
+<span id="cb231-14"><a href="5-3-network-failure.html#cb231-14"></a>  <span class="kw">names</span>(value) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;low&quot;</span>, <span class="st">&quot;estimate&quot;</span>, <span class="st">&quot;high&quot;</span>)</span>
+<span id="cb231-15"><a href="5-3-network-failure.html#cb231-15"></a>  value</span>
+<span id="cb231-16"><a href="5-3-network-failure.html#cb231-16"></a>}</span></code></pre></div>
+<p>We test the implementation against the previously computed
+results.</p>
+<div class="sourceCode" id="cb232"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb232-1"><a href="5-3-network-failure.html#cb232-1"></a><span class="kw">set.seed</span>(seed)  <span class="co">## Resetting seed</span></span>
+<span id="cb232-2"><a href="5-3-network-failure.html#cb232-2"></a><span class="kw">failure</span>(myNet, n)</span></code></pre></div>
+<pre><code>##          low     estimate         high 
+## 0.0002257328 0.0003400000 0.0004542672</code></pre>
+<div class="sourceCode" id="cb234"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb234-1"><a href="5-3-network-failure.html#cb234-1"></a><span class="kw">set.seed</span>(seed)  <span class="co">## Resetting seed</span></span>
+<span id="cb234-2"><a href="5-3-network-failure.html#cb234-2"></a><span class="kw">failure</span>(myNet, n, <span class="dt">p0 =</span> <span class="fl">0.2</span>)</span></code></pre></div>
+<pre><code>##          low     estimate         high 
+## 0.0002619838 0.0002960900 0.0003301962</code></pre>
+<p>We find that these are the same numbers as computed above, thus the object
+oriented implementation concurs with the non-object oriented on this example.</p>
+<p>We benchmark the object oriented implementation.</p>
+<div class="sourceCode" id="cb236"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb236-1"><a href="5-3-network-failure.html#cb236-1"></a><span class="kw">microbenchmark</span>(</span>
+<span id="cb236-2"><a href="5-3-network-failure.html#cb236-2"></a>  <span class="kw">simNet</span>(Aup, <span class="fl">0.05</span>),</span>
+<span id="cb236-3"><a href="5-3-network-failure.html#cb236-3"></a>  <span class="kw">sim</span>(myNet),</span>
+<span id="cb236-4"><a href="5-3-network-failure.html#cb236-4"></a>  <span class="dt">times =</span> <span class="fl">1e4</span></span>
+<span id="cb236-5"><a href="5-3-network-failure.html#cb236-5"></a>)</span></code></pre></div>
+<pre><code>## Unit: microseconds
+##               expr  min   lq mean median   uq   max neval
+##  simNet(Aup, 0.05) 13.2 18.0 21.1   19.5 21.1   283 10000
+##         sim(myNet) 14.9 19.4 25.2   20.8 22.5 27268 10000</code></pre>
+<p>One should expect a small computational overhead due to method dispatching,
+that is, the procedure that R uses to look up the appropriate <code>sim</code> method
+for an object of class <code>network</code>.</p>
+<p>The generic <code>print</code> function already exists. We implement a method
+for class <code>network</code>.</p>
+<div class="sourceCode" id="cb238"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb238-1"><a href="5-3-network-failure.html#cb238-1"></a>print.network &lt;-<span class="st"> </span><span class="cf">function</span>(x) {</span>
+<span id="cb238-2"><a href="5-3-network-failure.html#cb238-2"></a>  <span class="kw">cat</span>(<span class="st">&quot;#vertices: &quot;</span>, <span class="kw">nrow</span>(x<span class="op">$</span>A), <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb238-3"><a href="5-3-network-failure.html#cb238-3"></a>  <span class="kw">cat</span>(<span class="st">&quot;#edges:&quot;</span>, <span class="kw">sum</span>(x<span class="op">$</span>Aup), <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb238-4"><a href="5-3-network-failure.html#cb238-4"></a>  <span class="kw">cat</span>(<span class="st">&quot;p = &quot;</span>, x<span class="op">$</span>p, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb238-5"><a href="5-3-network-failure.html#cb238-5"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb239"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb239-1"><a href="5-3-network-failure.html#cb239-1"></a>myNet  <span class="co">## Implicitly calls &#39;print&#39;</span></span></code></pre></div>
+<pre><code>## #vertices:  10 
+## #edges: 18 
+## p =  0.05</code></pre>
+<p>Using igraph.</p>
+<div class="sourceCode" id="cb241"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb241-1"><a href="5-3-network-failure.html#cb241-1"></a><span class="kw">library</span>(igraph)</span>
+<span id="cb241-2"><a href="5-3-network-failure.html#cb241-2"></a>net &lt;-<span class="st"> </span><span class="kw">graph_from_adjacency_matrix</span>(A, <span class="dt">mode =</span> <span class="st">&quot;undirected&quot;</span>)</span>
+<span id="cb241-3"><a href="5-3-network-failure.html#cb241-3"></a>net</span></code></pre></div>
+<pre><code>## IGRAPH e985393 U--- 10 18 -- 
+## + edges from e985393:
+##  [1] 1-- 2 1-- 4 1-- 5 2-- 3 2-- 6 3-- 6 3-- 7 3-- 8 3--10 4-- 5 4-- 8 5-- 8
+## [13] 5-- 9 6-- 7 6--10 7--10 8-- 9 9--10</code></pre>
+<p>The igraph package supports a vast number of graph computation, manipulation and
+visualization tools.</p>
+<p>Plotting an igraph.</p>
+<div class="sourceCode" id="cb243"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb243-1"><a href="5-3-network-failure.html#cb243-1"></a><span class="co">## You can generate a layout ...</span></span>
+<span id="cb243-2"><a href="5-3-network-failure.html#cb243-2"></a>net_layout &lt;-<span class="st"> </span><span class="kw">layout_</span>(net, <span class="kw">nicely</span>())</span>
+<span id="cb243-3"><a href="5-3-network-failure.html#cb243-3"></a><span class="co">## ... or you can specify one yourself </span></span>
+<span id="cb243-4"><a href="5-3-network-failure.html#cb243-4"></a>net_layout &lt;-<span class="st"> </span><span class="kw">matrix</span>(</span>
+<span id="cb243-5"><a href="5-3-network-failure.html#cb243-5"></a>  <span class="kw">c</span>(<span class="op">-</span><span class="dv">20</span>,  <span class="dv">1</span>,</span>
+<span id="cb243-6"><a href="5-3-network-failure.html#cb243-6"></a>    <span class="dv">-4</span>,  <span class="dv">3</span>,</span>
+<span id="cb243-7"><a href="5-3-network-failure.html#cb243-7"></a>    <span class="dv">-4</span>,  <span class="dv">1</span>,</span>
+<span id="cb243-8"><a href="5-3-network-failure.html#cb243-8"></a>    <span class="dv">-4</span>, <span class="dv">-1</span>,</span>
+<span id="cb243-9"><a href="5-3-network-failure.html#cb243-9"></a>    <span class="dv">-4</span>, <span class="dv">-3</span>,</span>
+<span id="cb243-10"><a href="5-3-network-failure.html#cb243-10"></a>     <span class="dv">4</span>,  <span class="dv">3</span>,</span>
+<span id="cb243-11"><a href="5-3-network-failure.html#cb243-11"></a>     <span class="dv">4</span>,  <span class="dv">1</span>,</span>
+<span id="cb243-12"><a href="5-3-network-failure.html#cb243-12"></a>     <span class="dv">4</span>, <span class="dv">-1</span>,</span>
+<span id="cb243-13"><a href="5-3-network-failure.html#cb243-13"></a>     <span class="dv">4</span>, <span class="dv">-3</span>,</span>
+<span id="cb243-14"><a href="5-3-network-failure.html#cb243-14"></a>     <span class="dv">20</span>,  <span class="dv">-1</span>),</span>
+<span id="cb243-15"><a href="5-3-network-failure.html#cb243-15"></a>  <span class="dt">ncol =</span> <span class="dv">2</span>, <span class="dt">nrow =</span> <span class="dv">10</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<p>Plotting an igraph</p>
+<div class="sourceCode" id="cb244"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb244-1"><a href="5-3-network-failure.html#cb244-1"></a><span class="kw">plot</span>(net, <span class="dt">layout =</span> net_layout, <span class="dt">asp =</span> <span class="dv">0</span>)</span></code></pre></div>
+<p><img src="CSwR_files/figure-html/network_plot-1.png" width="70%" style="display: block; margin: auto;" /></p>
+<p>Simulation method for igraph</p>
+<div class="sourceCode" id="cb245"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb245-1"><a href="5-3-network-failure.html#cb245-1"></a>sim.igraph &lt;-<span class="st"> </span><span class="cf">function</span>(x, p) {</span>
+<span id="cb245-2"><a href="5-3-network-failure.html#cb245-2"></a>  nr &lt;-<span class="st"> </span><span class="kw">ecount</span>(x)</span>
+<span id="cb245-3"><a href="5-3-network-failure.html#cb245-3"></a>  deledges &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="ot">TRUE</span>, <span class="ot">FALSE</span>), nr, </span>
+<span id="cb245-4"><a href="5-3-network-failure.html#cb245-4"></a>                     <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p))</span>
+<span id="cb245-5"><a href="5-3-network-failure.html#cb245-5"></a>  <span class="kw">delete_edges</span>(x, <span class="kw">which</span>(deledges))</span>
+<span id="cb245-6"><a href="5-3-network-failure.html#cb245-6"></a>}</span></code></pre></div>
+<p>A simulated graph</p>
+<div class="sourceCode" id="cb246"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb246-1"><a href="5-3-network-failure.html#cb246-1"></a><span class="kw">plot</span>(<span class="kw">sim</span>(net, <span class="fl">0.25</span>), <span class="dt">layout =</span> net_layout, <span class="dt">asp =</span> <span class="dv">0</span>)</span></code></pre></div>
+<p><img src="CSwR_files/figure-html/network_simulated-1.png" width="70%" style="display: block; margin: auto;" /></p>
+<p>This is slower than using the matrix representation alone as in <code>simNet</code>.</p>
+<div class="sourceCode" id="cb247"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb247-1"><a href="5-3-network-failure.html#cb247-1"></a><span class="kw">system.time</span>(<span class="kw">replicate</span>(<span class="fl">1e5</span>, {<span class="kw">sim</span>(net, <span class="fl">0.05</span>); <span class="ot">NULL</span>}))</span></code></pre></div>
+<pre><code>##    user  system elapsed 
+##   4.664   2.571   6.624</code></pre>
+<p>One could also implement the function for testing if nodes 1 and 10 are
+disconnected using the <code>shortest_paths</code> function, but this is not faster
+than the simple matrix multiplications used in <code>disconAB</code> either, though
+it could be for larger graphs.</p>
+
+</div>
+</div>
+<!-- </div> -->
+
+
+
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="5-2-importance-sampling.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="6-four-examples.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"toc": {
+"collapse": "section"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

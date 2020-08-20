@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>3.1 Nearest neighbor smoothers | Computational Statistics with R</title>
+  <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  <meta name="generator" content="bookdown 0.20 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="3.1 Nearest neighbor smoothers | Computational Statistics with R" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="3.1 Nearest neighbor smoothers | Computational Statistics with R" />
+  
+  <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  
+
+<meta name="author" content="Niels Richard Hansen" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="3-bivariate.html"/>
+<link rel="next" href="3-2-kernel-methods.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<script src="libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+
+
+<style type="text/css">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Computational Statistics with R</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="1" data-path="1-intro.html"><a href="1-intro.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
+<li class="chapter" data-level="1.1" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html"><i class="fa fa-check"></i><b>1.1</b> Smoothing</a><ul>
+<li class="chapter" data-level="1.1.1" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#intro-angles"><i class="fa fa-check"></i><b>1.1.1</b> Angle distributions in proteins</a></li>
+<li class="chapter" data-level="1.1.2" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#using-ggplot2"><i class="fa fa-check"></i><b>1.1.2</b> Using ggplot2</a></li>
+<li class="chapter" data-level="1.1.3" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#changing-the-defaults"><i class="fa fa-check"></i><b>1.1.3</b> Changing the defaults</a></li>
+<li class="chapter" data-level="1.1.4" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#multivariate-smoothing"><i class="fa fa-check"></i><b>1.1.4</b> Multivariate methods</a></li>
+<li class="chapter" data-level="1.1.5" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#large-scale-smoothing"><i class="fa fa-check"></i><b>1.1.5</b> Large scale smoothing</a></li>
+</ul></li>
+<li class="chapter" data-level="1.2" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html"><i class="fa fa-check"></i><b>1.2</b> Monte Carlo Methods</a><ul>
+<li class="chapter" data-level="1.2.1" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#vM"><i class="fa fa-check"></i><b>1.2.1</b> Univariate von Mises distributions</a></li>
+<li class="chapter" data-level="1.2.2" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#mixtures-of-von-mises-distributions"><i class="fa fa-check"></i><b>1.2.2</b> Mixtures of von Mises distributions</a></li>
+<li class="chapter" data-level="1.2.3" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#large-scale-monte-carlo-methods"><i class="fa fa-check"></i><b>1.2.3</b> Large scale Monte Carlo methods</a></li>
+</ul></li>
+<li class="chapter" data-level="1.3" data-path="1-3-optimization.html"><a href="1-3-optimization.html"><i class="fa fa-check"></i><b>1.3</b> Optimization</a><ul>
+<li class="chapter" data-level="1.3.1" data-path="1-3-optimization.html"><a href="1-3-optimization.html#the-em-algorithm"><i class="fa fa-check"></i><b>1.3.1</b> The EM-algorithm</a></li>
+<li class="chapter" data-level="1.3.2" data-path="1-3-optimization.html"><a href="1-3-optimization.html#large-scale-optimization"><i class="fa fa-check"></i><b>1.3.2</b> Large scale optimization</a></li>
+</ul></li>
+<li class="chapter" data-level="1.4" data-path="1-4-exercises.html"><a href="1-4-exercises.html"><i class="fa fa-check"></i><b>1.4</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#r-training-exercises"><i class="fa fa-check"></i>R training exercises</a></li>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#histograms-with-non-equidistant-breaks"><i class="fa fa-check"></i>Histograms with non-equidistant breaks</a></li>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#functions-and-functional-programming"><i class="fa fa-check"></i>Functions and functional programming</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part I: Smoothing</b></span></li>
+<li class="chapter" data-level="2" data-path="2-density.html"><a href="2-density.html"><i class="fa fa-check"></i><b>2</b> Density estimation</a><ul>
+<li class="chapter" data-level="2.1" data-path="2-1-unidens.html"><a href="2-1-unidens.html"><i class="fa fa-check"></i><b>2.1</b> Univariate density estimation</a><ul>
+<li class="chapter" data-level="2.1.1" data-path="2-1-unidens.html"><a href="2-1-unidens.html#likelihood"><i class="fa fa-check"></i><b>2.1.1</b> Likelihood considerations</a></li>
+<li class="chapter" data-level="2.1.2" data-path="2-1-unidens.html"><a href="2-1-unidens.html#sieves"><i class="fa fa-check"></i><b>2.1.2</b> Method of sieves</a></li>
+<li class="chapter" data-level="2.1.3" data-path="2-1-unidens.html"><a href="2-1-unidens.html#basis-density"><i class="fa fa-check"></i><b>2.1.3</b> Basis expansions</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html"><i class="fa fa-check"></i><b>2.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="2.2.1" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#implementation"><i class="fa fa-check"></i><b>2.2.1</b> Implementation</a></li>
+<li class="chapter" data-level="2.2.2" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#benchmarking"><i class="fa fa-check"></i><b>2.2.2</b> Benchmarking</a></li>
+</ul></li>
+<li class="chapter" data-level="2.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html"><i class="fa fa-check"></i><b>2.3</b> Bandwidth selection</a><ul>
+<li class="chapter" data-level="2.3.1" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#rectangular"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
+<li class="chapter" data-level="2.3.2" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#ise-mise-and-mse-for-kernel-estimators"><i class="fa fa-check"></i><b>2.3.2</b> ISE, MISE and MSE for kernel estimators</a></li>
+<li class="chapter" data-level="2.3.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#plug-in-estimation-of-the-oracle-bandwidth"><i class="fa fa-check"></i><b>2.3.3</b> Plug-in estimation of the oracle bandwidth</a></li>
+<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>2.4</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="2-4-exercises.html"><a href="2-4-exercises.html"><i class="fa fa-check"></i>Kernel density estimation</a></li>
+<li class="chapter" data-level="" data-path="2-4-exercises.html"><a href="2-4-exercises.html#benchmarking-1"><i class="fa fa-check"></i>Benchmarking</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="3-bivariate.html"><a href="3-bivariate.html"><i class="fa fa-check"></i><b>3</b> Bivariate smoothing</a><ul>
+<li class="chapter" data-level="3.1" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html"><i class="fa fa-check"></i><b>3.1</b> Nearest neighbor smoothers</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#linear-smoothers"><i class="fa fa-check"></i><b>3.1.1</b> Linear smoothers</a></li>
+<li class="chapter" data-level="3.1.2" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#implementing-the-running-mean"><i class="fa fa-check"></i><b>3.1.2</b> Implementing the running mean</a></li>
+<li class="chapter" data-level="3.1.3" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#choose-k-by-cross-validation"><i class="fa fa-check"></i><b>3.1.3</b> Choose <span class="math inline">\(k\)</span> by cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html#nadarayawatson-kernel-smoothing"><i class="fa fa-check"></i><b>3.2.1</b> Nadaraya–Watson kernel smoothing</a></li>
+<li class="chapter" data-level="3.2.2" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html#local-regression-smoothers"><i class="fa fa-check"></i><b>3.2.2</b> Local regression smoothers</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="3-3-sparse-linear-algebra.html"><a href="3-3-sparse-linear-algebra.html"><i class="fa fa-check"></i><b>3.3</b> Sparse linear algebra</a></li>
+<li class="chapter" data-level="3.4" data-path="3-4-onb.html"><a href="3-4-onb.html"><i class="fa fa-check"></i><b>3.4</b> Orthogonal basis expansions</a><ul>
+<li class="chapter" data-level="3.4.1" data-path="3-4-onb.html"><a href="3-4-onb.html#polynomial-expansions"><i class="fa fa-check"></i><b>3.4.1</b> Polynomial expansions</a></li>
+<li class="chapter" data-level="3.4.2" data-path="3-4-onb.html"><a href="3-4-onb.html#fourier-expansions"><i class="fa fa-check"></i><b>3.4.2</b> Fourier expansions</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="3-5-splines.html"><a href="3-5-splines.html"><i class="fa fa-check"></i><b>3.5</b> Splines</a><ul>
+<li class="chapter" data-level="3.5.1" data-path="3-5-splines.html"><a href="3-5-splines.html#smoothing-splines"><i class="fa fa-check"></i><b>3.5.1</b> Smoothing splines</a></li>
+<li class="chapter" data-level="3.5.2" data-path="3-5-splines.html"><a href="3-5-splines.html#splines-in-r"><i class="fa fa-check"></i><b>3.5.2</b> Splines in R</a></li>
+<li class="chapter" data-level="3.5.3" data-path="3-5-splines.html"><a href="3-5-splines.html#efficient-splines"><i class="fa fa-check"></i><b>3.5.3</b> Efficient computation with splines</a></li>
+</ul></li>
+<li class="chapter" data-level="3.6" data-path="3-6-gaussian-processes.html"><a href="3-6-gaussian-processes.html"><i class="fa fa-check"></i><b>3.6</b> Gaussian processes</a></li>
+<li class="chapter" data-level="3.7" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html"><i class="fa fa-check"></i><b>3.7</b> The Kalman filter</a><ul>
+<li class="chapter" data-level="3.7.1" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#ar1-example"><i class="fa fa-check"></i><b>3.7.1</b> AR(1)-example</a></li>
+<li class="chapter" data-level="3.7.2" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#the-kalman-smoother"><i class="fa fa-check"></i><b>3.7.2</b> The Kalman smoother</a></li>
+<li class="chapter" data-level="3.7.3" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#implementation"><i class="fa fa-check"></i><b>3.7.3</b> Implementation</a></li>
+<li class="chapter" data-level="3.7.4" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#the-kalman-filter-1"><i class="fa fa-check"></i><b>3.7.4</b> The Kalman filter</a></li>
+</ul></li>
+<li class="chapter" data-level="3.8" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>3.8</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="3-8-exercises.html"><a href="3-8-exercises.html"><i class="fa fa-check"></i>Nearest neighbors</a></li>
+<li class="chapter" data-level="" data-path="3-8-exercises.html"><a href="3-8-exercises.html#kernel-estimators"><i class="fa fa-check"></i>Kernel estimators</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
+<li class="chapter" data-level="4" data-path="4-univariate-random-variables.html"><a href="4-univariate-random-variables.html"><i class="fa fa-check"></i><b>4</b> Univariate random variables</a><ul>
+<li class="chapter" data-level="4.1" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html"><i class="fa fa-check"></i><b>4.1</b> Pseudorandom number generators</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html#implementing-a-pseudorandom-number-generator"><i class="fa fa-check"></i><b>4.1.1</b> Implementing a pseudorandom number generator</a></li>
+<li class="chapter" data-level="4.1.2" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html#pseudorandom-number-packages"><i class="fa fa-check"></i><b>4.1.2</b> Pseudorandom number packages</a></li>
+</ul></li>
+<li class="chapter" data-level="4.2" data-path="4-2-transformation-techniques.html"><a href="4-2-transformation-techniques.html"><i class="fa fa-check"></i><b>4.2</b> Transformation techniques</a><ul>
+<li class="chapter" data-level="4.2.1" data-path="4-2-transformation-techniques.html"><a href="4-2-transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.3" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html"><i class="fa fa-check"></i><b>4.3</b> Rejection sampling</a><ul>
+<li class="chapter" data-level="4.3.1" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html#vMsim"><i class="fa fa-check"></i><b>4.3.1</b> von Mises distribution</a></li>
+<li class="chapter" data-level="4.3.2" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.2</b> Gamma distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.4" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html"><i class="fa fa-check"></i><b>4.4</b> Adaptive envelopes</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html#beta-distribution"><i class="fa fa-check"></i><b>4.4.1</b> Beta distribution</a></li>
+<li class="chapter" data-level="4.4.2" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html#von-mises-distribution"><i class="fa fa-check"></i><b>4.4.2</b> von Mises distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="4-5-exercises.html"><a href="4-5-exercises.html"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="5-mci.html"><a href="5-mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
+<li class="chapter" data-level="5.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html"><i class="fa fa-check"></i><b>5.1</b> Assessment</a><ul>
+<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#using-the-central-limit-theorem"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
+<li class="chapter" data-level="5.1.2" data-path="5-1-assessment.html"><a href="5-1-assessment.html#concentration-inequalities"><i class="fa fa-check"></i><b>5.1.2</b> Concentration inequalities</a></li>
+<li class="chapter" data-level="5.1.3" data-path="5-1-assessment.html"><a href="5-1-assessment.html#exponential-tail-bound-for-gamma-distributed-variables"><i class="fa fa-check"></i><b>5.1.3</b> Exponential tail bound for Gamma distributed variables</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html"><i class="fa fa-check"></i><b>5.2</b> Importance sampling</a><ul>
+<li class="chapter" data-level="5.2.1" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#unknown-normalization-constants"><i class="fa fa-check"></i><b>5.2.1</b> Unknown normalization constants</a></li>
+<li class="chapter" data-level="5.2.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#hd-int"><i class="fa fa-check"></i><b>5.2.2</b> Computing a high-dimensional integral</a></li>
+</ul></li>
+<li class="chapter" data-level="5.3" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part III: Optimization</b></span></li>
+<li class="chapter" data-level="6" data-path="6-four-examples.html"><a href="6-four-examples.html"><i class="fa fa-check"></i><b>6</b> Four Examples</a><ul>
+<li class="chapter" data-level="6.1" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html"><i class="fa fa-check"></i><b>6.1</b> Exponential families</a><ul>
+<li class="chapter" data-level="6.1.1" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#full-exponential-families"><i class="fa fa-check"></i><b>6.1.1</b> Full exponential families</a></li>
+<li class="chapter" data-level="6.1.2" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>6.1.2</b> Exponential family Bayesian networks</a></li>
+<li class="chapter" data-level="6.1.3" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>6.1.3</b> Likelihood computations</a></li>
+<li class="chapter" data-level="6.1.4" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>6.1.4</b> Curved exponential families</a></li>
+</ul></li>
+<li class="chapter" data-level="6.2" data-path="6-2-multinomial-models.html"><a href="6-2-multinomial-models.html"><i class="fa fa-check"></i><b>6.2</b> Multinomial models</a><ul>
+<li class="chapter" data-level="6.2.1" data-path="6-2-multinomial-models.html"><a href="6-2-multinomial-models.html#pep-moth"><i class="fa fa-check"></i><b>6.2.1</b> Peppered Moths</a></li>
+</ul></li>
+<li class="chapter" data-level="6.3" data-path="6-3-regression.html"><a href="6-3-regression.html"><i class="fa fa-check"></i><b>6.3</b> Regression models</a></li>
+<li class="chapter" data-level="6.4" data-path="6-4-finite-mixture-models.html"><a href="6-4-finite-mixture-models.html"><i class="fa fa-check"></i><b>6.4</b> Finite mixture models</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="6-4-finite-mixture-models.html"><a href="6-4-finite-mixture-models.html#Gaus-mix-ex"><i class="fa fa-check"></i><b>6.4.1</b> Gaussian mixtures</a></li>
+</ul></li>
+<li class="chapter" data-level="6.5" data-path="6-5-mixed-models.html"><a href="6-5-mixed-models.html"><i class="fa fa-check"></i><b>6.5</b> Mixed models</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="7-numopt.html"><a href="7-numopt.html"><i class="fa fa-check"></i><b>7</b> Numerical optimization</a><ul>
+<li class="chapter" data-level="7.1" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html"><i class="fa fa-check"></i><b>7.1</b> Algorithms and convergence</a><ul>
+<li class="chapter" data-level="7.1.1" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#descent-algorithms"><i class="fa fa-check"></i><b>7.1.1</b> Descent algorithms</a></li>
+<li class="chapter" data-level="7.1.2" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#maps-and-fixed-points"><i class="fa fa-check"></i><b>7.1.2</b> Maps and fixed points</a></li>
+<li class="chapter" data-level="7.1.3" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#convergence-rate"><i class="fa fa-check"></i><b>7.1.3</b> Convergence rate</a></li>
+<li class="chapter" data-level="7.1.4" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#stopping-criteria"><i class="fa fa-check"></i><b>7.1.4</b> Stopping criteria</a></li>
+</ul></li>
+<li class="chapter" data-level="7.2" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html"><i class="fa fa-check"></i><b>7.2</b> Descent direction algorithms</a><ul>
+<li class="chapter" data-level="7.2.1" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#line-search"><i class="fa fa-check"></i><b>7.2.1</b> Line search</a></li>
+<li class="chapter" data-level="7.2.2" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#gradient-descent"><i class="fa fa-check"></i><b>7.2.2</b> Gradient descent</a></li>
+<li class="chapter" data-level="7.2.3" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>7.2.3</b> Conjugate gradients</a></li>
+<li class="chapter" data-level="7.2.4" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#pep-moth-descent"><i class="fa fa-check"></i><b>7.2.4</b> Peppered Moths</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html"><i class="fa fa-check"></i><b>7.3</b> Newton-type algorithms</a><ul>
+<li class="chapter" data-level="7.3.1" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>7.3.1</b> Poisson regression</a></li>
+<li class="chapter" data-level="7.3.2" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>7.3.2</b> Quasi-Newton algorithms</a></li>
+<li class="chapter" data-level="7.3.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>7.3.3</b> Sparsity</a></li>
+</ul></li>
+<li class="chapter" data-level="7.4" data-path="7-4-misc-.html"><a href="7-4-misc-.html"><i class="fa fa-check"></i><b>7.4</b> Misc.</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="8-em.html"><a href="8-em.html"><i class="fa fa-check"></i><b>8</b> Expectation maximization algorithms</a><ul>
+<li class="chapter" data-level="8.1" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html"><i class="fa fa-check"></i><b>8.1</b> Basic properties</a><ul>
+<li class="chapter" data-level="8.1.1" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#incomplete-data-likelihood"><i class="fa fa-check"></i><b>8.1.1</b> Incomplete data likelihood</a></li>
+<li class="chapter" data-level="8.1.2" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#monotonicity-of-the-em-algorithm"><i class="fa fa-check"></i><b>8.1.2</b> Monotonicity of the EM algorithm</a></li>
+<li class="chapter" data-level="8.1.3" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#peppered-moths"><i class="fa fa-check"></i><b>8.1.3</b> Peppered moths</a></li>
+</ul></li>
+<li class="chapter" data-level="8.2" data-path="8-2-EM-exp.html"><a href="8-2-EM-exp.html"><i class="fa fa-check"></i><b>8.2</b> Exponential families</a></li>
+<li class="chapter" data-level="8.3" data-path="8-3-fisher-information.html"><a href="8-3-fisher-information.html"><i class="fa fa-check"></i><b>8.3</b> Fisher information</a></li>
+<li class="chapter" data-level="8.4" data-path="8-4-revisiting-gaussian-mixtures.html"><a href="8-4-revisiting-gaussian-mixtures.html"><i class="fa fa-check"></i><b>8.4</b> Revisiting Gaussian mixtures</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="9-StochOpt.html"><a href="9-StochOpt.html"><i class="fa fa-check"></i><b>9</b> Stochastic Optimization</a><ul>
+<li class="chapter" data-level="9.1" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html"><i class="fa fa-check"></i><b>9.1</b> Stochastic gradient algorithms</a><ul>
+<li class="chapter" data-level="9.1.1" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#section"><i class="fa fa-check"></i><b>9.1.1</b> </a></li>
+<li class="chapter" data-level="9.1.2" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#online-stochastic-gradient-descent"><i class="fa fa-check"></i><b>9.1.2</b> Online stochastic gradient descent</a></li>
+<li class="chapter" data-level="9.1.3" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#stochastic-gradient-descent"><i class="fa fa-check"></i><b>9.1.3</b> Stochastic gradient descent</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="9-2-nonlinear-least-squares.html"><a href="9-2-nonlinear-least-squares.html"><i class="fa fa-check"></i><b>9.2</b> Nonlinear least squares</a></li>
+</ul></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="A-app-R.html"><a href="A-app-R.html"><i class="fa fa-check"></i><b>A</b> R programming</a></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Computational Statistics with R</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="nearest-neighbor-smoothers" class="section level2">
+<h2><span class="header-section-number">3.1</span> Nearest neighbor smoothers</h2>
+<p>One of the most basic ideas on smoothing bivariate data is to use a
+running mean or moving average. This is particularly sensible when the
+<span class="math inline">\(x\)</span>-values are equidistant, e.g. when the observations constitute
+a time series such as the Nuuk temperature data. The running mean is
+an example of the more general nearest neighbor smoothers.</p>
+<p>Mathematically, the <span class="math inline">\(k\)</span> nearest neighbor smoother in <span class="math inline">\(x_i\)</span> is defined as
+<span class="math display">\[\hat{f}_i = \frac{1}{k} \sum_{j \in N_i} y_j\]</span>
+where <span class="math inline">\(N_i\)</span> is the set of indices for the <span class="math inline">\(k\)</span> nearest neighbors of <span class="math inline">\(x_i\)</span>.
+This simple idea is actually very general and powerful. It works as long
+as the <span class="math inline">\(x\)</span>-values lie in a metric space, and by letting <span class="math inline">\(k\)</span> grow with
+<span class="math inline">\(n\)</span> it is possible to construct consistent nonparametric estimators of
+regression functions, <span class="math inline">\(f(x) = E(Y \mid X = x)\)</span>, under minimal assumptions.
+The practical problem is that <span class="math inline">\(k\)</span> must grow slowly in high dimensions,
+and the estimator is not a panacea.</p>
+<p>In this chapter we focus exclusively on <span class="math inline">\(x\)</span> being real valued with the
+ordinary metric used to define the nearest neighbors. The total ordering of the
+real line adds a couple of extra possibilities to the definition of <span class="math inline">\(N_i\)</span>.
+When <span class="math inline">\(k\)</span> is odd, the <em>symmetric</em> nearest neighbor smoother takes <span class="math inline">\(N_i\)</span> to consist
+of <span class="math inline">\(x_i\)</span> together with the <span class="math inline">\((k-1)/2\)</span> smaller <span class="math inline">\(x_j\)</span>-s closest to
+<span class="math inline">\(x_i\)</span> and the <span class="math inline">\((k-1)/2\)</span> larger <span class="math inline">\(x_j\)</span>-s closest to <span class="math inline">\(x_i\)</span>. It is
+also possible to choose a one-sided smoother with <span class="math inline">\(N_i\)</span> corresponding
+to the <span class="math inline">\(k\)</span> smaller <span class="math inline">\(x_j\)</span>-s closest to <span class="math inline">\(x_i\)</span>, in which case the smoother would
+be known as a causal filter.</p>
+<p>The symmetric definition of neighbors makes it very easy
+to handle the neighbors computationally; we don’t need to compute and keep
+track of the <span class="math inline">\(n^2\)</span> pairwise distances between the <span class="math inline">\(x_i\)</span>-s, we only need
+to sort data according to the <span class="math inline">\(x\)</span>-values. Once data is sorted,
+<span class="math display">\[N_i = \{i - (k - 1) / 2, i - (k - 1) / 2 + 1, \ldots, i - 1 , i, i + 1, \ldots,   i + (k - 1) / 2\}\]</span>
+for <span class="math inline">\((k - 1) / 2 \leq i \leq n - (k - 1) / 2\)</span>. The symmetric <span class="math inline">\(k\)</span> nearest neighbor
+smoother is thus a running mean of the <span class="math inline">\(y\)</span>-values when sorted according to
+the <span class="math inline">\(x\)</span>-values. There are a couple of possibilities for handling the boundaries,
+one being simply to not define a value of <span class="math inline">\(\hat{f}_i\)</span> outside of the interval
+above.</p>
+<p>With <span class="math inline">\(\hat{\mathbf{f}}\)</span> denoting the vector of smoothed values by a nearest
+neighbor smoother we can observe that it is always possible to write
+<span class="math inline">\(\hat{\mathbf{f}} = \mathbf{S}\mathbf{y}\)</span> for a matrix <span class="math inline">\(\mathbf{S}\)</span>. For the symmetric
+nearest neighbor smoother and with data sorted according to the <span class="math inline">\(x\)</span>-values,
+the matrix has the following band diagonal form</p>
+<p><span class="math display">\[
+\mathbf{S} = \left( \begin{array}{cccccccccc} 
+\frac{1}{5} &amp; \frac{1}{5} &amp; \frac{1}{5} &amp; \frac{1}{5} &amp; \frac{1}{5} &amp; 0 &amp; 0 &amp; \ldots &amp; 0 &amp; 0 \\
+0 &amp; \frac{1}{5} &amp; \frac{1}{5} &amp; \frac{1}{5} &amp; \frac{1}{5} &amp; \frac{1}{5} &amp; 0 &amp; \ldots &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; \frac{1}{5} &amp; \frac{1}{5} &amp; \frac{1}{5} &amp; \frac{1}{5} &amp; \frac{1}{5} &amp; \ldots &amp; 0 &amp; 0 \\
+\vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \ldots &amp; \vdots &amp; \vdots \\
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; \ldots &amp; \frac{1}{5} &amp; \frac{1}{5} \\
+\end{array} \right) 
+\]</span></p>
+<p>here given for <span class="math inline">\(k = 5\)</span> and with dimensions <span class="math inline">\((n - 4) \times n\)</span> due to the
+undefined boundary values.</p>
+<div id="linear-smoothers" class="section level3">
+<h3><span class="header-section-number">3.1.1</span> Linear smoothers</h3>
+<p>A smoother of the form <span class="math inline">\(\hat{\mathbf{f}} = \mathbf{S}\mathbf{y}\)</span> for a <em>smoother matrix</em> <span class="math inline">\(\mathbf{S}\)</span>,
+such as the nearest neighbor smoother, is known as a <em>linear smoother</em>.
+The linear form is often beneficial for theoretical arguments, and many smoothers
+considered in this chapter will be linear smoothers. For computing <span class="math inline">\(\mathbf{f}\)</span>
+there may, however, be many alternatives to forming the matrix <span class="math inline">\(\mathbf{S}\)</span>
+and computing the matrix-vector product. Indeed, this is often not the best
+way to compute the smoothed values.</p>
+<p>It is, on the other hand, useful to see how <span class="math inline">\(\mathbf{S}\)</span> can be constructed
+for the symmetric nearest neighbor smoother.</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="3-1-nearest-neighbor-smoothers.html#cb54-1"></a>w &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rep</span>(<span class="dv">1</span><span class="op">/</span><span class="dv">11</span>, <span class="dv">11</span>), <span class="kw">rep</span>(<span class="dv">0</span>, <span class="dv">147</span> <span class="op">-</span><span class="st"> </span><span class="dv">10</span>))</span>
+<span id="cb54-2"><a href="3-1-nearest-neighbor-smoothers.html#cb54-2"></a>S &lt;-<span class="st"> </span><span class="kw">matrix</span>(w, <span class="dv">147</span> <span class="op">-</span><span class="st"> </span><span class="dv">10</span>, <span class="dv">147</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<pre><code>## Warning in matrix(w, 147 - 10, 147, byrow = TRUE): data length [148] is not a
+## sub-multiple or multiple of the number of rows [137]</code></pre>
+<p>The construction above relies on vector recycling of <code>w</code> in the construction of <code>S</code>
+and the fact that <code>w</code> has length <span class="math inline">\(147 + 1\)</span>, which will effectively cause <code>w</code> to be
+translated by one to the right every time it is recycled for a new row. As seen,
+the code triggers a warning by R, but in this case we get what we want.</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="3-1-nearest-neighbor-smoothers.html#cb56-1"></a>S</span></code></pre></div>
+<p><img src="CSwR_files/figure-html/S-NN-top-actual-1.png" width="70%" style="display: block; margin: auto;" /></p>
+<p>We can use the matrix to smooth the annual average temperature in Nuuk using a
+running mean with a window of <span class="math inline">\(k = 11\)</span> years. That is, the smoothed temperature
+at a given year is the average of the temperatures in the period
+from five years before to five years after. Note that to add the smoothed
+values to the previous plot we need to pad the values at the boundaries
+with <code>NA</code>s to get a vector of length 147.</p>
+<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="3-1-nearest-neighbor-smoothers.html#cb57-1"></a><span class="co">## Check first if data is sorted correctly.</span></span>
+<span id="cb57-2"><a href="3-1-nearest-neighbor-smoothers.html#cb57-2"></a><span class="co">## The test is backwards, but confirms that data isn&#39;t unsorted :-)</span></span>
+<span id="cb57-3"><a href="3-1-nearest-neighbor-smoothers.html#cb57-3"></a><span class="kw">is.unsorted</span>(Nuuk_year<span class="op">$</span>Year)</span></code></pre></div>
+<pre><code>## [1] FALSE</code></pre>
+<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="3-1-nearest-neighbor-smoothers.html#cb59-1"></a>f_hat &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rep</span>(<span class="ot">NA</span>, <span class="dv">5</span>), S <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature, <span class="kw">rep</span>(<span class="ot">NA</span>, <span class="dv">5</span>))</span>
+<span id="cb59-2"><a href="3-1-nearest-neighbor-smoothers.html#cb59-2"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> f_hat), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:Nuuk-NN-plot"></span>
+<img src="CSwR_files/figure-html/Nuuk-NN-plot-1.png" alt="Annual average temperature in Nuuk smoothed using the running mean with $k = 11$ neighbors." width="70%" />
+<p class="caption">
+Figure 3.2: Annual average temperature in Nuuk smoothed using the running mean with <span class="math inline">\(k = 11\)</span> neighbors.
+</p>
+</div>
+</div>
+<div id="implementing-the-running-mean" class="section level3">
+<h3><span class="header-section-number">3.1.2</span> Implementing the running mean</h3>
+<p>The running mean smoother fulfills the following identity
+<span class="math display">\[\hat{f}_{i+1} = \hat{f}_{i} - y_{i - (k-1)/2} + y_{i + (k + 1)/2},\]</span>
+which can be used for a much more efficient implementation
+than the matrix-vector multiplication. It should be emphasized
+again that the identity above and the implementation below
+assume that data is sorted according to <span class="math inline">\(x\)</span>-values.</p>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="3-1-nearest-neighbor-smoothers.html#cb60-1"></a><span class="co">## The vector &#39;y&#39; must be sorted according to the x-values</span></span>
+<span id="cb60-2"><a href="3-1-nearest-neighbor-smoothers.html#cb60-2"></a>runMean &lt;-<span class="st"> </span><span class="cf">function</span>(y, k) {</span>
+<span id="cb60-3"><a href="3-1-nearest-neighbor-smoothers.html#cb60-3"></a>  n &lt;-<span class="st"> </span><span class="kw">length</span>(y)</span>
+<span id="cb60-4"><a href="3-1-nearest-neighbor-smoothers.html#cb60-4"></a>  m &lt;-<span class="st"> </span><span class="kw">floor</span>((k <span class="op">-</span><span class="st"> </span><span class="dv">1</span>) <span class="op">/</span><span class="st"> </span><span class="dv">2</span>)</span>
+<span id="cb60-5"><a href="3-1-nearest-neighbor-smoothers.html#cb60-5"></a>  k &lt;-<span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>m <span class="op">+</span><span class="st"> </span><span class="dv">1</span>           <span class="co"># Ensures k to be odd and m = (k-1) / 2</span></span>
+<span id="cb60-6"><a href="3-1-nearest-neighbor-smoothers.html#cb60-6"></a>  y &lt;-<span class="st"> </span>y <span class="op">/</span><span class="st"> </span>k</span>
+<span id="cb60-7"><a href="3-1-nearest-neighbor-smoothers.html#cb60-7"></a>  s &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="ot">NA</span>, n)</span>
+<span id="cb60-8"><a href="3-1-nearest-neighbor-smoothers.html#cb60-8"></a>  s[m <span class="op">+</span><span class="st"> </span><span class="dv">1</span>] &lt;-<span class="st"> </span><span class="kw">sum</span>(y[<span class="dv">1</span><span class="op">:</span>k])</span>
+<span id="cb60-9"><a href="3-1-nearest-neighbor-smoothers.html#cb60-9"></a>  <span class="cf">for</span>(i <span class="cf">in</span> (m <span class="op">+</span><span class="st"> </span><span class="dv">1</span>)<span class="op">:</span>(n <span class="op">-</span><span class="st"> </span>m <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)) </span>
+<span id="cb60-10"><a href="3-1-nearest-neighbor-smoothers.html#cb60-10"></a>    s[i <span class="op">+</span><span class="st"> </span><span class="dv">1</span>] &lt;-<span class="st"> </span>s[i] <span class="op">-</span><span class="st"> </span>y[i <span class="op">-</span><span class="st"> </span>m] <span class="op">+</span><span class="st"> </span>y[i <span class="op">+</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>m]</span>
+<span id="cb60-11"><a href="3-1-nearest-neighbor-smoothers.html#cb60-11"></a>  s</span>
+<span id="cb60-12"><a href="3-1-nearest-neighbor-smoothers.html#cb60-12"></a>}</span></code></pre></div>
+
+<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="3-1-nearest-neighbor-smoothers.html#cb61-1"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">runMean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">11</span>)), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:Nuuk-NN-plot2"></span>
+<img src="CSwR_files/figure-html/Nuuk-NN-plot2-1.png" alt="Annual average temperature in Nuuk smoothed using the running mean with \(k = 11\) neighbors. This time using a different implementation than in Figure 3.2." width="70%" />
+<p class="caption">
+Figure 3.3: Annual average temperature in Nuuk smoothed using the running mean with <span class="math inline">\(k = 11\)</span> neighbors. This time using a different implementation than in Figure <a href="3-1-nearest-neighbor-smoothers.html#fig:Nuuk-NN-plot">3.2</a>.
+</p>
+</div>
+<p>The R function <code>filter</code> (from the stats package) can be used to compute running
+means and general moving averages using any weight vector. We compare our two
+implementations to <code>filter</code>.</p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="3-1-nearest-neighbor-smoothers.html#cb62-1"></a>f_hat_filter &lt;-<span class="st"> </span>stats<span class="op">::</span><span class="kw">filter</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="kw">rep</span>(<span class="dv">1</span><span class="op">/</span><span class="dv">11</span>, <span class="dv">11</span>))</span>
+<span id="cb62-2"><a href="3-1-nearest-neighbor-smoothers.html#cb62-2"></a><span class="kw">range</span>(f_hat_filter <span class="op">-</span><span class="st"> </span>f_hat, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<pre><code>## [1] -4.440892e-16  4.440892e-16</code></pre>
+<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="3-1-nearest-neighbor-smoothers.html#cb64-1"></a><span class="kw">range</span>(f_hat_filter <span class="op">-</span><span class="st"> </span><span class="kw">runMean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">11</span>), <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<pre><code>## [1] -1.332268e-15  4.440892e-16</code></pre>
+<p>Note that <code>filter</code> uses the same boundary convention as used in <code>runMean</code>.</p>
+<p>A benchmark comparison between matrix-vector multiplication, <code>runMean</code> and <code>filter</code>
+gives the following table with median run time in microseconds.</p>
+<pre><code>##                                       expr     median
+## 1                          S1 %*% y[1:512]   411.5695
+## 2                         S2 %*% y[1:1024]  1710.1580
+## 3                         S3 %*% y[1:2048]  6982.5700
+## 4                         S4 %*% y[1:4096] 27277.8575
+## 5                runMean(y[1:512], k = 11)    86.3020
+## 6               runMean(y[1:1024], k = 11)   165.5745
+## 7               runMean(y[1:2048], k = 11)   319.1950
+## 8               runMean(y[1:4096], k = 11)   645.2315
+## 9   stats::filter(y[1:512], rep(1/11, 11))   103.0275
+## 10 stats::filter(y[1:1024], rep(1/11, 11))   145.8120
+## 11 stats::filter(y[1:2048], rep(1/11, 11))   197.1010
+## 12 stats::filter(y[1:4096], rep(1/11, 11))   335.9570</code></pre>
+<p>The matrix-vector computation is clearly much slower than the two alternatives,
+and the time to construct the <span class="math inline">\(\mathbf{S}\)</span>-matrix has not even been included
+in the benchmark above. There is also a difference in how the matrix-vector
+multiplication scales with the size of data compared to the alternatives.
+Whenever the data size doubles the run time approximately doubles for
+both <code>filter</code> and <code>runMean</code>, while it quadruples for the matrix-vector
+multiplication. This shows the difference between an algorithm
+that scales like <span class="math inline">\(O(n)\)</span> and an algorithm that scales like <span class="math inline">\(O(n^2)\)</span>
+as the matrix-vector product does.</p>
+<p>Despite the fact that <code>filter</code> is actually implementing a more general
+algorithm than <code>runMean</code>, it is still faster. This reflects the fact that
+it is implemented in C and compiled.</p>
+</div>
+<div id="choose-k-by-cross-validation" class="section level3">
+<h3><span class="header-section-number">3.1.3</span> Choose <span class="math inline">\(k\)</span> by cross-validation</h3>
+<p>Many (linear) smoothers have a natural definition of an “out-of-sample”
+prediction, that is, how <span class="math inline">\(\hat{f}(x)\)</span> is computed for <span class="math inline">\(x\)</span> not
+in the data. If so, it becomes possible to define
+<span class="math display">\[\hat{f}^{-i}_i = \hat{f}^{-i}(x_i)\]</span>
+as the prediction at <span class="math inline">\(x_i\)</span> using the smoother computed from data
+with <span class="math inline">\((x_i, y_i)\)</span> excluded. However, instead of relying on this,
+we <em>define</em>
+<span class="math display">\[\hat{f}^{-i}_i = \sum_{j \neq i} \frac{S_{ij}y_j}{1 - S_{ii}}\]</span>
+for any linear smoother. This definition will concur with <span class="math inline">\(\hat{f}^{-i}(x_i)\)</span>
+for most smoothers, but this has to be verified case-by-case.</p>
+<p>The running mean is a little speciel in this respect. In the
+previous section, the
+running mean was only considered for odd <span class="math inline">\(k\)</span> and using
+a symmetric neighbor definition. This is convenient
+when considering the running mean <em>in the observations</em> <span class="math inline">\(x_i\)</span>.
+When considering the running mean in any other point, a symmetric
+neighbor definition works better with an even <span class="math inline">\(k\)</span>. This
+is exactly what the definition of <span class="math inline">\(\hat{f}^{-i}_i\)</span> above amounts to.
+If <span class="math inline">\(\mathbf{S}\)</span> is the running mean smoother matrix for an odd <span class="math inline">\(k\)</span>,
+then <span class="math inline">\(\hat{f}^{-i}_i\)</span> corresponds to symmetric <span class="math inline">\((k-1)\)</span>-nearest
+neighbor smoothing excluding <span class="math inline">\((x_i, y_i)\)</span> from the data.</p>
+<p>Using the definition above, we get that the <em>leave-one-out cross-validation</em>
+squared error criterion becomes
+<span class="math display">\[\mathrm{LOOCV} = \sum_{i=1}^n (y_i - \hat{f}^{-i}_i)^2 = 
+\sum_{i=1}^n \left(\frac{y_i - \hat{f}_i}{1 - S_{ii}}\right)^2.\]</span>
+The important observation from the identity above is that LOOCV
+can be computed without actually computing all the <span class="math inline">\(\hat{f}^{-i}_i\)</span>.</p>
+<p>For the running mean, all diagonal elements of the smoother matrix are identical.
+We disregard boundary values (with the <code>NA</code> value), so to get
+a comparable quantity across different choices of <span class="math inline">\(k\)</span> we use <code>mean</code> instead of
+<code>sum</code> in the implementation.</p>
+<div class="sourceCode" id="cb67"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb67-1"><a href="3-1-nearest-neighbor-smoothers.html#cb67-1"></a>loocv &lt;-<span class="st"> </span><span class="cf">function</span>(k, y) {</span>
+<span id="cb67-2"><a href="3-1-nearest-neighbor-smoothers.html#cb67-2"></a>  f_hat &lt;-<span class="st"> </span><span class="kw">runMean</span>(y, k)</span>
+<span id="cb67-3"><a href="3-1-nearest-neighbor-smoothers.html#cb67-3"></a>  <span class="kw">mean</span>(((y <span class="op">-</span><span class="st"> </span>f_hat) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span><span class="dv">1</span><span class="op">/</span>k))<span class="op">^</span><span class="dv">2</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>) </span>
+<span id="cb67-4"><a href="3-1-nearest-neighbor-smoothers.html#cb67-4"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="3-1-nearest-neighbor-smoothers.html#cb68-1"></a>k &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">3</span>, <span class="dv">40</span>, <span class="dv">2</span>)</span>
+<span id="cb68-2"><a href="3-1-nearest-neighbor-smoothers.html#cb68-2"></a>CV &lt;-<span class="st"> </span><span class="kw">sapply</span>(k, <span class="cf">function</span>(kk) <span class="kw">loocv</span>(kk, Nuuk_year<span class="op">$</span>Temperature))</span>
+<span id="cb68-3"><a href="3-1-nearest-neighbor-smoothers.html#cb68-3"></a>k_opt &lt;-<span class="st"> </span>k[<span class="kw">which.min</span>(CV)]</span>
+<span id="cb68-4"><a href="3-1-nearest-neighbor-smoothers.html#cb68-4"></a><span class="kw">qplot</span>(k, CV) <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>() <span class="op">+</span><span class="st"> </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> k_opt, <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>)</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:Nuuk-running-loocv"></span>
+<img src="CSwR_files/figure-html/Nuuk-running-loocv-1.png" alt="The leave-one-out cross-validation criterion for the running mean as a function of the number of neighbors $k$." width="70%" />
+<p class="caption">
+Figure 3.4: The leave-one-out cross-validation criterion for the running mean as a function of the number of neighbors <span class="math inline">\(k\)</span>.
+</p>
+</div>
+<p>The optimal choice of <span class="math inline">\(k\)</span> is 15, but the LOOCV criterion jumps quite a
+lot up and down with changing neighbor size, and <span class="math inline">\(k = 9\)</span> as well as <span class="math inline">\(k = 25\)</span>
+give a rather low values as well.</p>
+<div class="sourceCode" id="cb69"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb69-1"><a href="3-1-nearest-neighbor-smoothers.html#cb69-1"></a>p_Nuuk <span class="op">+</span><span class="st"> </span></span>
+<span id="cb69-2"><a href="3-1-nearest-neighbor-smoothers.html#cb69-2"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">runMean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">9</span>)), <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>) <span class="op">+</span></span>
+<span id="cb69-3"><a href="3-1-nearest-neighbor-smoothers.html#cb69-3"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">runMean</span>(Nuuk_year<span class="op">$</span>Temperature, k_opt)), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>) <span class="op">+</span></span>
+<span id="cb69-4"><a href="3-1-nearest-neighbor-smoothers.html#cb69-4"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">runMean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">25</span>)), <span class="dt">color =</span> <span class="st">&quot;purple&quot;</span>)</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:Nuuk-NN-plot3"></span>
+<img src="CSwR_files/figure-html/Nuuk-NN-plot3-1.png" alt="The $k$-nearest neighbor smoother with the optimal choice of $k$ based on LOOCV (blue) and with $k = 9$ (red) and $k = 25$ (purple)." width="70%" />
+<p class="caption">
+Figure 3.5: The <span class="math inline">\(k\)</span>-nearest neighbor smoother with the optimal choice of <span class="math inline">\(k\)</span> based on LOOCV (blue) and with <span class="math inline">\(k = 9\)</span> (red) and <span class="math inline">\(k = 25\)</span> (purple).
+</p>
+</div>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="3-bivariate.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="3-2-kernel-methods.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"toc": {
+"collapse": "section"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

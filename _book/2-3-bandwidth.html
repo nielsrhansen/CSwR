@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>2.3 Bandwidth selection | Computational Statistics with R</title>
+  <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  <meta name="generator" content="bookdown 0.20 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="2.3 Bandwidth selection | Computational Statistics with R" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="2.3 Bandwidth selection | Computational Statistics with R" />
+  
+  <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  
+
+<meta name="author" content="Niels Richard Hansen" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="2-2-kernel-density.html"/>
+<link rel="next" href="2-4-exercises.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<script src="libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+
+
+<style type="text/css">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Computational Statistics with R</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="1" data-path="1-intro.html"><a href="1-intro.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
+<li class="chapter" data-level="1.1" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html"><i class="fa fa-check"></i><b>1.1</b> Smoothing</a><ul>
+<li class="chapter" data-level="1.1.1" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#intro-angles"><i class="fa fa-check"></i><b>1.1.1</b> Angle distributions in proteins</a></li>
+<li class="chapter" data-level="1.1.2" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#using-ggplot2"><i class="fa fa-check"></i><b>1.1.2</b> Using ggplot2</a></li>
+<li class="chapter" data-level="1.1.3" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#changing-the-defaults"><i class="fa fa-check"></i><b>1.1.3</b> Changing the defaults</a></li>
+<li class="chapter" data-level="1.1.4" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#multivariate-smoothing"><i class="fa fa-check"></i><b>1.1.4</b> Multivariate methods</a></li>
+<li class="chapter" data-level="1.1.5" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#large-scale-smoothing"><i class="fa fa-check"></i><b>1.1.5</b> Large scale smoothing</a></li>
+</ul></li>
+<li class="chapter" data-level="1.2" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html"><i class="fa fa-check"></i><b>1.2</b> Monte Carlo Methods</a><ul>
+<li class="chapter" data-level="1.2.1" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#vM"><i class="fa fa-check"></i><b>1.2.1</b> Univariate von Mises distributions</a></li>
+<li class="chapter" data-level="1.2.2" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#mixtures-of-von-mises-distributions"><i class="fa fa-check"></i><b>1.2.2</b> Mixtures of von Mises distributions</a></li>
+<li class="chapter" data-level="1.2.3" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#large-scale-monte-carlo-methods"><i class="fa fa-check"></i><b>1.2.3</b> Large scale Monte Carlo methods</a></li>
+</ul></li>
+<li class="chapter" data-level="1.3" data-path="1-3-optimization.html"><a href="1-3-optimization.html"><i class="fa fa-check"></i><b>1.3</b> Optimization</a><ul>
+<li class="chapter" data-level="1.3.1" data-path="1-3-optimization.html"><a href="1-3-optimization.html#the-em-algorithm"><i class="fa fa-check"></i><b>1.3.1</b> The EM-algorithm</a></li>
+<li class="chapter" data-level="1.3.2" data-path="1-3-optimization.html"><a href="1-3-optimization.html#large-scale-optimization"><i class="fa fa-check"></i><b>1.3.2</b> Large scale optimization</a></li>
+</ul></li>
+<li class="chapter" data-level="1.4" data-path="1-4-exercises.html"><a href="1-4-exercises.html"><i class="fa fa-check"></i><b>1.4</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#r-training-exercises"><i class="fa fa-check"></i>R training exercises</a></li>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#histograms-with-non-equidistant-breaks"><i class="fa fa-check"></i>Histograms with non-equidistant breaks</a></li>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#functions-and-functional-programming"><i class="fa fa-check"></i>Functions and functional programming</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part I: Smoothing</b></span></li>
+<li class="chapter" data-level="2" data-path="2-density.html"><a href="2-density.html"><i class="fa fa-check"></i><b>2</b> Density estimation</a><ul>
+<li class="chapter" data-level="2.1" data-path="2-1-unidens.html"><a href="2-1-unidens.html"><i class="fa fa-check"></i><b>2.1</b> Univariate density estimation</a><ul>
+<li class="chapter" data-level="2.1.1" data-path="2-1-unidens.html"><a href="2-1-unidens.html#likelihood"><i class="fa fa-check"></i><b>2.1.1</b> Likelihood considerations</a></li>
+<li class="chapter" data-level="2.1.2" data-path="2-1-unidens.html"><a href="2-1-unidens.html#sieves"><i class="fa fa-check"></i><b>2.1.2</b> Method of sieves</a></li>
+<li class="chapter" data-level="2.1.3" data-path="2-1-unidens.html"><a href="2-1-unidens.html#basis-density"><i class="fa fa-check"></i><b>2.1.3</b> Basis expansions</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html"><i class="fa fa-check"></i><b>2.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="2.2.1" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#implementation"><i class="fa fa-check"></i><b>2.2.1</b> Implementation</a></li>
+<li class="chapter" data-level="2.2.2" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#benchmarking"><i class="fa fa-check"></i><b>2.2.2</b> Benchmarking</a></li>
+</ul></li>
+<li class="chapter" data-level="2.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html"><i class="fa fa-check"></i><b>2.3</b> Bandwidth selection</a><ul>
+<li class="chapter" data-level="2.3.1" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#rectangular"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
+<li class="chapter" data-level="2.3.2" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#ise-mise-and-mse-for-kernel-estimators"><i class="fa fa-check"></i><b>2.3.2</b> ISE, MISE and MSE for kernel estimators</a></li>
+<li class="chapter" data-level="2.3.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#plug-in-estimation-of-the-oracle-bandwidth"><i class="fa fa-check"></i><b>2.3.3</b> Plug-in estimation of the oracle bandwidth</a></li>
+<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>2.4</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="2-4-exercises.html"><a href="2-4-exercises.html"><i class="fa fa-check"></i>Kernel density estimation</a></li>
+<li class="chapter" data-level="" data-path="2-4-exercises.html"><a href="2-4-exercises.html#benchmarking-1"><i class="fa fa-check"></i>Benchmarking</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="3-bivariate.html"><a href="3-bivariate.html"><i class="fa fa-check"></i><b>3</b> Bivariate smoothing</a><ul>
+<li class="chapter" data-level="3.1" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html"><i class="fa fa-check"></i><b>3.1</b> Nearest neighbor smoothers</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#linear-smoothers"><i class="fa fa-check"></i><b>3.1.1</b> Linear smoothers</a></li>
+<li class="chapter" data-level="3.1.2" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#implementing-the-running-mean"><i class="fa fa-check"></i><b>3.1.2</b> Implementing the running mean</a></li>
+<li class="chapter" data-level="3.1.3" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#choose-k-by-cross-validation"><i class="fa fa-check"></i><b>3.1.3</b> Choose <span class="math inline">\(k\)</span> by cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html#nadarayawatson-kernel-smoothing"><i class="fa fa-check"></i><b>3.2.1</b> Nadaraya–Watson kernel smoothing</a></li>
+<li class="chapter" data-level="3.2.2" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html#local-regression-smoothers"><i class="fa fa-check"></i><b>3.2.2</b> Local regression smoothers</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="3-3-sparse-linear-algebra.html"><a href="3-3-sparse-linear-algebra.html"><i class="fa fa-check"></i><b>3.3</b> Sparse linear algebra</a></li>
+<li class="chapter" data-level="3.4" data-path="3-4-onb.html"><a href="3-4-onb.html"><i class="fa fa-check"></i><b>3.4</b> Orthogonal basis expansions</a><ul>
+<li class="chapter" data-level="3.4.1" data-path="3-4-onb.html"><a href="3-4-onb.html#polynomial-expansions"><i class="fa fa-check"></i><b>3.4.1</b> Polynomial expansions</a></li>
+<li class="chapter" data-level="3.4.2" data-path="3-4-onb.html"><a href="3-4-onb.html#fourier-expansions"><i class="fa fa-check"></i><b>3.4.2</b> Fourier expansions</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="3-5-splines.html"><a href="3-5-splines.html"><i class="fa fa-check"></i><b>3.5</b> Splines</a><ul>
+<li class="chapter" data-level="3.5.1" data-path="3-5-splines.html"><a href="3-5-splines.html#smoothing-splines"><i class="fa fa-check"></i><b>3.5.1</b> Smoothing splines</a></li>
+<li class="chapter" data-level="3.5.2" data-path="3-5-splines.html"><a href="3-5-splines.html#splines-in-r"><i class="fa fa-check"></i><b>3.5.2</b> Splines in R</a></li>
+<li class="chapter" data-level="3.5.3" data-path="3-5-splines.html"><a href="3-5-splines.html#efficient-splines"><i class="fa fa-check"></i><b>3.5.3</b> Efficient computation with splines</a></li>
+</ul></li>
+<li class="chapter" data-level="3.6" data-path="3-6-gaussian-processes.html"><a href="3-6-gaussian-processes.html"><i class="fa fa-check"></i><b>3.6</b> Gaussian processes</a></li>
+<li class="chapter" data-level="3.7" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html"><i class="fa fa-check"></i><b>3.7</b> The Kalman filter</a><ul>
+<li class="chapter" data-level="3.7.1" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#ar1-example"><i class="fa fa-check"></i><b>3.7.1</b> AR(1)-example</a></li>
+<li class="chapter" data-level="3.7.2" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#the-kalman-smoother"><i class="fa fa-check"></i><b>3.7.2</b> The Kalman smoother</a></li>
+<li class="chapter" data-level="3.7.3" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#implementation"><i class="fa fa-check"></i><b>3.7.3</b> Implementation</a></li>
+<li class="chapter" data-level="3.7.4" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#the-kalman-filter-1"><i class="fa fa-check"></i><b>3.7.4</b> The Kalman filter</a></li>
+</ul></li>
+<li class="chapter" data-level="3.8" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>3.8</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="3-8-exercises.html"><a href="3-8-exercises.html"><i class="fa fa-check"></i>Nearest neighbors</a></li>
+<li class="chapter" data-level="" data-path="3-8-exercises.html"><a href="3-8-exercises.html#kernel-estimators"><i class="fa fa-check"></i>Kernel estimators</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
+<li class="chapter" data-level="4" data-path="4-univariate-random-variables.html"><a href="4-univariate-random-variables.html"><i class="fa fa-check"></i><b>4</b> Univariate random variables</a><ul>
+<li class="chapter" data-level="4.1" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html"><i class="fa fa-check"></i><b>4.1</b> Pseudorandom number generators</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html#implementing-a-pseudorandom-number-generator"><i class="fa fa-check"></i><b>4.1.1</b> Implementing a pseudorandom number generator</a></li>
+<li class="chapter" data-level="4.1.2" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html#pseudorandom-number-packages"><i class="fa fa-check"></i><b>4.1.2</b> Pseudorandom number packages</a></li>
+</ul></li>
+<li class="chapter" data-level="4.2" data-path="4-2-transformation-techniques.html"><a href="4-2-transformation-techniques.html"><i class="fa fa-check"></i><b>4.2</b> Transformation techniques</a><ul>
+<li class="chapter" data-level="4.2.1" data-path="4-2-transformation-techniques.html"><a href="4-2-transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.3" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html"><i class="fa fa-check"></i><b>4.3</b> Rejection sampling</a><ul>
+<li class="chapter" data-level="4.3.1" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html#vMsim"><i class="fa fa-check"></i><b>4.3.1</b> von Mises distribution</a></li>
+<li class="chapter" data-level="4.3.2" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.2</b> Gamma distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.4" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html"><i class="fa fa-check"></i><b>4.4</b> Adaptive envelopes</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html#beta-distribution"><i class="fa fa-check"></i><b>4.4.1</b> Beta distribution</a></li>
+<li class="chapter" data-level="4.4.2" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html#von-mises-distribution"><i class="fa fa-check"></i><b>4.4.2</b> von Mises distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="4-5-exercises.html"><a href="4-5-exercises.html"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="5-mci.html"><a href="5-mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
+<li class="chapter" data-level="5.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html"><i class="fa fa-check"></i><b>5.1</b> Assessment</a><ul>
+<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#using-the-central-limit-theorem"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
+<li class="chapter" data-level="5.1.2" data-path="5-1-assessment.html"><a href="5-1-assessment.html#concentration-inequalities"><i class="fa fa-check"></i><b>5.1.2</b> Concentration inequalities</a></li>
+<li class="chapter" data-level="5.1.3" data-path="5-1-assessment.html"><a href="5-1-assessment.html#exponential-tail-bound-for-gamma-distributed-variables"><i class="fa fa-check"></i><b>5.1.3</b> Exponential tail bound for Gamma distributed variables</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html"><i class="fa fa-check"></i><b>5.2</b> Importance sampling</a><ul>
+<li class="chapter" data-level="5.2.1" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#unknown-normalization-constants"><i class="fa fa-check"></i><b>5.2.1</b> Unknown normalization constants</a></li>
+<li class="chapter" data-level="5.2.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#hd-int"><i class="fa fa-check"></i><b>5.2.2</b> Computing a high-dimensional integral</a></li>
+</ul></li>
+<li class="chapter" data-level="5.3" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part III: Optimization</b></span></li>
+<li class="chapter" data-level="6" data-path="6-four-examples.html"><a href="6-four-examples.html"><i class="fa fa-check"></i><b>6</b> Four Examples</a><ul>
+<li class="chapter" data-level="6.1" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html"><i class="fa fa-check"></i><b>6.1</b> Exponential families</a><ul>
+<li class="chapter" data-level="6.1.1" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#full-exponential-families"><i class="fa fa-check"></i><b>6.1.1</b> Full exponential families</a></li>
+<li class="chapter" data-level="6.1.2" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>6.1.2</b> Exponential family Bayesian networks</a></li>
+<li class="chapter" data-level="6.1.3" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>6.1.3</b> Likelihood computations</a></li>
+<li class="chapter" data-level="6.1.4" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>6.1.4</b> Curved exponential families</a></li>
+</ul></li>
+<li class="chapter" data-level="6.2" data-path="6-2-multinomial-models.html"><a href="6-2-multinomial-models.html"><i class="fa fa-check"></i><b>6.2</b> Multinomial models</a><ul>
+<li class="chapter" data-level="6.2.1" data-path="6-2-multinomial-models.html"><a href="6-2-multinomial-models.html#pep-moth"><i class="fa fa-check"></i><b>6.2.1</b> Peppered Moths</a></li>
+</ul></li>
+<li class="chapter" data-level="6.3" data-path="6-3-regression.html"><a href="6-3-regression.html"><i class="fa fa-check"></i><b>6.3</b> Regression models</a></li>
+<li class="chapter" data-level="6.4" data-path="6-4-finite-mixture-models.html"><a href="6-4-finite-mixture-models.html"><i class="fa fa-check"></i><b>6.4</b> Finite mixture models</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="6-4-finite-mixture-models.html"><a href="6-4-finite-mixture-models.html#Gaus-mix-ex"><i class="fa fa-check"></i><b>6.4.1</b> Gaussian mixtures</a></li>
+</ul></li>
+<li class="chapter" data-level="6.5" data-path="6-5-mixed-models.html"><a href="6-5-mixed-models.html"><i class="fa fa-check"></i><b>6.5</b> Mixed models</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="7-numopt.html"><a href="7-numopt.html"><i class="fa fa-check"></i><b>7</b> Numerical optimization</a><ul>
+<li class="chapter" data-level="7.1" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html"><i class="fa fa-check"></i><b>7.1</b> Algorithms and convergence</a><ul>
+<li class="chapter" data-level="7.1.1" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#descent-algorithms"><i class="fa fa-check"></i><b>7.1.1</b> Descent algorithms</a></li>
+<li class="chapter" data-level="7.1.2" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#maps-and-fixed-points"><i class="fa fa-check"></i><b>7.1.2</b> Maps and fixed points</a></li>
+<li class="chapter" data-level="7.1.3" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#convergence-rate"><i class="fa fa-check"></i><b>7.1.3</b> Convergence rate</a></li>
+<li class="chapter" data-level="7.1.4" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#stopping-criteria"><i class="fa fa-check"></i><b>7.1.4</b> Stopping criteria</a></li>
+</ul></li>
+<li class="chapter" data-level="7.2" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html"><i class="fa fa-check"></i><b>7.2</b> Descent direction algorithms</a><ul>
+<li class="chapter" data-level="7.2.1" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#line-search"><i class="fa fa-check"></i><b>7.2.1</b> Line search</a></li>
+<li class="chapter" data-level="7.2.2" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#gradient-descent"><i class="fa fa-check"></i><b>7.2.2</b> Gradient descent</a></li>
+<li class="chapter" data-level="7.2.3" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>7.2.3</b> Conjugate gradients</a></li>
+<li class="chapter" data-level="7.2.4" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#pep-moth-descent"><i class="fa fa-check"></i><b>7.2.4</b> Peppered Moths</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html"><i class="fa fa-check"></i><b>7.3</b> Newton-type algorithms</a><ul>
+<li class="chapter" data-level="7.3.1" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>7.3.1</b> Poisson regression</a></li>
+<li class="chapter" data-level="7.3.2" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>7.3.2</b> Quasi-Newton algorithms</a></li>
+<li class="chapter" data-level="7.3.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>7.3.3</b> Sparsity</a></li>
+</ul></li>
+<li class="chapter" data-level="7.4" data-path="7-4-misc-.html"><a href="7-4-misc-.html"><i class="fa fa-check"></i><b>7.4</b> Misc.</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="8-em.html"><a href="8-em.html"><i class="fa fa-check"></i><b>8</b> Expectation maximization algorithms</a><ul>
+<li class="chapter" data-level="8.1" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html"><i class="fa fa-check"></i><b>8.1</b> Basic properties</a><ul>
+<li class="chapter" data-level="8.1.1" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#incomplete-data-likelihood"><i class="fa fa-check"></i><b>8.1.1</b> Incomplete data likelihood</a></li>
+<li class="chapter" data-level="8.1.2" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#monotonicity-of-the-em-algorithm"><i class="fa fa-check"></i><b>8.1.2</b> Monotonicity of the EM algorithm</a></li>
+<li class="chapter" data-level="8.1.3" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#peppered-moths"><i class="fa fa-check"></i><b>8.1.3</b> Peppered moths</a></li>
+</ul></li>
+<li class="chapter" data-level="8.2" data-path="8-2-EM-exp.html"><a href="8-2-EM-exp.html"><i class="fa fa-check"></i><b>8.2</b> Exponential families</a></li>
+<li class="chapter" data-level="8.3" data-path="8-3-fisher-information.html"><a href="8-3-fisher-information.html"><i class="fa fa-check"></i><b>8.3</b> Fisher information</a></li>
+<li class="chapter" data-level="8.4" data-path="8-4-revisiting-gaussian-mixtures.html"><a href="8-4-revisiting-gaussian-mixtures.html"><i class="fa fa-check"></i><b>8.4</b> Revisiting Gaussian mixtures</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="9-StochOpt.html"><a href="9-StochOpt.html"><i class="fa fa-check"></i><b>9</b> Stochastic Optimization</a><ul>
+<li class="chapter" data-level="9.1" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html"><i class="fa fa-check"></i><b>9.1</b> Stochastic gradient algorithms</a><ul>
+<li class="chapter" data-level="9.1.1" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#section"><i class="fa fa-check"></i><b>9.1.1</b> </a></li>
+<li class="chapter" data-level="9.1.2" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#online-stochastic-gradient-descent"><i class="fa fa-check"></i><b>9.1.2</b> Online stochastic gradient descent</a></li>
+<li class="chapter" data-level="9.1.3" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#stochastic-gradient-descent"><i class="fa fa-check"></i><b>9.1.3</b> Stochastic gradient descent</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="9-2-nonlinear-least-squares.html"><a href="9-2-nonlinear-least-squares.html"><i class="fa fa-check"></i><b>9.2</b> Nonlinear least squares</a></li>
+</ul></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="A-app-R.html"><a href="A-app-R.html"><i class="fa fa-check"></i><b>A</b> R programming</a></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Computational Statistics with R</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="bandwidth" class="section level2">
+<h2><span class="header-section-number">2.3</span> Bandwidth selection</h2>
+<div id="rectangular" class="section level3">
+<h3><span class="header-section-number">2.3.1</span> Revisiting the rectangular kernel</h3>
+<p>We return to the rectangular kernel and compute the mean squared error. In the
+analysis it may be helpful to think about <span class="math inline">\(n\)</span> large and <span class="math inline">\(h\)</span> small. Indeed,
+we will eventually choose <span class="math inline">\(h = h_n\)</span> as a function of <span class="math inline">\(n\)</span> such
+that as <span class="math inline">\(n \to \infty\)</span> we have <span class="math inline">\(h_n \to 0\)</span>. We should also note the <span class="math inline">\(f_h(x) = E (\hat{f}_h(x))\)</span>
+is a density, thus <span class="math inline">\(\int f_h(x) \mathrm{d}x = 1\)</span>.</p>
+<p>We will assume that <span class="math inline">\(f_0\)</span> is sufficiently differentiable
+and use a Taylor expansion of the distribution function <span class="math inline">\(F_0\)</span> to get that</p>
+<p><span class="math display">\[\begin{align*}
+f_h(x) &amp; = \frac{1}{2h}\left(F_0(x + h) - F_0(x - h)\right) \\
+&amp; = \frac{1}{2h}\left(2h f_0(x) + \frac{h^3}{3} f_0&#39;&#39;(x) + R_0(x,h) \right) \\
+&amp; = f_0(x) + \frac{h^2}{6} f_0&#39;&#39;(x) + R_1(x,h) 
+\end{align*}\]</span></p>
+<p>where <span class="math inline">\(R_1(x, h) = o(h^2)\)</span>. One should note how the quadratic terms in <span class="math inline">\(h\)</span>
+in the Taylor expansion canceled. This gives the following formula for
+the squared bias of <span class="math inline">\(\hat{f}_h\)</span>.</p>
+<p><span class="math display">\[\begin{align*}
+\mathrm{bias}(\hat{f}_h(x))^2 &amp; = (f_h(x) - f_0(x))^2 \\
+&amp; = \left(\frac{h^2}{6} f_0&#39;&#39;(x) + R_1(x,h) \right)^2 \\
+&amp; = \frac{h^4}{36} f_0&#39;&#39;(x)^2 + R(x,h)
+\end{align*}\]</span></p>
+<p>where <span class="math inline">\(R(x,h) = o(h^4)\)</span>. For the variance we see from <a href="2-2-kernel-density.html#eq:varRect">(2.1)</a>
+that
+<span class="math display">\[V(\hat{f}_h(x)) = f_h(x)\frac{1}{2hn} - f_h(x)^2 \frac{1}{n}.\]</span>
+Integrating the sum of the bias and the variance over <span class="math inline">\(x\)</span> gives the
+integrated mean squared error</p>
+<p><span class="math display">\[\begin{align*}
+\mathrm{MISE}(h) &amp; = \int \mathrm{bias}(\hat{f}_h(x))^2 + V(\hat{f}_h(x)) \mathrm{d}x \\
+&amp; = \frac{h^4}{36} \|f_0&#39;&#39;\|^2_2 + \frac{1}{2hn} + \int R(x,h) \mathrm{d} x - 
+\frac{1}{n} \int f_h(x)^2 \mathrm{d} x.
+\end{align*}\]</span></p>
+<p>Since <span class="math inline">\(f_h(x) \leq 1\)</span>,
+<span class="math display">\[\int f_h(x)^2 \mathrm{d} x \leq \int f_h(x) \mathrm{d} x = 1,\]</span>
+and the last term is <span class="math inline">\(o((nh)^{-1})\)</span>. The second last term is <span class="math inline">\(o(h^4)\)</span>
+if we can interchange the limit and integration order. It is conceivable
+that we can do so under suitable assumptions on <span class="math inline">\(f_0\)</span>, but we will not pursue
+those at this place. The sum of the two remaining and asymptotically dominating terms in
+the formula for MISE is<br />
+<span class="math display">\[\mathrm{AMISE}(h) = \frac{h^4}{36} \|f_0&#39;&#39;\|^2_2 + \frac{1}{2hn},\]</span>
+which is known as the asymptotic mean integrated squared error. Clearly,
+for this to be a useful formula, we must assume <span class="math inline">\(\|f_0&#39;&#39;\|_2^2 &lt; \infty\)</span>.
+In this case the formula for AMISE can be used to find the asymptotic
+optimal tradeoff between (integrated) bias and variance. Differentiating w.r.t. <span class="math inline">\(h\)</span> we
+find that
+<span class="math display">\[\mathrm{AMISE}&#39;(h) = \frac{h^3}{9} \|f_0&#39;&#39;\|^2_2 - \frac{1}{2h^2n},\]</span>
+and solving for <span class="math inline">\(\mathrm{AMISE}&#39;(h) = 0\)</span> yields
+<span class="math display">\[h_n = \left(\frac{9}{2 \|f_0&#39;&#39;\|_2^2}\right)^{1/5} n^{-1/5}.\]</span>
+When AMISE is regarded as a function of <span class="math inline">\(h\)</span> we observe that
+it tends to <span class="math inline">\(\infty\)</span> for <span class="math inline">\(h \to 0\)</span> as well as for <span class="math inline">\(h \to \infty\)</span>, thus the unique
+stationary point <span class="math inline">\(h_n\)</span> is a unique global minimizer. Choosing the bandwidth to
+be <span class="math inline">\(h_n\)</span> will therefore minimize the asympototic mean integrated squared error, and it
+is in this sense an optimal choice of bandwidth.</p>
+<p>We see how “wiggliness” of <span class="math inline">\(f_0\)</span> enters into the formula for the optimal
+bandwidth <span class="math inline">\(h_n\)</span> via <span class="math inline">\(\|f_0&#39;&#39;\|_2\)</span>. This norm of the second derivative
+is precisely a quantification of how much <span class="math inline">\(f_0\)</span> oscillates. A large value,
+indicating a wiggly <span class="math inline">\(f_0\)</span>, will drive the optimal bandwidth down whereas
+a small value will drive the optimal bandwidth up.</p>
+<p>We should also observe that if we plug the optimal bandwidth into the formula
+for AMISE, we get
+<span class="math display">\[\begin{align*}
+\mathrm{AMISE}(h_n) &amp; = \frac{h_n^4}{36} \|f_0&#39;&#39;\|^2_2 + \frac{1}{2h_n n} \\
+&amp; = C n^{-4/5},
+\end{align*}\]</span>
+which indicates that in terms of integrated mean squared error the rate
+at which we can nonparametrically estimate
+<span class="math inline">\(f_0\)</span> is <span class="math inline">\(n^{-4/5}\)</span>. This should be contrasted to the common parametric
+rate of <span class="math inline">\(n^{-1}\)</span> for mean squared error.</p>
+<p>From a practical viewpoint there is one major problem with the optimal
+bandwidth <span class="math inline">\(h_n\)</span>; it depends via <span class="math inline">\(\|f_0&#39;&#39;\|^2_2\)</span> upon the unknown <span class="math inline">\(f_0\)</span>
+that we are trying to estimate. We therefore refer to <span class="math inline">\(h_n\)</span> as an <em>oracle</em>
+bandwidth – it is the bandwidth that an oracle that knows <span class="math inline">\(f_0\)</span> would
+tell us to use. In practice, we will have to come up with an estimate
+of <span class="math inline">\(\|f_0&#39;&#39;\|^2_2\)</span> and plug that estimate into the formula for <span class="math inline">\(h_n\)</span>.
+We pursue a couple of different options for doing so for general kernel
+density estimators below together with methods that do not rely on the
+AMISE formula.</p>
+</div>
+<div id="ise-mise-and-mse-for-kernel-estimators" class="section level3">
+<h3><span class="header-section-number">2.3.2</span> ISE, MISE and MSE for kernel estimators</h3>
+<p>Bandwidth selection for general kernel estimators can be studied
+asymptotically just as above. To this end it is useful to formalize
+how we quantify the <em>quality</em> of an estimate <span class="math inline">\(\hat{f}_h\)</span>. One natural
+quantification is the <em>integrated squared error</em>,
+<span class="math display">\[\mathrm{ISE}(\hat{f}_h) = \int (\hat{f}_h(x) - f_0(x))^2 \ \mathrm{d}x = \|\hat{f}_h - f_0\|_2^2.\]</span></p>
+<p>The quality of the estimation procedure producing <span class="math inline">\(\hat{f}_h\)</span> from data
+can then be quantified by taking the mean ISE,
+<span class="math display">\[\mathrm{MISE}(h) = E(\mathrm{ISE}(\hat{f}_h)),\]</span>
+where the expectation integral is over the data. Using Tonelli’s theorem
+we may interchange the expectation and the integration over <span class="math inline">\(x\)</span> to
+get
+<span class="math display">\[\mathrm{MISE}(h) = \int \mathrm{MSE}_x(h) \ \mathrm{d}x\]</span>
+where
+<span class="math display">\[\mathrm{MSE}_h(x) = \mathrm{var}(\hat{f}_h(x)) + \mathrm{bias}(\hat{f}_h(x))^2.\]</span>
+is the pointwise mean squared error.</p>
+<p>Using the same kind of Taylor expansion argument as above we can show that if
+<span class="math inline">\(K\)</span> is a square integrable probability density with mean 0 and
+<span class="math display">\[\sigma_K^2 = \int z^2 K(z) \ \mathrm{d}z &gt; 0,\]</span>
+then
+<span class="math display">\[\mathrm{MISE}(h) = \mathrm{AMISE}(h) + o((nh)^{-1} + h^4)\]</span>
+where the <em>asymptotic mean integrated squared error</em> is
+<span class="math display">\[\mathrm{AMISE}(h) = \frac{\|K\|_2^2}{nh} + \frac{h^4 \sigma^4_K \|f_0&#39;&#39;\|_2^2}{4}\]</span>
+with
+<span class="math display">\[\|g\|_2^2 = \int g(z)^2 \ \mathrm{d}z  \quad (\mathrm{squared } \ L_2\mathrm{-norm}).\]</span>
+Some regularity assumptions on <span class="math inline">\(f_0\)</span> are necessary, and from the result
+we clearly need to require that <span class="math inline">\(f_0&#39;&#39;\)</span> is meaningful and square integrable.
+However, that is also enough. See Proposition A.1 in <span class="citation">Tsybakov (<a href="#ref-Tsybakov:2009" role="doc-biblioref">2009</a>)</span> for a rigorous
+proof.</p>
+<p>By minimizing <span class="math inline">\(\mathrm{AMISE}(h)\)</span> we derive the optimal oracle bandwidth</p>
+<p><span class="math display" id="eq:oracle">\[\begin{equation}
+\tag{2.3}
+h_n = \left( \frac{\|K\|_2^2}{ \|f_0&#39;&#39;\|^2_2  \sigma_K^4} \right)^{1/5} n^{-1/5}.
+\end{equation}\]</span></p>
+<p>If we plug this formula into the formula for AMISE we arrive at the asymptotic
+error rate <span class="math inline">\(\mathrm{AMISE}(h_n) = C n^{-4/5}\)</span> with a constant <span class="math inline">\(C\)</span> depending on
+<span class="math inline">\(f_0&#39;&#39;\)</span> and the kernel. It is noteworthy that the asymptotic analysis can be carried
+out even if <span class="math inline">\(K\)</span> is allowed to take negative values, though the resulting estimate
+may not be a valid density as it is. <span class="citation">Tsybakov (<a href="#ref-Tsybakov:2009" role="doc-biblioref">2009</a>)</span> demonstrates how to improve on
+the rate <span class="math inline">\(n^{-4/5}\)</span> by allowing for kernels whose moments of order two or above vanish.
+Necessarily, such kernels must take negative values.</p>
+<p>We observe that for the rectangular kernel,
+<span class="math display">\[\sigma_K^4 = \left(\frac{1}{2} \int_{-1}^1 z^2 \ \mathrm{d} z\right)^2 = \frac{1}{9}\]</span>
+and
+<span class="math display">\[\|K\|_2^2 = \frac{1}{2^2} \int_{-1}^1 \ \mathrm{d} z = \frac{1}{2}.\]</span>
+Plugging these numbers into <a href="2-3-bandwidth.html#eq:oracle">(2.3)</a> we find the oracle bandwidth for
+the rectangular kernel as derived in Section <a href="2-3-bandwidth.html#rectangular">2.3.1</a>. For the Gaussian
+kernel we find that <span class="math inline">\(\sigma_K^4 = 1\)</span>, while
+<span class="math display">\[\|K\|_2^2 = \frac{1}{2 \pi} \int e^{-x^2} \ \mathrm{d} x = \frac{1}{2 \sqrt{\pi}}.\]</span></p>
+</div>
+<div id="plug-in-estimation-of-the-oracle-bandwidth" class="section level3">
+<h3><span class="header-section-number">2.3.3</span> Plug-in estimation of the oracle bandwidth</h3>
+<p>To compute <span class="math inline">\(\|f_0&#39;&#39;\|^2_2\)</span> that enters into the formula for the asymptotically optimal
+bandwidth we have to know <span class="math inline">\(f_0\)</span> that we are trying to estimate in the first place.
+To resolve the circularity we will make a first guess of what <span class="math inline">\(f_0\)</span> is and plug that
+guess into the formula for the oracle bandwidth.</p>
+<p>Our first guess is that <span class="math inline">\(f_0\)</span> is Gaussian with mean 0 and variance <span class="math inline">\(\sigma^2\)</span>.
+Then</p>
+<p><span class="math display">\[\begin{align*}
+\|f_0&#39;&#39;\|^2_2 &amp; = \frac{1}{2 \pi \sigma^2} \int \left(\frac{x^2}{\sigma^4} -  \frac{1}{\sigma^2}\right)^2 e^{-x^2/\sigma^2} \ \mathrm{d}x \\
+&amp; = \frac{1}{2 \sigma^9 \sqrt{\pi}} \frac{1}{\sqrt{\pi \sigma^2}} \int (x^4 - 2 \sigma^2 x^2 + \sigma^4) e^{-x^2/\sigma^2} \ \mathrm{d}x \\ 
+&amp; = \frac{1}{2 \sigma^9 \sqrt{\pi}} (\frac{3}{4} \sigma^4 - \sigma^4 + \sigma^4) \\
+&amp; = \frac{3}{8 \sigma^5 \sqrt{\pi}}.
+\end{align*}\]</span></p>
+<p>Plugging this expression for the squared 2-norm of the second derivative of the density
+into the formula for the oracle bandwidth gives</p>
+<p><span class="math display" id="eq:oracle-silverman">\[\begin{equation}
+\tag{2.4}
+h_n = \left( \frac{8 \sqrt{\pi} \|K\|_2^2}{3 \sigma_K^4} \right)^{1/5} \sigma n^{-1/5},
+\end{equation}\]</span></p>
+<p>with <span class="math inline">\(\sigma\)</span> the only quantity depending on the unknown density <span class="math inline">\(f_0\)</span>. We can now
+simply estimate <span class="math inline">\(\sigma\)</span>, using e.g. the empirical standard
+deviation <span class="math inline">\(\hat{\sigma}\)</span>, and plug this estimate into the formula above to get an
+estimate of the oracle bandwidth.</p>
+<p>It is well known that the empirical standard deviation is sensitive to outliers,
+and if <span class="math inline">\(\sigma\)</span> is overestimated for that reason, the bandwidth will be too large
+and the resulting estimate will be oversmoothed. To
+get more robust bandwidth selection, <span class="citation">Silverman (<a href="#ref-Silverman:1986" role="doc-biblioref">1986</a>)</span> suggested using
+the interquartile range to estimate <span class="math inline">\(\sigma\)</span>. In fact, he suggested
+estimating <span class="math inline">\(\sigma\)</span> by
+<span class="math display">\[\tilde{\sigma} = \min\{\hat{\sigma}, \mathrm{IQR} / 1.34\}.\]</span>
+In this estimator, IQR denotes the empirical interquartile range, and
+<span class="math inline">\(1.34\)</span> is approximately the interquartile range, <span class="math inline">\(\Phi^{-1}(0.75) - \Phi^{-1}(0.25)\)</span>,
+of the standard Gaussian distribution. Curiously, the interquartile range for
+the standard Gaussian distribution is <span class="math inline">\(1.35\)</span> to two decimals accuracy, but the
+use of <span class="math inline">\(1.34\)</span> in the estimator <span class="math inline">\(\tilde{\sigma}\)</span>
+has prevailed. Silverman, moreover, suggested to reduce the kernel-dependent
+constant in the formula <a href="2-3-bandwidth.html#eq:oracle-silverman">(2.4)</a> for <span class="math inline">\(h_n\)</span> to further reduce
+oversmoothing.</p>
+<p>If we specialize to the Gaussian kernel, formula <a href="2-3-bandwidth.html#eq:oracle-silverman">(2.4)</a>
+simplifies to
+<span class="math display">\[\hat{h}_n = \left(\frac{4}{3}\right)^{1/5} \tilde{\sigma} n^{-1/5},\]</span>
+with <span class="math inline">\(\tilde{\sigma}\)</span> plugged in as a robust estimate of <span class="math inline">\(\sigma\)</span>. <span class="citation">Silverman (<a href="#ref-Silverman:1986" role="doc-biblioref">1986</a>)</span>
+made the ad hoc suggestion to reduce the factor <span class="math inline">\((4/3)^{1/5} \simeq 1.06\)</span> to <span class="math inline">\(0.9\)</span>.
+This results in the bandwidth selector
+<span class="math display">\[\hat{h}_n = 0.9 \tilde{\sigma} n^{-1/5},\]</span>
+which has become known as <em>Silverman’s rule of thumb</em>.</p>
+<p>Silverman’s rule of thumb is the default bandwidth selector for <code>density</code>
+as implemented by the function <code>bw.nrd0</code>. The <code>bw.nrd</code> function implements
+bandwidth selection using the factor <span class="math inline">\(1.06\)</span> instead of <span class="math inline">\(0.9\)</span>. Though the theoretical
+derivations behind these implementations assume that <span class="math inline">\(f_0\)</span>
+is Gaussian, either will give reasonable bandwidth selection for a range of
+unimodal distributions. If <span class="math inline">\(f_0\)</span> is multimodal, Silverman’s
+rule of thumb is known to oversmooth the density estimate.</p>
+<p>Instead of computing <span class="math inline">\(\|f_0&#39;&#39;\|^2_2\)</span> assuming that the distribution is Gaussian,
+we can compute the norm for a pilot estimate, <span class="math inline">\(\tilde{f}\)</span>, and plug the result
+into the formula for <span class="math inline">\(h_n\)</span>. If the pilot estimate is a kernel estimate with
+kernel <span class="math inline">\(H\)</span> and bandwidth <span class="math inline">\(r\)</span> we get
+<span class="math display">\[\|\tilde{f}&#39;&#39;\|^2_2 = \frac{1}{n^2r^6} \sum_{i = 1}^n \sum_{j=1}^n 
+\int H&#39;&#39;\left( \frac{x - x_i}{r} \right) H&#39;&#39;\left( \frac{x - x_j}{r} \right) \mathrm{d} x.\]</span>
+The problem is, of course, that now we have to choose the pilot bandwidth
+<span class="math inline">\(r\)</span>. But doing so using a simple method like Silverman’s rule of thumb at this
+stage is typically not too bad an idea. Thus we arrive at the following
+plug-in procedure using the Gaussian kernel for the pilot estimate:</p>
+<ul>
+<li>Compute an estimate, <span class="math inline">\(\hat{r}\)</span>, of the pilot bandwidth using Silverman’s
+rule of thumb.</li>
+<li>Compute <span class="math inline">\(\|\tilde{f}&#39;&#39;\|^2_2\)</span> using the Gaussian kernel as pilot kernel <span class="math inline">\(H\)</span> and
+using the estimated pilot bandwidth <span class="math inline">\(\hat{r}\)</span>.</li>
+<li>Plug <span class="math inline">\(\|\tilde{f}&#39;&#39;\|^2_2\)</span> into the oracle bandwidth formula <a href="2-3-bandwidth.html#eq:oracle">(2.3)</a>
+to compute <span class="math inline">\(\hat{h}_n\)</span> for the kernel <span class="math inline">\(K\)</span>.</li>
+</ul>
+<p>Note that to use a pilot kernel different from the Gaussian we have
+to adjust the constant 0.9 (or 1.06) in Silverman’s rule of thumb accordingly
+by computing <span class="math inline">\(\|H\|_2^2\)</span> and <span class="math inline">\(\sigma_H^4\)</span> and using <a href="2-3-bandwidth.html#eq:oracle-silverman">(2.4)</a>.</p>
+<p><span class="citation">Sheather and Jones (<a href="#ref-Sheather:1991" role="doc-biblioref">1991</a>)</span> took these plug-in ideas a step further and analyzed in detail
+how to choose the pilot bandwidth in a good and data adaptive way. The resulting
+method is somewhat complicated but implementable. We skip the details but simply
+observe that their method is implemented in R in the function <code>bw.SJ</code>, and
+it can be selected when using <code>density</code> by setting the argument <code>bw = "SJ"</code>.
+This plug-in method is regarded as a solid default that performs well for
+many different data generating densities <span class="math inline">\(f_0\)</span>.</p>
+</div>
+<div id="cross-validation" class="section level3">
+<h3><span class="header-section-number">2.3.4</span> Cross-validation</h3>
+<p>An alternative to relying on the asymptotic optimality arguments for
+integrated mean squared error and the corresponding plug-in estimates
+of the bandwidth is known as <em>cross-validation</em>. The method mimics
+the idea of setting aside a subset of the data set, which is then <em>not</em>
+used for computing an estimate but only for validating the estimator’s
+performance. The benefit of cross-validation over simply setting
+aside a validation data set is that we don’t “waste” any of the data points
+on validation only. All data points are used for the ultimate computation
+of the estimate. The deficit is that cross-validation is usually
+computationally more demanding.</p>
+<p>Suppose that <span class="math inline">\(I_1, \ldots, I_k\)</span> form a partition of the index set <span class="math inline">\(\{1, \ldots, n\}\)</span>
+and define
+<span class="math display">\[I^{-i} = \bigcup_{l: i \not \in I_l} I_l.\]</span>
+That is, <span class="math inline">\(I^{-i}\)</span> contains all indices but those that belong to the set <span class="math inline">\(I_l\)</span>
+containing <span class="math inline">\(i\)</span>. In particular, <span class="math inline">\(i \not \in I^{-i}\)</span>. Define also <span class="math inline">\(n_i = |I^{-i}|\)</span>
+and
+<span class="math display">\[\hat{f}^{-i}_h = \frac{1}{h n_i} \sum_{j \in I^{-i}} K\left(\frac{x_i - x_j}{h}\right).\]</span>
+That is, <span class="math inline">\(\hat{f}^{-i}_h\)</span> is the kernel density estimate based on data with
+indices in <span class="math inline">\(I^{-i}\)</span> and evaluated in <span class="math inline">\(x_i\)</span>. Since the density
+estimate evaluated in <span class="math inline">\(x_i\)</span> is not based on <span class="math inline">\(x_i\)</span>, the quantity <span class="math inline">\(\hat{f}^{-i}_h\)</span>
+can be used to assess how well the density estimates computed using a bandwidth
+<span class="math inline">\(h\)</span> concur with the data point <span class="math inline">\(x_i\)</span>. This can be summarized using the
+log-likelihood
+<span class="math display">\[\ell_{\mathrm{CV}}(h) = \sum_{i=1}^n \log (\hat{f}^{-i}_h),\]</span>
+that we will refer to as the cross-validated log-likelihood. Contrary to
+the log-likelihood considered in Section <a href="2-1-unidens.html#likelihood">2.1.1</a>, the
+cross-validated log-likelihood will not just grow towards <span class="math inline">\(\infty\)</span> for <span class="math inline">\(h \to 0\)</span>,
+and we define
+<span class="math display">\[\hat{h}_{\mathrm{CV}} = \textrm{arg max}_h \ \ \ell_{\mathrm{CV}}(h).\]</span>
+This cross-validation based bandwidth can then be used for computing kernel
+density estimates using the entire data set.</p>
+<p>If the partition of indices consists of <span class="math inline">\(k\)</span> subsets we usually talk about
+<span class="math inline">\(k\)</span>-fold cross-validation. If <span class="math inline">\(k = n\)</span> so that all subsets consist of just a single
+index we talk about leave-one-out cross-validation. For leave-one-out
+cross-validation there is only one possible partition, while for <span class="math inline">\(k &lt; n\)</span>
+there are many possible partitions. Which should be chosen then? In practice,
+we choose the partition by sampling indices randomly without replacement
+into <span class="math inline">\(k\)</span> sets of size roughly <span class="math inline">\(n / k\)</span>.</p>
+<p>It is also possible to use cross-validation in combination with MISE. Rewriting
+we find that
+<span class="math display">\[\mathrm{MISE}(h) = E (\| \hat{f}_h\|_2^2) - 2 E (\hat{f}_h(X)) + E(\|f_0^2\|_2^2)\]</span>
+for <span class="math inline">\(X\)</span> a random variable independent of the data and with distribution having
+density <span class="math inline">\(f_0\)</span>. The last term does not depend upon <span class="math inline">\(h\)</span> and we can ignore it from
+the point of view of minimizing MISE. For the first term we have an unbiased
+estimate in <span class="math inline">\(\| \hat{f}_h\|_2^2\)</span>. The middle term can be estimated
+without bias by
+<span class="math display">\[\frac{2}{n} \sum_{i=1}^n \hat{f}^{-i}_h,\]</span>
+and this leads to the statistic
+<span class="math display">\[\mathrm{UCV}(h) = \| \hat{f}_h\|_2^2 - \frac{2}{n} \sum_{i=1}^n \hat{f}^{-i}_h\]</span>
+known as the unbiased cross-validation criterion. The corresponding
+bandwidth selector is
+<span class="math display">\[\hat{h}_{\mathrm{UCV}} = \textrm{arg min}_h \ \ \mathrm{UCV}(h).\]</span>
+Contrary to the log-likelihood based criterion, this criterion requires
+the computation of <span class="math inline">\(\| \hat{f}_h\|_2^2\)</span>. Bandwidth selection using UCV
+is implemented in R in the function <code>bw.ucv</code> and can be
+used with <code>density</code> by setting the argument <code>bw = "ucv"</code>.</p>
+</div>
+</div>
+<h3>References</h3>
+<div id="refs" class="references">
+<div id="ref-Sheather:1991">
+<p>Sheather, S. J., and M. C. Jones. 1991. “A Reliable Data-Based Bandwidth Selection Method for Kernel Density Estimation.” <em>Journal of the Royal Statistical Society. Series B (Methodological)</em> 53 (3): 683–90.</p>
+</div>
+<div id="ref-Silverman:1986">
+<p>Silverman, B. W. 1986. <em>Density Estimation for Statistics and Data Analysis</em>. Chapman; Hall/CRC.</p>
+</div>
+<div id="ref-Tsybakov:2009">
+<p>Tsybakov, A. B. 2009. <em>Introduction to Nonparametric Estimation</em>. Springer Series in Statistics. Springer, New York.</p>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="2-2-kernel-density.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="2-4-exercises.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"toc": {
+"collapse": "section"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

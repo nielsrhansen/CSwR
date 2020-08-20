@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>4.1 Pseudorandom number generators | Computational Statistics with R</title>
+  <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  <meta name="generator" content="bookdown 0.20 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="4.1 Pseudorandom number generators | Computational Statistics with R" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="4.1 Pseudorandom number generators | Computational Statistics with R" />
+  
+  <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  
+
+<meta name="author" content="Niels Richard Hansen" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="4-univariate-random-variables.html"/>
+<link rel="next" href="4-2-transformation-techniques.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<script src="libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+
+
+<style type="text/css">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Computational Statistics with R</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="1" data-path="1-intro.html"><a href="1-intro.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
+<li class="chapter" data-level="1.1" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html"><i class="fa fa-check"></i><b>1.1</b> Smoothing</a><ul>
+<li class="chapter" data-level="1.1.1" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#intro-angles"><i class="fa fa-check"></i><b>1.1.1</b> Angle distributions in proteins</a></li>
+<li class="chapter" data-level="1.1.2" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#using-ggplot2"><i class="fa fa-check"></i><b>1.1.2</b> Using ggplot2</a></li>
+<li class="chapter" data-level="1.1.3" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#changing-the-defaults"><i class="fa fa-check"></i><b>1.1.3</b> Changing the defaults</a></li>
+<li class="chapter" data-level="1.1.4" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#multivariate-smoothing"><i class="fa fa-check"></i><b>1.1.4</b> Multivariate methods</a></li>
+<li class="chapter" data-level="1.1.5" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#large-scale-smoothing"><i class="fa fa-check"></i><b>1.1.5</b> Large scale smoothing</a></li>
+</ul></li>
+<li class="chapter" data-level="1.2" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html"><i class="fa fa-check"></i><b>1.2</b> Monte Carlo Methods</a><ul>
+<li class="chapter" data-level="1.2.1" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#vM"><i class="fa fa-check"></i><b>1.2.1</b> Univariate von Mises distributions</a></li>
+<li class="chapter" data-level="1.2.2" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#mixtures-of-von-mises-distributions"><i class="fa fa-check"></i><b>1.2.2</b> Mixtures of von Mises distributions</a></li>
+<li class="chapter" data-level="1.2.3" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#large-scale-monte-carlo-methods"><i class="fa fa-check"></i><b>1.2.3</b> Large scale Monte Carlo methods</a></li>
+</ul></li>
+<li class="chapter" data-level="1.3" data-path="1-3-optimization.html"><a href="1-3-optimization.html"><i class="fa fa-check"></i><b>1.3</b> Optimization</a><ul>
+<li class="chapter" data-level="1.3.1" data-path="1-3-optimization.html"><a href="1-3-optimization.html#the-em-algorithm"><i class="fa fa-check"></i><b>1.3.1</b> The EM-algorithm</a></li>
+<li class="chapter" data-level="1.3.2" data-path="1-3-optimization.html"><a href="1-3-optimization.html#large-scale-optimization"><i class="fa fa-check"></i><b>1.3.2</b> Large scale optimization</a></li>
+</ul></li>
+<li class="chapter" data-level="1.4" data-path="1-4-exercises.html"><a href="1-4-exercises.html"><i class="fa fa-check"></i><b>1.4</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#r-training-exercises"><i class="fa fa-check"></i>R training exercises</a></li>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#histograms-with-non-equidistant-breaks"><i class="fa fa-check"></i>Histograms with non-equidistant breaks</a></li>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#functions-and-functional-programming"><i class="fa fa-check"></i>Functions and functional programming</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part I: Smoothing</b></span></li>
+<li class="chapter" data-level="2" data-path="2-density.html"><a href="2-density.html"><i class="fa fa-check"></i><b>2</b> Density estimation</a><ul>
+<li class="chapter" data-level="2.1" data-path="2-1-unidens.html"><a href="2-1-unidens.html"><i class="fa fa-check"></i><b>2.1</b> Univariate density estimation</a><ul>
+<li class="chapter" data-level="2.1.1" data-path="2-1-unidens.html"><a href="2-1-unidens.html#likelihood"><i class="fa fa-check"></i><b>2.1.1</b> Likelihood considerations</a></li>
+<li class="chapter" data-level="2.1.2" data-path="2-1-unidens.html"><a href="2-1-unidens.html#sieves"><i class="fa fa-check"></i><b>2.1.2</b> Method of sieves</a></li>
+<li class="chapter" data-level="2.1.3" data-path="2-1-unidens.html"><a href="2-1-unidens.html#basis-density"><i class="fa fa-check"></i><b>2.1.3</b> Basis expansions</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html"><i class="fa fa-check"></i><b>2.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="2.2.1" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#implementation"><i class="fa fa-check"></i><b>2.2.1</b> Implementation</a></li>
+<li class="chapter" data-level="2.2.2" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#benchmarking"><i class="fa fa-check"></i><b>2.2.2</b> Benchmarking</a></li>
+</ul></li>
+<li class="chapter" data-level="2.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html"><i class="fa fa-check"></i><b>2.3</b> Bandwidth selection</a><ul>
+<li class="chapter" data-level="2.3.1" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#rectangular"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
+<li class="chapter" data-level="2.3.2" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#ise-mise-and-mse-for-kernel-estimators"><i class="fa fa-check"></i><b>2.3.2</b> ISE, MISE and MSE for kernel estimators</a></li>
+<li class="chapter" data-level="2.3.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#plug-in-estimation-of-the-oracle-bandwidth"><i class="fa fa-check"></i><b>2.3.3</b> Plug-in estimation of the oracle bandwidth</a></li>
+<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>2.4</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="2-4-exercises.html"><a href="2-4-exercises.html"><i class="fa fa-check"></i>Kernel density estimation</a></li>
+<li class="chapter" data-level="" data-path="2-4-exercises.html"><a href="2-4-exercises.html#benchmarking-1"><i class="fa fa-check"></i>Benchmarking</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="3-bivariate.html"><a href="3-bivariate.html"><i class="fa fa-check"></i><b>3</b> Bivariate smoothing</a><ul>
+<li class="chapter" data-level="3.1" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html"><i class="fa fa-check"></i><b>3.1</b> Nearest neighbor smoothers</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#linear-smoothers"><i class="fa fa-check"></i><b>3.1.1</b> Linear smoothers</a></li>
+<li class="chapter" data-level="3.1.2" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#implementing-the-running-mean"><i class="fa fa-check"></i><b>3.1.2</b> Implementing the running mean</a></li>
+<li class="chapter" data-level="3.1.3" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#choose-k-by-cross-validation"><i class="fa fa-check"></i><b>3.1.3</b> Choose <span class="math inline">\(k\)</span> by cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html#nadarayawatson-kernel-smoothing"><i class="fa fa-check"></i><b>3.2.1</b> Nadaraya–Watson kernel smoothing</a></li>
+<li class="chapter" data-level="3.2.2" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html#local-regression-smoothers"><i class="fa fa-check"></i><b>3.2.2</b> Local regression smoothers</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="3-3-sparse-linear-algebra.html"><a href="3-3-sparse-linear-algebra.html"><i class="fa fa-check"></i><b>3.3</b> Sparse linear algebra</a></li>
+<li class="chapter" data-level="3.4" data-path="3-4-onb.html"><a href="3-4-onb.html"><i class="fa fa-check"></i><b>3.4</b> Orthogonal basis expansions</a><ul>
+<li class="chapter" data-level="3.4.1" data-path="3-4-onb.html"><a href="3-4-onb.html#polynomial-expansions"><i class="fa fa-check"></i><b>3.4.1</b> Polynomial expansions</a></li>
+<li class="chapter" data-level="3.4.2" data-path="3-4-onb.html"><a href="3-4-onb.html#fourier-expansions"><i class="fa fa-check"></i><b>3.4.2</b> Fourier expansions</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="3-5-splines.html"><a href="3-5-splines.html"><i class="fa fa-check"></i><b>3.5</b> Splines</a><ul>
+<li class="chapter" data-level="3.5.1" data-path="3-5-splines.html"><a href="3-5-splines.html#smoothing-splines"><i class="fa fa-check"></i><b>3.5.1</b> Smoothing splines</a></li>
+<li class="chapter" data-level="3.5.2" data-path="3-5-splines.html"><a href="3-5-splines.html#splines-in-r"><i class="fa fa-check"></i><b>3.5.2</b> Splines in R</a></li>
+<li class="chapter" data-level="3.5.3" data-path="3-5-splines.html"><a href="3-5-splines.html#efficient-splines"><i class="fa fa-check"></i><b>3.5.3</b> Efficient computation with splines</a></li>
+</ul></li>
+<li class="chapter" data-level="3.6" data-path="3-6-gaussian-processes.html"><a href="3-6-gaussian-processes.html"><i class="fa fa-check"></i><b>3.6</b> Gaussian processes</a></li>
+<li class="chapter" data-level="3.7" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html"><i class="fa fa-check"></i><b>3.7</b> The Kalman filter</a><ul>
+<li class="chapter" data-level="3.7.1" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#ar1-example"><i class="fa fa-check"></i><b>3.7.1</b> AR(1)-example</a></li>
+<li class="chapter" data-level="3.7.2" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#the-kalman-smoother"><i class="fa fa-check"></i><b>3.7.2</b> The Kalman smoother</a></li>
+<li class="chapter" data-level="3.7.3" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#implementation"><i class="fa fa-check"></i><b>3.7.3</b> Implementation</a></li>
+<li class="chapter" data-level="3.7.4" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#the-kalman-filter-1"><i class="fa fa-check"></i><b>3.7.4</b> The Kalman filter</a></li>
+</ul></li>
+<li class="chapter" data-level="3.8" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>3.8</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="3-8-exercises.html"><a href="3-8-exercises.html"><i class="fa fa-check"></i>Nearest neighbors</a></li>
+<li class="chapter" data-level="" data-path="3-8-exercises.html"><a href="3-8-exercises.html#kernel-estimators"><i class="fa fa-check"></i>Kernel estimators</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
+<li class="chapter" data-level="4" data-path="4-univariate-random-variables.html"><a href="4-univariate-random-variables.html"><i class="fa fa-check"></i><b>4</b> Univariate random variables</a><ul>
+<li class="chapter" data-level="4.1" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html"><i class="fa fa-check"></i><b>4.1</b> Pseudorandom number generators</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html#implementing-a-pseudorandom-number-generator"><i class="fa fa-check"></i><b>4.1.1</b> Implementing a pseudorandom number generator</a></li>
+<li class="chapter" data-level="4.1.2" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html#pseudorandom-number-packages"><i class="fa fa-check"></i><b>4.1.2</b> Pseudorandom number packages</a></li>
+</ul></li>
+<li class="chapter" data-level="4.2" data-path="4-2-transformation-techniques.html"><a href="4-2-transformation-techniques.html"><i class="fa fa-check"></i><b>4.2</b> Transformation techniques</a><ul>
+<li class="chapter" data-level="4.2.1" data-path="4-2-transformation-techniques.html"><a href="4-2-transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.3" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html"><i class="fa fa-check"></i><b>4.3</b> Rejection sampling</a><ul>
+<li class="chapter" data-level="4.3.1" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html#vMsim"><i class="fa fa-check"></i><b>4.3.1</b> von Mises distribution</a></li>
+<li class="chapter" data-level="4.3.2" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.2</b> Gamma distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.4" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html"><i class="fa fa-check"></i><b>4.4</b> Adaptive envelopes</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html#beta-distribution"><i class="fa fa-check"></i><b>4.4.1</b> Beta distribution</a></li>
+<li class="chapter" data-level="4.4.2" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html#von-mises-distribution"><i class="fa fa-check"></i><b>4.4.2</b> von Mises distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="4-5-exercises.html"><a href="4-5-exercises.html"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="5-mci.html"><a href="5-mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
+<li class="chapter" data-level="5.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html"><i class="fa fa-check"></i><b>5.1</b> Assessment</a><ul>
+<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#using-the-central-limit-theorem"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
+<li class="chapter" data-level="5.1.2" data-path="5-1-assessment.html"><a href="5-1-assessment.html#concentration-inequalities"><i class="fa fa-check"></i><b>5.1.2</b> Concentration inequalities</a></li>
+<li class="chapter" data-level="5.1.3" data-path="5-1-assessment.html"><a href="5-1-assessment.html#exponential-tail-bound-for-gamma-distributed-variables"><i class="fa fa-check"></i><b>5.1.3</b> Exponential tail bound for Gamma distributed variables</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html"><i class="fa fa-check"></i><b>5.2</b> Importance sampling</a><ul>
+<li class="chapter" data-level="5.2.1" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#unknown-normalization-constants"><i class="fa fa-check"></i><b>5.2.1</b> Unknown normalization constants</a></li>
+<li class="chapter" data-level="5.2.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#hd-int"><i class="fa fa-check"></i><b>5.2.2</b> Computing a high-dimensional integral</a></li>
+</ul></li>
+<li class="chapter" data-level="5.3" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part III: Optimization</b></span></li>
+<li class="chapter" data-level="6" data-path="6-four-examples.html"><a href="6-four-examples.html"><i class="fa fa-check"></i><b>6</b> Four Examples</a><ul>
+<li class="chapter" data-level="6.1" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html"><i class="fa fa-check"></i><b>6.1</b> Exponential families</a><ul>
+<li class="chapter" data-level="6.1.1" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#full-exponential-families"><i class="fa fa-check"></i><b>6.1.1</b> Full exponential families</a></li>
+<li class="chapter" data-level="6.1.2" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>6.1.2</b> Exponential family Bayesian networks</a></li>
+<li class="chapter" data-level="6.1.3" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>6.1.3</b> Likelihood computations</a></li>
+<li class="chapter" data-level="6.1.4" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>6.1.4</b> Curved exponential families</a></li>
+</ul></li>
+<li class="chapter" data-level="6.2" data-path="6-2-multinomial-models.html"><a href="6-2-multinomial-models.html"><i class="fa fa-check"></i><b>6.2</b> Multinomial models</a><ul>
+<li class="chapter" data-level="6.2.1" data-path="6-2-multinomial-models.html"><a href="6-2-multinomial-models.html#pep-moth"><i class="fa fa-check"></i><b>6.2.1</b> Peppered Moths</a></li>
+</ul></li>
+<li class="chapter" data-level="6.3" data-path="6-3-regression.html"><a href="6-3-regression.html"><i class="fa fa-check"></i><b>6.3</b> Regression models</a></li>
+<li class="chapter" data-level="6.4" data-path="6-4-finite-mixture-models.html"><a href="6-4-finite-mixture-models.html"><i class="fa fa-check"></i><b>6.4</b> Finite mixture models</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="6-4-finite-mixture-models.html"><a href="6-4-finite-mixture-models.html#Gaus-mix-ex"><i class="fa fa-check"></i><b>6.4.1</b> Gaussian mixtures</a></li>
+</ul></li>
+<li class="chapter" data-level="6.5" data-path="6-5-mixed-models.html"><a href="6-5-mixed-models.html"><i class="fa fa-check"></i><b>6.5</b> Mixed models</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="7-numopt.html"><a href="7-numopt.html"><i class="fa fa-check"></i><b>7</b> Numerical optimization</a><ul>
+<li class="chapter" data-level="7.1" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html"><i class="fa fa-check"></i><b>7.1</b> Algorithms and convergence</a><ul>
+<li class="chapter" data-level="7.1.1" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#descent-algorithms"><i class="fa fa-check"></i><b>7.1.1</b> Descent algorithms</a></li>
+<li class="chapter" data-level="7.1.2" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#maps-and-fixed-points"><i class="fa fa-check"></i><b>7.1.2</b> Maps and fixed points</a></li>
+<li class="chapter" data-level="7.1.3" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#convergence-rate"><i class="fa fa-check"></i><b>7.1.3</b> Convergence rate</a></li>
+<li class="chapter" data-level="7.1.4" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#stopping-criteria"><i class="fa fa-check"></i><b>7.1.4</b> Stopping criteria</a></li>
+</ul></li>
+<li class="chapter" data-level="7.2" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html"><i class="fa fa-check"></i><b>7.2</b> Descent direction algorithms</a><ul>
+<li class="chapter" data-level="7.2.1" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#line-search"><i class="fa fa-check"></i><b>7.2.1</b> Line search</a></li>
+<li class="chapter" data-level="7.2.2" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#gradient-descent"><i class="fa fa-check"></i><b>7.2.2</b> Gradient descent</a></li>
+<li class="chapter" data-level="7.2.3" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>7.2.3</b> Conjugate gradients</a></li>
+<li class="chapter" data-level="7.2.4" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#pep-moth-descent"><i class="fa fa-check"></i><b>7.2.4</b> Peppered Moths</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html"><i class="fa fa-check"></i><b>7.3</b> Newton-type algorithms</a><ul>
+<li class="chapter" data-level="7.3.1" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>7.3.1</b> Poisson regression</a></li>
+<li class="chapter" data-level="7.3.2" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>7.3.2</b> Quasi-Newton algorithms</a></li>
+<li class="chapter" data-level="7.3.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>7.3.3</b> Sparsity</a></li>
+</ul></li>
+<li class="chapter" data-level="7.4" data-path="7-4-misc-.html"><a href="7-4-misc-.html"><i class="fa fa-check"></i><b>7.4</b> Misc.</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="8-em.html"><a href="8-em.html"><i class="fa fa-check"></i><b>8</b> Expectation maximization algorithms</a><ul>
+<li class="chapter" data-level="8.1" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html"><i class="fa fa-check"></i><b>8.1</b> Basic properties</a><ul>
+<li class="chapter" data-level="8.1.1" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#incomplete-data-likelihood"><i class="fa fa-check"></i><b>8.1.1</b> Incomplete data likelihood</a></li>
+<li class="chapter" data-level="8.1.2" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#monotonicity-of-the-em-algorithm"><i class="fa fa-check"></i><b>8.1.2</b> Monotonicity of the EM algorithm</a></li>
+<li class="chapter" data-level="8.1.3" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#peppered-moths"><i class="fa fa-check"></i><b>8.1.3</b> Peppered moths</a></li>
+</ul></li>
+<li class="chapter" data-level="8.2" data-path="8-2-EM-exp.html"><a href="8-2-EM-exp.html"><i class="fa fa-check"></i><b>8.2</b> Exponential families</a></li>
+<li class="chapter" data-level="8.3" data-path="8-3-fisher-information.html"><a href="8-3-fisher-information.html"><i class="fa fa-check"></i><b>8.3</b> Fisher information</a></li>
+<li class="chapter" data-level="8.4" data-path="8-4-revisiting-gaussian-mixtures.html"><a href="8-4-revisiting-gaussian-mixtures.html"><i class="fa fa-check"></i><b>8.4</b> Revisiting Gaussian mixtures</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="9-StochOpt.html"><a href="9-StochOpt.html"><i class="fa fa-check"></i><b>9</b> Stochastic Optimization</a><ul>
+<li class="chapter" data-level="9.1" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html"><i class="fa fa-check"></i><b>9.1</b> Stochastic gradient algorithms</a><ul>
+<li class="chapter" data-level="9.1.1" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#section"><i class="fa fa-check"></i><b>9.1.1</b> </a></li>
+<li class="chapter" data-level="9.1.2" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#online-stochastic-gradient-descent"><i class="fa fa-check"></i><b>9.1.2</b> Online stochastic gradient descent</a></li>
+<li class="chapter" data-level="9.1.3" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#stochastic-gradient-descent"><i class="fa fa-check"></i><b>9.1.3</b> Stochastic gradient descent</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="9-2-nonlinear-least-squares.html"><a href="9-2-nonlinear-least-squares.html"><i class="fa fa-check"></i><b>9.2</b> Nonlinear least squares</a></li>
+</ul></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="A-app-R.html"><a href="A-app-R.html"><i class="fa fa-check"></i><b>A</b> R programming</a></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Computational Statistics with R</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="pseudorandom-number-generators" class="section level2">
+<h2><span class="header-section-number">4.1</span> Pseudorandom number generators</h2>
+<p>Most simulation algorithms are based on algorithms for generating
+<em>pseudorandom</em> uniformly distributed variables in <span class="math inline">\((0, 1)\)</span>. They arise from
+deterministic integer sequences initiated by a <em>seed</em>. A classical
+example of a pseudorandom integer generator is the
+linear congruential generator. A sequence of numbers from
+this generator is computed iteratively by
+<span class="math display">\[x_{n+1} = (a x_n + c)  \text{ mod m}\]</span>
+for integer parameters <span class="math inline">\(a\)</span>, <span class="math inline">\(c\)</span> and <span class="math inline">\(m\)</span>. The seed <span class="math inline">\(x_1\)</span> is a
+number between <span class="math inline">\(0\)</span> and <span class="math inline">\(m - 1\)</span>, and the resulting
+sequence is in the set <span class="math inline">\(\{0, \ldots, m - 1\}\)</span>. The ANSI C standard specifies
+the choices <span class="math inline">\(m = 2^{31}\)</span>, <span class="math inline">\(a = 1,103,515,245\)</span> and <span class="math inline">\(c = 12,345\)</span>. The generator
+is simple to understand and implement but has been superseded by much better
+generators.</p>
+<p>Pseudorandom number generators are generally defined in terms of a finite state space
+<span class="math inline">\(\mathcal{Z}\)</span> and a one-to-one map <span class="math inline">\(f : \mathcal{Z} \to \mathcal{Z}\)</span>. The
+generator produces a sequence in <span class="math inline">\(\mathcal{Z}\)</span> iteratively from the
+seed <span class="math inline">\(\mathbf{z}_1 \in \mathcal{Z}\)</span> by
+<span class="math display">\[\mathbf{z}_n = f(\mathbf{z}_{n-1}).\]</span>
+Pseudorandom integers are typically obtained as
+<span class="math display">\[x_n = h(\mathbf{z}_n)\]</span>
+for a transformation <span class="math inline">\(h : \mathcal{Z} \mapsto \mathbb{Z}\)</span>. If the
+image of <span class="math inline">\(h\)</span> is in the set <span class="math inline">\(\{0, 1, \ldots, 2^{w} - 1\}\)</span> of <span class="math inline">\(w\)</span>-bit integers,
+pseudorandom numbers in <span class="math inline">\([0, 1)\)</span> are typically obtained as
+<span class="math display">\[x_n = 2^{-w} h(\mathbf{z}_n).\]</span></p>
+<p>In R (3.6.0), the default pseudorandom number generator is the 32-bit
+<em>Mersenne Twister</em>, which generates integers in the range
+<span class="math display">\[\{0, 1, \ldots, 2^{32} -1\}.\]</span> The state space is
+<span class="math display">\[\mathcal{Z} =  \{0, 1, \ldots, 2^{32} -1\}^{624},\]</span>
+that is, a state is a 624 dimensional vector of 32-bit integers.
+The function <span class="math inline">\(f\)</span> is of the form
+<span class="math display">\[f(\mathbf{z}) = (z_2, z_3, \ldots, z_{623}, f_{624}(z_1, z_2, z_{m + 1})),\]</span>
+for <span class="math inline">\(1 \leq m &lt; 624\)</span>, and <span class="math inline">\(h\)</span> is a function of <span class="math inline">\(z_{624}\)</span> only.
+The standard choice <span class="math inline">\(m = 397\)</span> is used in the R implementation.
+The function <span class="math inline">\(f_{624}\)</span> is a bit complicated, it includes
+what is known as the <em>twist transformation</em>, and it requires
+additional parameters. The period of the generator
+is the astronomical number
+<span class="math display">\[2^{32 \times 624 - 31} - 1 = 2^{19937} - 1,\]</span>
+which is a Mersenne prime.
+Moreover, all combinations of consecutive integers
+up to dimension 623 occur equally often in a period, and empirical tests of the
+generator demonstrate that it has good statistical properties, though it
+is known to fail some tests.</p>
+<p>In R you can set the seed using the function <code>set.seed</code> that takes an
+integer argument and produces an element in the state space. The argument
+given to <code>set.seed</code> is not the actual seed, and <code>set.seed</code> computes a
+valid seed for any pseudorandom number generator that R is using,
+whether it is the Mersenne Twister or not. Thus the use of <code>set.seed</code> is
+the safe and recommended way of setting a seed.</p>
+<p>The actual seed (together with some additional information) can be accessed
+via the vector <code>.Random.seed</code>. Its first entry, <code>.Random.seed[1]</code>, encodes the
+pseudorandom number generator used as well as the generator for
+Gaussian variables and discrete uniform variables. This
+information is decoded by <code>RNGkind()</code>.</p>
+<div class="sourceCode" id="cb122"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb122-1"><a href="4-1-pseudorandom-number-generators.html#cb122-1"></a><span class="kw">RNGkind</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;Mersenne-Twister&quot; &quot;Inversion&quot;        &quot;Rejection&quot;</code></pre>
+<p>For the Mersenne Twister,
+<code>.Random.seed[3:626]</code> contains the vector in the state space, while
+<code>.Random.seed[2]</code> contains the “current position” in the state vector.
+The implementation needs a position variable because it does 624 updates of the
+state vector at a time and then runs through those values sequentially
+before the next update. This is equivalent to but more efficient than e.g.
+implementing the position shifts explicitly as in the definition of <span class="math inline">\(f\)</span> above.</p>
+<div class="sourceCode" id="cb124"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb124-1"><a href="4-1-pseudorandom-number-generators.html#cb124-1"></a><span class="kw">set.seed</span>(<span class="dv">27112015</span>)           <span class="co">## Computes a new seed from an integer</span></span>
+<span id="cb124-2"><a href="4-1-pseudorandom-number-generators.html#cb124-2"></a>oldseed &lt;-<span class="st"> </span>.Random.seed[<span class="op">-</span><span class="dv">1</span>]  <span class="co">## The actual seed</span></span>
+<span id="cb124-3"><a href="4-1-pseudorandom-number-generators.html#cb124-3"></a>.Random.seed[<span class="dv">1</span>]              <span class="co">## Encoding of generators used, will stay fixed</span></span></code></pre></div>
+<pre><code>## [1] 10403</code></pre>
+<div class="sourceCode" id="cb126"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb126-1"><a href="4-1-pseudorandom-number-generators.html#cb126-1"></a>.Random.seed[<span class="dv">2</span>]              <span class="co">## Start position after the seed has been set is 624</span></span></code></pre></div>
+<pre><code>## [1] 624</code></pre>
+<div class="sourceCode" id="cb128"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb128-1"><a href="4-1-pseudorandom-number-generators.html#cb128-1"></a>tmp &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>)</span>
+<span id="cb128-2"><a href="4-1-pseudorandom-number-generators.html#cb128-2"></a>tmp</span></code></pre></div>
+<pre><code>## [1] 0.7793288</code></pre>
+<p>Every time a random number is generated, e.g. by <code>runif</code> above, the same underlying
+sequence of pseudorandom numbers is used, and the state vector stored in
+<code>.Random.seed</code> is updated accordingly.</p>
+<div class="sourceCode" id="cb130"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb130-1"><a href="4-1-pseudorandom-number-generators.html#cb130-1"></a><span class="kw">head</span>(oldseed, <span class="dv">5</span>)</span></code></pre></div>
+<pre><code>## [1]         624 -1660633125 -1167670944  1031453153   815285806</code></pre>
+<div class="sourceCode" id="cb132"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb132-1"><a href="4-1-pseudorandom-number-generators.html#cb132-1"></a><span class="kw">head</span>(.Random.seed[<span class="op">-</span><span class="dv">1</span>], <span class="dv">5</span>)     <span class="co">## The state vector and position has been updated</span></span></code></pre></div>
+<pre><code>## [1]           1  -696993996 -1035426662  -378189083  -745352065</code></pre>
+<div class="sourceCode" id="cb134"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb134-1"><a href="4-1-pseudorandom-number-generators.html#cb134-1"></a><span class="kw">c</span>(tmp, <span class="kw">runif</span>(<span class="dv">1</span>))          </span></code></pre></div>
+<pre><code>## [1] 0.7793288 0.5613179</code></pre>
+<div class="sourceCode" id="cb136"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb136-1"><a href="4-1-pseudorandom-number-generators.html#cb136-1"></a><span class="kw">head</span>(.Random.seed[<span class="op">-</span><span class="dv">1</span>], <span class="dv">5</span>)     <span class="co">## The state vector has not changed, only the position</span></span></code></pre></div>
+<pre><code>## [1]           2  -696993996 -1035426662  -378189083  -745352065</code></pre>
+<p>Resetting the seed will restart the pseudorandom number generator with the
+same seed and result in the same sequence of random numbers.</p>
+<div class="sourceCode" id="cb138"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb138-1"><a href="4-1-pseudorandom-number-generators.html#cb138-1"></a><span class="kw">set.seed</span>(<span class="dv">27112015</span>)</span>
+<span id="cb138-2"><a href="4-1-pseudorandom-number-generators.html#cb138-2"></a><span class="kw">head</span>(.Random.seed[<span class="op">-</span><span class="dv">1</span>], <span class="dv">5</span>)</span></code></pre></div>
+<pre><code>## [1]         624 -1660633125 -1167670944  1031453153   815285806</code></pre>
+<div class="sourceCode" id="cb140"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb140-1"><a href="4-1-pseudorandom-number-generators.html#cb140-1"></a><span class="kw">head</span>(oldseed, <span class="dv">5</span>)             <span class="co">## Same as current .Random.seed</span></span></code></pre></div>
+<pre><code>## [1]         624 -1660633125 -1167670944  1031453153   815285806</code></pre>
+<div class="sourceCode" id="cb142"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb142-1"><a href="4-1-pseudorandom-number-generators.html#cb142-1"></a><span class="kw">runif</span>(<span class="dv">1</span>)                     <span class="co">## Same as tmp</span></span></code></pre></div>
+<pre><code>## [1] 0.7793288</code></pre>
+<p>Note that when using any of the standard R generators, any value of <span class="math inline">\(0\)</span> or <span class="math inline">\(1\)</span>
+returned by the underlying pseudorandom uniform generator is
+adjusted to be in <span class="math inline">\((0,1)\)</span>. Thus uniform random variables are guaranteed to be
+in <span class="math inline">\((0, 1)\)</span>.</p>
+<p>Some of the random number generators implemented in R use more than one
+pseudorandom number per variable. This is, for instance, the case when we simulate
+Gamma distributed random variables.</p>
+<div class="sourceCode" id="cb144"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb144-1"><a href="4-1-pseudorandom-number-generators.html#cb144-1"></a><span class="kw">set.seed</span>(<span class="dv">27112015</span>)</span>
+<span id="cb144-2"><a href="4-1-pseudorandom-number-generators.html#cb144-2"></a><span class="kw">rgamma</span>(<span class="dv">1</span>, <span class="dv">1</span>)                 <span class="co">## A single Gamma distributed random number</span></span></code></pre></div>
+<pre><code>## [1] 1.192619</code></pre>
+<div class="sourceCode" id="cb146"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb146-1"><a href="4-1-pseudorandom-number-generators.html#cb146-1"></a><span class="kw">head</span>(.Random.seed[<span class="op">-</span><span class="dv">1</span>], <span class="dv">5</span>)    <span class="co">## Position changed to 2</span></span></code></pre></div>
+<pre><code>## [1]           2  -696993996 -1035426662  -378189083  -745352065</code></pre>
+<div class="sourceCode" id="cb148"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb148-1"><a href="4-1-pseudorandom-number-generators.html#cb148-1"></a><span class="kw">rgamma</span>(<span class="dv">1</span>, <span class="dv">1</span>)                 <span class="co">## A single Gamma distributed random number</span></span></code></pre></div>
+<pre><code>## [1] 0.2794622</code></pre>
+<div class="sourceCode" id="cb150"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb150-1"><a href="4-1-pseudorandom-number-generators.html#cb150-1"></a><span class="kw">head</span>(.Random.seed[<span class="op">-</span><span class="dv">1</span>], <span class="dv">5</span>)    <span class="co">## Position changed to 5</span></span></code></pre></div>
+<pre><code>## [1]           5  -696993996 -1035426662  -378189083  -745352065</code></pre>
+<p>In the example above, the first Gamma variable required two pseudorandom
+numbers, while the second required three pseudorandom numbers. The detailed
+explanation is given in Section <a href="4-3-reject-samp.html#reject-samp">4.3</a>, where it is shown
+how to generate random variables from the Gamma distribution via
+rejection sampling. This requires as a minimum two pseudorandom numbers
+for every Gamma variable generated.</p>
+<div id="implementing-a-pseudorandom-number-generator" class="section level3">
+<h3><span class="header-section-number">4.1.1</span> Implementing a pseudorandom number generator</h3>
+<p>The development of high quality pseudorandom number generators is a
+research field in itself. This is particularly true if one needs
+theoretical guarantees for randomized algorithms or cryptographically
+secure generators. For scientific computations and
+simulations correct statistical properties, reproducibility and speed are
+more important than cryptographic security, but even so, it is not trivial
+to invent a good generator, and the field is still developing. For a
+generator to be seriously considered, its mathematical properties should
+be well understood, and it should pass (most) tests in standardized
+test suites such as <a href="http://simul.iro.umontreal.ca/testu01/tu01.html">TestU01</a>,
+see <span class="citation">L’Ecuyer and Simard (<a href="#ref-LEcuyer:2007" role="doc-biblioref">2007</a>)</span>.</p>
+<p>R provides a couple of alternatives to the Mersenne Twister,
+see <code>?RNG</code>, but there is no compelling reason to switch to any of those for ordinary
+use. They are mostly available for historical reasons.
+One exception is the L’Ecuyer-CMRG generator, which is useful when
+independent pseudorandom sequences are needed for parallel computations.</p>
+<p>Though the Mersenne Twister is a widely used pseudorandom number generator,
+it has <a href="http://www.pcg-random.org/other-rngs.html">well known shortcomings</a>.
+There are high quality alternatives that are simpler and faster, such
+as the family of <a href="https://en.wikipedia.org/wiki/Xorshift">shift-register generators</a>
+and their variations, but they are not currently available from the base R package.</p>
+<p>Shift-register generators are based on linear transformations of the bit
+representation of integers. Three particular transformations are typically
+composed; the <span class="math inline">\(\mathrm{Lshift}\)</span> and <span class="math inline">\(\mathrm{Rshift}\)</span> operators and the
+bitwise <span class="math inline">\(\mathrm{xor}\)</span> operator. Let <span class="math inline">\(z = [z_{31}, z_{30}, \ldots, z_0]\)</span>
+with <span class="math inline">\(z_i \in \{0, 1\}\)</span> denote the bit
+representation of a 32-bit (unsigned) integer <span class="math inline">\(z\)</span> (ordered from most significant
+bit to least significant bit). That is,
+<span class="math display">\[z = z_{31} 2^{31} + z_{30} 2^{30} + \ldots + z_2 2^2 + z_1 2^{1} + z_0.\]</span>
+Then the left shift operator is defined as
+<span class="math display">\[\mathrm{Lshift}(z) = [z_{30}, z_{29}, \ldots, z_0, 0],\]</span>
+and the right shift operator is defined as
+<span class="math display">\[\mathrm{Rshift}(z) = [0, z_{31}, z_{30}, \ldots, z_1].\]</span>
+The bitwise xor operator is defined as
+<span class="math display">\[\mathrm{xor}(z, z&#39;) = [\mathrm{xor}(z_{31},z_{31}&#39;) , 
+\mathrm{xor}(z_{30}, z_{30}&#39;), \ldots, \mathrm{xor}(z_0, z_0&#39;)]\]</span>
+where <span class="math inline">\(\mathrm{xor}(0, 0) = \mathrm{xor}(1, 1) = 0\)</span> and
+<span class="math inline">\(\mathrm{xor}(1, 0) = \mathrm{xor}(0, 1) = 1\)</span>. Thus a transformation could
+be of the form
+<span class="math display">\[\mathrm{xor}(z, \mathrm{Rshift}^2(z)) = [\mathrm{xor}(z_{31}, 0) , 
+\mathrm{xor}(z_{30}, 0), \mathrm{xor}(z_{29}, z_{31}), \ldots, \mathrm{xor}(z_0, z_2)].\]</span></p>
+<p>One example of a shift-register based generator is Marsaglia’s <a href="https://en.wikipedia.org/wiki/Xorshift#xorwow">xorwow</a>
+algorithm, <span class="citation">Marsaglia (<a href="#ref-Marsaglia:2003" role="doc-biblioref">2003</a>)</span>. In addition to the shift and xor operations, the output of
+this generator is perturbed by a sequence of integers with period <span class="math inline">\(2^{32}\)</span>.
+The state space of the generator is
+<span class="math display">\[\{0, 1, \ldots, 2^{32} -1\}^{5}\]</span>
+with
+<span class="math display">\[f(\mathbf{z}) = (z_1 + 362437 \ (\mathrm{mod}\ 2^{32}),
+f_1(z_5, z_2), z_2, z_3, z_4),\]</span>
+and
+<span class="math display">\[h(\mathbf{z}) = 2^{-32} (z_1 + z_2).\]</span>
+The number 362437 is Marsaglia’s choice for generating what he calls a
+Weyl sequence, but any odd number will do. The function <span class="math inline">\(f_1\)</span> is given as
+<span class="math display">\[f_1(z, z&#39;) = \mathrm{xor}(\mathrm{xor}(z, \mathrm{Rshift}^2(z)), \mathrm{xor}(z&#39;, \mathrm{xor}(\mathrm{Lshift}^4(z&#39;), \mathrm{Lshift}(\mathrm{xor}(z, \mathrm{Rshift}^2(z)))))).\]</span></p>
+<p>This may look intimidating, but all the operations are very elementary.
+Take the number <span class="math inline">\(z = 123456\)</span>, say, then the intermediate value
+<span class="math inline">\(\overline{z} = \mathrm{xor}(z, \mathrm{Rshift}^2(z))\)</span> is computed as follows:</p>
+<p><span class="math display">\[
+\begin{array}{ll}
+z &amp; \texttt{00000000 00000001 11100010 01000000} \\
+\mathrm{Rshift}^2(z) &amp; \texttt{00000000 00000000 01111000 10010000} \\
+\hline
+\mathrm{xor} &amp; \texttt{00000000 00000001 10011010 11010000}
+\end{array}
+\]</span></p>
+<p>And if <span class="math inline">\(z&#39; = 87654321\)</span> the value of <span class="math inline">\(f_1(z, z&#39;)\)</span> is computed like this:</p>
+<p><span class="math display">\[
+\begin{array}{ll}
+\mathrm{Lshift}^4(z&#39;) &amp; \texttt{01010011 10010111 11111011 00010000} \\
+\mathrm{Lshift}(\overline{z}) &amp; \texttt{00000000 00000011 00110101 10100000} \\
+\hline
+\mathrm{xor} &amp; \texttt{01010011 10010100 11001110 10110000} \\
+z&#39; &amp; \texttt{00000101 00111001 01111111 10110001} \\
+\hline
+\mathrm{xor} &amp; \texttt{01010110 10101101 10110001 00000001} \\
+\overline{z} &amp; \texttt{00000000 00000001 10011010 11010000} \\
+\hline
+ \mathrm{xor} &amp; \texttt{01010110 10101100 00101011 11010001}
+\end{array}
+\]</span></p>
+<p>Converted back to a 32-bit integer, the result is <span class="math inline">\(f_1(z, z&#39;) = 1454123985\)</span>.
+The shift and xor operations are tedious to do by hand but extremely fast on
+modern computer architectures, and shift-register based generators are some
+of the fastest generators with good statistical properties.</p>
+<p>To make R use the xorwow generator we need to implement it as a user supplied
+generator. This requires writing the C code that implements the generator,
+compiling the code into a shared object file, loading it into
+R with the <code>dyn.load</code> function, and finally calling <code>RNGkind("user")</code>
+to make R use this pseudorandom number generator. See <code>?Random.user</code>
+for some details and an example.</p>
+<p>Using the Rcpp package, and <code>sourceCpp</code>, in particular, is usually much preferred
+over manual compiling and loading. However, in this case we need to make
+functions available to the internals of R rather than exporting functions to be
+callable from the R console. That is, nothing needs to be exported from C/C++.
+If nothing is exported, <code>sourceCpp</code> will actually not load the shared object
+file, so we need to trick <code>sourceCpp</code> to do so anyway. In the implementation
+below we achieve this by simply exporting a direct interface to the xorwow generator.</p>
+<div class="sourceCode" id="cb152"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb152-1"><a href="4-1-pseudorandom-number-generators.html#cb152-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
+<span id="cb152-2"><a href="4-1-pseudorandom-number-generators.html#cb152-2"></a><span class="pp">#include </span><span class="im">&lt;R_ext/Random.h&gt;</span></span>
+<span id="cb152-3"><a href="4-1-pseudorandom-number-generators.html#cb152-3"></a></span>
+<span id="cb152-4"><a href="4-1-pseudorandom-number-generators.html#cb152-4"></a><span class="co">/* The Random.h header file contains the function declarations for the functions </span></span>
+<span id="cb152-5"><a href="4-1-pseudorandom-number-generators.html#cb152-5"></a><span class="co"> that R rely on internally for a user defined generator, and it also defines </span></span>
+<span id="cb152-6"><a href="4-1-pseudorandom-number-generators.html#cb152-6"></a><span class="co"> the type Int32 as an unsigned int. */</span></span>
+<span id="cb152-7"><a href="4-1-pseudorandom-number-generators.html#cb152-7"></a></span>
+<span id="cb152-8"><a href="4-1-pseudorandom-number-generators.html#cb152-8"></a><span class="at">static</span> Int32 z[<span class="dv">5</span>];     <span class="co">// The state vector </span></span>
+<span id="cb152-9"><a href="4-1-pseudorandom-number-generators.html#cb152-9"></a><span class="at">static</span> <span class="dt">double</span> res;</span>
+<span id="cb152-10"><a href="4-1-pseudorandom-number-generators.html#cb152-10"></a><span class="at">static</span> <span class="dt">int</span> nseed = <span class="dv">5</span>;  <span class="co">// Length of the state vector</span></span>
+<span id="cb152-11"><a href="4-1-pseudorandom-number-generators.html#cb152-11"></a></span>
+<span id="cb152-12"><a href="4-1-pseudorandom-number-generators.html#cb152-12"></a><span class="co">// Implementation of xorwow from Marsaglia&#39;s &quot;Xorshift RNGs&quot; </span></span>
+<span id="cb152-13"><a href="4-1-pseudorandom-number-generators.html#cb152-13"></a><span class="co">// modified so as to return a double in [0, 1). The &#39;&gt;&gt;&#39; and &#39;&lt;&lt;&#39; </span></span>
+<span id="cb152-14"><a href="4-1-pseudorandom-number-generators.html#cb152-14"></a><span class="co">// operators in C are bitwise right and left shift operators, and </span></span>
+<span id="cb152-15"><a href="4-1-pseudorandom-number-generators.html#cb152-15"></a><span class="co">// the caret, &#39;^&#39;, is the xor operator. </span></span>
+<span id="cb152-16"><a href="4-1-pseudorandom-number-generators.html#cb152-16"></a></span>
+<span id="cb152-17"><a href="4-1-pseudorandom-number-generators.html#cb152-17"></a><span class="dt">double</span> * user_unif_rand()</span>
+<span id="cb152-18"><a href="4-1-pseudorandom-number-generators.html#cb152-18"></a>{ </span>
+<span id="cb152-19"><a href="4-1-pseudorandom-number-generators.html#cb152-19"></a>  Int32 t = z[<span class="dv">4</span>];</span>
+<span id="cb152-20"><a href="4-1-pseudorandom-number-generators.html#cb152-20"></a>  Int32 s = z[<span class="dv">1</span>];</span>
+<span id="cb152-21"><a href="4-1-pseudorandom-number-generators.html#cb152-21"></a>  z[<span class="dv">0</span>] += <span class="dv">362437</span>;</span>
+<span id="cb152-22"><a href="4-1-pseudorandom-number-generators.html#cb152-22"></a>  z[<span class="dv">4</span>] = z[<span class="dv">3</span>];</span>
+<span id="cb152-23"><a href="4-1-pseudorandom-number-generators.html#cb152-23"></a>  z[<span class="dv">3</span>] = z[<span class="dv">2</span>];</span>
+<span id="cb152-24"><a href="4-1-pseudorandom-number-generators.html#cb152-24"></a>  z[<span class="dv">2</span>] = s;</span>
+<span id="cb152-25"><a href="4-1-pseudorandom-number-generators.html#cb152-25"></a>  <span class="co">// Right shift t by 2, then bitwise xor between t and its shift</span></span>
+<span id="cb152-26"><a href="4-1-pseudorandom-number-generators.html#cb152-26"></a>  t ^= t &gt;&gt; <span class="dv">2</span>;  </span>
+<span id="cb152-27"><a href="4-1-pseudorandom-number-generators.html#cb152-27"></a>  <span class="co">// Left shift t by 1 and s by 4, xor them, xor with s and xor with t</span></span>
+<span id="cb152-28"><a href="4-1-pseudorandom-number-generators.html#cb152-28"></a>  t ^= s ^ (s &lt;&lt; <span class="dv">4</span>) ^ (t &lt;&lt; <span class="dv">1</span>);</span>
+<span id="cb152-29"><a href="4-1-pseudorandom-number-generators.html#cb152-29"></a>  z[<span class="dv">1</span>] = t;</span>
+<span id="cb152-30"><a href="4-1-pseudorandom-number-generators.html#cb152-30"></a>  res = (z[<span class="dv">0</span>] + t) * <span class="fl">2.32830643653869e-10</span>;</span>
+<span id="cb152-31"><a href="4-1-pseudorandom-number-generators.html#cb152-31"></a>  <span class="cf">return</span> &amp;res;</span>
+<span id="cb152-32"><a href="4-1-pseudorandom-number-generators.html#cb152-32"></a>}</span>
+<span id="cb152-33"><a href="4-1-pseudorandom-number-generators.html#cb152-33"></a></span>
+<span id="cb152-34"><a href="4-1-pseudorandom-number-generators.html#cb152-34"></a><span class="co">// A seed initializer using Marsaglia&#39;s congruential PRNG</span></span>
+<span id="cb152-35"><a href="4-1-pseudorandom-number-generators.html#cb152-35"></a></span>
+<span id="cb152-36"><a href="4-1-pseudorandom-number-generators.html#cb152-36"></a><span class="dt">void</span>  user_unif_init(Int32 seed_in) { </span>
+<span id="cb152-37"><a href="4-1-pseudorandom-number-generators.html#cb152-37"></a>  z[<span class="dv">0</span>] = seed_in;</span>
+<span id="cb152-38"><a href="4-1-pseudorandom-number-generators.html#cb152-38"></a>  z[<span class="dv">1</span>] = <span class="dv">69069</span> * z[<span class="dv">0</span>] + <span class="dv">1</span>;</span>
+<span id="cb152-39"><a href="4-1-pseudorandom-number-generators.html#cb152-39"></a>  z[<span class="dv">2</span>] = <span class="dv">69069</span> * z[<span class="dv">1</span>] + <span class="dv">1</span>;</span>
+<span id="cb152-40"><a href="4-1-pseudorandom-number-generators.html#cb152-40"></a>  z[<span class="dv">3</span>] = <span class="dv">69069</span> * z[<span class="dv">2</span>] + <span class="dv">1</span>;</span>
+<span id="cb152-41"><a href="4-1-pseudorandom-number-generators.html#cb152-41"></a>  z[<span class="dv">4</span>] = <span class="dv">69069</span> * z[<span class="dv">3</span>] + <span class="dv">1</span>;</span>
+<span id="cb152-42"><a href="4-1-pseudorandom-number-generators.html#cb152-42"></a>}</span>
+<span id="cb152-43"><a href="4-1-pseudorandom-number-generators.html#cb152-43"></a></span>
+<span id="cb152-44"><a href="4-1-pseudorandom-number-generators.html#cb152-44"></a><span class="co">// Two functions to make &#39;.Random.seed&#39; in R reflect the state vector</span></span>
+<span id="cb152-45"><a href="4-1-pseudorandom-number-generators.html#cb152-45"></a></span>
+<span id="cb152-46"><a href="4-1-pseudorandom-number-generators.html#cb152-46"></a><span class="dt">int</span> * user_unif_nseed() { <span class="cf">return</span> &amp;nseed; }</span>
+<span id="cb152-47"><a href="4-1-pseudorandom-number-generators.html#cb152-47"></a><span class="dt">int</span> * user_unif_seedloc() { <span class="cf">return</span> (<span class="dt">int</span> *) &amp;z; }</span>
+<span id="cb152-48"><a href="4-1-pseudorandom-number-generators.html#cb152-48"></a></span>
+<span id="cb152-49"><a href="4-1-pseudorandom-number-generators.html#cb152-49"></a><span class="co">// Wrapper to make &#39;user_unif_rand&#39; callable from R</span></span>
+<span id="cb152-50"><a href="4-1-pseudorandom-number-generators.html#cb152-50"></a><span class="dt">double</span> xor_runif() {</span>
+<span id="cb152-51"><a href="4-1-pseudorandom-number-generators.html#cb152-51"></a>  <span class="cf">return</span> *user_unif_rand();</span>
+<span id="cb152-52"><a href="4-1-pseudorandom-number-generators.html#cb152-52"></a>}</span>
+<span id="cb152-53"><a href="4-1-pseudorandom-number-generators.html#cb152-53"></a></span>
+<span id="cb152-54"><a href="4-1-pseudorandom-number-generators.html#cb152-54"></a><span class="co">// This module will export two functions to be directly available from R.</span></span>
+<span id="cb152-55"><a href="4-1-pseudorandom-number-generators.html#cb152-55"></a><span class="co">// Note: if nothing is exported, `sourceCpp` will not load the shared </span></span>
+<span id="cb152-56"><a href="4-1-pseudorandom-number-generators.html#cb152-56"></a><span class="co">// object file generated by the compilation of the code, and </span></span>
+<span id="cb152-57"><a href="4-1-pseudorandom-number-generators.html#cb152-57"></a><span class="co">// &#39;user_unif_rand&#39; will not become available to the internals of R. </span></span>
+<span id="cb152-58"><a href="4-1-pseudorandom-number-generators.html#cb152-58"></a>RCPP_MODULE(xorwow) {</span>
+<span id="cb152-59"><a href="4-1-pseudorandom-number-generators.html#cb152-59"></a>  Rcpp::function(<span class="st">&quot;xor_set.seed&quot;</span>, &amp;user_unif_init, <span class="st">&quot;Seeds Marsaglia&#39;s xorwow&quot;</span>);</span>
+<span id="cb152-60"><a href="4-1-pseudorandom-number-generators.html#cb152-60"></a>  Rcpp::function(<span class="st">&quot;xor_runif&quot;</span>, &amp;xor_runif, <span class="st">&quot;A uniform from Marsaglia&#39;s xorwow&quot;</span>);</span>
+<span id="cb152-61"><a href="4-1-pseudorandom-number-generators.html#cb152-61"></a>}</span></code></pre></div>
+<p>We first test the direct interface to the xorwow algorithm.</p>
+<div class="sourceCode" id="cb153"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb153-1"><a href="4-1-pseudorandom-number-generators.html#cb153-1"></a><span class="kw">xor_set.seed</span>(<span class="dv">3573076633</span>)</span>
+<span id="cb153-2"><a href="4-1-pseudorandom-number-generators.html#cb153-2"></a><span class="kw">xor_runif</span>()</span></code></pre></div>
+<pre><code>## [1] 0.9090892</code></pre>
+<p>Then we set R’s pseudorandom number generator to be our user supplied
+generator.</p>
+<div class="sourceCode" id="cb155"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb155-1"><a href="4-1-pseudorandom-number-generators.html#cb155-1"></a>default_prng &lt;-<span class="st"> </span><span class="kw">RNGkind</span>(<span class="st">&quot;user&quot;</span>)</span></code></pre></div>
+<p>All R’s standard random number generators will after the call <code>RNGkind("user")</code>
+rely on the user provided generator, in this case the xorwow generator.
+Note that R does an “initial scrambling” of the argument given to <code>set.seed</code>
+before it is passed on to our user defined initializer. This
+scrambling turns 24102019 used below into 3573076633 used above.</p>
+<div class="sourceCode" id="cb156"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb156-1"><a href="4-1-pseudorandom-number-generators.html#cb156-1"></a><span class="kw">set.seed</span>(<span class="dv">24102019</span>)</span>
+<span id="cb156-2"><a href="4-1-pseudorandom-number-generators.html#cb156-2"></a>.Random.seed[<span class="op">-</span><span class="dv">1</span>]  <span class="co">## The state vector as seeded </span></span></code></pre></div>
+<pre><code>## [1] -721890663    9136518 -310030769 1191753796  194708085</code></pre>
+<div class="sourceCode" id="cb158"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb158-1"><a href="4-1-pseudorandom-number-generators.html#cb158-1"></a><span class="kw">runif</span>(<span class="dv">1</span>)          <span class="co">## As above since same unscrambled seed is used</span></span></code></pre></div>
+<pre><code>## [1] 0.9090892</code></pre>
+<div class="sourceCode" id="cb160"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb160-1"><a href="4-1-pseudorandom-number-generators.html#cb160-1"></a>.Random.seed[<span class="op">-</span><span class="dv">1</span>]  <span class="co">## The state vector after one update</span></span></code></pre></div>
+<pre><code>## [1] -721528226  331069150    9136518 -310030769 1191753796</code></pre>
+<p>The code above shows the state vector of the xorwow algorithm when seeded
+by the <code>user_unif_init</code> function, and it also shows the
+update to the state vector after a single iteration of the xorwow algorithm.</p>
+<p>Though the xorwow algorithm is fast and simple, a benchmark study (not shown)
+reveals that using xorwow instead of the Mersenne Twister doesn’t impact the
+run time in a notable way when using e.g. <code>runif</code>. The generator is simply
+not the bottleneck. As the implementation
+of xorwow above is experimental and has not been thoroughly tested, we will
+not rely on it and quickly reset the random number generator to its default value.</p>
+<div class="sourceCode" id="cb162"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb162-1"><a href="4-1-pseudorandom-number-generators.html#cb162-1"></a><span class="co">## Resetting the generator to the default</span></span>
+<span id="cb162-2"><a href="4-1-pseudorandom-number-generators.html#cb162-2"></a><span class="kw">RNGkind</span>(default_prng[<span class="dv">1</span>])</span></code></pre></div>
+</div>
+<div id="pseudorandom-number-packages" class="section level3">
+<h3><span class="header-section-number">4.1.2</span> Pseudorandom number packages</h3>
+<p>To benefit from the recent developments in pseudorandom number generators
+we can turn to R packages such as the <a href="https://CRAN.R-project.org/package=dqrng">dqrng</a>
+package. It implements pcg64 from the <a href="http://www.pcg-random.org">PCG family</a> of
+generators as well as <a href="http://prng.di.unimi.it">Xoroshiro128+ and Xoshiro256+</a>
+that are shift-register algorithms. Xoroshiro128+ is the default and other
+generators can be chosen using <code>dqRNGkind</code>. The usage of generators from dqrng
+is similar to the usage of base R generators.</p>
+<div class="sourceCode" id="cb163"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb163-1"><a href="4-1-pseudorandom-number-generators.html#cb163-1"></a><span class="kw">library</span>(dqrng)</span>
+<span id="cb163-2"><a href="4-1-pseudorandom-number-generators.html#cb163-2"></a><span class="kw">dqset.seed</span>(<span class="dv">24102019</span>)</span>
+<span id="cb163-3"><a href="4-1-pseudorandom-number-generators.html#cb163-3"></a><span class="kw">dqrunif</span>(<span class="dv">1</span>)</span></code></pre></div>
+<pre><code>## [1] 0.6172152</code></pre>
+<p>Using the generators from dqrng does not interfere with the base R generators
+as the state vectors are completely separated.</p>
+<p>In addition to uniform pseudorandom variables generated by <code>dqrunif</code> the
+dqrng package can generate exponential (<code>dqrexp</code>) and Gaussian (<code>dqrnorm</code>)
+random variables as well as uniform discrete distributions (<code>dqsample</code> and
+<code>dqsample.int</code>). All based on the fast pseudorandom integer generators that
+the package includes. In addition, the package has a C++ interface that makes it
+possible to use its generators in compiled code as well.</p>
+<div class="sourceCode" id="cb165"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb165-1"><a href="4-1-pseudorandom-number-generators.html#cb165-1"></a><span class="kw">microbenchmark</span>(</span>
+<span id="cb165-2"><a href="4-1-pseudorandom-number-generators.html#cb165-2"></a>  <span class="kw">runif</span>(<span class="fl">1e6</span>),</span>
+<span id="cb165-3"><a href="4-1-pseudorandom-number-generators.html#cb165-3"></a>  <span class="kw">dqrunif</span>(<span class="fl">1e6</span>)</span>
+<span id="cb165-4"><a href="4-1-pseudorandom-number-generators.html#cb165-4"></a>)</span></code></pre></div>
+<pre><code>## Unit: milliseconds
+##            expr  min   lq mean median   uq max neval
+##    runif(1e+06) 25.3 26.8 28.3   28.5 29.2  32   100
+##  dqrunif(1e+06)  3.7  5.8  7.7    6.6  6.9  49   100</code></pre>
+<p>As the benchmark above shows, <code>dqrunif</code> is about six times faster than
+<code>runif</code> when generating one million variables. The other generators provided
+by the dqrng package show similar improvements over the base R generators.</p>
+</div>
+</div>
+<h3>References</h3>
+<div id="refs" class="references">
+<div id="ref-LEcuyer:2007">
+<p>L’Ecuyer, Pierre, and Richard Simard. 2007. “TestU01: A c Library for Empirical Testing of Random Number Generators.” <em>ACM Trans. Math. Softw.</em> 33 (4): 22:1–22:40. <a href="https://doi.org/10.1145/1268776.1268777">https://doi.org/10.1145/1268776.1268777</a>.</p>
+</div>
+<div id="ref-Marsaglia:2003">
+<p>Marsaglia, George. 2003. “Xorshift Rngs.” <em>Journal of Statistical Software</em> 8 (14): 1–6. <a href="https://doi.org/10.18637/jss.v008.i14">https://doi.org/10.18637/jss.v008.i14</a>.</p>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="4-univariate-random-variables.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="4-2-transformation-techniques.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"toc": {
+"collapse": "section"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

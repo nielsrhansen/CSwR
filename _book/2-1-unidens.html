@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>2.1 Univariate density estimation | Computational Statistics with R</title>
+  <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  <meta name="generator" content="bookdown 0.20 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="2.1 Univariate density estimation | Computational Statistics with R" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="2.1 Univariate density estimation | Computational Statistics with R" />
+  
+  <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
+  
+
+<meta name="author" content="Niels Richard Hansen" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="2-density.html"/>
+<link rel="next" href="2-2-kernel-density.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<script src="libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+
+
+<style type="text/css">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Computational Statistics with R</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="1" data-path="1-intro.html"><a href="1-intro.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
+<li class="chapter" data-level="1.1" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html"><i class="fa fa-check"></i><b>1.1</b> Smoothing</a><ul>
+<li class="chapter" data-level="1.1.1" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#intro-angles"><i class="fa fa-check"></i><b>1.1.1</b> Angle distributions in proteins</a></li>
+<li class="chapter" data-level="1.1.2" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#using-ggplot2"><i class="fa fa-check"></i><b>1.1.2</b> Using ggplot2</a></li>
+<li class="chapter" data-level="1.1.3" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#changing-the-defaults"><i class="fa fa-check"></i><b>1.1.3</b> Changing the defaults</a></li>
+<li class="chapter" data-level="1.1.4" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#multivariate-smoothing"><i class="fa fa-check"></i><b>1.1.4</b> Multivariate methods</a></li>
+<li class="chapter" data-level="1.1.5" data-path="1-1-intro-smooth.html"><a href="1-1-intro-smooth.html#large-scale-smoothing"><i class="fa fa-check"></i><b>1.1.5</b> Large scale smoothing</a></li>
+</ul></li>
+<li class="chapter" data-level="1.2" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html"><i class="fa fa-check"></i><b>1.2</b> Monte Carlo Methods</a><ul>
+<li class="chapter" data-level="1.2.1" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#vM"><i class="fa fa-check"></i><b>1.2.1</b> Univariate von Mises distributions</a></li>
+<li class="chapter" data-level="1.2.2" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#mixtures-of-von-mises-distributions"><i class="fa fa-check"></i><b>1.2.2</b> Mixtures of von Mises distributions</a></li>
+<li class="chapter" data-level="1.2.3" data-path="1-2-monte-carlo-methods.html"><a href="1-2-monte-carlo-methods.html#large-scale-monte-carlo-methods"><i class="fa fa-check"></i><b>1.2.3</b> Large scale Monte Carlo methods</a></li>
+</ul></li>
+<li class="chapter" data-level="1.3" data-path="1-3-optimization.html"><a href="1-3-optimization.html"><i class="fa fa-check"></i><b>1.3</b> Optimization</a><ul>
+<li class="chapter" data-level="1.3.1" data-path="1-3-optimization.html"><a href="1-3-optimization.html#the-em-algorithm"><i class="fa fa-check"></i><b>1.3.1</b> The EM-algorithm</a></li>
+<li class="chapter" data-level="1.3.2" data-path="1-3-optimization.html"><a href="1-3-optimization.html#large-scale-optimization"><i class="fa fa-check"></i><b>1.3.2</b> Large scale optimization</a></li>
+</ul></li>
+<li class="chapter" data-level="1.4" data-path="1-4-exercises.html"><a href="1-4-exercises.html"><i class="fa fa-check"></i><b>1.4</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#r-training-exercises"><i class="fa fa-check"></i>R training exercises</a></li>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#histograms-with-non-equidistant-breaks"><i class="fa fa-check"></i>Histograms with non-equidistant breaks</a></li>
+<li class="chapter" data-level="" data-path="1-4-exercises.html"><a href="1-4-exercises.html#functions-and-functional-programming"><i class="fa fa-check"></i>Functions and functional programming</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part I: Smoothing</b></span></li>
+<li class="chapter" data-level="2" data-path="2-density.html"><a href="2-density.html"><i class="fa fa-check"></i><b>2</b> Density estimation</a><ul>
+<li class="chapter" data-level="2.1" data-path="2-1-unidens.html"><a href="2-1-unidens.html"><i class="fa fa-check"></i><b>2.1</b> Univariate density estimation</a><ul>
+<li class="chapter" data-level="2.1.1" data-path="2-1-unidens.html"><a href="2-1-unidens.html#likelihood"><i class="fa fa-check"></i><b>2.1.1</b> Likelihood considerations</a></li>
+<li class="chapter" data-level="2.1.2" data-path="2-1-unidens.html"><a href="2-1-unidens.html#sieves"><i class="fa fa-check"></i><b>2.1.2</b> Method of sieves</a></li>
+<li class="chapter" data-level="2.1.3" data-path="2-1-unidens.html"><a href="2-1-unidens.html#basis-density"><i class="fa fa-check"></i><b>2.1.3</b> Basis expansions</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html"><i class="fa fa-check"></i><b>2.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="2.2.1" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#implementation"><i class="fa fa-check"></i><b>2.2.1</b> Implementation</a></li>
+<li class="chapter" data-level="2.2.2" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#benchmarking"><i class="fa fa-check"></i><b>2.2.2</b> Benchmarking</a></li>
+</ul></li>
+<li class="chapter" data-level="2.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html"><i class="fa fa-check"></i><b>2.3</b> Bandwidth selection</a><ul>
+<li class="chapter" data-level="2.3.1" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#rectangular"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
+<li class="chapter" data-level="2.3.2" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#ise-mise-and-mse-for-kernel-estimators"><i class="fa fa-check"></i><b>2.3.2</b> ISE, MISE and MSE for kernel estimators</a></li>
+<li class="chapter" data-level="2.3.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#plug-in-estimation-of-the-oracle-bandwidth"><i class="fa fa-check"></i><b>2.3.3</b> Plug-in estimation of the oracle bandwidth</a></li>
+<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>2.4</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="2-4-exercises.html"><a href="2-4-exercises.html"><i class="fa fa-check"></i>Kernel density estimation</a></li>
+<li class="chapter" data-level="" data-path="2-4-exercises.html"><a href="2-4-exercises.html#benchmarking-1"><i class="fa fa-check"></i>Benchmarking</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="3-bivariate.html"><a href="3-bivariate.html"><i class="fa fa-check"></i><b>3</b> Bivariate smoothing</a><ul>
+<li class="chapter" data-level="3.1" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html"><i class="fa fa-check"></i><b>3.1</b> Nearest neighbor smoothers</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#linear-smoothers"><i class="fa fa-check"></i><b>3.1.1</b> Linear smoothers</a></li>
+<li class="chapter" data-level="3.1.2" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#implementing-the-running-mean"><i class="fa fa-check"></i><b>3.1.2</b> Implementing the running mean</a></li>
+<li class="chapter" data-level="3.1.3" data-path="3-1-nearest-neighbor-smoothers.html"><a href="3-1-nearest-neighbor-smoothers.html#choose-k-by-cross-validation"><i class="fa fa-check"></i><b>3.1.3</b> Choose <span class="math inline">\(k\)</span> by cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html"><i class="fa fa-check"></i><b>3.2</b> Kernel methods</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html#nadarayawatson-kernel-smoothing"><i class="fa fa-check"></i><b>3.2.1</b> Nadaraya–Watson kernel smoothing</a></li>
+<li class="chapter" data-level="3.2.2" data-path="3-2-kernel-methods.html"><a href="3-2-kernel-methods.html#local-regression-smoothers"><i class="fa fa-check"></i><b>3.2.2</b> Local regression smoothers</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="3-3-sparse-linear-algebra.html"><a href="3-3-sparse-linear-algebra.html"><i class="fa fa-check"></i><b>3.3</b> Sparse linear algebra</a></li>
+<li class="chapter" data-level="3.4" data-path="3-4-onb.html"><a href="3-4-onb.html"><i class="fa fa-check"></i><b>3.4</b> Orthogonal basis expansions</a><ul>
+<li class="chapter" data-level="3.4.1" data-path="3-4-onb.html"><a href="3-4-onb.html#polynomial-expansions"><i class="fa fa-check"></i><b>3.4.1</b> Polynomial expansions</a></li>
+<li class="chapter" data-level="3.4.2" data-path="3-4-onb.html"><a href="3-4-onb.html#fourier-expansions"><i class="fa fa-check"></i><b>3.4.2</b> Fourier expansions</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="3-5-splines.html"><a href="3-5-splines.html"><i class="fa fa-check"></i><b>3.5</b> Splines</a><ul>
+<li class="chapter" data-level="3.5.1" data-path="3-5-splines.html"><a href="3-5-splines.html#smoothing-splines"><i class="fa fa-check"></i><b>3.5.1</b> Smoothing splines</a></li>
+<li class="chapter" data-level="3.5.2" data-path="3-5-splines.html"><a href="3-5-splines.html#splines-in-r"><i class="fa fa-check"></i><b>3.5.2</b> Splines in R</a></li>
+<li class="chapter" data-level="3.5.3" data-path="3-5-splines.html"><a href="3-5-splines.html#efficient-splines"><i class="fa fa-check"></i><b>3.5.3</b> Efficient computation with splines</a></li>
+</ul></li>
+<li class="chapter" data-level="3.6" data-path="3-6-gaussian-processes.html"><a href="3-6-gaussian-processes.html"><i class="fa fa-check"></i><b>3.6</b> Gaussian processes</a></li>
+<li class="chapter" data-level="3.7" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html"><i class="fa fa-check"></i><b>3.7</b> The Kalman filter</a><ul>
+<li class="chapter" data-level="3.7.1" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#ar1-example"><i class="fa fa-check"></i><b>3.7.1</b> AR(1)-example</a></li>
+<li class="chapter" data-level="3.7.2" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#the-kalman-smoother"><i class="fa fa-check"></i><b>3.7.2</b> The Kalman smoother</a></li>
+<li class="chapter" data-level="3.7.3" data-path="2-2-kernel-density.html"><a href="2-2-kernel-density.html#implementation"><i class="fa fa-check"></i><b>3.7.3</b> Implementation</a></li>
+<li class="chapter" data-level="3.7.4" data-path="3-7-the-kalman-filter.html"><a href="3-7-the-kalman-filter.html#the-kalman-filter-1"><i class="fa fa-check"></i><b>3.7.4</b> The Kalman filter</a></li>
+</ul></li>
+<li class="chapter" data-level="3.8" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>3.8</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="3-8-exercises.html"><a href="3-8-exercises.html"><i class="fa fa-check"></i>Nearest neighbors</a></li>
+<li class="chapter" data-level="" data-path="3-8-exercises.html"><a href="3-8-exercises.html#kernel-estimators"><i class="fa fa-check"></i>Kernel estimators</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part II: Monte Carlo Methods</b></span></li>
+<li class="chapter" data-level="4" data-path="4-univariate-random-variables.html"><a href="4-univariate-random-variables.html"><i class="fa fa-check"></i><b>4</b> Univariate random variables</a><ul>
+<li class="chapter" data-level="4.1" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html"><i class="fa fa-check"></i><b>4.1</b> Pseudorandom number generators</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html#implementing-a-pseudorandom-number-generator"><i class="fa fa-check"></i><b>4.1.1</b> Implementing a pseudorandom number generator</a></li>
+<li class="chapter" data-level="4.1.2" data-path="4-1-pseudorandom-number-generators.html"><a href="4-1-pseudorandom-number-generators.html#pseudorandom-number-packages"><i class="fa fa-check"></i><b>4.1.2</b> Pseudorandom number packages</a></li>
+</ul></li>
+<li class="chapter" data-level="4.2" data-path="4-2-transformation-techniques.html"><a href="4-2-transformation-techniques.html"><i class="fa fa-check"></i><b>4.2</b> Transformation techniques</a><ul>
+<li class="chapter" data-level="4.2.1" data-path="4-2-transformation-techniques.html"><a href="4-2-transformation-techniques.html#sampling-from-a-t-distribution"><i class="fa fa-check"></i><b>4.2.1</b> Sampling from a <span class="math inline">\(t\)</span>-distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.3" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html"><i class="fa fa-check"></i><b>4.3</b> Rejection sampling</a><ul>
+<li class="chapter" data-level="4.3.1" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html#vMsim"><i class="fa fa-check"></i><b>4.3.1</b> von Mises distribution</a></li>
+<li class="chapter" data-level="4.3.2" data-path="4-3-reject-samp.html"><a href="4-3-reject-samp.html#gamma-distribution"><i class="fa fa-check"></i><b>4.3.2</b> Gamma distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.4" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html"><i class="fa fa-check"></i><b>4.4</b> Adaptive envelopes</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html#beta-distribution"><i class="fa fa-check"></i><b>4.4.1</b> Beta distribution</a></li>
+<li class="chapter" data-level="4.4.2" data-path="4-4-adaptive.html"><a href="4-4-adaptive.html#von-mises-distribution"><i class="fa fa-check"></i><b>4.4.2</b> von Mises distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="1-4-exercises.html"><a href="1-4-exercises.html#exercises"><i class="fa fa-check"></i><b>4.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="4-5-exercises.html"><a href="4-5-exercises.html"><i class="fa fa-check"></i>Rejection sampling of Gaussian random variables</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="5-mci.html"><a href="5-mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
+<li class="chapter" data-level="5.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html"><i class="fa fa-check"></i><b>5.1</b> Assessment</a><ul>
+<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#using-the-central-limit-theorem"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
+<li class="chapter" data-level="5.1.2" data-path="5-1-assessment.html"><a href="5-1-assessment.html#concentration-inequalities"><i class="fa fa-check"></i><b>5.1.2</b> Concentration inequalities</a></li>
+<li class="chapter" data-level="5.1.3" data-path="5-1-assessment.html"><a href="5-1-assessment.html#exponential-tail-bound-for-gamma-distributed-variables"><i class="fa fa-check"></i><b>5.1.3</b> Exponential tail bound for Gamma distributed variables</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html"><i class="fa fa-check"></i><b>5.2</b> Importance sampling</a><ul>
+<li class="chapter" data-level="5.2.1" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#unknown-normalization-constants"><i class="fa fa-check"></i><b>5.2.1</b> Unknown normalization constants</a></li>
+<li class="chapter" data-level="5.2.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#hd-int"><i class="fa fa-check"></i><b>5.2.2</b> Computing a high-dimensional integral</a></li>
+</ul></li>
+<li class="chapter" data-level="5.3" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
+</ul></li>
+</ul></li>
+<li class="part"><span><b>Part III: Optimization</b></span></li>
+<li class="chapter" data-level="6" data-path="6-four-examples.html"><a href="6-four-examples.html"><i class="fa fa-check"></i><b>6</b> Four Examples</a><ul>
+<li class="chapter" data-level="6.1" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html"><i class="fa fa-check"></i><b>6.1</b> Exponential families</a><ul>
+<li class="chapter" data-level="6.1.1" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#full-exponential-families"><i class="fa fa-check"></i><b>6.1.1</b> Full exponential families</a></li>
+<li class="chapter" data-level="6.1.2" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#bayes-net"><i class="fa fa-check"></i><b>6.1.2</b> Exponential family Bayesian networks</a></li>
+<li class="chapter" data-level="6.1.3" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#exp-fam-deriv"><i class="fa fa-check"></i><b>6.1.3</b> Likelihood computations</a></li>
+<li class="chapter" data-level="6.1.4" data-path="6-1-exp-fam.html"><a href="6-1-exp-fam.html#curved-exponential-families"><i class="fa fa-check"></i><b>6.1.4</b> Curved exponential families</a></li>
+</ul></li>
+<li class="chapter" data-level="6.2" data-path="6-2-multinomial-models.html"><a href="6-2-multinomial-models.html"><i class="fa fa-check"></i><b>6.2</b> Multinomial models</a><ul>
+<li class="chapter" data-level="6.2.1" data-path="6-2-multinomial-models.html"><a href="6-2-multinomial-models.html#pep-moth"><i class="fa fa-check"></i><b>6.2.1</b> Peppered Moths</a></li>
+</ul></li>
+<li class="chapter" data-level="6.3" data-path="6-3-regression.html"><a href="6-3-regression.html"><i class="fa fa-check"></i><b>6.3</b> Regression models</a></li>
+<li class="chapter" data-level="6.4" data-path="6-4-finite-mixture-models.html"><a href="6-4-finite-mixture-models.html"><i class="fa fa-check"></i><b>6.4</b> Finite mixture models</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="6-4-finite-mixture-models.html"><a href="6-4-finite-mixture-models.html#Gaus-mix-ex"><i class="fa fa-check"></i><b>6.4.1</b> Gaussian mixtures</a></li>
+</ul></li>
+<li class="chapter" data-level="6.5" data-path="6-5-mixed-models.html"><a href="6-5-mixed-models.html"><i class="fa fa-check"></i><b>6.5</b> Mixed models</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="7-numopt.html"><a href="7-numopt.html"><i class="fa fa-check"></i><b>7</b> Numerical optimization</a><ul>
+<li class="chapter" data-level="7.1" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html"><i class="fa fa-check"></i><b>7.1</b> Algorithms and convergence</a><ul>
+<li class="chapter" data-level="7.1.1" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#descent-algorithms"><i class="fa fa-check"></i><b>7.1.1</b> Descent algorithms</a></li>
+<li class="chapter" data-level="7.1.2" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#maps-and-fixed-points"><i class="fa fa-check"></i><b>7.1.2</b> Maps and fixed points</a></li>
+<li class="chapter" data-level="7.1.3" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#convergence-rate"><i class="fa fa-check"></i><b>7.1.3</b> Convergence rate</a></li>
+<li class="chapter" data-level="7.1.4" data-path="7-1-algorithms-and-convergence.html"><a href="7-1-algorithms-and-convergence.html#stopping-criteria"><i class="fa fa-check"></i><b>7.1.4</b> Stopping criteria</a></li>
+</ul></li>
+<li class="chapter" data-level="7.2" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html"><i class="fa fa-check"></i><b>7.2</b> Descent direction algorithms</a><ul>
+<li class="chapter" data-level="7.2.1" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#line-search"><i class="fa fa-check"></i><b>7.2.1</b> Line search</a></li>
+<li class="chapter" data-level="7.2.2" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#gradient-descent"><i class="fa fa-check"></i><b>7.2.2</b> Gradient descent</a></li>
+<li class="chapter" data-level="7.2.3" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>7.2.3</b> Conjugate gradients</a></li>
+<li class="chapter" data-level="7.2.4" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#pep-moth-descent"><i class="fa fa-check"></i><b>7.2.4</b> Peppered Moths</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html"><i class="fa fa-check"></i><b>7.3</b> Newton-type algorithms</a><ul>
+<li class="chapter" data-level="7.3.1" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>7.3.1</b> Poisson regression</a></li>
+<li class="chapter" data-level="7.3.2" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>7.3.2</b> Quasi-Newton algorithms</a></li>
+<li class="chapter" data-level="7.3.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>7.3.3</b> Sparsity</a></li>
+</ul></li>
+<li class="chapter" data-level="7.4" data-path="7-4-misc-.html"><a href="7-4-misc-.html"><i class="fa fa-check"></i><b>7.4</b> Misc.</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="8-em.html"><a href="8-em.html"><i class="fa fa-check"></i><b>8</b> Expectation maximization algorithms</a><ul>
+<li class="chapter" data-level="8.1" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html"><i class="fa fa-check"></i><b>8.1</b> Basic properties</a><ul>
+<li class="chapter" data-level="8.1.1" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#incomplete-data-likelihood"><i class="fa fa-check"></i><b>8.1.1</b> Incomplete data likelihood</a></li>
+<li class="chapter" data-level="8.1.2" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#monotonicity-of-the-em-algorithm"><i class="fa fa-check"></i><b>8.1.2</b> Monotonicity of the EM algorithm</a></li>
+<li class="chapter" data-level="8.1.3" data-path="8-1-basic-properties.html"><a href="8-1-basic-properties.html#peppered-moths"><i class="fa fa-check"></i><b>8.1.3</b> Peppered moths</a></li>
+</ul></li>
+<li class="chapter" data-level="8.2" data-path="8-2-EM-exp.html"><a href="8-2-EM-exp.html"><i class="fa fa-check"></i><b>8.2</b> Exponential families</a></li>
+<li class="chapter" data-level="8.3" data-path="8-3-fisher-information.html"><a href="8-3-fisher-information.html"><i class="fa fa-check"></i><b>8.3</b> Fisher information</a></li>
+<li class="chapter" data-level="8.4" data-path="8-4-revisiting-gaussian-mixtures.html"><a href="8-4-revisiting-gaussian-mixtures.html"><i class="fa fa-check"></i><b>8.4</b> Revisiting Gaussian mixtures</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="9-StochOpt.html"><a href="9-StochOpt.html"><i class="fa fa-check"></i><b>9</b> Stochastic Optimization</a><ul>
+<li class="chapter" data-level="9.1" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html"><i class="fa fa-check"></i><b>9.1</b> Stochastic gradient algorithms</a><ul>
+<li class="chapter" data-level="9.1.1" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#section"><i class="fa fa-check"></i><b>9.1.1</b> </a></li>
+<li class="chapter" data-level="9.1.2" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#online-stochastic-gradient-descent"><i class="fa fa-check"></i><b>9.1.2</b> Online stochastic gradient descent</a></li>
+<li class="chapter" data-level="9.1.3" data-path="9-1-stochastic-gradient-algorithms.html"><a href="9-1-stochastic-gradient-algorithms.html#stochastic-gradient-descent"><i class="fa fa-check"></i><b>9.1.3</b> Stochastic gradient descent</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="9-2-nonlinear-least-squares.html"><a href="9-2-nonlinear-least-squares.html"><i class="fa fa-check"></i><b>9.2</b> Nonlinear least squares</a></li>
+</ul></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="A-app-R.html"><a href="A-app-R.html"><i class="fa fa-check"></i><b>A</b> R programming</a></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Computational Statistics with R</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="unidens" class="section level2">
+<h2><span class="header-section-number">2.1</span> Univariate density estimation</h2>
+<p>Recall the data on <a href="1-1-intro-smooth.html#intro-angles"><span class="math inline">\(\phi\)</span>- and <span class="math inline">\(\psi\)</span>-angles</a> in
+polypeptide backbone structures, as considered in Section <a href="1-1-intro-smooth.html#intro-angles">1.1.1</a>.</p>
+
+<div class="figure" style="text-align: center"><span id="fig:phipsiDens2"></span>
+<img src="CSwR_files/figure-html/phipsiDens2-1.png" alt="Histograms equipped with a rug plot of the distribution of \(\phi\)-angles (left) and \(\psi\)-angles (right) of the peptide planes in the protein human protein 1HMP." width="49%" /><img src="CSwR_files/figure-html/phipsiDens2-2.png" alt="Histograms equipped with a rug plot of the distribution of \(\phi\)-angles (left) and \(\psi\)-angles (right) of the peptide planes in the protein human protein 1HMP." width="49%" />
+<p class="caption">
+Figure 2.1: Histograms equipped with a rug plot of the distribution of <span class="math inline">\(\phi\)</span>-angles (left) and <span class="math inline">\(\psi\)</span>-angles (right) of the peptide planes in the protein human protein <a href="https://www.rcsb.org/structure/1HMP">1HMP</a>.
+</p>
+</div>
+<p>We will in this section start the treatment of methods for smooth density
+estimation for univariate data such as data on either the <span class="math inline">\(\phi\)</span>- or the
+<span class="math inline">\(\psi\)</span>-angle. <a href="1-1-intro-smooth.html#multivariate-smoothing">Multivariate methods</a> for estimation
+of e.g. the bivariate joint density of the angles is postponed to
+Section <a href="1-1-intro-smooth.html#multivariate-smoothing">1.1.4</a>.</p>
+<div id="likelihood" class="section level3">
+<h3><span class="header-section-number">2.1.1</span> Likelihood considerations</h3>
+<p>Let <span class="math inline">\(f_0\)</span> denote the unknown density that we want to estimate.
+That is, we imagine that the data points <span class="math inline">\(x_1, \ldots, x_n\)</span> are
+all observations drawn from the probability measure with
+density <span class="math inline">\(f_0\)</span> w.r.t. Lebesgue measure on <span class="math inline">\(\mathbb{R}\)</span>.</p>
+<p>Note that whenever we have a parametrized statistical model
+<span class="math inline">\((f_{\theta})_{\theta}\)</span>, where <span class="math inline">\(f_{\theta}\)</span> is a density w.r.t.
+Lebesgue measure on <span class="math inline">\(\mathbb{R}\)</span>, and an estimate <span class="math inline">\(\hat{\theta}\)</span>
+of the parameter, then <span class="math inline">\(f_{\hat{\theta}}\)</span> is an estimate of the unknown
+density <span class="math inline">\(f_0\)</span>. For a parametric family we can always try to use the MLE
+<span class="math display">\[\hat{\theta} = \text{arg max}_{\theta} \sum_{i=1}^n \log f_{\theta}(x_i)\]</span>
+as an estimate of <span class="math inline">\(\theta\)</span>. Likewise, we might compute the empirical mean and variance
+for the data and plug those numbers into the density for the Gaussian
+distribution, and in this way obtain a Gaussian density estimate of <span class="math inline">\(f_0\)</span>.</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="2-1-unidens.html#cb29-1"></a>psi_mean &lt;-<span class="st"> </span><span class="kw">mean</span>(psi)</span>
+<span id="cb29-2"><a href="2-1-unidens.html#cb29-2"></a>psi_sd &lt;-<span class="st"> </span><span class="kw">sd</span>(psi)</span>
+<span id="cb29-3"><a href="2-1-unidens.html#cb29-3"></a><span class="kw">hist</span>(psi, <span class="dt">prob =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb29-4"><a href="2-1-unidens.html#cb29-4"></a><span class="kw">rug</span>(psi)</span>
+<span id="cb29-5"><a href="2-1-unidens.html#cb29-5"></a><span class="kw">curve</span>(<span class="kw">dnorm</span>(x, psi_mean, psi_sd), <span class="dt">add =</span> <span class="ot">TRUE</span>, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:psi-gauss"></span>
+<img src="CSwR_files/figure-html/psi-gauss-1.png" alt="Gaussian density (red) fitted to the $\psi$-angles." width="70%" />
+<p class="caption">
+Figure 2.2: Gaussian density (red) fitted to the <span class="math inline">\(\psi\)</span>-angles.
+</p>
+</div>
+<p>As Figure <a href="2-1-unidens.html#fig:psi-gauss">2.2</a> shows, if we fit a Gaussian distribution to the <span class="math inline">\(\psi\)</span>-angle
+data we get a density estimate that clearly doesn’t match the
+histogram. The Gaussian density matches the data on the first and second moments,
+but the histogram shows a clear bimodality that the Gaussian distribution by
+definition cannot match. Thus we need a more flexible parametric model than
+the Gaussian if we want to fit a density to this data set.</p>
+<p>It is natural to ask why we don’t go all-in and simply try to find the maximum
+likelihood estimate of the density among all possible densities? Why restrict
+attention to some subset of densities in a particular parametric family?
+The log-likelihood
+<span class="math display">\[\ell(f) = \sum_{i=1}^n \log f(x_i)\]</span>
+is well defined as a function of the density <span class="math inline">\(f\)</span> – even when <span class="math inline">\(f\)</span> isn’t restricted
+to belong to a finite-dimensional parametric model.
+To investigate if a nonparametric MLE is meaningful we consider how the likelihood
+behaves for the densities
+<span class="math display">\[\overline{f}_h(x) = \frac{1}{nh \sqrt{2 \pi}} \sum_{j=1}^n e^{- \frac{(x - x_j)^2}{2 h^2} }\]</span>
+for different choices of <span class="math inline">\(h\)</span>.</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="2-1-unidens.html#cb30-1"></a><span class="co">## The densities can easily be implemented using the density implementation</span></span>
+<span id="cb30-2"><a href="2-1-unidens.html#cb30-2"></a><span class="co">## of the Gaussian density in R</span></span>
+<span id="cb30-3"><a href="2-1-unidens.html#cb30-3"></a>f_h &lt;-<span class="st"> </span><span class="cf">function</span>(x, h) <span class="kw">mean</span>(<span class="kw">dnorm</span>(x, psi, h))</span>
+<span id="cb30-4"><a href="2-1-unidens.html#cb30-4"></a><span class="co">## This function does not work as a vectorized function as it is, but there is </span></span>
+<span id="cb30-5"><a href="2-1-unidens.html#cb30-5"></a><span class="co">## a convenience function, &#39;Vectorize&#39;, in R that turns the function into a </span></span>
+<span id="cb30-6"><a href="2-1-unidens.html#cb30-6"></a><span class="co">## function that can actually be applied correctly to a vector. </span></span>
+<span id="cb30-7"><a href="2-1-unidens.html#cb30-7"></a>f_h &lt;-<span class="st"> </span><span class="kw">Vectorize</span>(f_h)</span></code></pre></div>
+<p>Figure <a href="2-1-unidens.html#fig:gausKern">2.3</a> shows what some of
+these densities look like compared to the histogram of the <span class="math inline">\(\psi\)</span>-angle data.
+Clearly, for large <span class="math inline">\(h\)</span> these densities are smooth and slowly oscillating, while
+as <span class="math inline">\(h\)</span> gets smaller the densities become more and more wiggly. As <span class="math inline">\(h \to 0\)</span>
+the densities become increasingly dominated by tall narrow peaks
+around the individual data points.</p>
+
+<div class="figure" style="text-align: center"><span id="fig:gausKern"></span>
+<img src="CSwR_files/figure-html/gausKern-1.png" alt="The densities \(\overline{f}_h\) for different choices of \(h\)." width="49%" /><img src="CSwR_files/figure-html/gausKern-2.png" alt="The densities \(\overline{f}_h\) for different choices of \(h\)." width="49%" /><img src="CSwR_files/figure-html/gausKern-3.png" alt="The densities \(\overline{f}_h\) for different choices of \(h\)." width="49%" /><img src="CSwR_files/figure-html/gausKern-4.png" alt="The densities \(\overline{f}_h\) for different choices of \(h\)." width="49%" /><img src="CSwR_files/figure-html/gausKern-5.png" alt="The densities \(\overline{f}_h\) for different choices of \(h\)." width="49%" /><img src="CSwR_files/figure-html/gausKern-6.png" alt="The densities \(\overline{f}_h\) for different choices of \(h\)." width="49%" />
+<p class="caption">
+Figure 2.3: The densities <span class="math inline">\(\overline{f}_h\)</span> for different choices of <span class="math inline">\(h\)</span>.
+</p>
+</div>
+<p>The way that these densities adapt to the data points is reflected in the
+log-likelihood as well.</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="2-1-unidens.html#cb31-1"></a><span class="co">## To plot the log-likelihood we need to evaluate it in a grid of h-values.</span></span>
+<span id="cb31-2"><a href="2-1-unidens.html#cb31-2"></a>hseq &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1</span>, <span class="fl">0.001</span>, <span class="fl">-0.001</span>)</span>
+<span id="cb31-3"><a href="2-1-unidens.html#cb31-3"></a><span class="co">## For the following computation of the log-likelihood it is necessary </span></span>
+<span id="cb31-4"><a href="2-1-unidens.html#cb31-4"></a><span class="co">## that f_h is vectorized. There are other ways to implement this computation</span></span>
+<span id="cb31-5"><a href="2-1-unidens.html#cb31-5"></a><span class="co">## in R, and some are more efficient, but the computation of the log-likelihood </span></span>
+<span id="cb31-6"><a href="2-1-unidens.html#cb31-6"></a><span class="co">## for each h scales as O(n^2) with n the number of data points. </span></span>
+<span id="cb31-7"><a href="2-1-unidens.html#cb31-7"></a>ll &lt;-<span class="st"> </span><span class="kw">sapply</span>(hseq, <span class="cf">function</span>(h) <span class="kw">sum</span>(<span class="kw">log</span>(<span class="kw">f_h</span>(psi, h))))</span>
+<span id="cb31-8"><a href="2-1-unidens.html#cb31-8"></a><span class="kw">qplot</span>(hseq, ll, <span class="dt">geom =</span> <span class="st">&quot;line&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">xlab</span>(<span class="st">&quot;h&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;Log-likelihood&quot;</span>)</span>
+<span id="cb31-9"><a href="2-1-unidens.html#cb31-9"></a><span class="kw">qplot</span>(hseq, ll, <span class="dt">geom =</span> <span class="st">&quot;line&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_x_log10</span>(<span class="st">&quot;h&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;&quot;</span>)</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:LogLike"></span>
+<img src="CSwR_files/figure-html/LogLike-1.png" alt="Log-likelihood, $\ell(\overline{f}_h)$, for the densities $\overline{f}_h$ as a function of $h$. Note the log-scale on the right." width="49%" /><img src="CSwR_files/figure-html/LogLike-2.png" alt="Log-likelihood, $\ell(\overline{f}_h)$, for the densities $\overline{f}_h$ as a function of $h$. Note the log-scale on the right." width="49%" />
+<p class="caption">
+Figure 2.4: Log-likelihood, <span class="math inline">\(\ell(\overline{f}_h)\)</span>, for the densities <span class="math inline">\(\overline{f}_h\)</span> as a function of <span class="math inline">\(h\)</span>. Note the log-scale on the right.
+</p>
+</div>
+<p>From Figure <a href="2-1-unidens.html#fig:LogLike">2.4</a> it is clear that the likelihood is decreasing in
+<span class="math inline">\(h\)</span>, and it appears that it is unbounded as <span class="math inline">\(h \to 0\)</span>. This is most clearly
+seen on the figure when <span class="math inline">\(h\)</span> is plotted on the log-scale because then it appears
+that the log-likelihood approximately behaves as <span class="math inline">\(-\log(h)\)</span> for <span class="math inline">\(h \to 0\)</span>.</p>
+<p>We can show that that is, indeed, the case. If <span class="math inline">\(x_i \neq x_j\)</span> when <span class="math inline">\(i \neq j\)</span></p>
+<p><span class="math display">\[\begin{align*}
+\ell(\overline{f}_h) &amp; = \sum_{i} \log\left(1 + \sum_{j \neq i} e^{-(x_i - x_j)^2 / (2 h^2)} \right) - 
+n \log(nh\sqrt{2 \pi}) \\
+&amp; \sim - n \log(nh\sqrt{2 \pi})
+\end{align*}\]</span></p>
+<p>for <span class="math inline">\(h \to 0\)</span>. Hence, <span class="math inline">\(\ell(\overline{f}_h) \to \infty\)</span> for <span class="math inline">\(h \to 0\)</span>. This demonstrates that the MLE
+of the density doesn’t exist in the set of all distributions with densities.</p>
+<p>In the sense of <a href="https://en.wikipedia.org/wiki/Convergence_of_measures#Weak_convergence_of_measures">weak convergence</a> it actually holds that
+<span class="math display">\[\overline{f}_h \cdot m \overset{\mathrm{wk}}{\longrightarrow} 
+\varepsilon_n = \frac{1}{n} \sum_{i=1}^n \delta_{x_i}\]</span>
+for <span class="math inline">\(h \to 0\)</span>. The <em>empirical measure</em> <span class="math inline">\(\varepsilon_n\)</span> can sensibly be regarded as
+the nonparametric MLE of the distribution, but the empirical measure does not have
+a density. We conclude that we cannot directly define a sensible
+density estimator as a maximum-likelihood estimator.</p>
+</div>
+<div id="sieves" class="section level3">
+<h3><span class="header-section-number">2.1.2</span> Method of sieves</h3>
+<p>A sieve is a family of models, <span class="math inline">\(\Theta_{h}\)</span>, indexed by
+a real valued parameter, <span class="math inline">\(h \in \mathbb{R}\)</span>, such that <span class="math inline">\(\Theta_{h_1} \subseteq \Theta_{h_2}\)</span> for
+<span class="math inline">\(h_1 \leq h_2\)</span>. In this chapter <span class="math inline">\(\Theta_{h}\)</span> will denote a set of probability densities.
+If the increasing family of models is chosen in a sensible way, we
+may be able to compute the MLE
+<span class="math display">\[\hat{f}_h = \text{arg max}_{f \in \Theta_h} \ell(f),\]</span>
+and we may even be able to choose <span class="math inline">\(h = h_n\)</span> as a function of the sample size <span class="math inline">\(n\)</span>
+such that <span class="math inline">\(\hat{f}_{h_n}\)</span> becomes a consistent estimator of <span class="math inline">\(f_0\)</span>.</p>
+<p>It is possible to take
+<span class="math display">\[\Theta_h = \{ \overline{f}_{h&#39;} \mid h&#39; \leq h \}\]</span>
+with <span class="math inline">\(\overline{f}_{h&#39;}\)</span> as defined above, in which case <span class="math inline">\(\hat{f}_h = \overline{f}_h\)</span>.
+We will see in the following section that this is simply a kernel estimator.</p>
+<p>A more interesting example is obtained by letting
+<span class="math display">\[\Theta_h = \left\{ x \mapsto  \frac{1}{h \sqrt{2 \pi}} \int  e^{- \frac{(x - z)^2}{2 h^2} } \mathrm{d}\mu(z) \Biggm| \mu \textrm{ a probability measure}   \right\},\]</span>
+which is known as the convolution sieve. We note that <span class="math inline">\(\overline{f}_h \in \Theta_h\)</span> by
+taking <span class="math inline">\(\mu = \varepsilon_n\)</span>, but generally <span class="math inline">\(\hat{f}_h\)</span> will be
+different from <span class="math inline">\(\overline{f}_h\)</span>.</p>
+<p>We will not pursue the general theory of sieve estimators, but refer
+to the paper <a href="https://projecteuclid.org/euclid.aos/1176345782">Nonparametric Maximum Likelihood Estimation by the Method of Sieves</a> by Geman and Hwang.
+In the following section we will work out some more practical details
+for a particular sieve estimator based on a basis expansion of the
+log-density.</p>
+</div>
+<div id="basis-density" class="section level3">
+<h3><span class="header-section-number">2.1.3</span> Basis expansions</h3>
+<p>We suppose in this section that the data points are all contained in the
+interval <span class="math inline">\([a,b]\)</span> for <span class="math inline">\(a, b \in \mathbb{R}\)</span>. This is true for the angle
+data with <span class="math inline">\(a = -\pi\)</span> and <span class="math inline">\(b = \pi\)</span> no matter the size of the data set,
+but if <span class="math inline">\(f_0\)</span> does not have a bounded support it may be necessary to let <span class="math inline">\(a\)</span>
+and <span class="math inline">\(b\)</span> change with the data. However, for any fixed data set we can choose
+some sufficiently large <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span>.</p>
+<p>In this section the sieve will be indexed by integers,
+and for <span class="math inline">\(h \in \mathbb{N}\)</span> we suppose that we have chosen continuous
+functions <span class="math inline">\(b_1, \ldots, b_h : [a,b] \to \mathbb{R}\)</span>. These will be
+called <em>basis functions</em>. We then define
+<span class="math display">\[\Theta_h = \left\{ x \mapsto  \varphi(\boldsymbol{\beta})^{-1} 
+\exp\left(\sum_{k=1}^h \beta_k b_k(x)\right) \Biggm| \boldsymbol{\beta} = (\beta_1, \ldots, \beta_h)^T \in \mathbb{R}^h \right\},\]</span>
+where
+<span class="math display">\[\varphi(\boldsymbol{\beta}) = \int_a^b \exp\left(\sum_{k=1}^h \beta_k b_k(x)\right) \mathrm{d} x.\]</span></p>
+<p>The MLE over <span class="math inline">\(\Theta_h\)</span> is then given as
+<span class="math display">\[\hat{f}_h(x) =  \varphi(\hat{\boldsymbol{\beta}})^{-1} 
+\exp\left(\sum_{k=1}^h \hat{\beta}_k b_k(x)\right),\]</span>
+where</p>
+<p><span class="math display">\[\begin{align*}
+\hat{\boldsymbol{\beta}} &amp; = 
+\text{arg max}_{\boldsymbol{\beta} \in \mathbb{R}^h} \ \sum_{i=1}^n \sum_{k=1}^h \beta_k b_k(x_i) - \log \varphi(\boldsymbol{\beta}) \\
+&amp; = \text{arg max}_{\boldsymbol{\beta} \in \mathbb{R}^h} \ \ \mathbf{1}^T \mathbf{B} \boldsymbol{\beta} - \log \varphi(\boldsymbol{\beta}).
+\end{align*}\]</span></p>
+<p>Here <span class="math inline">\(\mathbf{B}\)</span> is the <span class="math inline">\(n \times h\)</span> matrix with <span class="math inline">\(B_{ik} = b_k(x_i)\)</span>. Thus for
+any fixed <span class="math inline">\(h\)</span> the model is, in fact, just an ordinary parametric exponential
+family, though it may not be entirely straightforward how to compute
+<span class="math inline">\(\varphi(\boldsymbol{\beta})\)</span>.</p>
+<p>Many basis functions are possible. Polynomials may be used, but splines are
+often preferred. An alternative is a selection of trigonometric functions,
+for instance<br />
+<span class="math display">\[b_1(x) = \cos(x), b_2(x) = \sin(x), \ldots, b_{2h-1}(x) = \cos(hx),  b_{2h}(x) = \sin(hx)\]</span>
+on the interval <span class="math inline">\([-\pi, \pi]\)</span>. In Section <a href="1-2-monte-carlo-methods.html#vM">1.2.1</a> a simple special case
+was actually treated corresponding to <span class="math inline">\(h = 2\)</span>, where the normalization constant
+was identified in terms of a modified Bessel function.</p>
+<p>It is worth remembering the following:</p>
+<blockquote>
+<p>“With four parameters I can fit an elephant, and with five I can make him wiggle his trunk.”</p>
+<p>— John von Neumann</p>
+</blockquote>
+<p>The Normal-inverse Gaussian distribution has four parameters and
+the generalized hyperbolic distribution is an extension with five,
+but von Neumann was probably thinking more in terms of a
+spline or a polynomial expansion as above with four or five suitably
+chosen basis functions.</p>
+<p>The quote is not a mathematical statement but an empirical observation.
+With a handful of parameters you already have a quite flexible class of
+densities that will fit many real data sets well. But remember
+that a reasonably good fit doesn’t mean
+that you have found the “true” data generating model. Though data is
+in some situations not as scarce a resource today as when von Neumann made
+elephants wiggle their trunks, the quote still suggests that <span class="math inline">\(h\)</span> should grow
+rather slowly with <span class="math inline">\(n\)</span> to avoid overfitting.</p>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="2-density.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="2-2-kernel-density.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"toc": {
+"collapse": "section"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
