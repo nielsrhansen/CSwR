@@ -1,1 +1,177 @@
 # R programming {#app:R}
+
+This appendix on R programming is meant to be a quick review of the most important
+programming concepts in R that are used in the book. It should be read together 
+with or after the [Introduction](#intro). For a detailed and much more
+extensive coverage of R as a programming language the reader is referred to 
+the book [Advanced R](https://adv-r.hadley.nz/).
+
+## Functions
+
+### Vectorization
+
+## Objects and methods
+
+## Environments
+
+### Function factories
+
+## Performance
+
+### Parallel computations
+
+
+## Exercises
+
+### R training exercises {-}
+
+```{exercise, numerics}
+Explain the result of evaluating the following R expression. 
+```
+
+```{r ex-numerics}
+(0.1 + 0.1 + 0.1) > 0.3
+
+```
+
+
+```{exercise, filter-function}
+Write a function that takes a numeric vector `x` and a threshold value `h` 
+as arguments and returns the vector of all values in `x` greater than `h`.
+Test the function on `seq(0, 1, 0.1)` with threshold 0.3. Have the example 
+from Exercise \@ref(exr:numerics) in mind.
+
+```
+  
+  
+```{exercise, special-values}
+Investigate how your function from Exercise \@ref(exr:filter-function) 
+treats missing values (`NA`), infinite values
+(`Inf` and `-Inf`) and the special value "Not a Number" (`NaN`). Rewrite your
+function (if necessary) to exclude all or some of such values from `x`.
+
+*Hint: The functions `is.na`, `is.nan` and `is.finite` are useful.* 
+
+```
+
+
+### Histograms with non-equidistant breaks {-}
+
+The following three exercises will use a data set consisting of measurements from objects 
+outside of our galaxy including infrared emissions. We will focus on the variable 
+F12, which is the total 12 micron band flux density.
+
+
+```{r infrared-read}
+infrared <- read.table("data/infrared.txt", header = TRUE)
+F12 <- infrared$F12
+```
+
+
+The purpose of this exercise is two-fold. First, you will get familiar with the 
+data and see how different choices of visualizations using histograms can affect 
+your interpretation of the data. Second, you will learn more about how to write 
+functions in R and gain a better understanding of how they work.
+
+
+```{exercise, plotHist}
+Plot a histogram of `log(F12)` using the default value of the argument `breaks`. Experiment with alternative values of `breaks`. 
+
+```
+
+
+```{exercise, myBreaks}
+Write your own function, called `myBreaks`, which takes two arguments, `x` (a vector) and `h` (a positive integer). Let `h` have default value `5`. The function should first sort
+`x` into increasing order and then return the vector that: starts with the smallest entry in `x`;
+contains every $h$th unique entry from the sorted `x`; ends with the largest entry in `x`.  
+
+For example, if `h = 2` and `x = c(1, 3, 2, 5, 10, 11, 1, 1, 3)` the function should return `c(1, 3, 10, 11)`. To see this, first sort `x`, which gives the vector `c(1, 1, 1, 2, 3, 3, 5, 10, 11)`, whose unique 
+values are `c(1, 2, 3, 5, 10, 11)`. Every second unique entry is `c(1, 3, 10)`, and then the largest entry `11` is concatenated.
+
+*Hint: The functions `sort` and `unique` can be useful.* 
+  
+Use your function to construct *breakpoints* for the histogram for different values of `h`, and compare with the histograms obtained in Exercise \@ref(exr:plotHist).  
+
+```
+
+
+```{exercise, myBreaks-advanced}
+If there are no ties in the data set, the function above will produce breakpoints 
+with `h` observations in the interval between two consecutive breakpoints 
+(except the last two perhaps). If there are ties, the function will by construction 
+return unique breakpoints, but there may be 
+more than `h` observations in some intervals. 
+
+*The intention is now to rewrite `myBreaks` so that if possible each interval 
+contains `h` observations.*
+
+Modify the `myBreaks` function with this intention and so that is has the 
+following properties:
+
+* All breakpoints must be unique.
+* The range of the breakpoints must cover the range of `x`.
+* For two subsequent breakpoints, $a$ and $b$, there must be at least `h` observations in the interval $(a,b]$, provided `h < length(x)`. (With the exception that for the first two breakpoints, the interval is $[a,b]$.)
+
+```
+
+### Functions and functional programming {-}
+
+The following four exercises build on having implemented a function that 
+computes breakpoints for a histogram either as in 
+Exercise \@ref(exr:myBreaks) or as in Exercise \@ref(exr:myBreaks-advanced).
+The purpose of the exercises is to explore various features of the R language
+related to functions and using R as a functional programming language. 
+
+```{exercise, myHist}
+Write a function called `myHist`, which takes a single argument `h` and plots a 
+histogram of `log(F12)` using your function. Extend 
+the implementation so that any additional argument specified when calling `myHist` 
+is passed on to `hist`. Investigate and explain what happens when executing 
+the following function calls.
+```
+
+```{r, eval = FALSE}
+myHist()
+myHist(h = 5, freq = TRUE)
+myHist(h = 0)
+```
+
+Finally, what happens if you remove that data from the global environment and 
+call `myHist` subsequently? 
+
+```{exercise, myHist-env}
+What is the environment of `myHist`? Change it to a new environment, and assign 
+(using the function `assign`) the data to a 
+variable with an appropriate name in that environment. Once this is done, 
+check what now happens when calling `myHist` after
+the data is removed from the global environment. 
+
+```
+
+```{exercise, myHist-funfact}
+Write a function that takes an argument `x` (the data) and 
+returns a function, where the returned function 
+takes an argument `h` (just as `myHist`) and plots a histogram (just as `myHist`). 
+Because the return value is a function, we may refer to the function 
+as a [function factory](https://adv-r.hadley.nz/function-factories.html). 
+
+What is the environment of the function created by the function factory? What 
+is in the environment? 
+Does it have any effect when calling the function whether the data is altered 
+or removed from the global environment? 
+
+```
+
+```{exercise, }
+Evaluate the following function call:
+
+```
+
+```{r, eval = FALSE}
+tmp <- myHist(10, plot = FALSE)
+```
+
+What is the type and class of `tmp`? What happens when `plot(tmp, col = "red")` 
+is executed? How can you find help on what `plot` does with an 
+object of this class? Specifically, how do you find the documentation for the 
+argument `col`, which is not an argument of `plot`?
