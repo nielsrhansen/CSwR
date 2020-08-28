@@ -308,10 +308,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="A.4" data-path="A-4-performance.html"><a href="A-4-performance.html"><i class="fa fa-check"></i><b>A.4</b> Performance</a><ul>
 <li class="chapter" data-level="A.4.1" data-path="A-4-performance.html"><a href="A-4-performance.html#parallel-computations"><i class="fa fa-check"></i><b>A.4.1</b> Parallel computations</a></li>
 </ul></li>
-<li class="chapter" data-level="A.5" data-path="2-4-exercises.html"><a href="2-4-exercises.html#exercises"><i class="fa fa-check"></i><b>A.5</b> Exercises</a><ul>
-<li class="chapter" data-level="" data-path="A-5-exercises.html"><a href="A-5-exercises.html"><i class="fa fa-check"></i>R training exercises</a></li>
-<li class="chapter" data-level="" data-path="A-5-exercises.html"><a href="A-5-exercises.html#histograms-with-non-equidistant-breaks"><i class="fa fa-check"></i>Histograms with non-equidistant breaks</a></li>
-<li class="chapter" data-level="" data-path="A-5-exercises.html"><a href="A-5-exercises.html#functions-and-functional-programming"><i class="fa fa-check"></i>Functions and functional programming</a></li>
+<li class="chapter" data-level="A.5" data-path="A-5-app-ex.html"><a href="A-5-app-ex.html"><i class="fa fa-check"></i><b>A.5</b> Exercises</a><ul>
+<li class="chapter" data-level="" data-path="A-5-app-ex.html"><a href="A-5-app-ex.html#r-training-exercises"><i class="fa fa-check"></i>R training exercises</a></li>
+<li class="chapter" data-level="" data-path="A-5-app-ex.html"><a href="A-5-app-ex.html#histograms-with-non-equidistant-breaks"><i class="fa fa-check"></i>Histograms with non-equidistant breaks</a></li>
+<li class="chapter" data-level="" data-path="A-5-app-ex.html"><a href="A-5-app-ex.html#functions-and-functional-programming"><i class="fa fa-check"></i>Functions and functional programming</a></li>
 </ul></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
@@ -352,7 +352,7 @@ and optimize it using standard algorithms. However, it can also be
 optimized using the EM-algorithm, which is a clever algorithm for
 optimizing likelihood functions for models that can be formulated
 in terms of latent variables.</p>
-<p>This section illustrates how to fit a mixture of von Mises distributions to the
+<p>This section demonstrates how to fit a mixture of von Mises distributions to the
 angle data using the EM-algorithm as implemented in the R package movMF. This
 will illustrate some of the many practical choices we have to make when using numerical
 optimization such as: the choice of starting value; the stopping criterion;
@@ -437,11 +437,11 @@ itself, and for <code>movMF()</code> such information is found in a list entry o
 ## $converge
 ## [1] TRUE</code></pre>
 <p>We see that the number of iterations used was 16 (and less than the maximal
-number of 100). The relative tolerance used for the stopping was <span class="math inline">\(1.49 \times 10^{-8}\)</span>.
-The <code>converge</code> entry of the list is <code>TRUE</code>, which for this algorithm simply
-indicates that the stopping criterion was used (<code>converge</code> is a control argument,
-and if it is <code>FALSE</code> the algorithm is run for a fixed number of iterations).</p>
-<p>The relative tolerance criterion for stopping in iteration <span class="math inline">\(n\)</span> is
+number of 100), and the stopping criterion (small relative improvement)
+was active (<code>converge</code> is <code>TRUE</code>, if <code>FALSE</code> the algorithm is run for a
+fixed number of iterations). The tolerance parameter used for the
+stopping criterion was <span class="math inline">\(1.49 \times 10^{-8}\)</span>.</p>
+<p>The small relative improvement criterion for stopping in iteration <span class="math inline">\(n\)</span> is
 <span class="math display">\[ |L(\theta_{n-1}) - L(\theta_n)| &lt; \varepsilon (|L(\theta_{n-1})| + \varepsilon)\]</span>
 where <span class="math inline">\(L\)</span> is the log-likelihood and <span class="math inline">\(\varepsilon\)</span> is the tolerance parameter above.
 The default tolerance parameter is the square root of the <a href="https://en.wikipedia.org/wiki/Machine_epsilon">machine epsilon</a>, see also <code>?.Machine</code>.
@@ -449,10 +449,10 @@ This is a commonly encountered default for a â€œsmall-but-not-too-small-numberâ€
 but outside of numerical differentiation this default may not be supported by
 much theory.</p>
 <p>By choosing different control arguments we can change how the numerical
-optimization proceeds. Below a different method for setting the
-starting value is chosen, which contains a random component. Here we consider
+optimization proceeds. A different method for setting the
+starting value is chosen below, which contains a random component. Here we consider
 the results in four different runs of the entire algorithm with different random
-initialization. We also decrease the number of maximal
+starting values. We also decrease the number of maximal
 iterations to 10 and make the algorithm print out information about its progress
 along the way.</p>
 <div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="1-3-optimization.html#cb28-1"></a>vM_control &lt;-<span class="st"> </span><span class="kw">list</span>(</span>
@@ -509,7 +509,7 @@ along the way.</p>
 the log-likelihood as what we found above, though the last run starts out in a
 much lower value and takes more iterations to reach a large log-likelihood value.
 Note also that in all runs the log-likelihood is increasing. It is a feature of
-the EM-algorithm that every step of the algorithm will increase the log-likelihood.</p>
+the EM-algorithm that every step of the algorithm will increase the likelihood.</p>
 <p>Variations of the EM-algorithm are possible, like in <code>movMF</code> where the
 control argument <code>E</code> determines the so-called E-step of the algorithm.
 Here the default (<code>softmax</code>)
@@ -583,11 +583,11 @@ space, <span class="math inline">\(p\)</span>, and the number of data points, <s
 the log-likelihood or its gradient can become prohibitively costly.
 Optimization algorithms based on higher order derivatives are then completely out
 of the question, and even if the (penalized) log-likelihood and its gradient
-can be computed in <span class="math inline">\(pn\)</span>-operations this may still be too much for an optimization
-algorithm that does these computations in each iteration. Such large scale
+can be computed in <span class="math inline">\(O(pn)\)</span>-operations this may still be too much for an optimization
+algorithm that does this in each iteration. Such large scale
 optimization problems have spurred a substantial development of stochastic
 gradient methods and related stochastic optimization algorithms that only use
-parts of data in each iteration, and which are now the only way to fit sufficiently
+parts of data in each iteration, and which are currently the only way to fit sufficiently
 complicated models to data.</p>
 
 </div>

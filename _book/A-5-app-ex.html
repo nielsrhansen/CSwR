@@ -4,11 +4,11 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Chapter 6 Four Examples | Computational Statistics with R</title>
+  <title>A.5 Exercises | Computational Statistics with R</title>
   <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   <meta name="generator" content="bookdown 0.20 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Chapter 6 Four Examples | Computational Statistics with R" />
+  <meta property="og:title" content="A.5 Exercises | Computational Statistics with R" />
   <meta property="og:type" content="book" />
   
   
@@ -16,7 +16,7 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Chapter 6 Four Examples | Computational Statistics with R" />
+  <meta name="twitter:title" content="A.5 Exercises | Computational Statistics with R" />
   
   <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   
@@ -30,8 +30,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="5-3-network-failure.html"/>
-<link rel="next" href="6-1-exp-fam.html"/>
+<link rel="prev" href="A-4-performance.html"/>
+<link rel="next" href="references.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
@@ -332,46 +332,145 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="four-examples" class="section level1">
-<h1><span class="header-section-number">Chapter 6</span> Four Examples</h1>
-<p>This chapter treats four examples of non-trivial statistical models in some
-detail. These are all parametric models, and a central computational
-challenge is to fit the models to data via (penalized) likelihood
-maximization. The actual optimization algorithms and implementations
-are the topics of Chapters <a href="7-numopt.html#numopt">7</a> and <a href="8-em.html#em">8</a>.
-The focus of this chapter is on the structure of the statistical models
-themselves to provide the necessary background for the later chapters.</p>
-<p>Statistical models come in all forms and shapes, and it is possible to
-take a very general and abstract mathematical approach; statistical
-models are parametrized families of probability distributions. To
-say anything of interest, we need more structure such as structure
-on the parameter set, properties of the parametrized distributions,
-and properties of the mapping from the parameter set to the
-distributions. For any specific model we have ample of structure
-but often also an overwhelming amount of irrelevant details
-that will be more distracting than clarifying. The intention is that
-the four examples treated will illustrate the breath of
-statistical models that share important
-structures without getting lost in a wasteland of abstractions.</p>
-<p>If one should emphasize a single abstract idea that is of
-theoretical value as well as of practical importance, it is
-the idea of <em>exponential families</em>. Statistical models that
-are exponential families have so much structure that the
-general theory provides a number of results and details
-of practical value for individual models. Exponential
-families are exemplary statistical models, that are widely
-used as models of data, or as central building
-blocks of more complicated models of data. For this reason,
-the treatment of the examples is preceded by a treatment of
-exponential families.</p>
+<div id="app:ex" class="section level2">
+<h2><span class="header-section-number">A.5</span> Exercises</h2>
+<div id="r-training-exercises" class="section level3 unnumbered">
+<h3>R training exercises</h3>
+
+<div class="exercise">
+<span id="exr:numerics" class="exercise"><strong>Exercise A.1  </strong></span>Explain the result of evaluating the following R expression.
 </div>
+
+<div class="sourceCode" id="cb378"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb378-1"><a href="A-5-app-ex.html#cb378-1"></a>(<span class="fl">0.1</span> <span class="op">+</span><span class="st"> </span><span class="fl">0.1</span> <span class="op">+</span><span class="st"> </span><span class="fl">0.1</span>) <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.3</span></span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+
+<div class="exercise">
+<p><span id="exr:filter-function" class="exercise"><strong>Exercise A.2  </strong></span>Write a function that takes a numeric vector <code>x</code> and a threshold value <code>h</code>
+as arguments and returns the vector of all values in <code>x</code> greater than <code>h</code>.
+Test the function on <code>seq(0, 1, 0.1)</code> with threshold 0.3. Have the example
+from Exercise <a href="A-5-app-ex.html#exr:numerics">A.1</a> in mind.</p>
+</div>
+
+
+<div class="exercise">
+<p><span id="exr:special-values" class="exercise"><strong>Exercise A.3  </strong></span>Investigate how your function from Exercise <a href="A-5-app-ex.html#exr:filter-function">A.2</a>
+treats missing values (<code>NA</code>), infinite values
+(<code>Inf</code> and <code>-Inf</code>) and the special value “Not a Number” (<code>NaN</code>). Rewrite your
+function (if necessary) to exclude all or some of such values from <code>x</code>.</p>
+<p><em>Hint: The functions <code>is.na</code>, <code>is.nan</code> and <code>is.finite</code> are useful.</em></p>
+</div>
+
+</div>
+<div id="histograms-with-non-equidistant-breaks" class="section level3 unnumbered">
+<h3>Histograms with non-equidistant breaks</h3>
+<p>The following three exercises will use a data set consisting of measurements from objects
+outside of our galaxy including infrared emissions. We will focus on the variable
+F12, which is the total 12 micron band flux density.</p>
+<div class="sourceCode" id="cb380"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb380-1"><a href="A-5-app-ex.html#cb380-1"></a>infrared &lt;-<span class="st"> </span><span class="kw">read.table</span>(<span class="st">&quot;data/infrared.txt&quot;</span>, <span class="dt">header =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb380-2"><a href="A-5-app-ex.html#cb380-2"></a>F12 &lt;-<span class="st"> </span>infrared<span class="op">$</span>F12</span></code></pre></div>
+<p>The purpose of this exercise is two-fold. First, you will get familiar with the
+data and see how different choices of visualizations using histograms can affect
+your interpretation of the data. Second, you will learn more about how to write
+functions in R and gain a better understanding of how they work.</p>
+
+<div class="exercise">
+<p><span id="exr:plotHist" class="exercise"><strong>Exercise A.4  </strong></span>Plot a histogram of <code>log(F12)</code> using the default value of the argument <code>breaks</code>. Experiment with alternative values of <code>breaks</code>.</p>
+</div>
+
+
+<div class="exercise">
+<p><span id="exr:myBreaks" class="exercise"><strong>Exercise A.5  </strong></span>Write your own function, called <code>myBreaks</code>, which takes two arguments, <code>x</code> (a vector) and <code>h</code> (a positive integer). Let <code>h</code> have default value <code>5</code>. The function should first sort
+<code>x</code> into increasing order and then return the vector that: starts with the smallest entry in <code>x</code>;
+contains every <span class="math inline">\(h\)</span>th unique entry from the sorted <code>x</code>; ends with the largest entry in <code>x</code>.</p>
+<p>For example, if <code>h = 2</code> and <code>x = c(1, 3, 2, 5, 10, 11, 1, 1, 3)</code> the function should return <code>c(1, 3, 10, 11)</code>. To see this, first sort <code>x</code>, which gives the vector <code>c(1, 1, 1, 2, 3, 3, 5, 10, 11)</code>, whose unique
+values are <code>c(1, 2, 3, 5, 10, 11)</code>. Every second unique entry is <code>c(1, 3, 10)</code>, and then the largest entry <code>11</code> is concatenated.</p>
+<p><em>Hint: The functions <code>sort</code> and <code>unique</code> can be useful.</em></p>
+<p>Use your function to construct <em>breakpoints</em> for the histogram for different values of <code>h</code>, and compare with the histograms obtained in Exercise <a href="A-5-app-ex.html#exr:plotHist">A.4</a>.</p>
+</div>
+
+
+<div class="exercise">
+<p><span id="exr:myBreaks-advanced" class="exercise"><strong>Exercise A.6  </strong></span>If there are no ties in the data set, the function above will produce breakpoints
+with <code>h</code> observations in the interval between two consecutive breakpoints
+(except the last two perhaps). If there are ties, the function will by construction
+return unique breakpoints, but there may be
+more than <code>h</code> observations in some intervals.</p>
+<p><em>The intention is now to rewrite <code>myBreaks</code> so that if possible each interval
+contains <code>h</code> observations.</em></p>
+<p>Modify the <code>myBreaks</code> function with this intention and so that is has the
+following properties:</p>
+<ul>
+<li>All breakpoints must be unique.</li>
+<li>The range of the breakpoints must cover the range of <code>x</code>.</li>
+<li>For two subsequent breakpoints, <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span>, there must be at least <code>h</code> observations in the interval <span class="math inline">\((a,b]\)</span>, provided <code>h &lt; length(x)</code>. (With the exception that for the first two breakpoints, the interval is <span class="math inline">\([a,b]\)</span>.)</li>
+</ul>
+</div>
+
+</div>
+<div id="functions-and-functional-programming" class="section level3 unnumbered">
+<h3>Functions and functional programming</h3>
+<p>The following four exercises build on having implemented a function that
+computes breakpoints for a histogram either as in
+Exercise <a href="A-5-app-ex.html#exr:myBreaks">A.5</a> or as in Exercise <a href="A-5-app-ex.html#exr:myBreaks-advanced">A.6</a>.
+The purpose of the exercises is to explore various features of the R language
+related to functions and using R as a functional programming language.</p>
+
+<div class="exercise">
+<span id="exr:myHist" class="exercise"><strong>Exercise A.7  </strong></span>Write a function called <code>myHist</code>, which takes a single argument <code>h</code> and plots a
+histogram of <code>log(F12)</code> using your function. Extend
+the implementation so that any additional argument specified when calling <code>myHist</code>
+is passed on to <code>hist</code>. Investigate and explain what happens when executing
+the following function calls.
+</div>
+
+<div class="sourceCode" id="cb381"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb381-1"><a href="A-5-app-ex.html#cb381-1"></a><span class="kw">myHist</span>()</span>
+<span id="cb381-2"><a href="A-5-app-ex.html#cb381-2"></a><span class="kw">myHist</span>(<span class="dt">h =</span> <span class="dv">5</span>, <span class="dt">freq =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb381-3"><a href="A-5-app-ex.html#cb381-3"></a><span class="kw">myHist</span>(<span class="dt">h =</span> <span class="dv">0</span>)</span></code></pre></div>
+<p>Finally, what happens if you remove that data from the global environment and
+call <code>myHist</code> subsequently?</p>
+
+<div class="exercise">
+<p><span id="exr:myHist-env" class="exercise"><strong>Exercise A.8  </strong></span>What is the environment of <code>myHist</code>? Change it to a new environment, and assign
+(using the function <code>assign</code>) the data to a
+variable with an appropriate name in that environment. Once this is done,
+check what now happens when calling <code>myHist</code> after
+the data is removed from the global environment.</p>
+</div>
+
+
+<div class="exercise">
+<p><span id="exr:myHist-funfact" class="exercise"><strong>Exercise A.9  </strong></span>Write a function that takes an argument <code>x</code> (the data) and
+returns a function, where the returned function
+takes an argument <code>h</code> (just as <code>myHist</code>) and plots a histogram (just as <code>myHist</code>).
+Because the return value is a function, we may refer to the function
+as a <a href="https://adv-r.hadley.nz/function-factories.html">function factory</a>.</p>
+<p>What is the environment of the function created by the function factory? What
+is in the environment?
+Does it have any effect when calling the function whether the data is altered
+or removed from the global environment?</p>
+</div>
+
+
+<div class="exercise">
+<p><span id="exr:unnamed-chunk-8" class="exercise"><strong>Exercise A.10  </strong></span>Evaluate the following function call:</p>
+</div>
+
+<div class="sourceCode" id="cb382"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb382-1"><a href="A-5-app-ex.html#cb382-1"></a>tmp &lt;-<span class="st"> </span><span class="kw">myHist</span>(<span class="dv">10</span>, <span class="dt">plot =</span> <span class="ot">FALSE</span>)</span></code></pre></div>
+<p>What is the type and class of <code>tmp</code>? What happens when <code>plot(tmp, col = "red")</code>
+is executed? How can you find help on what <code>plot</code> does with an
+object of this class? Specifically, how do you find the documentation for the
+argument <code>col</code>, which is not an argument of <code>plot</code>?</p>
+
+</div>
+</div>
+<!-- </div> -->
             </section>
 
           </div>
         </div>
       </div>
-<a href="5-3-network-failure.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="6-1-exp-fam.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="A-4-performance.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="references.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
