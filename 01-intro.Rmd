@@ -696,7 +696,7 @@ optimized using the EM-algorithm, which is a clever algorithm for
 optimizing likelihood functions for models that can be formulated
 in terms of latent variables. 
 
-This section illustrates how to fit a mixture of von Mises distributions to the 
+This section demonstrates how to fit a mixture of von Mises distributions to the 
 angle data using the EM-algorithm as implemented in the R package movMF. This 
 will illustrate some of the many practical choices we have to make when using numerical
 optimization such as: the choice of starting value; the stopping criterion; 
@@ -770,12 +770,12 @@ vM_fit$details
 ```
 
 We see that the number of iterations used was 16 (and less than the maximal 
-number of 100). The relative tolerance used for the stopping was $1.49 \times 10^{-8}$.
-The `converge` entry of the list is `TRUE`, which for this algorithm simply 
-indicates that the stopping criterion was used (`converge` is  a control argument,
-and if it is `FALSE` the algorithm is run for a fixed number of iterations).
+number of 100), and the stopping criterion (small relative improvement) 
+was active (`converge` is `TRUE`,  if `FALSE` the algorithm is run for a 
+fixed number of iterations). The tolerance parameter used for the 
+stopping criterion was $1.49 \times 10^{-8}$.
 
-The relative tolerance criterion for stopping in iteration $n$ is 
+The small relative improvement criterion for stopping in iteration $n$ is 
 $$ |L(\theta_{n-1}) - L(\theta_n)| < \varepsilon (|L(\theta_{n-1})| + \varepsilon)$$
 where $L$ is the log-likelihood and $\varepsilon$ is the tolerance parameter above.
 The default tolerance parameter is the square root of the [machine epsilon](https://en.wikipedia.org/wiki/Machine_epsilon), see also `?.Machine`.
@@ -784,10 +784,10 @@ but outside of numerical differentiation this default may not be supported by
 much theory.
 
 By choosing different control arguments we can change how the numerical 
-optimization proceeds. Below a different method for setting the 
-starting value is chosen, which contains a random component. Here we consider 
+optimization proceeds. A different method for setting the 
+starting value is chosen below, which contains a random component. Here we consider 
 the results in four different runs of the entire algorithm with different random 
-initialization. We also decrease the number of maximal
+starting values. We also decrease the number of maximal
 iterations to 10 and make the algorithm print out information about its progress
 along the way.
 
@@ -805,7 +805,7 @@ In all four cases it appears that the algorithm is approaching the same value of
 the log-likelihood as what we found above, though the last run starts out in a 
 much lower value and takes more iterations to reach a large log-likelihood value.
 Note also that in all runs the log-likelihood is increasing. It is a feature of
-the EM-algorithm that every step of the algorithm will increase the log-likelihood.
+the EM-algorithm that every step of the algorithm will increase the likelihood.
 
 Variations of the EM-algorithm are possible, like in `movMF` where the 
 control argument `E` determines the so-called E-step of the algorithm. 
@@ -866,10 +866,10 @@ space, $p$, and the number of data points, $n$, are both large, evaluation of
 the log-likelihood or its gradient can become prohibitively costly. 
 Optimization algorithms based on higher order derivatives are then completely out 
 of the question, and even if the (penalized) log-likelihood and its gradient 
-can be computed in $pn$-operations this may still be too much for an optimization
-algorithm that does these computations in each iteration. Such large scale 
+can be computed in $O(pn)$-operations this may still be too much for an optimization
+algorithm that does this in each iteration. Such large scale 
 optimization problems have spurred a substantial development of stochastic 
 gradient methods and related stochastic optimization algorithms that only use
-parts of data in each iteration, and which are now the only way to fit sufficiently 
+parts of data in each iteration, and which are currently the only way to fit sufficiently 
 complicated models to data.
 
