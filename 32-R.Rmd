@@ -23,7 +23,7 @@ the book [Advanced R](https://adv-r.hadley.nz/).
 
 ## Exercises {#app:ex}
 
-### R training exercises {-}
+### Functions {-}
 
 ```{exercise, numerics}
 Explain the result of evaluating the following R expression. 
@@ -57,8 +57,8 @@ function (if necessary) to exclude all or some of such values from `x`.
 
 ### Histograms with non-equidistant breaks {-}
 
-The following three exercises will use a data set consisting of measurements from objects 
-outside of our galaxy including infrared emissions. We will focus on the variable 
+The following three exercises will use a data set consisting of measurements 
+of infrared emissions from objects outside of our galax. We will focus on the variable 
 F12, which is the total 12 micron band flux density.
 
 
@@ -80,8 +80,8 @@ Plot a histogram of `log(F12)` using the default value of the argument `breaks`.
 ```
 
 
-```{exercise, myBreaks}
-Write your own function, called `myBreaks`, which takes two arguments, `x` (a vector) and `h` (a positive integer). Let `h` have default value `5`. The function should first sort
+```{exercise, my-breaks}
+Write your own function, called `my_breaks`, which takes two arguments, `x` (a vector) and `h` (a positive integer). Let `h` have default value `5`. The function should first sort
 `x` into increasing order and then return the vector that: starts with the smallest entry in `x`;
 contains every $h$th unique entry from the sorted `x`; ends with the largest entry in `x`.  
 
@@ -95,63 +95,83 @@ Use your function to construct *breakpoints* for the histogram for different val
 ```
 
 
-```{exercise, myBreaks-advanced}
+```{exercise, my-breaks-advanced}
 If there are no ties in the data set, the function above will produce breakpoints 
 with `h` observations in the interval between two consecutive breakpoints 
 (except the last two perhaps). If there are ties, the function will by construction 
 return unique breakpoints, but there may be 
 more than `h` observations in some intervals. 
 
-*The intention is now to rewrite `myBreaks` so that if possible each interval 
+*The intention is now to rewrite `my_breaks` so that if possible each interval 
 contains `h` observations.*
 
-Modify the `myBreaks` function with this intention and so that is has the 
+Modify the `my_breaks` function with this intention and so that is has the 
 following properties:
 
 * All breakpoints must be unique.
 * The range of the breakpoints must cover the range of `x`.
-* For two subsequent breakpoints, $a$ and $b$, there must be at least `h` observations in the interval $(a,b]$, provided `h < length(x)`. (With the exception that for the first two breakpoints, the interval is $[a,b]$.)
+* For two subsequent breakpoints, $a$ and $b$, there must be at least `h` observations in the interval $(a,b],$ provided `h < length(x)`. (With the exception that for the first two breakpoints, the interval is $[a,b].$)
 
 ```
 
-### Functions and functional programming {-}
+### Functions and objects {-}
 
-The following four exercises build on having implemented a function that 
+The following exercises build on having implemented a function that 
 computes breakpoints for a histogram either as in 
-Exercise \@ref(exr:myBreaks) or as in Exercise \@ref(exr:myBreaks-advanced).
-The purpose of the exercises is to explore various features of the R language
-related to functions and using R as a functional programming language. 
+Exercise \@ref(exr:my-breaks) or as in Exercise \@ref(exr:my-breaks-advanced).
 
-```{exercise, myHist}
-Write a function called `myHist`, which takes a single argument `h` and plots a 
-histogram of `log(F12)` using your function. Extend 
-the implementation so that any additional argument specified when calling `myHist` 
+```{exercise, my-hist}
+Write a function called `my_hist`, which takes a single argument `h` and plots a 
+histogram of `log(F12)`. Extend 
+the implementation so that any additional argument specified when calling `my_hist` 
 is passed on to `hist`. Investigate and explain what happens when executing 
 the following function calls.
 ```
 
 ```{r, eval = FALSE}
-myHist()
-myHist(h = 5, freq = TRUE)
-myHist(h = 0)
+my_hist()
+my_hist(h = 5, freq = TRUE)
+my_hist(h = 0)
 ```
 
-Finally, what happens if you remove that data from the global environment and 
-call `myHist` subsequently? 
+```{exercise, my-hist-mod}
+Modify your `my_hist` function so that it returns an object of class `my_histogram`, 
+which is not plotted. Write a print method for objects of this class, 
+which prints just the number of cells. 
 
-```{exercise, myHist-env}
-What is the environment of `myHist`? Change it to a new environment, and assign 
+*Hint: It can be useful to know about the function `cat`.*
+
+How can you assign a class label to the returned object so that it is printed using your new print method, but it is still plotted as a histogram when given as argument to `plot`?
+  
+```
+
+```{exercise, my-hist-summary}
+Write a `summary` method that returns a data frame with two columns containing the midpoints of the cells and the counts. 
+```
+
+```{exercise, my-hist-ggplot2}
+Write a new `plot` method for objects of class `my_histogram` that uses `ggplot2` for plotting the histogram.
+``` 
+
+### Functions and environments {-}
+
+The following exercises assume that you have implemented a `my_hist` function
+as in Exercise \@ref(exr:my-hist).
+
+```{exercise, my-hist-env}
+What happens if you remove that data and call `my_hist` subsequently? 
+What is the environment of `my_hist`? Change it to a new environment, and assign 
 (using the function `assign`) the data to a 
 variable with an appropriate name in that environment. Once this is done, 
-check what now happens when calling `myHist` after
+check what now happens when calling `my_hist` after
 the data is removed from the global environment. 
 
 ```
 
-```{exercise, myHist-funfact}
+```{exercise, my-hist-funfact}
 Write a function that takes an argument `x` (the data) and 
 returns a function, where the returned function 
-takes an argument `h` (just as `myHist`) and plots a histogram (just as `myHist`). 
+takes an argument `h` (just as `my_hist`) and plots a histogram (just as `my_hist`). 
 Because the return value is a function, we may refer to the function 
 as a [function factory](https://adv-r.hadley.nz/function-factories.html). 
 
@@ -168,7 +188,7 @@ Evaluate the following function call:
 ```
 
 ```{r, eval = FALSE}
-tmp <- myHist(10, plot = FALSE)
+tmp <- my_hist(10, plot = FALSE)
 ```
 
 What is the type and class of `tmp`? What happens when `plot(tmp, col = "red")` 
