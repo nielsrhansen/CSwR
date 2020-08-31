@@ -309,9 +309,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="A.4.1" data-path="A-4-performance.html"><a href="A-4-performance.html#parallel-computations"><i class="fa fa-check"></i><b>A.4.1</b> Parallel computations</a></li>
 </ul></li>
 <li class="chapter" data-level="A.5" data-path="A-5-app-ex.html"><a href="A-5-app-ex.html"><i class="fa fa-check"></i><b>A.5</b> Exercises</a><ul>
-<li class="chapter" data-level="" data-path="A-5-app-ex.html"><a href="A-5-app-ex.html#r-training-exercises"><i class="fa fa-check"></i>R training exercises</a></li>
+<li class="chapter" data-level="" data-path="A-5-app-ex.html"><a href="A-5-app-ex.html#functions-1"><i class="fa fa-check"></i>Functions</a></li>
 <li class="chapter" data-level="" data-path="A-5-app-ex.html"><a href="A-5-app-ex.html#histograms-with-non-equidistant-breaks"><i class="fa fa-check"></i>Histograms with non-equidistant breaks</a></li>
-<li class="chapter" data-level="" data-path="A-5-app-ex.html"><a href="A-5-app-ex.html#functions-and-functional-programming"><i class="fa fa-check"></i>Functions and functional programming</a></li>
+<li class="chapter" data-level="" data-path="A-5-app-ex.html"><a href="A-5-app-ex.html#functions-and-objects"><i class="fa fa-check"></i>Functions and objects</a></li>
+<li class="chapter" data-level="" data-path="A-5-app-ex.html"><a href="A-5-app-ex.html#functions-and-environments"><i class="fa fa-check"></i>Functions and environments</a></li>
 </ul></li>
 </ul></li>
 <li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
@@ -414,19 +415,19 @@ in a finite number of points.</p>
 the evaluation of the density estimate in a given number of equidistant
 points. The function mimics some of the defaults of <code>density</code> so that it
 actually evaluates the estimate in the same points as <code>density</code>.</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="2-2-kernel-density.html#cb33-1"></a><span class="co">## This is an implementation of the function &#39;kernDens&#39; that computes </span></span>
-<span id="cb33-2"><a href="2-2-kernel-density.html#cb33-2"></a><span class="co">## evaluations of Gaussian kernel density estimates in a grid of points.</span></span>
-<span id="cb33-3"><a href="2-2-kernel-density.html#cb33-3"></a><span class="co">##</span></span>
-<span id="cb33-4"><a href="2-2-kernel-density.html#cb33-4"></a><span class="co">## The function has three formal arguments: &#39;x&#39; is the numeric vector of data </span></span>
-<span id="cb33-5"><a href="2-2-kernel-density.html#cb33-5"></a><span class="co">## points, &#39;h&#39; is the bandwidth and &#39;m&#39; is the number of grid points. </span></span>
-<span id="cb33-6"><a href="2-2-kernel-density.html#cb33-6"></a><span class="co">## The default value of 512 is chosen to match the default of &#39;density&#39;. </span></span>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="2-2-kernel-density.html#cb33-1"></a><span class="co"># This is an implementation of the function &#39;kernDens&#39; that computes </span></span>
+<span id="cb33-2"><a href="2-2-kernel-density.html#cb33-2"></a><span class="co"># evaluations of Gaussian kernel density estimates in a grid of points.</span></span>
+<span id="cb33-3"><a href="2-2-kernel-density.html#cb33-3"></a><span class="co">#</span></span>
+<span id="cb33-4"><a href="2-2-kernel-density.html#cb33-4"></a><span class="co"># The function has three formal arguments: &#39;x&#39; is the numeric vector of data </span></span>
+<span id="cb33-5"><a href="2-2-kernel-density.html#cb33-5"></a><span class="co"># points, &#39;h&#39; is the bandwidth and &#39;m&#39; is the number of grid points. </span></span>
+<span id="cb33-6"><a href="2-2-kernel-density.html#cb33-6"></a><span class="co"># The default value of 512 is chosen to match the default of &#39;density&#39;. </span></span>
 <span id="cb33-7"><a href="2-2-kernel-density.html#cb33-7"></a>kernDens &lt;-<span class="st"> </span><span class="cf">function</span> (x, h, <span class="dt">m =</span> <span class="dv">512</span>) {</span>
 <span id="cb33-8"><a href="2-2-kernel-density.html#cb33-8"></a>  rg &lt;-<span class="st"> </span><span class="kw">range</span>(x)</span>
-<span id="cb33-9"><a href="2-2-kernel-density.html#cb33-9"></a>  <span class="co">## xx is equivalent to grid points in &#39;density&#39;</span></span>
+<span id="cb33-9"><a href="2-2-kernel-density.html#cb33-9"></a>  <span class="co"># xx is equivalent to grid points in &#39;density&#39;</span></span>
 <span id="cb33-10"><a href="2-2-kernel-density.html#cb33-10"></a>  xx &lt;-<span class="st"> </span><span class="kw">seq</span>(rg[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, rg[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, <span class="dt">length.out =</span> m)</span>
-<span id="cb33-11"><a href="2-2-kernel-density.html#cb33-11"></a>  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(m) <span class="co">## The evaluations, initialized as a vector of zeroes</span></span>
-<span id="cb33-12"><a href="2-2-kernel-density.html#cb33-12"></a>  <span class="co">## The actual computation is done using nested for-loops. The outer loop</span></span>
-<span id="cb33-13"><a href="2-2-kernel-density.html#cb33-13"></a>  <span class="co">## is over the grid points, and the inner loop is over the data points.</span></span>
+<span id="cb33-11"><a href="2-2-kernel-density.html#cb33-11"></a>  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(m) <span class="co"># The evaluations, initialized as a vector of zeros</span></span>
+<span id="cb33-12"><a href="2-2-kernel-density.html#cb33-12"></a>  <span class="co"># The actual computation is done using nested for-loops. The outer loop</span></span>
+<span id="cb33-13"><a href="2-2-kernel-density.html#cb33-13"></a>  <span class="co"># is over the grid points, and the inner loop is over the data points.</span></span>
 <span id="cb33-14"><a href="2-2-kernel-density.html#cb33-14"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="kw">seq_along</span>(xx))</span>
 <span id="cb33-15"><a href="2-2-kernel-density.html#cb33-15"></a>    <span class="cf">for</span> (j <span class="cf">in</span> <span class="kw">seq_along</span>(x))</span>
 <span id="cb33-16"><a href="2-2-kernel-density.html#cb33-16"></a>      y[i] &lt;-<span class="st"> </span>y[i] <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>(xx[i] <span class="op">-</span><span class="st"> </span>x[j])<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>h<span class="op">^</span><span class="dv">2</span>))  </span>
@@ -469,8 +470,8 @@ the <code>sum</code> function and the fact that <code>exp</code> and squaring ar
 <span id="cb35-2"><a href="2-2-kernel-density.html#cb35-2"></a>  rg &lt;-<span class="st"> </span><span class="kw">range</span>(x)</span>
 <span id="cb35-3"><a href="2-2-kernel-density.html#cb35-3"></a>  xx &lt;-<span class="st"> </span><span class="kw">seq</span>(rg[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, rg[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, <span class="dt">length.out =</span> m)</span>
 <span id="cb35-4"><a href="2-2-kernel-density.html#cb35-4"></a>  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(m) </span>
-<span id="cb35-5"><a href="2-2-kernel-density.html#cb35-5"></a>  <span class="co">## The inner loop from &#39;kernDens&#39; has been vectorized, and only the </span></span>
-<span id="cb35-6"><a href="2-2-kernel-density.html#cb35-6"></a>  <span class="co">## outer loop over the grid points remains. </span></span>
+<span id="cb35-5"><a href="2-2-kernel-density.html#cb35-5"></a>  <span class="co"># The inner loop from &#39;kernDens&#39; has been vectorized, and only the </span></span>
+<span id="cb35-6"><a href="2-2-kernel-density.html#cb35-6"></a>  <span class="co"># outer loop over the grid points remains. </span></span>
 <span id="cb35-7"><a href="2-2-kernel-density.html#cb35-7"></a>  const &lt;-<span class="st"> </span>(<span class="kw">sqrt</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi) <span class="op">*</span><span class="st"> </span>h <span class="op">*</span><span class="st"> </span><span class="kw">length</span>(x))</span>
 <span id="cb35-8"><a href="2-2-kernel-density.html#cb35-8"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="kw">seq_along</span>(xx))</span>
 <span id="cb35-9"><a href="2-2-kernel-density.html#cb35-9"></a>      y[i] &lt;-<span class="st"> </span><span class="kw">sum</span>(<span class="kw">exp</span>(<span class="op">-</span>(xx[i] <span class="op">-</span><span class="st"> </span>x)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>h<span class="op">^</span><span class="dv">2</span>))) <span class="op">/</span><span class="st"> </span>const</span>
@@ -556,16 +557,16 @@ measured in seconds.</p>
 <span id="cb44-4"><a href="2-2-kernel-density.html#cb44-4"></a><span class="kw">system.time</span>(<span class="kw">kernDens_outer</span>(psi, <span class="fl">0.2</span>))</span></code></pre></div>
 <pre><code>## kernDens:
 ##    user  system elapsed 
-##   0.283   0.391   0.614 
+##   0.039   0.000   0.040 
 ## kernDens_vec:
 ##    user  system elapsed 
 ##   0.004   0.000   0.005 
 ## kernDens_apply:
 ##    user  system elapsed 
-##   0.004   0.001   0.005 
+##   0.004   0.000   0.005 
 ## kernDens_outer:
 ##    user  system elapsed 
-##   0.006   0.001   0.006</code></pre>
+##   0.005   0.000   0.006</code></pre>
 <p>The “elapsed” time is the total run time as experienced, while the “user” and
 “system” times are how long the CPU spent on executing your code and
 operating system code on behalf of your code, respectively.</p>
@@ -590,7 +591,7 @@ data, but the actual data structure is revealed by the R function <code>str</cod
 <div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="2-2-kernel-density.html#cb48-1"></a><span class="kw">str</span>(kern_bench)</span></code></pre></div>
 <pre><code>## Classes &#39;microbenchmark&#39; and &#39;data.frame&#39;:	400 obs. of  2 variables:
 ##  $ expr: Factor w/ 4 levels &quot;kernDens(psi, 0.2)&quot;,..: 3 3 3 4 3 2 1 1 2 2 ...
-##  $ time: num  4475928 4120693 4104450 4111522 4106339 ...</code></pre>
+##  $ time: num  3875367 3765418 3653887 4035853 3635016 ...</code></pre>
 <p>A total of 400 evaluations were done for the above benchmark, and <code>microbenchmark</code><br />
 does the evaluations in a random order by default. Measuring evaluation time on a
 complex system like a modern computer is an empirical science, and
@@ -603,10 +604,10 @@ printing the results such as the following summary table with times in
 milliseconds.</p>
 <pre><code>## Unit: milliseconds
 ##                      expr   min    lq  mean median    uq   max neval
-##        kernDens(psi, 0.2) 28.36 29.14 32.83  29.64 30.44 236.1   100
-##    kernDens_vec(psi, 0.2)  2.44  2.57  3.05   2.68  3.02  12.5   100
-##  kernDens_apply(psi, 0.2)  2.81  2.96  3.45   3.10  3.43  10.5   100
-##  kernDens_outer(psi, 0.2)  3.06  3.28  5.82   3.49  5.00 113.7   100</code></pre>
+##        kernDens(psi, 0.2) 28.76 29.51 30.71  29.95 30.58 47.26   100
+##    kernDens_vec(psi, 0.2)  2.48  2.59  3.08   2.71  2.85  9.21   100
+##  kernDens_apply(psi, 0.2)  2.79  2.92  3.38   3.03  3.24  9.08   100
+##  kernDens_outer(psi, 0.2)  3.10  3.38  4.30   3.53  4.02 11.90   100</code></pre>
 <p>The summary table shows some key statistics like median and mean evaluation
 times but also extremes and upper and lower quartiles. The distributions
 of run times can be investigated further using the <code>autoplot</code> function, which is
