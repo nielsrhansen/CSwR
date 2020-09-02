@@ -1,0 +1,390 @@
+---
+title: "Exercises A.4-A.10 solutions"
+author: "Niels Richard Hansen"
+date: "September 3, 2020"
+output:
+  html_document:
+    css: science.css
+    toc: TRUE
+    nature:
+      highlightLines: true
+---
+
+```{r init, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::opts_chunk$set(cache = TRUE, fig.width = 6, fig.height = 4, comment = NA,
+                      dev.args = list(bg = 'transparent'), fig.align = "center")
+```
+
+## Exercise A.4
+
+```{r}
+infrared <- read.table("../data/infrared.txt", header = TRUE)
+F12 <- infrared$F12
+hist(log(F12))
+```
+
+
+```{r}
+hist(log(F12), breaks = 5)
+```
+
+
+```{r hist1, eval = FALSE}
+hist(log(infrared$F12), 20, main = "breaks = 20") 
+rug(log(infrared$F12))
+hist(log(infrared$F12), 100, main = "breaks = 100")
+rug(log(infrared$F12))
+```
+
+```{r, echo = FALSE}
+par(mfcol = c(1, 2))
+<<hist1>>
+```
+
+
+We observe:
+
+* The number of cells changes the impression of the distribution. 
+
+
+* The default gives relatively few and large cells.
+
+
+* The default uses *Sturges' formula*: the number of cells for $n$ observations is $$\lceil \log_2(n) + 1 \rceil.$$
+
+
+
+## Exercise A.5
+
+```{r}
+my_breaks <- function(x, h = 5) {
+  x <- sort(x)
+  ux <- unique(x)
+  i <- seq(from = 1, to = length(ux), by = h)
+  ux[i]
+}
+```
+
+
+```{r}
+my_breaks(c(1, 3, 2, 5, 10, 11, 1, 1, 3), 2)
+```
+
+
+Note, we missed the largest value 11 in `x`.
+
+
+### A correction
+
+```{r}
+my_breaks <- function(x, h = 5) {
+  x <- sort(x)
+  ux <- unique(x)
+  i <- seq(from = 1, to = length(ux), by = h)
+  if (i[length(i)] < length(ux))      # If last index not length(ux) 
+    i[length(i) + 1] <- length(ux)    # append that index
+  ux[i]
+}
+```
+
+
+```{r}
+my_breaks(c(1, 3, 2, 5, 10, 11, 1, 1, 3), 2)
+```
+
+Now it works as expected, and we can use the function with `hist()` 
+
+```{r hist2, echo=-1}
+par(mfcol = c(1, 2))
+hist(log(F12), my_breaks)
+rug(log(F12))
+
+hist(log(F12), function(x) my_breaks(x, 40)) 
+rug(log(F12))
+```
+
+
+## Exercise A.6
+
+### First version
+
+
+```{r}
+my_breaks <- function(x, h = 5) {
+  x <- sort(x)
+  breaks <- xb <- x[1]
+  k <- 1
+  for(i in seq_along(x)[-1]) {
+    if (k < h) {
+      k <- k + 1
+    } else {
+      if (xb < x[i - 1] && x[i - 1] < x[i]) {
+        xb <- x[i - 1]
+        breaks <- c(breaks, xb)
+        k <- 1
+      }
+    }
+  }
+  # A last breakpoint is appended to ensure coverage of the range of x
+  breaks[length(breaks) + 1] <- x[length(x)]
+  breaks
+}
+```
+
+
+### Testing 
+
+```{r}
+my_breaks(1:11, 1)  # Should be 1:11
+my_breaks(1:2, 1)   # Should be 1, 2
+my_breaks(1:10, 5)  # Should be 1, 5, 10
+my_breaks(1:11)     # Should be 1, 5, 11
+```
+
+
+Last interval $(10, 11]$ doesn't have five elements! The way that the last 
+breakpoint is appended doesn't ensure that the number of elements in each 
+interval is at least `h`.
+
+
+### Second version
+
+
+```{r}
+my_breaks <- function(x, h = 5) {
+  x <- sort(x)
+  breaks <- xb <- x[1]
+  k <- 1
+  for(i in seq_along(x)[-1]) {
+    if (k < h) {
+      k <- k + 1
+    } else {
+      if (xb < x[i - 1] && x[i - 1] < x[i]) {
+        xb <- x[i - 1]
+        breaks <- c(breaks, xb)
+        k <- 1
+      }
+    }
+  }
+  # If there are at least h (k == h) elements after the last 
+  # breakpoint (or if length(x) < h) a last breakpoint is appended
+  # Otherwise the last breakpoint is changed to be the largest element of x 
+  last <- length(breaks) 
+  if (k == min(h, length(x) - 1)) 
+    last <- last + 1
+  breaks[last] <- x[length(x)] 
+  breaks
+}
+```
+
+
+### Testing again 
+
+```{r}
+my_breaks(1:11, 1)  # Should be 1:11
+my_breaks(1:2, 1)   # Should be 1, 2
+my_breaks(1:10, 5)  # Should be 1, 5, 10
+my_breaks(1:11)     # Should be 1, 5, 11
+```
+
+```{r}
+# A test with unsorted data with ties
+# Should be 1, 2, 3, 11
+my_breaks(c(1, 3, 2, 5, 10, 11, 1, 1, 3), 2) 
+# A test with non-integer data with ties 
+test <- c(3, 1, 4.2, 3, 2, 4.2, 3, 1, 2, 4, 5, 3, 3.1, 3, 4.3)
+# Should be A.0, 2.0, 3.0, 4.0, 4.2, 10
+my_breaks(test, 2)  
+# Should be 1, 2, 3, 5 (why?)
+my_breaks(test, 3)
+# Sort data to compute breakpoints by hand
+sort(test)
+```
+
+### Testing on data
+
+```{r}
+hh <- seq(1, 100, 1)
+breaks <- lapply(hh, function(h) my_breaks(log(F12), h))
+counts <- lapply(breaks, 
+                 function(b) hist(log(F12), b, plot = FALSE)$counts)
+any(sapply(breaks, function(x) any(duplicated(x))))
+all(sapply(seq_along(hh), function(i) all(counts[[i]] >= hh[i])))
+```
+
+First there is a test for duplicated breaks, and second there is a test for the number 
+of observations in each interval to be larger than $h$. 
+
+
+```{r hist3, echo=-1}
+par(mfcol = c(1, 2))
+hist(log(F12), my_breaks)
+rug(log(F12))
+hist(log(F12), function(x) my_breaks(x, 40)) 
+rug(log(F12))
+```
+
+
+## Exercise A.7
+
+We define a `my_hist` function as requested.
+
+```{r}
+my_hist <- function(h, ...) 
+  hist(log(F12), function(x) my_breaks(x, h), ...)
+```
+
+```{r}
+my_hist(30)
+```
+
+
+### Testing
+
+```{r, error=TRUE}
+my_hist()
+```
+
+
+```{r}
+my_hist(h = 5, freq = TRUE) 
+```
+
+```{r}
+my_hist(h = 0) ## Result will depend on implementation of 'my_breaks'
+```
+
+## Exercise A.8
+
+```{r}
+my_hist <- function(h, ...) {
+  structure(
+    hist(log(F12), function(x) my_breaks(x, h), plot = FALSE, ...),
+    class = "my_histogram"
+    )
+}
+```
+
+Note how `...` is used to pass on arguments to `hist`.
+
+And then we try it out:
+
+```{r}
+class(my_hist(40))
+my_hist(40)
+```
+
+Next we write the print method.
+
+```{r}
+print.my_histogram <- function(x) 
+  cat(length(x$counts))
+```
+
+```{r}
+my_hist(40)
+```
+
+Note that R (the graphics and base packages, to be specific) implements generic `plot`, `print` and `summary` functions. To implement a method 
+for such generic functions, all you need is to implement a function called `print.my_histogram`, say, following the naming convention `f.classname` 
+for the method for class `classname` for generic function `f`. 
+Also note that you don't need to test in `print.my_histogram` whether its argument is of class my_histogram, because the 
+method is only called for objects of this class. Finally, you will never explicitly call `print.my_histogram`, but you will call `print` with an
+argument of class my_histogram, and the so-called *dispatch mechanism* in R will then call `print.my_histogram`. 
+
+Note that
+
+```{r, error = TRUE}
+plot(my_hist(40))
+```
+
+gives an error. The error message is cryptic. 
+
+One could imagine that the call should still produce a plot of the histogram, but it doesn't. Since we have modified the 
+class label, what happens is that R does no know that it should use `plot.histogram`, and it calls `plot.default`. 
+This function cannot find suitable `x` and `y` components and complains. 
+
+There is a very simple way of making our class "inherit" the histogram class.
+
+```{r}
+my_hist <- function(h, ...) 
+  structure(hist(log(F12), function(x) my_breaks(x, h), plot = FALSE, ...),
+            class = c("my_histogram", "histogram"))
+```
+
+And now the result is printed using our method and plotted using the method for objects of class histogram.
+
+```{r}
+my_hist(40)
+plot(my_hist(40))
+```
+
+## Exercise A.9
+
+```{r}
+summary.my_histogram <- function(x) 
+  as.data.frame(x[c("mids", "counts")])
+```
+
+```{r}
+summary(my_hist(40))
+```
+
+Note that in the implementation above, the entries in the list are referred to by names. 
+This makes the implementation robust to
+internal changes in the number of components in the object, and is good practice. It is even better practice to use accessor functions provided 
+by the programmer for the class. This is not widely used in R with S3 classes, but some examples include the functions `coefficients` and `residuals`, 
+which are used together with objects of class lm or glm, say. 
+
+## Exercise A.10
+
+The plot method uses `geom_rect` from the package ggplot2 to plot the bars.  
+
+```{r, warning = FALSE}
+library(ggplot2)
+plot.my_histogram <- function(x, plot = TRUE, ...) {
+  hist_data <- data.frame(
+    breaksLeft = x$breaks[-length(x$breaks)],
+    breaksRight = x$breaks[-1],
+    density = x$density
+  )
+  p <- geom_rect(
+    data = hist_data, 
+    mapping = aes(
+      xmin = breaksLeft, 
+      xmax = breaksRight, 
+      ymin = 0, 
+      ymax = density), 
+    ...
+  )
+  if (plot)
+    p <- ggplot() + p
+  p
+}
+```
+
+```{r, out.width = "70%", fig.align="center"}
+plot(my_hist(40))
+```
+
+The method implements that all additional arguments are passed on to `geom_rect`, which allows
+us to change the colors of the lines and the fill etc. 
+
+```{r, out.width = "70%", fig.align="center"}
+plot(my_hist(40), color = "black", fill = NA)
+```
+
+We can also make the histogram semitransparent and overplot it with another one for a different value of $h$.
+
+```{r, out.width = "70%", fig.align="center"}
+plot(my_hist(40), fill = "red", alpha = 0.4) +
+plot(my_hist(20), plot = FALSE, fill = "blue", alpha = 0.4)
+```
+
+
+
+
+
+
+
+

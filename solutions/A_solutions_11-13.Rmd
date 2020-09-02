@@ -1,0 +1,202 @@
+---
+title: "Exercises 1.11—1.13 <br> solution"
+author: "Niels Richard Hansen"
+date: "September 3, 2020"
+output:
+  xaringan::moon_reader:
+    css: ["default", "science.css"]
+    nature:
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: '16:10'
+      navigation:
+        scroll: false
+---
+
+
+---
+## Problem 1.8
+
+
+```{r}
+rm(F12)
+```
+
+
+
+```{r, error = TRUE}
+my_hist(30)
+```
+
+
+```{r}
+environment(myHist)
+environment(myHist) <- new.env()
+assign("F12", infrared$F12, environment(myHist))
+```
+
+--
+
+```{r}
+ls()
+```
+
+--
+
+```{r}
+ls(environment(myHist))
+```
+
+---
+## Problem 1.8
+
+```{r, error=TRUE}
+myHist(40)
+```
+
+---
+## Problem 1.9 
+
+```{r}
+histFactory <- function(x) {
+  function(h, ...) 
+     hist(x, myBreaks(x, h), ...)
+}
+F12 <- infrared$F12
+myHist2 <- histFactory(log(F12))
+```
+
+---
+## Problem 1.9
+
+```{r}
+myHist2(40)
+```
+
+---
+## Problem 1.9
+
+```{r}
+myHist2 <- histFactory(log(F12))
+rm(F12)
+ls()
+ls(environment(myHist2))
+```
+
+---
+## Problem 1.9
+
+```{r, error=TRUE}
+myHist2(40)
+```
+
+--
+
+Perhaps surprisingly, a reference to `F12` was still around, and removing `F12` from 
+the global environment resulted in an error.
+
+--
+
+```{r}
+substitute(x, environment(myHist2))
+```
+
+The explantion is that the R expression `log(F12)` was never evaluated. (It
+has nothing to do with the log-transformation.)
+
+---
+## Problem 1.9 tricky point
+
+```{r}
+histFactory <- function(x) {
+  ## force evaluation of argument `x`
+  force(x)  #<<
+  function(h, ...) 
+     hist(x, myBreaks(x, h), ...)
+}
+F12 <- infrared$F12
+myHist2 <- histFactory(log(F12))
+```
+
+Due to *lazy evaluation* arguments are not evaluated until used. 
+--
+
+
+The value of `F12` is, without `force(x)` as above, not looked up until the first call of `myHist2`. 
+--
+
+
+If `F12` is removed before the first call of `myHist2`, the call will result in an error!
+
+---
+## Problem 1.9
+
+```{r}
+rm(F12)
+myHist2(40)
+```
+
+
+---
+## Summary
+
+* A function can look up variables in its *enclosing environment*. 
+--
+
+* The enclosing environment is suitable for storing *local variables*. 
+--
+
+* The default enclosing environment is where the function is defined. 
+--
+
+* The global environment (the workspace) is not suitable for *local variables*, and dependence 
+upon *global variables* should be avoided.
+--
+
+* The enclosing environment can be set and populated manually (using `new.env` and `assign`).
+--
+
+* A *function factory* like `histFactory` is a systematic way of creating enclosing environments 
+for local variables.
+
+---
+## Problem 1.10
+
+```{r}
+tmp <- myHist(10, plot = FALSE)
+typeof(tmp)
+class(tmp)
+```
+
+---
+## Problem 1.10, internal structure
+
+```{r}
+## 'str' gives an overview of the internal structure of an R object 
+str(tmp) 
+```
+
+---
+## Problem 1.10, plotting
+
+```{r}
+plot(tmp, col = "red") 
+```
+
+---
+## Problem 1.10, getting help 
+
+You can find documentation for `plot` using e.g. 
+
+```{r}
+?plot
+```
+
+However, this will be uninformative on how an object of class histogram is plotted. Try instead 
+
+```{r}
+?plot.histogram
+```
+
+This will give the documentation for the plot method for objects of class histogram. 
+
