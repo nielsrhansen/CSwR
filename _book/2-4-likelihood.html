@@ -4,11 +4,11 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>A.1 Functions | Computational Statistics with R</title>
+  <title>2.4 Likelihood considerations | Computational Statistics with R</title>
   <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   <meta name="generator" content="bookdown 0.20 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="A.1 Functions | Computational Statistics with R" />
+  <meta property="og:title" content="2.4 Likelihood considerations | Computational Statistics with R" />
   <meta property="og:type" content="book" />
   
   
@@ -16,7 +16,7 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="A.1 Functions | Computational Statistics with R" />
+  <meta name="twitter:title" content="2.4 Likelihood considerations | Computational Statistics with R" />
   
   <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   
@@ -30,8 +30,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="A-app-R.html"/>
-<link rel="next" href="A-2-objects-and-methods.html"/>
+<link rel="prev" href="2-3-bandwidth.html"/>
+<link rel="next" href="2-5-exercises.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
@@ -333,10 +333,155 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="functions" class="section level2">
-<h2><span class="header-section-number">A.1</span> Functions</h2>
-<div id="vectorization" class="section level3">
-<h3><span class="header-section-number">A.1.1</span> Vectorization</h3>
+<div id="likelihood" class="section level2">
+<h2><span class="header-section-number">2.4</span> Likelihood considerations</h2>
+<p>It is natural to ask why we don’t go all-in and simply try to find the maximum
+likelihood estimate of the density among all possible densities? Why use this
+ad hoc idea behind kernel density estimation?</p>
+<p>The log-likelihood
+<span class="math display">\[\ell(f) = \sum_{i=j}^n \log f(x_j)\]</span>
+is well defined as a function of the density <span class="math inline">\(f\)</span> – even when <span class="math inline">\(f\)</span> isn’t restricted
+to belong to a finite-dimensional parametric model.
+To investigate if a nonparametric MLE is meaningful we consider how the likelihood
+behaves for the densities
+<span class="math display">\[\overline{f}_h(x) = \frac{1}{nh \sqrt{2 \pi}} \sum_{j=1}^n e^{- \frac{(x - x_j)^2}{2 h^2} }\]</span>
+for different choices of <span class="math inline">\(h\)</span>. Note that <span class="math inline">\(\overline{f}_h\)</span> is simply the
+kernel density estimator with the Gaussian kernel and bandwidth <span class="math inline">\(h\)</span>.</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="2-4-likelihood.html#cb50-1"></a><span class="co">## The densities can easily be implemented using the density implementation</span></span>
+<span id="cb50-2"><a href="2-4-likelihood.html#cb50-2"></a><span class="co">## of the Gaussian density in R</span></span>
+<span id="cb50-3"><a href="2-4-likelihood.html#cb50-3"></a>f_h &lt;-<span class="st"> </span><span class="cf">function</span>(x, h) <span class="kw">mean</span>(<span class="kw">dnorm</span>(x, psi, h))</span>
+<span id="cb50-4"><a href="2-4-likelihood.html#cb50-4"></a><span class="co">## This function does not work as a vectorized function as it is, but there is </span></span>
+<span id="cb50-5"><a href="2-4-likelihood.html#cb50-5"></a><span class="co">## a convenience function, &#39;Vectorize&#39;, in R that turns the function into a </span></span>
+<span id="cb50-6"><a href="2-4-likelihood.html#cb50-6"></a><span class="co">## function that can actually be applied correctly to a vector. </span></span>
+<span id="cb50-7"><a href="2-4-likelihood.html#cb50-7"></a>f_h &lt;-<span class="st"> </span><span class="kw">Vectorize</span>(f_h)</span></code></pre></div>
+<p>Figure <a href="2-4-likelihood.html#fig:gausKern">2.5</a> shows what some of
+these densities look like compared to the histogram of the <span class="math inline">\(\psi\)</span>-angle data.
+Clearly, for large <span class="math inline">\(h\)</span> these densities are smooth and slowly oscillating, while
+as <span class="math inline">\(h\)</span> gets smaller the densities become more and more wiggly. As <span class="math inline">\(h \to 0\)</span>
+the densities become increasingly dominated by tall narrow peaks
+around the individual data points.</p>
+
+<div class="figure" style="text-align: center"><span id="fig:gausKern"></span>
+<img src="CSwR_files/figure-html/gausKern-1.png" alt="The densities \(\overline{f}_h\) for different choices of \(h\)." width="49%" /><img src="CSwR_files/figure-html/gausKern-2.png" alt="The densities \(\overline{f}_h\) for different choices of \(h\)." width="49%" /><img src="CSwR_files/figure-html/gausKern-3.png" alt="The densities \(\overline{f}_h\) for different choices of \(h\)." width="49%" /><img src="CSwR_files/figure-html/gausKern-4.png" alt="The densities \(\overline{f}_h\) for different choices of \(h\)." width="49%" /><img src="CSwR_files/figure-html/gausKern-5.png" alt="The densities \(\overline{f}_h\) for different choices of \(h\)." width="49%" /><img src="CSwR_files/figure-html/gausKern-6.png" alt="The densities \(\overline{f}_h\) for different choices of \(h\)." width="49%" />
+<p class="caption">
+Figure 2.5: The densities <span class="math inline">\(\overline{f}_h\)</span> for different choices of <span class="math inline">\(h\)</span>.
+</p>
+</div>
+<p>The way that these densities adapt to the data points is reflected in the
+log-likelihood as well.</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="2-4-likelihood.html#cb51-1"></a><span class="co"># To plot the log-likelihood we need to evaluate it in a grid of h-values.</span></span>
+<span id="cb51-2"><a href="2-4-likelihood.html#cb51-2"></a>hseq &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1</span>, <span class="fl">0.001</span>, <span class="fl">-0.001</span>)</span>
+<span id="cb51-3"><a href="2-4-likelihood.html#cb51-3"></a><span class="co"># For the following computation of the log-likelihood it is necessary </span></span>
+<span id="cb51-4"><a href="2-4-likelihood.html#cb51-4"></a><span class="co"># that f_h is vectorized. There are other ways to implement this computation</span></span>
+<span id="cb51-5"><a href="2-4-likelihood.html#cb51-5"></a><span class="co"># in R, and some are more efficient, but the computation of the log-likelihood </span></span>
+<span id="cb51-6"><a href="2-4-likelihood.html#cb51-6"></a><span class="co"># for each h scales as O(n^2) with n the number of data points. </span></span>
+<span id="cb51-7"><a href="2-4-likelihood.html#cb51-7"></a>ll &lt;-<span class="st"> </span><span class="kw">sapply</span>(hseq, <span class="cf">function</span>(h) <span class="kw">sum</span>(<span class="kw">log</span>(<span class="kw">f_h</span>(psi, h))))</span>
+<span id="cb51-8"><a href="2-4-likelihood.html#cb51-8"></a><span class="kw">qplot</span>(hseq, ll, <span class="dt">geom =</span> <span class="st">&quot;line&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">xlab</span>(<span class="st">&quot;h&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;Log-likelihood&quot;</span>)</span>
+<span id="cb51-9"><a href="2-4-likelihood.html#cb51-9"></a><span class="kw">qplot</span>(hseq, ll, <span class="dt">geom =</span> <span class="st">&quot;line&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_x_log10</span>(<span class="st">&quot;h&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;&quot;</span>)</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:LogLike"></span>
+<img src="CSwR_files/figure-html/LogLike-1.png" alt="Log-likelihood, $\ell(\overline{f}_h)$, for the densities $\overline{f}_h$ as a function of $h$. Note the log-scale on the right." width="49%" /><img src="CSwR_files/figure-html/LogLike-2.png" alt="Log-likelihood, $\ell(\overline{f}_h)$, for the densities $\overline{f}_h$ as a function of $h$. Note the log-scale on the right." width="49%" />
+<p class="caption">
+Figure 2.6: Log-likelihood, <span class="math inline">\(\ell(\overline{f}_h)\)</span>, for the densities <span class="math inline">\(\overline{f}_h\)</span> as a function of <span class="math inline">\(h\)</span>. Note the log-scale on the right.
+</p>
+</div>
+<p>From Figure <a href="2-4-likelihood.html#fig:LogLike">2.6</a> it is clear that the likelihood is decreasing in
+<span class="math inline">\(h\)</span>, and it appears that it is unbounded as <span class="math inline">\(h \to 0\)</span>. This is most clearly
+seen on the figure when <span class="math inline">\(h\)</span> is plotted on the log-scale because then it appears
+that the log-likelihood approximately behaves as <span class="math inline">\(-\log(h)\)</span> for <span class="math inline">\(h \to 0\)</span>.</p>
+<p>We can show that that is, indeed, the case. If <span class="math inline">\(x_i \neq x_j\)</span> when <span class="math inline">\(i \neq j\)</span></p>
+<p><span class="math display">\[\begin{align*}
+\ell(\overline{f}_h) &amp; = \sum_{i} \log\left(1 + \sum_{j \neq i} e^{-(x_i - x_j)^2 / (2 h^2)} \right) - 
+n \log(nh\sqrt{2 \pi}) \\
+&amp; \sim - n \log(nh\sqrt{2 \pi})
+\end{align*}\]</span></p>
+<p>for <span class="math inline">\(h \to 0\)</span>. Hence, <span class="math inline">\(\ell(\overline{f}_h) \to \infty\)</span> for <span class="math inline">\(h \to 0\)</span>. This demonstrates that the MLE
+of the density doesn’t exist in the set of all distributions with densities.</p>
+<p>In the sense of <a href="https://en.wikipedia.org/wiki/Convergence_of_measures#Weak_convergence_of_measures">weak convergence</a> it actually holds that
+<span class="math display">\[\overline{f}_h \cdot m \overset{\mathrm{wk}}{\longrightarrow} 
+\varepsilon_n = \frac{1}{n} \sum_{j=1}^n \delta_{x_j}\]</span>
+for <span class="math inline">\(h \to 0\)</span>. The <em>empirical measure</em> <span class="math inline">\(\varepsilon_n\)</span> can sensibly be regarded as
+the nonparametric MLE of the distribution, but the empirical measure does not have
+a density. We conclude that we cannot directly define a sensible
+density estimator as a maximum-likelihood estimator.</p>
+<div id="sieves" class="section level3">
+<h3><span class="header-section-number">2.4.1</span> Method of sieves</h3>
+<p>A sieve is a family of models, <span class="math inline">\(\Theta_{h}\)</span>, indexed by
+a real valued parameter, <span class="math inline">\(h \in \mathbb{R}\)</span>, such that <span class="math inline">\(\Theta_{h_1} \subseteq \Theta_{h_2}\)</span> for
+<span class="math inline">\(h_1 \leq h_2\)</span>. In this chapter <span class="math inline">\(\Theta_{h}\)</span> will denote a set of probability densities.
+If the increasing family of models is chosen in a sensible way, we
+may be able to compute the MLE
+<span class="math display">\[\hat{f}_h = \text{arg max}_{f \in \Theta_h} \ell(f),\]</span>
+and we may even be able to choose <span class="math inline">\(h = h_n\)</span> as a function of the sample size <span class="math inline">\(n\)</span>
+such that <span class="math inline">\(\hat{f}_{h_n}\)</span> becomes a consistent estimator of <span class="math inline">\(f_0\)</span>.</p>
+<p>It is possible to take
+<span class="math display">\[\Theta_h = \{ \overline{f}_{h&#39;} \mid h&#39; \leq h \}\]</span>
+with <span class="math inline">\(\overline{f}_{h&#39;}\)</span> as defined above, in which case <span class="math inline">\(\hat{f}_h = \overline{f}_h\)</span>.
+We will see in the following section that this is simply a kernel estimator.</p>
+<p>A more interesting example is obtained by letting
+<span class="math display">\[\Theta_h = \left\{ x \mapsto  \frac{1}{h \sqrt{2 \pi}} \int  e^{- \frac{(x - z)^2}{2 h^2} } \mathrm{d}\mu(z) \Biggm| \mu \textrm{ a probability measure}   \right\},\]</span>
+which is known as the convolution sieve. We note that <span class="math inline">\(\overline{f}_h \in \Theta_h\)</span> by
+taking <span class="math inline">\(\mu = \varepsilon_n\)</span>, but generally <span class="math inline">\(\hat{f}_h\)</span> will be
+different from <span class="math inline">\(\overline{f}_h\)</span>.</p>
+<p>We will not pursue the general theory of sieve estimators, but refer
+to the paper <a href="https://projecteuclid.org/euclid.aos/1176345782">Nonparametric Maximum Likelihood Estimation by the Method of Sieves</a> by Geman and Hwang.
+In the following section we will work out some more practical details
+for a particular sieve estimator based on a basis expansion of the
+log-density.</p>
+</div>
+<div id="basis-density" class="section level3">
+<h3><span class="header-section-number">2.4.2</span> Basis expansions</h3>
+<p>We suppose in this section that the data points are all contained in the
+interval <span class="math inline">\([a,b]\)</span> for <span class="math inline">\(a, b \in \mathbb{R}\)</span>. This is true for the angle
+data with <span class="math inline">\(a = -\pi\)</span> and <span class="math inline">\(b = \pi\)</span> no matter the size of the data set,
+but if <span class="math inline">\(f_0\)</span> does not have a bounded support it may be necessary to let <span class="math inline">\(a\)</span>
+and <span class="math inline">\(b\)</span> change with the data. However, for any fixed data set we can choose
+some sufficiently large <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span>.</p>
+<p>In this section the sieve will be indexed by integers,
+and for <span class="math inline">\(h \in \mathbb{N}\)</span> we suppose that we have chosen continuous
+functions <span class="math inline">\(b_1, \ldots, b_h : [a,b] \to \mathbb{R}\)</span>. These will be
+called <em>basis functions</em>. We then define
+<span class="math display">\[\Theta_h = \left\{ x \mapsto  \varphi(\boldsymbol{\beta})^{-1} 
+\exp\left(\sum_{k=1}^h \beta_k b_k(x)\right) \Biggm| \boldsymbol{\beta} = (\beta_1, \ldots, \beta_h)^T \in \mathbb{R}^h \right\},\]</span>
+where
+<span class="math display">\[\varphi(\boldsymbol{\beta}) = \int_a^b \exp\left(\sum_{k=1}^h \beta_k b_k(x)\right) \mathrm{d} x.\]</span></p>
+<p>The MLE over <span class="math inline">\(\Theta_h\)</span> is then given as
+<span class="math display">\[\hat{f}_h(x) =  \varphi(\hat{\boldsymbol{\beta}})^{-1} 
+\exp\left(\sum_{k=1}^h \hat{\beta}_k b_k(x)\right),\]</span>
+where</p>
+<p><span class="math display">\[\begin{align*}
+\hat{\boldsymbol{\beta}} &amp; = 
+\text{arg max}_{\boldsymbol{\beta} \in \mathbb{R}^h} \ \sum_{j=1}^n \sum_{k=1}^h \beta_k b_k(x_j) - \log \varphi(\boldsymbol{\beta}) \\
+&amp; = \text{arg max}_{\boldsymbol{\beta} \in \mathbb{R}^h} \ \ \mathbf{1}^T \mathbf{B} \boldsymbol{\beta} - \log \varphi(\boldsymbol{\beta}).
+\end{align*}\]</span></p>
+<p>Here <span class="math inline">\(\mathbf{B}\)</span> is the <span class="math inline">\(n \times h\)</span> matrix with <span class="math inline">\(B_{jk} = b_k(x_j)\)</span>. Thus for
+any fixed <span class="math inline">\(h\)</span> the model is, in fact, just an ordinary parametric exponential
+family, though it may not be entirely straightforward how to compute
+<span class="math inline">\(\varphi(\boldsymbol{\beta})\)</span>.</p>
+<p>Many basis functions are possible. Polynomials may be used, but splines are
+often preferred. An alternative is a selection of trigonometric functions,
+for instance<br />
+<span class="math display">\[b_1(x) = \cos(x), b_2(x) = \sin(x), \ldots, b_{2h-1}(x) = \cos(hx),  b_{2h}(x) = \sin(hx)\]</span>
+on the interval <span class="math inline">\([-\pi, \pi]\)</span>. In Section <a href="1-2-monte-carlo-methods.html#vM">1.2.1</a> a simple special case
+was actually treated corresponding to <span class="math inline">\(h = 2\)</span>, where the normalization constant
+was identified in terms of a modified Bessel function.</p>
+<p>It is worth remembering the following:</p>
+<blockquote>
+<p>“With four parameters I can fit an elephant, and with five I can make him wiggle his trunk.”</p>
+<p>— John von Neumann</p>
+</blockquote>
+<p>The Normal-inverse Gaussian distribution has four parameters and
+the generalized hyperbolic distribution is an extension with five,
+but von Neumann was probably thinking more in terms of a
+spline or a polynomial expansion as above with four or five suitably
+chosen basis functions.</p>
+<p>The quote is not a mathematical statement but an empirical observation.
+With a handful of parameters you already have a quite flexible class of
+densities that will fit many real data sets well. But remember
+that a reasonably good fit doesn’t mean
+that you have found the “true” data generating model. Though data is
+in some situations not as scarce a resource today as when von Neumann made
+elephants wiggle their trunks, the quote still suggests that <span class="math inline">\(h\)</span> should grow
+rather slowly with <span class="math inline">\(n\)</span> to avoid overfitting.</p>
 </div>
 </div>
             </section>
@@ -344,8 +489,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           </div>
         </div>
       </div>
-<a href="A-app-R.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="A-2-objects-and-methods.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="2-3-bandwidth.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="2-5-exercises.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
