@@ -4,11 +4,11 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>6.2 Multinomial models | Computational Statistics with R</title>
+  <title>2.5 Exercises | Computational Statistics with R</title>
   <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   <meta name="generator" content="bookdown 0.20 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="6.2 Multinomial models | Computational Statistics with R" />
+  <meta property="og:title" content="2.5 Exercises | Computational Statistics with R" />
   <meta property="og:type" content="book" />
   
   
@@ -16,7 +16,7 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="6.2 Multinomial models | Computational Statistics with R" />
+  <meta name="twitter:title" content="2.5 Exercises | Computational Statistics with R" />
   
   <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   
@@ -30,8 +30,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="6-1-exp-fam.html"/>
-<link rel="next" href="6-3-regression.html"/>
+<link rel="prev" href="2-4-likelihood.html"/>
+<link rel="next" href="3-bivariate.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
@@ -333,249 +333,68 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="multinomial-models" class="section level2">
-<h2><span class="header-section-number">6.2</span> Multinomial models</h2>
-<p>The multinomial model is the model of all probability distributions on
-a finite set <span class="math inline">\(\mathcal{Y} = \{1, \ldots, K\}\)</span>. The model is parametrized
-by the simplex
-<span class="math display">\[\Delta_K = \left\{(p_1, \ldots, p_K)^T \in \mathbb{R}^K \mid p_k \geq 0, \sum_{k=1}^K p_k = 1\right\}.\]</span>
-The distributions parametrized by the relative interior of <span class="math inline">\(\Delta_K\)</span> form
-an exponential family by the parametrization
-<span class="math display">\[p_k = \frac{e^{\theta_k}}{\sum_{l=1}^K e^{\theta_l}} \in (0,1)\]</span>
-for <span class="math inline">\((\theta_1, \ldots, \theta_K)^T \in \mathbb{R}^K.\)</span> That is,
-the sufficient statistic is <span class="math inline">\(k \mapsto (\delta_{1k}, \ldots, \delta_{Kk})^T \in \mathbb{R}^{K-1}\)</span>
-(where <span class="math inline">\(\delta_{lk} \in \{0, 1\}\)</span> is the Kronecker delta being 1 if and only
-if <span class="math inline">\(l = k\)</span>), and
-<span class="math display">\[\varphi(\theta_1, \ldots, \theta_K) = \sum_{l=1}^K e^{\theta_l}.\]</span>
-We call this exponential family parametrization the <em>symmetric</em> parametrization.
-The canonical parameter in the symmetric parametrization is not identifiable,
-and to resolve the lack of identifiability
-there is a tradition of fixing the last parameter as <span class="math inline">\(\theta_K = 0\)</span>. This
-results in a canonical parameter <span class="math inline">\(\theta = (\theta_1, \ldots, \theta_{K-1})^T \in \mathbb{R}^{K-1},\)</span>
-a sufficient statistic <span class="math inline">\(t_1(k) = (\delta_{1k}, \ldots, \delta_{(K-1)k})^T \in \mathbb{R}^p\)</span>,</p>
-<p><span class="math display">\[\varphi(\theta) = 1 + \sum_{l=1}^{K-1} e^{\theta_l}\]</span></p>
-<p>and probabilities</p>
-<p><span class="math display">\[p_k = \left\{\begin{array}{ll} \frac{e^{\theta_k}}{1 + \sum_{l=1}^{K-1} e^{\theta_l}}  &amp; \quad \text{if } k = 1, \ldots, K-1 \\  \frac{1}{1 + \sum_{l=1}^{K-1} e^{\theta_l}} &amp; \quad \text{if } k = K. \end{array}\right.\]</span></p>
-<p>We see that in this parametrization <span class="math inline">\(p_k = e^{\theta_k}p_K\)</span> for <span class="math inline">\(k = 1, \ldots, K-1\)</span>,
-where the probability of the last element <span class="math inline">\(K\)</span> acts as a baseline or reference probability,
-and the factors <span class="math inline">\(e^{\theta_k}\)</span> act as multiplicative modifications of this
-baseline. Moreover,
-<span class="math display">\[\frac{p_k}{p_l} = e^{\theta_k - \theta_l},\]</span>
-which is independent of the chosen baseline.</p>
-<p>In the special case of <span class="math inline">\(K = 2\)</span> the two elements <span class="math inline">\(\mathcal{Y}\)</span> are often given
-other labels than <span class="math inline">\(1\)</span> and <span class="math inline">\(2\)</span>. The most common labels are <span class="math inline">\(\{0, 1\}\)</span> and <span class="math inline">\(\{-1, 1\}\)</span>.
-If we use the <span class="math inline">\(0\)</span>-<span class="math inline">\(1\)</span>-labels the convention is to use <span class="math inline">\(p_0\)</span> as the baseline and
-thus
-<span class="math display">\[p_1 = \frac{e^{\theta}}{1 + e^{\theta}} = e^{\theta} p_0 = e^{\theta} (1 - p_1).\]</span>
-parametrized by <span class="math inline">\(\theta \in \mathbb{R}\)</span>. As this function of <span class="math inline">\(\theta\)</span> is
-known as the <em>logistic function</em>, this parametrization of the probability
-distributions on <span class="math inline">\(\{0,1\}\)</span> is often referred to as the logistic model. From the
-above we see directly that
-<span class="math display">\[\theta = \log \frac{p_1}{1 - p_1}\]</span>
-is the log-odds.</p>
-<p>If we use the <span class="math inline">\(\pm 1\)</span>-labels, an alternative exponential family parametrization is
-<span class="math display">\[p_k = \frac{e^{k\theta}}{e^\theta + e^{-\theta}}\]</span>
-for <span class="math inline">\(\theta \in \mathbb{R}\)</span> and <span class="math inline">\(k \in \{-1, 1\}\)</span>. This gives a symmetric treatment of the two
-labels while retaining the identifiability.</p>
-<p>With i.i.d. observations from a multinomial distribution we find
-that the log-likelihood is</p>
-<p><span class="math display">\[\begin{align*}
-\ell(\theta) &amp; = \sum_{i=1}^n \sum_{k=1}^K \delta_{k y_i} \log(p_k(\theta)) \\
-&amp; = \sum_{k=1}^K \underbrace{\sum_{i=1}^n \delta_{k y_i}}_{= n_k} \log(p_k(\theta)) \\ 
-&amp; = \theta^T  \mathbf{n} - n \log \left(1 + \sum_{l=1}^{K-1} e^{\theta_l} \right).
-\end{align*}\]</span></p>
-<p>where <span class="math inline">\(\mathbf{n} = (n_1, \ldots, n_K)^T = \sum_{i=1}^n t(y_i)\)</span> is the sufficient
-statistic, which is simply a tabulation of the times the different elements in
-<span class="math inline">\(\{1, \ldots, K\}\)</span> were observed.</p>
-<div id="pep-moth" class="section level3">
-<h3><span class="header-section-number">6.2.1</span> Peppered Moths</h3>
-<p>This example is on the color of the peppered Moth (<em>Birkemåler</em> in Danish).
-The color of the moth is
-primarily determined by one gene that occur in three different alleles denoted C,
-I and T. The alleles are ordered in terms of dominance as C &gt; I &gt; T. Moths with genotype
-including C are dark. Moths
-with genotype TT are light colored. Moths with genotypes II and IT are mottled.
-Thus there a total of six different genotypes (CC, CI, CT, II, IT and TT) and
-three different phenotypes (black, mottled, light colored).</p>
-<p><img src="figures/peppered-moth.jpg" width="70%" style="display: block; margin: auto;" /></p>
-<p>The peppered moth provided an <a href="https://en.wikipedia.org/wiki/Peppered_moth_evolution">early demonstration of evolution</a>
-in the 19th century England, where the light colored moth was outnumbered by the dark
-colored variety. The dark color became dominant due to the increased
-pollution, where trees were darkened by soot, and had for that reason a selective
-advantage. There is a nice collection
-of moth in different colors at the Danish Zoological Museum, and further
-explanation of the role it played in understanding evolution.</p>
-<p>We denote the allele frequencies <span class="math inline">\(p_C\)</span>, <span class="math inline">\(p_I\)</span>, <span class="math inline">\(p_T\)</span> with <span class="math inline">\(p_C + p_I + p_T = 1.\)</span>
-According to the <a href="https://en.wikipedia.org/wiki/Hardy–Weinberg_principle">Hardy-Weinberg principle</a>,
-the genotype frequencies are then</p>
-<p><span class="math display">\[p_C^2, 2p_Cp_I, 2p_Cp_T, p_I^2,  2p_Ip_T, p_T^2.\]</span></p>
-<p>If we could observe the genotypes, the complete multinomial log-likelihood would be</p>
-<p><span class="math display">\[\begin{align*}
- &amp; 2n_{CC} \log(p_C) + n_{CI} \log (2 p_C p_I) + n_{CT} \log(2 p_C p_I) \\
-&amp; \ \ + 2 n_{II} \log(p_I) + n_{IT} \log(2p_I p_T) + 2 n_{TT} \log(p_T) \\
-&amp; = 2n_{CC} \log(p_C) + n_{CI} \log (2 p_C p_I) + n_{CT} \log(2 p_C p_I) \\
-&amp; \ \ + 2 n_{II} \log(p_I) + n_{IT} \log(2p_I (1 - p_C - p_I)) + 2 n_{TT} \log(1 - p_C - p_I). 
-\end{align*}\]</span></p>
-<p>The log-likelihood is given in terms of the genotype counts and the two probability parameters
-<span class="math inline">\(p_C, p_I \geq 0\)</span> with <span class="math inline">\(p_C + p_I \leq 1\)</span>, and on the interior of this
-parameter set the model is a curved exponential family.</p>
-<p>Collecting moths and determining their color will, however, only identify their phenotype,
-not their genotype. Thus we observe <span class="math inline">\((n_C, n_T, n_I)\)</span>, where
-<span class="math display">\[n = \underbrace{n_{CC} + n_{CI} + n_{CT}}_{= n_C} + 
-\underbrace{n_{IT} + n_{II}}_{=n_I} + \underbrace{n_{TT}}_{=n_T}.\]</span></p>
-<p>For maximum-likelihood estimation of the parameters in this model from
-the observation <span class="math inline">\((n_C, n_T, n_I)\)</span>, we need the likelihood,
-that is, the likelihood in the marginal distribution of the observed
-variables.</p>
-<p>The peppered Moth example is an example of <em>cell collapsing</em> in a multinomial model.
-In general, let <span class="math inline">\(A_1 \cup \ldots \cup A_{K_0} = \{1, \ldots, K\}\)</span> be a partition and let
-<span class="math display">\[M : \mathbb{N}_0^K \to \mathbb{N}_0^{K_0}\]</span>
-be the map given by
-<span class="math display">\[M((n_1, \ldots, n_K))_j = \sum_{k \in A_j} n_k.\]</span></p>
-<p>If <span class="math inline">\(Y \sim \textrm{Mult}(p, n)\)</span> with <span class="math inline">\(p = (p_1, \ldots, p_K)\)</span> then
-<span class="math display">\[X = M(Y) \sim \textrm{Mult}(M(p), n).\]</span>
-If <span class="math inline">\(\theta \mapsto p(\theta)\)</span> is a parametrization of the cell probabilities
-the log-likelihood under the collapsed multinomial model is generally</p>
-<p><span class="math display" id="eq:mult-col-loglik">\[\begin{equation}
-\ell(\theta) = \sum_{j = 1}^{K_0} x_j \log (M(p(\theta))_j) = \sum_{j = 1}^{K_0} x_j \log \left(\sum_{k \in A_j} p_k(\theta)\right).
-\tag{6.2} 
-\end{equation}\]</span></p>
-<p>For the peppered Moths, <span class="math inline">\(K = 6\)</span> corresponding to the six genotypes, <span class="math inline">\(K_0 = 3\)</span> and
-the partition corresponding to the phenotypes is
-<span class="math display">\[\{1, 2, 3\} \cup \{4, 5\} \cup \{6\} = \{1, \ldots, 6\},\]</span>
-and
-<span class="math display">\[M(n_1, \ldots, n_6) = (n_1 + n_2 + n_3, n_4 + n_5, n_6).\]</span></p>
-<p>In terms of the <span class="math inline">\((p_C, p_I)\)</span> parametrization, <span class="math inline">\(p_T = 1 - p_C - p_I\)</span> and
-<span class="math display">\[p = (p_C^2, 2p_Cp_I, 2p_Cp_T, p_I^2,  2p_Ip_T, p_T^2).\]</span></p>
-<p>Hence
-<span class="math display">\[M(p) = (p_C^2 + 2p_Cp_I + 2p_Cp_T, p_I^2 +2p_Ip_T, p_T^2).\]</span></p>
-<p>The log-likelihood is</p>
-<p><span class="math display">\[\begin{align}
-\ell(p_C, p_I) &amp; = n_C \log(p_C^2 + 2p_Cp_I + 2p_Cp_T) + n_I \log(p_I^2 +2p_Ip_T) + n_T \log (p_T^2).
-\end{align}\]</span></p>
-<p>We can implement the log-likelihood in a very problem specific way.
-Note how the parameter constraints are encoded via the return value <span class="math inline">\(\infty\)</span>.</p>
-<div class="sourceCode" id="cb250"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb250-1"><a href="6-2-multinomial-models.html#cb250-1"></a><span class="co">## par = c(pC, pI), pT = 1 - pC - pI</span></span>
-<span id="cb250-2"><a href="6-2-multinomial-models.html#cb250-2"></a><span class="co">## x is the data vector of length 3 of counts </span></span>
-<span id="cb250-3"><a href="6-2-multinomial-models.html#cb250-3"></a>loglik &lt;-<span class="st"> </span><span class="cf">function</span>(par, x) {</span>
-<span id="cb250-4"><a href="6-2-multinomial-models.html#cb250-4"></a>  pT &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>par[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>par[<span class="dv">2</span>]</span>
-<span id="cb250-5"><a href="6-2-multinomial-models.html#cb250-5"></a>  </span>
-<span id="cb250-6"><a href="6-2-multinomial-models.html#cb250-6"></a>  <span class="cf">if</span> (par[<span class="dv">1</span>] <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span> <span class="op">||</span><span class="st"> </span>par[<span class="dv">1</span>] <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>par[<span class="dv">2</span>] <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span> </span>
-<span id="cb250-7"><a href="6-2-multinomial-models.html#cb250-7"></a>      <span class="op">||</span><span class="st"> </span>par[<span class="dv">2</span>] <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>pT <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span>)</span>
-<span id="cb250-8"><a href="6-2-multinomial-models.html#cb250-8"></a>    <span class="kw">return</span>(<span class="ot">Inf</span>)</span>
-<span id="cb250-9"><a href="6-2-multinomial-models.html#cb250-9"></a>  </span>
-<span id="cb250-10"><a href="6-2-multinomial-models.html#cb250-10"></a>  PC &lt;-<span class="st"> </span>par[<span class="dv">1</span>]<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>par[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>par[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>par[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>pT</span>
-<span id="cb250-11"><a href="6-2-multinomial-models.html#cb250-11"></a>  PI &lt;-<span class="st"> </span>par[<span class="dv">2</span>]<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>par[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span>pT</span>
-<span id="cb250-12"><a href="6-2-multinomial-models.html#cb250-12"></a>  PT &lt;-<span class="st"> </span>pT<span class="op">^</span><span class="dv">2</span></span>
-<span id="cb250-13"><a href="6-2-multinomial-models.html#cb250-13"></a>  <span class="co">## The function returns the negative log-likelihood </span></span>
-<span id="cb250-14"><a href="6-2-multinomial-models.html#cb250-14"></a>  <span class="op">-</span><span class="st"> </span>(x[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(PC) <span class="op">+</span><span class="st"> </span>x[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(PI) <span class="op">+</span><span class="st"> </span>x[<span class="dv">3</span>]<span class="op">*</span><span class="st"> </span><span class="kw">log</span>(PT))</span>
-<span id="cb250-15"><a href="6-2-multinomial-models.html#cb250-15"></a>}</span></code></pre></div>
-<p>It is possible to use <code>optim</code> in R with just this implementation to
-compute the maximum-likelihood estimate of the allele parameters.</p>
-<div class="sourceCode" id="cb251"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb251-1"><a href="6-2-multinomial-models.html#cb251-1"></a><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>))</span></code></pre></div>
-<pre><code>## $par
-## [1] 0.07084643 0.18871900
-## 
-## $value
-## [1] 600.481
-## 
-## $counts
-## function gradient 
-##       71       NA 
-## 
-## $convergence
-## [1] 0
-## 
-## $message
-## NULL</code></pre>
-<p>The <code>optim</code> function uses an algorithm called <a href="https://en.wikipedia.org/wiki/Nelder–Mead_method">Nelder-Mead</a>
-as the default algorithm that relies on log-likelihood evaluations only. It
-is slow but fairly robust, though a bit of thought has to go into the initial
-parameter choice.</p>
-<div class="sourceCode" id="cb253"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb253-1"><a href="6-2-multinomial-models.html#cb253-1"></a><span class="kw">optim</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>), loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>))</span></code></pre></div>
-<pre><code>## Error in optim(c(0, 0), loglik, x = c(85, 196, 341)): function
-cannot be evaluated at initial parameters```
+<div id="density:ex" class="section level2">
+<h2><span class="header-section-number">2.5</span> Exercises</h2>
+<div id="kernel-density-estimation" class="section level3 unnumbered">
+<h3>Kernel density estimation</h3>
 
-Starting the algorithm in a boundary value where the negative log-likelihood attains
-the value $\infty$ does not work. 
+<div class="exercise">
+<p><span id="exr:epanechnikov" class="exercise"><strong>Exercise 2.1  </strong></span>The Epanechnikov kernel is given by
+<span class="math display">\[K(x) = \frac{3}{4}(1 - x^2)\]</span>
+for <span class="math inline">\(x \in [-1, 1]\)</span> and 0 elsewhere. Show that this is a probability density
+with mean zero and compute <span class="math inline">\(\sigma_K^2\)</span> as well as <span class="math inline">\(\|K\|_2^2\)</span>.</p>
+</div>
 
-The computations can beneficially be implemented in greater 
-generality. The function `M` sums the cells that are collapsed, 
-which has to be specified by the `group` argument.
+<p>For the following exercises use the log(F12) variable as considered in
+Exercise <a href="A-5-app-ex.html#exr:plotHist">A.4</a>.</p>
+
+<div class="exercise">
+<p><span id="exr:epanechnikov-density" class="exercise"><strong>Exercise 2.2  </strong></span>Use <code>density()</code> to compute the kernel density estimate with the Epanechnikov kernel
+to the log(F12) data. Try different bandwidths.</p>
+</div>
 
 
-```r
-M &lt;- function(x, group)
-  as.vector(tapply(x, group, sum))</code></pre>
-<p>The log-likelihood is then implemented for multinomial cell
-collapsing via <code>M</code> and two problem specific arguments to
-the <code>loglik</code> function. One of these is a vector specifying
-the grouping structure of the collapsing. The other is a function
-that determines the
-parametrization that maps the parameter that we are optimizing over to the
-cell probabilities. In the implementation it is assumed
-that this <code>prob</code> function in addition encodes parameter constraints
-by returning <code>NULL</code> if parameter constraints are violated.</p>
-<div class="sourceCode" id="cb255"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb255-1"><a href="6-2-multinomial-models.html#cb255-1"></a>loglik &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, prob, group, ...) {</span>
-<span id="cb255-2"><a href="6-2-multinomial-models.html#cb255-2"></a>  p &lt;-<span class="st"> </span><span class="kw">prob</span>(par)</span>
-<span id="cb255-3"><a href="6-2-multinomial-models.html#cb255-3"></a>  <span class="cf">if</span>(<span class="kw">is.null</span>(p)) <span class="kw">return</span>(<span class="ot">Inf</span>)</span>
-<span id="cb255-4"><a href="6-2-multinomial-models.html#cb255-4"></a>  <span class="op">-</span><span class="st"> </span><span class="kw">sum</span>(x <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(<span class="kw">M</span>(<span class="kw">prob</span>(par), group)))</span>
-<span id="cb255-5"><a href="6-2-multinomial-models.html#cb255-5"></a>}</span></code></pre></div>
-<p>The function <code>prob</code> is implemented specifically for the peppered moths
-as follows.</p>
-<div class="sourceCode" id="cb256"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb256-1"><a href="6-2-multinomial-models.html#cb256-1"></a>prob &lt;-<span class="st"> </span><span class="cf">function</span>(p) {</span>
-<span id="cb256-2"><a href="6-2-multinomial-models.html#cb256-2"></a>  p[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>p[<span class="dv">2</span>]</span>
-<span id="cb256-3"><a href="6-2-multinomial-models.html#cb256-3"></a>  <span class="cf">if</span> (p[<span class="dv">1</span>] <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span> <span class="op">||</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>p[<span class="dv">2</span>] <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span> <span class="op">||</span><span class="st"> </span>p[<span class="dv">2</span>] <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>p[<span class="dv">3</span>] <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span>)</span>
-<span id="cb256-4"><a href="6-2-multinomial-models.html#cb256-4"></a>    <span class="kw">return</span>(<span class="ot">NULL</span>)</span>
-<span id="cb256-5"><a href="6-2-multinomial-models.html#cb256-5"></a>  <span class="kw">c</span>(p[<span class="dv">1</span>]<span class="op">^</span><span class="dv">2</span>, <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>], <span class="dv">2</span><span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>], </span>
-<span id="cb256-6"><a href="6-2-multinomial-models.html#cb256-6"></a>    p[<span class="dv">2</span>]<span class="op">^</span><span class="dv">2</span>, <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>], p[<span class="dv">3</span>]<span class="op">^</span><span class="dv">2</span>)</span>
-<span id="cb256-7"><a href="6-2-multinomial-models.html#cb256-7"></a>}</span></code></pre></div>
-<p>We test that the new implementation gives the same result when
-optimized as using the more problem specific implementation.</p>
-<div class="sourceCode" id="cb257"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb257-1"><a href="6-2-multinomial-models.html#cb257-1"></a><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </span>
-<span id="cb257-2"><a href="6-2-multinomial-models.html#cb257-2"></a>      <span class="dt">prob =</span> prob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span></code></pre></div>
-<pre><code>## $par
-## [1] 0.07084643 0.18871900
-## 
-## $value
-## [1] 600.481
-## 
-## $counts
-## function gradient 
-##       71       NA 
-## 
-## $convergence
-## [1] 0
-## 
-## $message
-## NULL</code></pre>
-<p>Once we have found an estimate of the parameters, we can compute a prediction
-of the unobserved genotype counts from the phenotype counts using
-the conditional distribution of the genotypes given the phenotypes.
-This is straightforward as the conditional distribution of <span class="math inline">\(Y_{A_j} = (Y_k)_{k \in A_j}\)</span>,
-conditionally on <span class="math inline">\(X\)</span> is also a multinomial distribution;
-<span class="math display">\[Y_{A_j} \mid X = x \sim \textrm{Mult}\left( \frac{p_{A_j}}{M(p)_j}, x_j \right).\]</span>
-The probability parameters are simply <span class="math inline">\(p\)</span> restricted to <span class="math inline">\(A_j\)</span> and renormalized
-to a probability vector. Observe that this gives
-<span class="math display">\[E (Y_k \mid X = x) = \frac{x_j p_k}{M(p)_j}\]</span>
-for <span class="math inline">\(k \in A_j\)</span>. Using the estimated parameters and the <code>M</code> function implemented
-above, we can compute a prediction of the genotype counts as follows.</p>
-<div class="sourceCode" id="cb259"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb259-1"><a href="6-2-multinomial-models.html#cb259-1"></a>x &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>)</span>
-<span id="cb259-2"><a href="6-2-multinomial-models.html#cb259-2"></a>group &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>)</span>
-<span id="cb259-3"><a href="6-2-multinomial-models.html#cb259-3"></a>p &lt;-<span class="st"> </span><span class="kw">prob</span>(<span class="kw">c</span>(<span class="fl">0.07084643</span>, <span class="fl">0.18871900</span>))</span>
-<span id="cb259-4"><a href="6-2-multinomial-models.html#cb259-4"></a>x[group] <span class="op">*</span><span class="st"> </span>p <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(p, group)[group]</span></code></pre></div>
-<pre><code>## [1]   3.121549  16.630211  65.248241  22.154520 173.845480 341.000000</code></pre>
-<p>This is of interest in itself, but computing these conditional expectations
-will also be central for the EM algorithm in Chapter <a href="8-em.html#em">8</a>.</p>
+<div class="exercise">
+<p><span id="exr:epanechnikov-implement" class="exercise"><strong>Exercise 2.3  </strong></span>Implement kernel density estimation yourself using the Epanechnikov kernel.
+Test your implementation by comparing it to <code>density()</code> using the log(F12) data.</p>
+</div>
+
+</div>
+<div id="benchmarking-1" class="section level3 unnumbered">
+<h3>Benchmarking</h3>
+
+<div class="exercise">
+<span id="exr:benchmark-epanechnikov" class="exercise"><strong>Exercise 2.4  </strong></span>Construct the following vector
+</div>
+
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="2-5-density-ex.html#cb52-1"></a>x &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">2</span><span class="op">^</span><span class="dv">13</span>)</span></code></pre></div>
+<p>Then use <code>microbenchmark</code> to benchmark the computation of</p>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="2-5-density-ex.html#cb53-1"></a><span class="kw">density</span>(x[<span class="dv">1</span><span class="op">:</span>k], <span class="fl">0.2</span>)</span></code></pre></div>
+<p>for <code>k</code> ranging from <span class="math inline">\(2^5\)</span> to <span class="math inline">\(2^{13}\)</span>. Summarize the benchmarking results.</p>
+
+<div class="exercise">
+<p><span id="exr:benchmark-own-epanechnikov" class="exercise"><strong>Exercise 2.5  </strong></span>Benchmark your own implementation of kernel density estimation using the Epanechnikov
+kernel. Compare the results to those obtained for <code>density()</code>.</p>
+</div>
+
+
+<div class="exercise">
+<p><span id="exr:benchmark-kernel" class="exercise"><strong>Exercise 2.6  </strong></span>Experiment with different implementations of kernel evaluation in R using
+the Gaussian kernel and the Epanechnikov kernel. Use <code>microbenchmark()</code> to compare
+the different implementations.</p>
+</div>
+
+
 </div>
 </div>
+<!-- </div> -->
             </section>
 
           </div>
         </div>
       </div>
-<a href="6-1-exp-fam.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="6-3-regression.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="2-4-likelihood.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="3-bivariate.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
