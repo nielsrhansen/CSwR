@@ -340,9 +340,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>Degree 19 polynomial fitted to the temperature data.</p>
 <p><img src="CSwR_files/figure-html/Nuuk_poly_fig-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <p>We can extract the model matrix from the lm-object.</p>
-<div class="sourceCode" id="cb91"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb91-1"><a href="3-4-onb.html#cb91-1"></a>intercept &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="dv">1</span><span class="op">/</span><span class="kw">sqrt</span>(n), n)  <span class="co">## To make intercept column have norm one</span></span>
-<span id="cb91-2"><a href="3-4-onb.html#cb91-2"></a>polylm &lt;-<span class="st"> </span><span class="kw">lm</span>(Temperature <span class="op">~</span><span class="st"> </span>intercept <span class="op">+</span><span class="st"> </span><span class="kw">poly</span>(Year, <span class="dv">19</span>) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Nuuk_year)</span>
-<span id="cb91-3"><a href="3-4-onb.html#cb91-3"></a>Phi &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(polylm)</span></code></pre></div>
+<div class="sourceCode" id="cb89"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb89-1"><a href="3-4-onb.html#cb89-1"></a>intercept &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="dv">1</span><span class="op">/</span><span class="kw">sqrt</span>(n), n)  <span class="co"># To make intercept column have norm one</span></span>
+<span id="cb89-2"><a href="3-4-onb.html#cb89-2"></a>polylm &lt;-<span class="st"> </span><span class="kw">lm</span>(Temperature <span class="op">~</span><span class="st"> </span>intercept <span class="op">+</span><span class="st"> </span><span class="kw">poly</span>(Year, <span class="dv">19</span>) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Nuuk_year)</span>
+<span id="cb89-3"><a href="3-4-onb.html#cb89-3"></a>Phi &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(polylm)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:model-matrix-fig"></span>
 <img src="CSwR_files/figure-html/model-matrix-fig-1.png" alt="The model matrix columns as functions" width="100%" />
 <p class="caption">
@@ -354,16 +354,16 @@ With an orthogonal model matrix the normal equation reduces to the estimate
 <span class="math display">\[\hat{\beta} = \Phi^T Y\]</span>
 since <span class="math inline">\(\Phi^T \Phi = I\)</span>. The predicted (or fitted) values are <span class="math inline">\(\Phi \Phi^T Y\)</span>
 with smoother matrix <span class="math inline">\(\mathbf{S} = \Phi \Phi^T\)</span> being a projection.</p>
-<div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb92-1"><a href="3-4-onb.html#cb92-1"></a>(<span class="kw">t</span>(Phi) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, <span class="dv">1</span>]</span></code></pre></div>
-<pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 poly(Year, 19)4 
-##     -17.2469646       4.9002430      -1.7968913       0.8175400       5.9668689 
-## poly(Year, 19)5 poly(Year, 19)6 poly(Year, 19)7 poly(Year, 19)8 poly(Year, 19)9 
-##       1.4265091      -1.9258864      -0.2523581      -2.1355117      -0.8046267</code></pre>
-<div class="sourceCode" id="cb94"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb94-1"><a href="3-4-onb.html#cb94-1"></a><span class="kw">coef</span>(polylm)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>]</span></code></pre></div>
-<pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 poly(Year, 19)4 
-##     -17.2469646       4.9002430      -1.7968913       0.8175400       5.9668689 
-## poly(Year, 19)5 poly(Year, 19)6 poly(Year, 19)7 poly(Year, 19)8 poly(Year, 19)9 
-##       1.4265091      -1.9258864      -0.2523581      -2.1355117      -0.8046267</code></pre>
+<div class="sourceCode" id="cb90"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb90-1"><a href="3-4-onb.html#cb90-1"></a>(<span class="kw">t</span>(Phi) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, <span class="dv">1</span>]</span></code></pre></div>
+<pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 poly(Year, 19)4 poly(Year, 19)5 
+##     -17.2469646       4.9002430      -1.7968913       0.8175400       5.9668689       1.4265091 
+## poly(Year, 19)6 poly(Year, 19)7 poly(Year, 19)8 poly(Year, 19)9 
+##      -1.9258864      -0.2523581      -2.1355117      -0.8046267</code></pre>
+<div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb92-1"><a href="3-4-onb.html#cb92-1"></a><span class="kw">coef</span>(polylm)[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>]</span></code></pre></div>
+<pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 poly(Year, 19)4 poly(Year, 19)5 
+##     -17.2469646       4.9002430      -1.7968913       0.8175400       5.9668689       1.4265091 
+## poly(Year, 19)6 poly(Year, 19)7 poly(Year, 19)8 poly(Year, 19)9 
+##      -1.9258864      -0.2523581      -2.1355117      -0.8046267</code></pre>
 <p>With homogeneous variance
 <span class="math display">\[\hat{\beta}_i \overset{\text{approx}}{\sim} \mathcal{N}(\beta_i, \sigma^2),\]</span>
 and for <span class="math inline">\(\beta_i = 0\)</span> we have <span class="math inline">\(P(|\hat{\beta}_i| \geq 1.96\sigma) \simeq 0.05.\)</span></p>
@@ -391,18 +391,20 @@ where <span class="math inline">\(\Phi^*\)</span> is the conjugate transposed of
 It is the basis coefficients in the orthonormal basis given by <span class="math inline">\(\Phi\)</span>;
 <span class="math display">\[y_k = \frac{1}{\sqrt{n}} \sum_{m=0}^{n-1} \hat{\beta}_m  e^{2 \pi i k m / n}\]</span></p>
 <p>or <span class="math inline">\(y = \Phi \hat{\beta}.\)</span></p>
-<div class="sourceCode" id="cb96"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb96-1"><a href="3-4-onb.html#cb96-1"></a>Phi &lt;-<span class="st"> </span><span class="kw">outer</span>(<span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), <span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), </span>
-<span id="cb96-2"><a href="3-4-onb.html#cb96-2"></a>           <span class="cf">function</span>(k, m) <span class="kw">exp</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi <span class="op">*</span><span class="st"> </span>1i <span class="op">*</span><span class="st"> </span>(k <span class="op">*</span><span class="st"> </span>m) <span class="op">/</span><span class="st"> </span>n) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n))</span></code></pre></div>
+<div class="sourceCode" id="cb94"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb94-1"><a href="3-4-onb.html#cb94-1"></a>Phi &lt;-<span class="st"> </span><span class="kw">outer</span>(</span>
+<span id="cb94-2"><a href="3-4-onb.html#cb94-2"></a>  <span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), </span>
+<span id="cb94-3"><a href="3-4-onb.html#cb94-3"></a>  <span class="dv">0</span><span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">1</span>), </span>
+<span id="cb94-4"><a href="3-4-onb.html#cb94-4"></a>  <span class="cf">function</span>(k, m) <span class="kw">exp</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi <span class="op">*</span><span class="st"> </span>1i <span class="op">*</span><span class="st"> </span>(k <span class="op">*</span><span class="st"> </span>m) <span class="op">/</span><span class="st"> </span>n) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n)</span>
+<span id="cb94-5"><a href="3-4-onb.html#cb94-5"></a>)</span></code></pre></div>
 <p>The matrix <span class="math inline">\(\Phi\)</span> generates an interesting pattern.</p>
 <p><img src="CSwR_files/figure-html/Fourier_fig-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <p>Columns in the matrix <span class="math inline">\(\Phi\)</span>:</p>
 <p><img src="CSwR_files/figure-html/Fourier_basis_fig-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <p>We can estimate by matrix multiplication</p>
-<div class="sourceCode" id="cb97"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb97-1"><a href="3-4-onb.html#cb97-1"></a>betahat &lt;-<span class="st"> </span><span class="kw">Conj</span>(<span class="kw">t</span>(Phi)) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature <span class="co"># t(Phi) = Phi for Fourier bases</span></span>
-<span id="cb97-2"><a href="3-4-onb.html#cb97-2"></a>betahat[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span><span class="op">:</span><span class="dv">4</span>, <span class="dv">73</span>, n<span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">2</span>))]</span></code></pre></div>
-<pre><code>## [1] -17.2469646+0.0000000i  -2.4642887+2.3871189i   3.5481329+0.9099226i
-## [4]   1.6721444+0.7413580i   0.0321232+0.7089991i  -2.4642887-2.3871189i
-## [7]   3.5481329-0.9099226i   1.6721444-0.7413580i</code></pre>
+<div class="sourceCode" id="cb95"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb95-1"><a href="3-4-onb.html#cb95-1"></a>betahat &lt;-<span class="st"> </span><span class="kw">Conj</span>(<span class="kw">t</span>(Phi)) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature <span class="co"># t(Phi) = Phi for Fourier bases</span></span>
+<span id="cb95-2"><a href="3-4-onb.html#cb95-2"></a>betahat[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span><span class="op">:</span><span class="dv">4</span>, <span class="dv">73</span>, n<span class="op">:</span>(n <span class="op">-</span><span class="st"> </span><span class="dv">2</span>))]</span></code></pre></div>
+<pre><code>## [1] -17.2469646+0.0000000i  -2.4642887+2.3871189i   3.5481329+0.9099226i   1.6721444+0.7413580i
+## [5]   0.0321232+0.7089991i  -2.4642887-2.3871189i   3.5481329-0.9099226i   1.6721444-0.7413580i</code></pre>
 <p>For real <span class="math inline">\(y\)</span> it holds that <span class="math inline">\(\hat{\beta}_0\)</span> is real, and the symmetry
 <span class="math display">\[\hat{\beta}_{n-m} = \hat{\beta}_m^*\]</span>
 holds for <span class="math inline">\(m = 1, \ldots, n - 1\)</span>. (For <span class="math inline">\(n\)</span> even, <span class="math inline">\(\hat{\beta}_{n/2}\)</span> is real too).</p>
@@ -439,12 +441,10 @@ Figure 3.12: Fourier based smoother by thresholding (blue) and polynomial fit of
 The point is that the discrete Fourier transform can be computed via the
 <em>fast Fourier transform</em> (FFT), which has an <span class="math inline">\(O(n\log(n))\)</span> time complexity.
 The FFT works optimally for <span class="math inline">\(n = 2^p\)</span>.</p>
-<div class="sourceCode" id="cb99"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb99-1"><a href="3-4-onb.html#cb99-1"></a><span class="kw">fft</span>(Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>] <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n)</span></code></pre></div>
-<pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i
-## [4]   1.672144+0.741358i</code></pre>
-<div class="sourceCode" id="cb101"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb101-1"><a href="3-4-onb.html#cb101-1"></a>betahat[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>]</span></code></pre></div>
-<pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i
-## [4]   1.672144+0.741358i</code></pre>
+<div class="sourceCode" id="cb97"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb97-1"><a href="3-4-onb.html#cb97-1"></a><span class="kw">fft</span>(Nuuk_year<span class="op">$</span>Temperature)[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>] <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(n)</span></code></pre></div>
+<pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i   1.672144+0.741358i</code></pre>
+<div class="sourceCode" id="cb99"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb99-1"><a href="3-4-onb.html#cb99-1"></a>betahat[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>]</span></code></pre></div>
+<pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i   1.672144+0.741358i</code></pre>
 </div>
 </div>
             </section>
@@ -497,7 +497,7 @@ gitbook.start({
 },
 "download": null,
 "toc": {
-"collapse": "section"
+"collapse": "subsection"
 }
 });
 });

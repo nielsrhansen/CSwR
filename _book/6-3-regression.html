@@ -379,8 +379,8 @@ under a marketing campaign. A predicted number of items sold in a normal week
 (without a campaign) based on historic sales is included. It is of interest to
 recalibrate this number to give a good prediction of the number of items
 actually sold.</p>
-<div class="sourceCode" id="cb261"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb261-1"><a href="6-3-regression.html#cb261-1"></a>vegetables &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/vegetables.csv&quot;</span>, <span class="dt">col_types =</span> <span class="kw">cols</span>(<span class="dt">store =</span> <span class="st">&quot;c&quot;</span>))</span></code></pre></div>
-<div class="sourceCode" id="cb262"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb262-1"><a href="6-3-regression.html#cb262-1"></a><span class="kw">summary</span>(vegetables)</span></code></pre></div>
+<div class="sourceCode" id="cb259"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb259-1"><a href="6-3-regression.html#cb259-1"></a>vegetables &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/vegetables.csv&quot;</span>, <span class="dt">col_types =</span> <span class="kw">cols</span>(<span class="dt">store =</span> <span class="st">&quot;c&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb260"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb260-1"><a href="6-3-regression.html#cb260-1"></a><span class="kw">summary</span>(vegetables)</span></code></pre></div>
 <pre><code>##       sale          normalSale        store          
 ##  Min.   :  1.00   Min.   :  0.20   Length:1066       
 ##  1st Qu.: 12.00   1st Qu.:  4.20   Class :character  
@@ -397,10 +397,10 @@ be fitted to data using the <code>glm</code> function and using the formula inte
 to specify how the response should depend on the normal sale. The model is
 fitted by computing the maximum-likelihood estimate of the two parameters
 <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span>.</p>
-<div class="sourceCode" id="cb264"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb264-1"><a href="6-3-regression.html#cb264-1"></a>pois_model_null &lt;-<span class="st"> </span><span class="kw">glm</span>(sale <span class="op">~</span><span class="st"> </span><span class="kw">log</span>(normalSale), </span>
-<span id="cb264-2"><a href="6-3-regression.html#cb264-2"></a>                       <span class="dt">data =</span> vegetables, </span>
-<span id="cb264-3"><a href="6-3-regression.html#cb264-3"></a>                       <span class="dt">family =</span> poisson)   <span class="co">## A Poisson regression model</span></span></code></pre></div>
-<div class="sourceCode" id="cb265"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb265-1"><a href="6-3-regression.html#cb265-1"></a><span class="kw">summary</span>(pois_model_null)</span></code></pre></div>
+<div class="sourceCode" id="cb262"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb262-1"><a href="6-3-regression.html#cb262-1"></a>pois_model_null &lt;-<span class="st"> </span><span class="kw">glm</span>(sale <span class="op">~</span><span class="st"> </span><span class="kw">log</span>(normalSale), </span>
+<span id="cb262-2"><a href="6-3-regression.html#cb262-2"></a>                       <span class="dt">data =</span> vegetables, </span>
+<span id="cb262-3"><a href="6-3-regression.html#cb262-3"></a>                       <span class="dt">family =</span> poisson)   <span class="co">## A Poisson regression model</span></span></code></pre></div>
+<div class="sourceCode" id="cb263"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb263-1"><a href="6-3-regression.html#cb263-1"></a><span class="kw">summary</span>(pois_model_null)</span></code></pre></div>
 <pre><code>## 
 ## Call:
 ## glm(formula = sale ~ log(normalSale), family = poisson, data = vegetables)
@@ -434,14 +434,14 @@ stores in the data set, and it is not obvious that the same effect should
 apply across all stores. Thus we would like to fit a model of the form</p>
 <p><span class="math display">\[\log(E(\text{sale})) = \beta_{\text{store}} + \beta_1 \log(\text{normalSale})\]</span></p>
 <p>instead. Fortunately, this is also straightforward using <code>glm</code>.</p>
-<div class="sourceCode" id="cb267"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb267-1"><a href="6-3-regression.html#cb267-1"></a><span class="co">## Note, variable store is a factor! The &#39;intercept&#39; is removed </span></span>
-<span id="cb267-2"><a href="6-3-regression.html#cb267-2"></a><span class="co">## in the formula to obtain a parametrization as above. </span></span>
-<span id="cb267-3"><a href="6-3-regression.html#cb267-3"></a>pois_model &lt;-<span class="st"> </span><span class="kw">glm</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, </span>
-<span id="cb267-4"><a href="6-3-regression.html#cb267-4"></a>                  <span class="dt">data =</span> vegetables, </span>
-<span id="cb267-5"><a href="6-3-regression.html#cb267-5"></a>                  <span class="dt">family =</span> poisson)</span></code></pre></div>
+<div class="sourceCode" id="cb265"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb265-1"><a href="6-3-regression.html#cb265-1"></a><span class="co">## Note, variable store is a factor! The &#39;intercept&#39; is removed </span></span>
+<span id="cb265-2"><a href="6-3-regression.html#cb265-2"></a><span class="co">## in the formula to obtain a parametrization as above. </span></span>
+<span id="cb265-3"><a href="6-3-regression.html#cb265-3"></a>pois_model &lt;-<span class="st"> </span><span class="kw">glm</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, </span>
+<span id="cb265-4"><a href="6-3-regression.html#cb265-4"></a>                  <span class="dt">data =</span> vegetables, </span>
+<span id="cb265-5"><a href="6-3-regression.html#cb265-5"></a>                  <span class="dt">family =</span> poisson)</span></code></pre></div>
 <p>We will not print all the individual store effects as there are 352
 individual stores.</p>
-<div class="sourceCode" id="cb268"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb268-1"><a href="6-3-regression.html#cb268-1"></a><span class="kw">summary</span>(pois_model)<span class="op">$</span>coefficients[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">353</span>), ]</span></code></pre></div>
+<div class="sourceCode" id="cb266"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb266-1"><a href="6-3-regression.html#cb266-1"></a><span class="kw">summary</span>(pois_model)<span class="op">$</span>coefficients[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">353</span>), ]</span></code></pre></div>
 <pre><code>##                 Estimate Std. Error z value   Pr(&gt;|z|)
 ## store1            2.7182    0.12756  21.309 9.416e-101
 ## store10           4.2954    0.12043  35.668 1.254e-278
@@ -507,7 +507,7 @@ gitbook.start({
 },
 "download": null,
 "toc": {
-"collapse": "section"
+"collapse": "subsection"
 }
 });
 });

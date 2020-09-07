@@ -413,18 +413,18 @@ given in terms of <span class="math inline">\(\varphi&#39;&#39;_i\)</span> as ab
 <div id="splines-in-r" class="section level3">
 <h3><span class="header-section-number">3.5.2</span> Splines in R</h3>
 <p>The splines package in R implements some of the basic functions needed to work
-with splines. In particular, the <code>splineDesign</code> function that computes evaluations
+with splines. In particular, the <code>splineDesign()</code> function that computes evaluations
 of B-splines and their derivatives.</p>
-<div class="sourceCode" id="cb103"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb103-1"><a href="3-5-splines.html#cb103-1"></a><span class="kw">library</span>(splines)</span></code></pre></div>
-<div class="sourceCode" id="cb104"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb104-1"><a href="3-5-splines.html#cb104-1"></a><span class="co">## Note the specification of repeated boundary knots</span></span>
-<span id="cb104-2"><a href="3-5-splines.html#cb104-2"></a>knots &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.2</span>), <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)</span>
-<span id="cb104-3"><a href="3-5-splines.html#cb104-3"></a>xx &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.005</span>)</span>
-<span id="cb104-4"><a href="3-5-splines.html#cb104-4"></a>B_splines &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(knots, xx)</span>
-<span id="cb104-5"><a href="3-5-splines.html#cb104-5"></a><span class="kw">matplot</span>(xx, B_splines, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">lty =</span> <span class="dv">1</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb101"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb101-1"><a href="3-5-splines.html#cb101-1"></a><span class="kw">library</span>(splines)</span></code></pre></div>
+<div class="sourceCode" id="cb102"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb102-1"><a href="3-5-splines.html#cb102-1"></a><span class="co"># Note the specification of repeated boundary knots</span></span>
+<span id="cb102-2"><a href="3-5-splines.html#cb102-2"></a>knots &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.2</span>), <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb102-3"><a href="3-5-splines.html#cb102-3"></a>xx &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.005</span>)</span>
+<span id="cb102-4"><a href="3-5-splines.html#cb102-4"></a>B_splines &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(knots, xx)</span>
+<span id="cb102-5"><a href="3-5-splines.html#cb102-5"></a><span class="kw">matplot</span>(xx, B_splines, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">lty =</span> <span class="dv">1</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:splines"></span>
-<img src="CSwR_files/figure-html/splines-1.png" alt="B-spline basis as computed by `splineDesign`." width="70%" />
+<img src="CSwR_files/figure-html/splines-1.png" alt="B-spline basis as computed by `splineDesign()`." width="70%" />
 <p class="caption">
-Figure 3.13: B-spline basis as computed by <code>splineDesign</code>.
+Figure 3.13: B-spline basis as computed by <code>splineDesign()</code>.
 </p>
 </div>
 <p>The basis shown in Figure <a href="3-5-splines.html#fig:splines">3.13</a> is an example of a cubic B-spline
@@ -447,81 +447,87 @@ for numerical integration, and the fact that this is an identity for quadratic
 polynomials, and not an approximation, means that Simpson’s rule
 applied appropriately leads to exact computation of
 <span class="math inline">\(\mathbf{\Omega}_{ij}\)</span>. All we need is the ability to evaluate
-<span class="math inline">\(\varphi&#39;&#39;_i\)</span> at certain points, and <code>splineDesign</code> can be used for that.</p>
-<div class="sourceCode" id="cb105"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb105-1"><a href="3-5-splines.html#cb105-1"></a>pen_mat &lt;-<span class="st"> </span><span class="cf">function</span>(inner_knots) {</span>
-<span id="cb105-2"><a href="3-5-splines.html#cb105-2"></a>  knots &lt;-<span class="st"> </span><span class="kw">sort</span>(<span class="kw">c</span>(<span class="kw">rep</span>(<span class="kw">range</span>(inner_knots), <span class="dv">3</span>), inner_knots))</span>
-<span id="cb105-3"><a href="3-5-splines.html#cb105-3"></a>  d &lt;-<span class="st"> </span><span class="kw">diff</span>(inner_knots)  <span class="co">## the vector of knot differences; b - a </span></span>
-<span id="cb105-4"><a href="3-5-splines.html#cb105-4"></a>  g_ab &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(knots, inner_knots, <span class="dt">derivs =</span> <span class="dv">2</span>) </span>
-<span id="cb105-5"><a href="3-5-splines.html#cb105-5"></a>  knots_mid &lt;-<span class="st"> </span>inner_knots[<span class="op">-</span><span class="kw">length</span>(inner_knots)] <span class="op">+</span><span class="st"> </span>d <span class="op">/</span><span class="st"> </span><span class="dv">2</span></span>
-<span id="cb105-6"><a href="3-5-splines.html#cb105-6"></a>  g_ab_mid &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(knots, knots_mid, <span class="dt">derivs =</span> <span class="dv">2</span>)</span>
-<span id="cb105-7"><a href="3-5-splines.html#cb105-7"></a>  g_a &lt;-<span class="st"> </span>g_ab[<span class="op">-</span><span class="kw">nrow</span>(g_ab), ]</span>
-<span id="cb105-8"><a href="3-5-splines.html#cb105-8"></a>  g_b &lt;-<span class="st"> </span>g_ab[<span class="op">-</span><span class="dv">1</span>, ]</span>
-<span id="cb105-9"><a href="3-5-splines.html#cb105-9"></a>  (<span class="kw">crossprod</span>(d <span class="op">*</span><span class="st"> </span>g_a,  g_a) <span class="op">+</span><span class="st"> </span></span>
-<span id="cb105-10"><a href="3-5-splines.html#cb105-10"></a><span class="st">      </span><span class="dv">4</span> <span class="op">*</span><span class="st"> </span><span class="kw">crossprod</span>(d <span class="op">*</span><span class="st"> </span>g_ab_mid, g_ab_mid) <span class="op">+</span><span class="st"> </span></span>
-<span id="cb105-11"><a href="3-5-splines.html#cb105-11"></a><span class="st">      </span><span class="kw">crossprod</span>(d <span class="op">*</span><span class="st"> </span>g_b, g_b)) <span class="op">/</span><span class="st"> </span><span class="dv">6</span> </span>
-<span id="cb105-12"><a href="3-5-splines.html#cb105-12"></a>}</span></code></pre></div>
-<p>It is laborious to write good tests of <code>pen_mat</code>. We would have to work out a
+<span class="math inline">\(\varphi&#39;&#39;_i\)</span> at certain points, and <code>splineDesign()</code> can be used for that.</p>
+<div class="sourceCode" id="cb103"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb103-1"><a href="3-5-splines.html#cb103-1"></a>pen_mat &lt;-<span class="st"> </span><span class="cf">function</span>(inner_knots) {</span>
+<span id="cb103-2"><a href="3-5-splines.html#cb103-2"></a>  knots &lt;-<span class="st"> </span><span class="kw">sort</span>(<span class="kw">c</span>(<span class="kw">rep</span>(<span class="kw">range</span>(inner_knots), <span class="dv">3</span>), inner_knots))</span>
+<span id="cb103-3"><a href="3-5-splines.html#cb103-3"></a>  d &lt;-<span class="st"> </span><span class="kw">diff</span>(inner_knots)  <span class="co"># The vector of knot differences; b - a </span></span>
+<span id="cb103-4"><a href="3-5-splines.html#cb103-4"></a>  g_ab &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(knots, inner_knots, <span class="dt">derivs =</span> <span class="dv">2</span>) </span>
+<span id="cb103-5"><a href="3-5-splines.html#cb103-5"></a>  knots_mid &lt;-<span class="st"> </span>inner_knots[<span class="op">-</span><span class="kw">length</span>(inner_knots)] <span class="op">+</span><span class="st"> </span>d <span class="op">/</span><span class="st"> </span><span class="dv">2</span></span>
+<span id="cb103-6"><a href="3-5-splines.html#cb103-6"></a>  g_ab_mid &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(knots, knots_mid, <span class="dt">derivs =</span> <span class="dv">2</span>)</span>
+<span id="cb103-7"><a href="3-5-splines.html#cb103-7"></a>  g_a &lt;-<span class="st"> </span>g_ab[<span class="op">-</span><span class="kw">nrow</span>(g_ab), ]</span>
+<span id="cb103-8"><a href="3-5-splines.html#cb103-8"></a>  g_b &lt;-<span class="st"> </span>g_ab[<span class="op">-</span><span class="dv">1</span>, ]</span>
+<span id="cb103-9"><a href="3-5-splines.html#cb103-9"></a>  (<span class="kw">crossprod</span>(d <span class="op">*</span><span class="st"> </span>g_a,  g_a) <span class="op">+</span><span class="st"> </span></span>
+<span id="cb103-10"><a href="3-5-splines.html#cb103-10"></a><span class="st">      </span><span class="dv">4</span> <span class="op">*</span><span class="st"> </span><span class="kw">crossprod</span>(d <span class="op">*</span><span class="st"> </span>g_ab_mid, g_ab_mid) <span class="op">+</span><span class="st"> </span></span>
+<span id="cb103-11"><a href="3-5-splines.html#cb103-11"></a><span class="st">      </span><span class="kw">crossprod</span>(d <span class="op">*</span><span class="st"> </span>g_b, g_b)) <span class="op">/</span><span class="st"> </span><span class="dv">6</span> </span>
+<span id="cb103-12"><a href="3-5-splines.html#cb103-12"></a>}</span></code></pre></div>
+<p>It is laborious to write good tests of <code>pen_mat()</code>. We would have to work out a
 set of example matrices by other means, e.g. by hand. Alternatively, we can
 compare to a simpler numerical integration technique using Riemann sums.</p>
-<div class="sourceCode" id="cb106"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb106-1"><a href="3-5-splines.html#cb106-1"></a>tmp_deriv &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>), </span>
-<span id="cb106-2"><a href="3-5-splines.html#cb106-2"></a>                          <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">1e-5</span>), <span class="dt">derivs =</span> <span class="dv">2</span>)</span>
-<span id="cb106-3"><a href="3-5-splines.html#cb106-3"></a>Omega_numeric &lt;-<span class="st"> </span><span class="kw">crossprod</span>(tmp_deriv[<span class="op">-</span><span class="dv">1</span>, ]) <span class="op">*</span><span class="st"> </span><span class="fl">1e-5</span>  <span class="co">## Right Riemann sums</span></span>
-<span id="cb106-4"><a href="3-5-splines.html#cb106-4"></a>Omega &lt;-<span class="st"> </span><span class="kw">pen_mat</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">1</span>))</span>
-<span id="cb106-5"><a href="3-5-splines.html#cb106-5"></a>Omega_numeric <span class="op">/</span><span class="st"> </span>Omega</span></code></pre></div>
+<div class="sourceCode" id="cb104"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb104-1"><a href="3-5-splines.html#cb104-1"></a>spline_deriv &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(</span>
+<span id="cb104-2"><a href="3-5-splines.html#cb104-2"></a>  <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>), </span>
+<span id="cb104-3"><a href="3-5-splines.html#cb104-3"></a>  <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">1e-5</span>), </span>
+<span id="cb104-4"><a href="3-5-splines.html#cb104-4"></a>  <span class="dt">derivs =</span> <span class="dv">2</span></span>
+<span id="cb104-5"><a href="3-5-splines.html#cb104-5"></a>)</span>
+<span id="cb104-6"><a href="3-5-splines.html#cb104-6"></a>Omega_numeric &lt;-<span class="st"> </span><span class="kw">crossprod</span>(spline_deriv[<span class="op">-</span><span class="dv">1</span>, ]) <span class="op">*</span><span class="st"> </span><span class="fl">1e-5</span>  <span class="co"># Right Riemann sums</span></span>
+<span id="cb104-7"><a href="3-5-splines.html#cb104-7"></a>Omega &lt;-<span class="st"> </span><span class="kw">pen_mat</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">1</span>))</span>
+<span id="cb104-8"><a href="3-5-splines.html#cb104-8"></a>Omega_numeric <span class="op">/</span><span class="st"> </span>Omega</span></code></pre></div>
 <pre><code>##           [,1]      [,2]     [,3]     [,4]     [,5]
 ## [1,] 0.9999700 0.9999673 0.999940 1.000000      NaN
 ## [2,] 0.9999673 0.9999663 0.999955 1.000000 1.000000
 ## [3,] 0.9999400 0.9999550 1.000000 1.000045 1.000060
 ## [4,] 1.0000000 1.0000000 1.000045 1.000034 1.000033
 ## [5,]       NaN 1.0000000 1.000060 1.000033 1.000030</code></pre>
-<div class="sourceCode" id="cb108"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb108-1"><a href="3-5-splines.html#cb108-1"></a><span class="kw">range</span>((Omega_numeric <span class="op">-</span><span class="st"> </span>Omega) <span class="op">/</span><span class="st"> </span>(Omega <span class="op">+</span><span class="st"> </span><span class="fl">0.001</span>))  <span class="co">## Relative error</span></span></code></pre></div>
+<div class="sourceCode" id="cb106"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb106-1"><a href="3-5-splines.html#cb106-1"></a><span class="kw">range</span>((Omega_numeric <span class="op">-</span><span class="st"> </span>Omega) <span class="op">/</span><span class="st"> </span>(Omega <span class="op">+</span><span class="st"> </span><span class="fl">0.001</span>))  <span class="co">#  Relative error</span></span></code></pre></div>
 <pre><code>## [1] -5.99967e-05  5.99983e-05</code></pre>
 <p>And we should also test an example with non-equidistant knots.</p>
-<div class="sourceCode" id="cb110"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb110-1"><a href="3-5-splines.html#cb110-1"></a>tmp_deriv &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(</span>
-<span id="cb110-2"><a href="3-5-splines.html#cb110-2"></a>  <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.65</span>, <span class="fl">0.7</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>), </span>
-<span id="cb110-3"><a href="3-5-splines.html#cb110-3"></a>  <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">1e-5</span>), <span class="dt">derivs =</span> <span class="dv">2</span>)</span>
-<span id="cb110-4"><a href="3-5-splines.html#cb110-4"></a>Omega_numeric &lt;-<span class="st"> </span><span class="kw">crossprod</span>(tmp_deriv[<span class="op">-</span><span class="dv">1</span>, ]) <span class="op">*</span><span class="st"> </span><span class="fl">1e-5</span>  <span class="co">## Right Riemann sums</span></span>
-<span id="cb110-5"><a href="3-5-splines.html#cb110-5"></a>Omega &lt;-<span class="st"> </span><span class="kw">pen_mat</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.65</span>, <span class="fl">0.7</span>, <span class="dv">1</span>))</span>
-<span id="cb110-6"><a href="3-5-splines.html#cb110-6"></a><span class="kw">range</span>((Omega_numeric <span class="op">-</span><span class="st"> </span>Omega) <span class="op">/</span><span class="st"> </span>(Omega <span class="op">+</span><span class="st"> </span><span class="fl">0.001</span>)) <span class="co">## Relative error</span></span></code></pre></div>
+<div class="sourceCode" id="cb108"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb108-1"><a href="3-5-splines.html#cb108-1"></a>spline_deriv &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(</span>
+<span id="cb108-2"><a href="3-5-splines.html#cb108-2"></a>  <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.65</span>, <span class="fl">0.7</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>), </span>
+<span id="cb108-3"><a href="3-5-splines.html#cb108-3"></a>  <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">1e-5</span>), </span>
+<span id="cb108-4"><a href="3-5-splines.html#cb108-4"></a>  <span class="dt">derivs =</span> <span class="dv">2</span></span>
+<span id="cb108-5"><a href="3-5-splines.html#cb108-5"></a>)</span>
+<span id="cb108-6"><a href="3-5-splines.html#cb108-6"></a>Omega_numeric &lt;-<span class="st"> </span><span class="kw">crossprod</span>(spline_deriv[<span class="op">-</span><span class="dv">1</span>, ]) <span class="op">*</span><span class="st"> </span><span class="fl">1e-5</span>  <span class="co"># Right Riemann sums</span></span>
+<span id="cb108-7"><a href="3-5-splines.html#cb108-7"></a>Omega &lt;-<span class="st"> </span><span class="kw">pen_mat</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.65</span>, <span class="fl">0.7</span>, <span class="dv">1</span>))</span>
+<span id="cb108-8"><a href="3-5-splines.html#cb108-8"></a><span class="kw">range</span>((Omega_numeric <span class="op">-</span><span class="st"> </span>Omega) <span class="op">/</span><span class="st"> </span>(Omega <span class="op">+</span><span class="st"> </span><span class="fl">0.001</span>)) <span class="co"># Relative error</span></span></code></pre></div>
 <pre><code>## [1] -0.0001607084  0.0002545494</code></pre>
-<p>These examples indicate that <code>pen_mat</code> computes <span class="math inline">\(\mathbf{\Omega}\)</span> correctly,
+<p>These examples indicate that <code>pen_mat()</code> computes <span class="math inline">\(\mathbf{\Omega}\)</span> correctly,
 in particular as increasing the Riemann sum precision by
 lowering the number <span class="math inline">\(10^{-5}\)</span> will decrease the relative error (not shown).
-Of course, correctness ultimately depends on <code>splineDesign</code> computing
+Of course, correctness ultimately depends on <code>splineDesign()</code> computing
 the correct second derivatives, which hasn’t been tested here.</p>
 <p>We can also test how our implementation of smoothing splines works
 on data. We do this here by implementing the matrix-algebra directly
 for computing <span class="math inline">\(\mathbf{S}_{\lambda} \mathbf{y}\)</span>.</p>
-<div class="sourceCode" id="cb112"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb112-1"><a href="3-5-splines.html#cb112-1"></a>inner_knots &lt;-<span class="st"> </span>Nuuk_year<span class="op">$</span>Year</span>
-<span id="cb112-2"><a href="3-5-splines.html#cb112-2"></a>Phi &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(<span class="kw">c</span>(<span class="kw">rep</span>(<span class="kw">range</span>(inner_knots), <span class="dv">3</span>), inner_knots), inner_knots)</span>
-<span id="cb112-3"><a href="3-5-splines.html#cb112-3"></a>Omega &lt;-<span class="st"> </span><span class="kw">pen_mat</span>(inner_knots)</span>
-<span id="cb112-4"><a href="3-5-splines.html#cb112-4"></a>smoother &lt;-<span class="st"> </span><span class="cf">function</span>(lambda) </span>
-<span id="cb112-5"><a href="3-5-splines.html#cb112-5"></a>  Phi <span class="op">%*%</span><span class="st"> </span><span class="kw">solve</span>(<span class="kw">crossprod</span>(Phi) <span class="op">+</span><span class="st"> </span>lambda <span class="op">*</span><span class="st"> </span>Omega, </span>
-<span id="cb112-6"><a href="3-5-splines.html#cb112-6"></a>                <span class="kw">t</span>(Phi) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature)</span>
-<span id="cb112-7"><a href="3-5-splines.html#cb112-7"></a></span>
-<span id="cb112-8"><a href="3-5-splines.html#cb112-8"></a>p_Nuuk <span class="op">+</span><span class="st"> </span></span>
-<span id="cb112-9"><a href="3-5-splines.html#cb112-9"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">smoother</span>(<span class="dv">10</span>)), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>) <span class="op">+</span><span class="st">      </span><span class="co">## Undersmooth</span></span>
-<span id="cb112-10"><a href="3-5-splines.html#cb112-10"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">smoother</span>(<span class="dv">1000</span>)), <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>) <span class="op">+</span><span class="st">     </span><span class="co">## Smooth</span></span>
-<span id="cb112-11"><a href="3-5-splines.html#cb112-11"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">smoother</span>(<span class="dv">100000</span>)), <span class="dt">color =</span> <span class="st">&quot;purple&quot;</span>)  <span class="co">## Oversmooth</span></span></code></pre></div>
+<div class="sourceCode" id="cb110"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb110-1"><a href="3-5-splines.html#cb110-1"></a>inner_knots &lt;-<span class="st"> </span>Nuuk_year<span class="op">$</span>Year</span>
+<span id="cb110-2"><a href="3-5-splines.html#cb110-2"></a>Phi &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(<span class="kw">c</span>(<span class="kw">rep</span>(<span class="kw">range</span>(inner_knots), <span class="dv">3</span>), inner_knots), inner_knots)</span>
+<span id="cb110-3"><a href="3-5-splines.html#cb110-3"></a>Omega &lt;-<span class="st"> </span><span class="kw">pen_mat</span>(inner_knots)</span>
+<span id="cb110-4"><a href="3-5-splines.html#cb110-4"></a>smoother &lt;-<span class="st"> </span><span class="cf">function</span>(lambda) </span>
+<span id="cb110-5"><a href="3-5-splines.html#cb110-5"></a>  Phi <span class="op">%*%</span><span class="st"> </span><span class="kw">solve</span>(</span>
+<span id="cb110-6"><a href="3-5-splines.html#cb110-6"></a>    <span class="kw">crossprod</span>(Phi) <span class="op">+</span><span class="st"> </span>lambda <span class="op">*</span><span class="st"> </span>Omega, </span>
+<span id="cb110-7"><a href="3-5-splines.html#cb110-7"></a>    <span class="kw">t</span>(Phi) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature</span>
+<span id="cb110-8"><a href="3-5-splines.html#cb110-8"></a>  )</span>
+<span id="cb110-9"><a href="3-5-splines.html#cb110-9"></a>p_Nuuk <span class="op">+</span><span class="st"> </span></span>
+<span id="cb110-10"><a href="3-5-splines.html#cb110-10"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">smoother</span>(<span class="dv">10</span>)), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>) <span class="op">+</span><span class="st">      </span><span class="co"># Undersmooth</span></span>
+<span id="cb110-11"><a href="3-5-splines.html#cb110-11"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">smoother</span>(<span class="dv">1000</span>)), <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>) <span class="op">+</span><span class="st">     </span><span class="co"># Smooth</span></span>
+<span id="cb110-12"><a href="3-5-splines.html#cb110-12"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">smoother</span>(<span class="dv">100000</span>)), <span class="dt">color =</span> <span class="st">&quot;purple&quot;</span>)  <span class="co"># Oversmooth</span></span></code></pre></div>
 <p><img src="CSwR_files/figure-html/Nuuk-smooth-spline-1.png" width="70%" style="display: block; margin: auto;" /></p>
-<p>Smoothing splines can be computed using the R function <code>smooth.spline</code>
+<p>Smoothing splines can be computed using the R function <code>smooth.spline()</code>
 from the stats package. It is possible to manually specify the amount of
 smoothing using one of the arguments <code>lambda</code>, <code>spar</code> or <code>df</code>
 (the latter being the trace of the smoother matrix). However,
-due to internal differences from the <code>splineDesign</code> basis
-above, the <code>lambda</code> argument to <code>smooth.spline</code> does not match the
+due to internal differences from the <code>splineDesign()</code> basis
+above, the <code>lambda</code> argument to <code>smooth.spline()</code> does not match the
 <span class="math inline">\(\lambda\)</span> parameter above.</p>
-<p>If the amount of smoothing is not manually set, <code>smooth.spline</code> chooses
+<p>If the amount of smoothing is not manually set, <code>smooth.spline()</code> chooses
 <span class="math inline">\(\lambda\)</span> by <em>generalized cross validation</em> (GCV), which minimizes
 <span class="math display">\[\mathrm{GCV} = \sum_{i=1}^n \left(\frac{y_i - \hat{f}_i}{1 - \mathrm{df} / n}\right)^2,\]</span>
 where
 <span class="math display">\[\mathrm{df} = \mathrm{trace}(\mathbf{S}) = \sum_{i=1}^n S_{ii}.\]</span>
-Thus it corresponds to LOOCV with the diagonal entries, <span class="math inline">\(S_{ii}\)</span>,
+GCV corresponds to LOOCV with the diagonal entries, <span class="math inline">\(S_{ii}\)</span>,
 replaced by their average <span class="math inline">\(\mathrm{df} / n\)</span>. The main reason for
 using GCV over LOOCV is that for some smoothers, such as the
 spline smoother, it is possible to compute the trace <span class="math inline">\(\mathrm{df}\)</span> easily
 without computing <span class="math inline">\(\mathbf{S}\)</span> or even its diagonal elements.</p>
-<p>To compare our results to <code>smooth.spline</code> we optimize the GCV criterion.
+<p>To compare our results to <code>smooth.spline()</code> we optimize the GCV criterion.
 First we implement a function that computes GCV for a fixed value of <span class="math inline">\(\lambda\)</span>.
 Here the implementation is relying on computing the smoother matrix, but
 this is not the most efficient implementation. Section <a href="3-5-splines.html#efficient-splines">3.5.3</a>
@@ -530,18 +536,17 @@ parameters. This representation allows for efficient computation
 with splines, and it will become clear why it is not necessary to compute
 <span class="math inline">\(\mathbf{S}\)</span> or even its diagonal elements. The trace is nevertheless
 easily computable from the diagonalization.</p>
-<div class="sourceCode" id="cb113"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb113-1"><a href="3-5-splines.html#cb113-1"></a>gcv &lt;-<span class="st"> </span><span class="cf">function</span>(lambda, y) {</span>
-<span id="cb113-2"><a href="3-5-splines.html#cb113-2"></a>  S &lt;-<span class="st"> </span>Phi <span class="op">%*%</span><span class="st"> </span><span class="kw">solve</span>(<span class="kw">crossprod</span>(Phi) <span class="op">+</span><span class="st"> </span>lambda <span class="op">*</span><span class="st"> </span>Omega, <span class="kw">t</span>(Phi))</span>
-<span id="cb113-3"><a href="3-5-splines.html#cb113-3"></a>  df &lt;-<span class="st"> </span><span class="kw">sum</span>(<span class="kw">diag</span>(S))  <span class="co">## The trace of the smoother matrix</span></span>
-<span id="cb113-4"><a href="3-5-splines.html#cb113-4"></a>  <span class="kw">sum</span>(((y <span class="op">-</span><span class="st"> </span>S <span class="op">%*%</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>df <span class="op">/</span><span class="st"> </span><span class="kw">length</span>(y)))<span class="op">^</span><span class="dv">2</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>) </span>
-<span id="cb113-5"><a href="3-5-splines.html#cb113-5"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb111"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb111-1"><a href="3-5-splines.html#cb111-1"></a>gcv &lt;-<span class="st"> </span><span class="cf">function</span>(lambda, y) {</span>
+<span id="cb111-2"><a href="3-5-splines.html#cb111-2"></a>  S &lt;-<span class="st"> </span>Phi <span class="op">%*%</span><span class="st"> </span><span class="kw">solve</span>(<span class="kw">crossprod</span>(Phi) <span class="op">+</span><span class="st"> </span>lambda <span class="op">*</span><span class="st"> </span>Omega, <span class="kw">t</span>(Phi))</span>
+<span id="cb111-3"><a href="3-5-splines.html#cb111-3"></a>  df &lt;-<span class="st"> </span><span class="kw">sum</span>(<span class="kw">diag</span>(S))  <span class="co"># The trace of the smoother matrix</span></span>
+<span id="cb111-4"><a href="3-5-splines.html#cb111-4"></a>  <span class="kw">sum</span>(((y <span class="op">-</span><span class="st"> </span>S <span class="op">%*%</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>df <span class="op">/</span><span class="st"> </span><span class="kw">length</span>(y)))<span class="op">^</span><span class="dv">2</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>) </span>
+<span id="cb111-5"><a href="3-5-splines.html#cb111-5"></a>}</span></code></pre></div>
 <p>Then we apply this function to a grid of <span class="math inline">\(\lambda\)</span>-values and
 choose the value of <span class="math inline">\(\lambda\)</span> that minimizes GCV.</p>
-<div class="sourceCode" id="cb114"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb114-1"><a href="3-5-splines.html#cb114-1"></a>lambda &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">50</span>, <span class="dv">250</span>, <span class="dv">2</span>)</span>
-<span id="cb114-2"><a href="3-5-splines.html#cb114-2"></a>GCV &lt;-<span class="st"> </span><span class="kw">sapply</span>(lambda, gcv, <span class="dt">y =</span> Nuuk_year<span class="op">$</span>Temperature)</span>
-<span id="cb114-3"><a href="3-5-splines.html#cb114-3"></a>lambda_opt &lt;-<span class="st"> </span>lambda[<span class="kw">which.min</span>(GCV)]</span>
-<span id="cb114-4"><a href="3-5-splines.html#cb114-4"></a><span class="kw">qplot</span>(lambda, GCV) <span class="op">+</span><span class="st"> </span></span>
-<span id="cb114-5"><a href="3-5-splines.html#cb114-5"></a><span class="st">  </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> lambda_opt, <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb112"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb112-1"><a href="3-5-splines.html#cb112-1"></a>lambda &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">50</span>, <span class="dv">250</span>, <span class="dv">2</span>)</span>
+<span id="cb112-2"><a href="3-5-splines.html#cb112-2"></a>GCV &lt;-<span class="st"> </span><span class="kw">sapply</span>(lambda, gcv, <span class="dt">y =</span> Nuuk_year<span class="op">$</span>Temperature)</span>
+<span id="cb112-3"><a href="3-5-splines.html#cb112-3"></a>lambda_opt &lt;-<span class="st"> </span>lambda[<span class="kw">which.min</span>(GCV)]</span>
+<span id="cb112-4"><a href="3-5-splines.html#cb112-4"></a><span class="kw">qplot</span>(lambda, GCV) <span class="op">+</span><span class="st"> </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> lambda_opt, <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:Nuuk-spline-gcv"></span>
 <img src="CSwR_files/figure-html/Nuuk-spline-gcv-1.png" alt="The generalized cross-validation criterion for smoothing splines as a function of the tuning parameter $\lambda$." width="70%" />
 <p class="caption">
@@ -549,9 +554,11 @@ Figure 3.14: The generalized cross-validation criterion for smoothing splines as
 </p>
 </div>
 <p>Finally, we can visualize the resulting smoothing spline.</p>
-<div class="sourceCode" id="cb115"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb115-1"><a href="3-5-splines.html#cb115-1"></a>temp_smooth_opt &lt;-<span class="st"> </span>Phi <span class="op">%*%</span><span class="st"> </span><span class="kw">solve</span>(<span class="kw">crossprod</span>(Phi) <span class="op">+</span><span class="st"> </span>lambda_opt <span class="op">*</span><span class="st"> </span>Omega, </span>
-<span id="cb115-2"><a href="3-5-splines.html#cb115-2"></a>                                 <span class="kw">t</span>(Phi) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature)</span>
-<span id="cb115-3"><a href="3-5-splines.html#cb115-3"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> temp_smooth_opt), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb113"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb113-1"><a href="3-5-splines.html#cb113-1"></a>temp_smooth_opt &lt;-<span class="st"> </span>Phi <span class="op">%*%</span><span class="st"> </span><span class="kw">solve</span>(</span>
+<span id="cb113-2"><a href="3-5-splines.html#cb113-2"></a>  <span class="kw">crossprod</span>(Phi) <span class="op">+</span><span class="st"> </span>lambda_opt <span class="op">*</span><span class="st"> </span>Omega, </span>
+<span id="cb113-3"><a href="3-5-splines.html#cb113-3"></a>  <span class="kw">t</span>(Phi) <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature</span>
+<span id="cb113-4"><a href="3-5-splines.html#cb113-4"></a>)</span>
+<span id="cb113-5"><a href="3-5-splines.html#cb113-5"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> temp_smooth_opt), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:Nuuk-spline-opt"></span>
 <img src="CSwR_files/figure-html/Nuuk-spline-opt-1.png" alt="The smoothing spline that minimizes GCV over the tuning parameter $\lambda$" width="70%" />
 <p class="caption">
@@ -559,23 +566,25 @@ Figure 3.15: The smoothing spline that minimizes GCV over the tuning parameter <
 </p>
 </div>
 <p>The smoothing spline that we found by minimizing GCV can be compared to
-the smoothing spline that <code>smooth.spline</code> computes by minimizing GCV
+the smoothing spline that <code>smooth.spline()</code> computes by minimizing GCV
 as well.</p>
 
-<div class="sourceCode" id="cb116"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb116-1"><a href="3-5-splines.html#cb116-1"></a>temp_smooth_splines &lt;-<span class="st"> </span><span class="kw">smooth.spline</span>(Nuuk_year<span class="op">$</span>Year, </span>
-<span id="cb116-2"><a href="3-5-splines.html#cb116-2"></a>                                     Nuuk_year<span class="op">$</span>Temperature, </span>
-<span id="cb116-3"><a href="3-5-splines.html#cb116-3"></a>                                     <span class="dt">all.knots =</span> <span class="ot">TRUE</span>)  <span class="co">## Don&#39;t use heuristic</span></span>
-<span id="cb116-4"><a href="3-5-splines.html#cb116-4"></a><span class="kw">range</span>(temp_smooth_splines<span class="op">$</span>y <span class="op">-</span><span class="st"> </span>temp_smooth_opt)</span></code></pre></div>
+<div class="sourceCode" id="cb114"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb114-1"><a href="3-5-splines.html#cb114-1"></a>temp_smooth_splines &lt;-<span class="st"> </span><span class="kw">smooth.spline</span>(</span>
+<span id="cb114-2"><a href="3-5-splines.html#cb114-2"></a>  Nuuk_year<span class="op">$</span>Year, </span>
+<span id="cb114-3"><a href="3-5-splines.html#cb114-3"></a>  Nuuk_year<span class="op">$</span>Temperature, </span>
+<span id="cb114-4"><a href="3-5-splines.html#cb114-4"></a>  <span class="dt">all.knots =</span> <span class="ot">TRUE</span>        <span class="co"># Don&#39;t use heuristic</span></span>
+<span id="cb114-5"><a href="3-5-splines.html#cb114-5"></a>)  </span>
+<span id="cb114-6"><a href="3-5-splines.html#cb114-6"></a><span class="kw">range</span>(temp_smooth_splines<span class="op">$</span>y <span class="op">-</span><span class="st"> </span>temp_smooth_opt)</span></code></pre></div>
 <pre><code>## [1] -0.000775662  0.001072587</code></pre>
-<div class="sourceCode" id="cb118"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb118-1"><a href="3-5-splines.html#cb118-1"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> temp_smooth_splines<span class="op">$</span>y), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb116"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb116-1"><a href="3-5-splines.html#cb116-1"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> temp_smooth_splines<span class="op">$</span>y), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:Nuuk-spline-opt2"></span>
-<img src="CSwR_files/figure-html/Nuuk-spline-opt2-1.png" alt="The smoothing spline that minimizes GCV as computed by smooth.spline." width="70%" />
+<img src="CSwR_files/figure-html/Nuuk-spline-opt2-1.png" alt="The smoothing spline that minimizes GCV as computed by smooth.spline()." width="70%" />
 <p class="caption">
-Figure 3.16: The smoothing spline that minimizes GCV as computed by <code>smooth.spline</code>.
+Figure 3.16: The smoothing spline that minimizes GCV as computed by <code>smooth.spline()</code>.
 </p>
 </div>
 <p>The differences between the smoothing spline computed by our implementation
-and by <code>smooth.spline</code> is hardly detectable visually, and they are at most
+and by <code>smooth.spline()</code> is hardly detectable visually, and they are at most
 of the order <span class="math inline">\(10^{-3}\)</span> as computed above. It is possible to further
 decrease the differences by finding the optimal value of <span class="math inline">\(\lambda\)</span> with a
 higher precision, but we will not pursue this here.</p>
@@ -585,15 +594,15 @@ higher precision, but we will not pursue this here.</p>
 <p>Using the full B-spline basis with knots in every observation is computationally
 heavy and from a practical viewpoint unnecessary. Smoothing using B-splines
 is therefore often done using a knot-selection heuristic that selects much fewer
-knots than <span class="math inline">\(n\)</span>, in particular if <span class="math inline">\(n\)</span> is large. This is also what <code>smooth.spline</code>
+knots than <span class="math inline">\(n\)</span>, in particular if <span class="math inline">\(n\)</span> is large. This is also what <code>smooth.spline()</code>
 does unless <code>all.knots = TRUE</code>. The heuristic for selecting
-the number of knots is a bit complicated, but it is implemented in the function <code>.nknots.smspl</code>,
+the number of knots is a bit complicated, but it is implemented in the function <code>.nknots.smspl()</code>,
 which can be inspected for details. Once the number of knots gets above 200 it
 grows extremely slowly with <span class="math inline">\(n\)</span>. With the number of knots selected,
 a common heuristic for selecting their position is to use the quantiles of
 the distribution of the <span class="math inline">\(x\)</span>-values. That is, with 9 knots, say, the knots
 are positioned in the deciles (0.1-quantile, 0.2-quantile etc.). This is
-effectively also what <code>smooth.spline</code> does, and this heuristic places most of
+effectively also what <code>smooth.spline()</code> does, and this heuristic places most of
 the knots where we have most of the data points.</p>
 <p>Having implemented a knot-selection heuristic that results in <span class="math inline">\(p\)</span> B-spline
 basis functions, the matrix <span class="math inline">\(\Phi\)</span> will be <span class="math inline">\(n \times p\)</span>, typically with <span class="math inline">\(p &lt; n\)</span>
@@ -623,7 +632,7 @@ is the <span class="math inline">\(p \times p\)</span> dimensional identity matr
 a positive semidefinite <span class="math inline">\(p \times p\)</span> matrix. By diagonalization,
 <span class="math display">\[\widetilde{\mathbf{\Omega}} = \mathbf{W} \Gamma \mathbf{W}^T,\]</span>
 where <span class="math inline">\(\mathbf{W}\)</span> is orthogonal and <span class="math inline">\(\Gamma\)</span> is a diagonal matrix with nonnegative
-values in the diagonal, we find that</p>
+values in the diagonal, and we find that</p>
 <p><span class="math display">\[\begin{align}
 \mathbf{S}_{\lambda} &amp; = \mathbf{U} \mathbf{W} (I + \lambda  \Gamma)^{-1}  \mathbf{W}^T  \mathbf{U}^T \\
 &amp; = \widetilde{\mathbf{U}}  (I + \lambda  \Gamma)^{-1} \widetilde{\mathbf{U}}^T
@@ -633,7 +642,7 @@ values in the diagonal, we find that</p>
 <p>The interpretation of this representation is as follows.</p>
 <ul>
 <li>First, the coefficients, <span class="math inline">\(\hat{\beta} = \widetilde{\mathbf{U}}^Ty\)</span>, are computed for
-expanding <span class="math inline">\(y\)</span> in the basis given by the columns of <span class="math inline">\(\mathbf{U}\)</span>.</li>
+expanding <span class="math inline">\(y\)</span> in the basis given by the columns of <span class="math inline">\(\widetilde{\mathbf{U}}\)</span>.</li>
 <li>Second, the <span class="math inline">\(i\)</span>-th coefficient is shrunk towards 0,
 <span class="math display">\[\hat{\beta}_i(\lambda) = \frac{\hat{\beta}_i}{1 + \lambda \gamma_i}.\]</span></li>
 <li>Third, the smoothed values, <span class="math inline">\(\widetilde{\mathbf{U}} \hat{\beta}(\lambda)\)</span>,
@@ -648,21 +657,21 @@ with reference to <span class="citation">Demmler and Reinsch (<a href="#ref-Demm
 <p>We implement the computation of the diagonalization for the Nuuk temperature
 data using <span class="math inline">\(p = 20\)</span> basis functions (18 inner knots) equidistantly distributed
 over the range of the years for which we have data.</p>
-<div class="sourceCode" id="cb119"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb119-1"><a href="3-5-splines.html#cb119-1"></a>inner_knots &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1867</span>, <span class="dv">2013</span>, <span class="dt">length.out =</span> <span class="dv">18</span>)</span>
-<span id="cb119-2"><a href="3-5-splines.html#cb119-2"></a>Phi &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(<span class="kw">c</span>(<span class="kw">rep</span>(<span class="kw">range</span>(inner_knots), <span class="dv">3</span>), inner_knots), Nuuk_year<span class="op">$</span>Year)</span>
-<span id="cb119-3"><a href="3-5-splines.html#cb119-3"></a>Omega &lt;-<span class="st"> </span><span class="kw">pen_mat</span>(inner_knots)</span>
-<span id="cb119-4"><a href="3-5-splines.html#cb119-4"></a>Phi_svd &lt;-<span class="st"> </span><span class="kw">svd</span>(Phi)</span>
-<span id="cb119-5"><a href="3-5-splines.html#cb119-5"></a>Omega_tilde &lt;-<span class="st"> </span><span class="kw">t</span>(<span class="kw">crossprod</span>(Phi_svd<span class="op">$</span>v, Omega <span class="op">%*%</span><span class="st"> </span>Phi_svd<span class="op">$</span>v)) <span class="op">/</span><span class="st"> </span>Phi_svd<span class="op">$</span>d</span>
-<span id="cb119-6"><a href="3-5-splines.html#cb119-6"></a>Omega_tilde &lt;-<span class="st"> </span><span class="kw">t</span>(Omega_tilde) <span class="op">/</span><span class="st"> </span>Phi_svd<span class="op">$</span>d</span>
-<span id="cb119-7"><a href="3-5-splines.html#cb119-7"></a><span class="co">## It is safer to use the numerical singular value decomposition (&#39;svd&#39;)</span></span>
-<span id="cb119-8"><a href="3-5-splines.html#cb119-8"></a><span class="co">## for diagonalizing a positive semidefinite matrix than to use a </span></span>
-<span id="cb119-9"><a href="3-5-splines.html#cb119-9"></a><span class="co">## more general numerical diagonalization implementation such as &#39;eigen&#39;. </span></span>
-<span id="cb119-10"><a href="3-5-splines.html#cb119-10"></a>Omega_tilde_svd &lt;-<span class="st"> </span><span class="kw">svd</span>(Omega_tilde)  </span>
-<span id="cb119-11"><a href="3-5-splines.html#cb119-11"></a>U_tilde &lt;-<span class="st"> </span>Phi_svd<span class="op">$</span>u <span class="op">%*%</span><span class="st"> </span>Omega_tilde_svd<span class="op">$</span>u</span></code></pre></div>
+<div class="sourceCode" id="cb117"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb117-1"><a href="3-5-splines.html#cb117-1"></a>inner_knots &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1867</span>, <span class="dv">2013</span>, <span class="dt">length.out =</span> <span class="dv">18</span>)</span>
+<span id="cb117-2"><a href="3-5-splines.html#cb117-2"></a>Phi &lt;-<span class="st"> </span><span class="kw">splineDesign</span>(<span class="kw">c</span>(<span class="kw">rep</span>(<span class="kw">range</span>(inner_knots), <span class="dv">3</span>), inner_knots), Nuuk_year<span class="op">$</span>Year)</span>
+<span id="cb117-3"><a href="3-5-splines.html#cb117-3"></a>Omega &lt;-<span class="st"> </span><span class="kw">pen_mat</span>(inner_knots)</span>
+<span id="cb117-4"><a href="3-5-splines.html#cb117-4"></a>Phi_svd &lt;-<span class="st"> </span><span class="kw">svd</span>(Phi)</span>
+<span id="cb117-5"><a href="3-5-splines.html#cb117-5"></a>Omega_tilde &lt;-<span class="st"> </span><span class="kw">t</span>(<span class="kw">crossprod</span>(Phi_svd<span class="op">$</span>v, Omega <span class="op">%*%</span><span class="st"> </span>Phi_svd<span class="op">$</span>v)) <span class="op">/</span><span class="st"> </span>Phi_svd<span class="op">$</span>d</span>
+<span id="cb117-6"><a href="3-5-splines.html#cb117-6"></a>Omega_tilde &lt;-<span class="st"> </span><span class="kw">t</span>(Omega_tilde) <span class="op">/</span><span class="st"> </span>Phi_svd<span class="op">$</span>d</span>
+<span id="cb117-7"><a href="3-5-splines.html#cb117-7"></a><span class="co"># It is safer to use the numerical singular value decomposition (&#39;svd()&#39;)</span></span>
+<span id="cb117-8"><a href="3-5-splines.html#cb117-8"></a><span class="co"># for diagonalizing a positive semidefinite matrix than to use a </span></span>
+<span id="cb117-9"><a href="3-5-splines.html#cb117-9"></a><span class="co"># more general numerical diagonalization implementation such as &#39;eigen()&#39;. </span></span>
+<span id="cb117-10"><a href="3-5-splines.html#cb117-10"></a>Omega_tilde_svd &lt;-<span class="st"> </span><span class="kw">svd</span>(Omega_tilde)  </span>
+<span id="cb117-11"><a href="3-5-splines.html#cb117-11"></a>U_tilde &lt;-<span class="st"> </span>Phi_svd<span class="op">$</span>u <span class="op">%*%</span><span class="st"> </span>Omega_tilde_svd<span class="op">$</span>u</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:spline-gamma"></span>
-<img src="CSwR_files/figure-html/spline-gamma-1.png" alt="The eigenvalues $\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues untransformed, while the right plot shows the eigenvalues log-transformed." width="49%" /><img src="CSwR_files/figure-html/spline-gamma-2.png" alt="The eigenvalues $\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues untransformed, while the right plot shows the eigenvalues log-transformed." width="49%" />
+<img src="CSwR_files/figure-html/spline-gamma-1.png" alt="The eigenvalues $\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues, ane the right plot shows the eigenvalues on a log-scale." width="49%" /><img src="CSwR_files/figure-html/spline-gamma-2.png" alt="The eigenvalues $\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues, ane the right plot shows the eigenvalues on a log-scale." width="49%" />
 <p class="caption">
-Figure 3.17: The eigenvalues <span class="math inline">\(\gamma_i\)</span> that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues untransformed, while the right plot shows the eigenvalues log-transformed.
+Figure 3.17: The eigenvalues <span class="math inline">\(\gamma_i\)</span> that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues, ane the right plot shows the eigenvalues on a log-scale.
 </p>
 </div>
 <div class="figure" style="text-align: center"><span id="fig:spline-basis"></span>
@@ -741,7 +750,7 @@ gitbook.start({
 },
 "download": null,
 "toc": {
-"collapse": "section"
+"collapse": "subsection"
 }
 });
 });

@@ -369,11 +369,14 @@ approximation techniques such as binning. In this section we will focus on
 implementing bandwidth selection rather than the kernel smoother itself.
 The basic kernel smoothing computation is also implemented in the
 <code>ksmooth</code> function from the stats package.</p>
-<div class="sourceCode" id="cb71"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb71-1"><a href="3-2-kernel-methods.html#cb71-1"></a>f_hat &lt;-<span class="st"> </span><span class="kw">ksmooth</span>(Nuuk_year<span class="op">$</span>Year, Nuuk_year<span class="op">$</span>Temperature, </span>
-<span id="cb71-2"><a href="3-2-kernel-methods.html#cb71-2"></a>                 <span class="dt">kernel =</span> <span class="st">&quot;normal&quot;</span>,</span>
-<span id="cb71-3"><a href="3-2-kernel-methods.html#cb71-3"></a>                 <span class="dt">bandwidth =</span> <span class="dv">10</span>, </span>
-<span id="cb71-4"><a href="3-2-kernel-methods.html#cb71-4"></a>                 <span class="dt">x.points =</span> Nuuk_year<span class="op">$</span>Year)</span>
-<span id="cb71-5"><a href="3-2-kernel-methods.html#cb71-5"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> f_hat<span class="op">$</span>y), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="3-2-kernel-methods.html#cb70-1"></a>f_hat &lt;-<span class="st"> </span><span class="kw">ksmooth</span>(</span>
+<span id="cb70-2"><a href="3-2-kernel-methods.html#cb70-2"></a>  Nuuk_year<span class="op">$</span>Year, </span>
+<span id="cb70-3"><a href="3-2-kernel-methods.html#cb70-3"></a>  Nuuk_year<span class="op">$</span>Temperature, </span>
+<span id="cb70-4"><a href="3-2-kernel-methods.html#cb70-4"></a>  <span class="dt">kernel =</span> <span class="st">&quot;normal&quot;</span>,</span>
+<span id="cb70-5"><a href="3-2-kernel-methods.html#cb70-5"></a>  <span class="dt">bandwidth =</span> <span class="dv">10</span>, </span>
+<span id="cb70-6"><a href="3-2-kernel-methods.html#cb70-6"></a>  <span class="dt">x.points =</span> Nuuk_year<span class="op">$</span>Year</span>
+<span id="cb70-7"><a href="3-2-kernel-methods.html#cb70-7"></a>)</span>
+<span id="cb70-8"><a href="3-2-kernel-methods.html#cb70-8"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> f_hat<span class="op">$</span>y), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:ksmooth-Nuuk"></span>
 <img src="CSwR_files/figure-html/ksmooth-Nuuk-1.png" alt="Nadaraya–Watson kernel smoother of the annual average temperature in Nuuk computed using `ksmooth` with the Gaussian kernel and bandwidth 10." width="70%" />
 <p class="caption">
@@ -388,12 +391,11 @@ The rows sum to 1 by construction, and the diagonal elements are
 <span class="math display">\[S_{ii} = \frac{K(0)}{\sum_{l=1}^n K\left(\frac{x_l - x_i}{h}\right)}.\]</span>
 The computation of <span class="math inline">\(\mathbf{S}\)</span> for the Gaussian kernel is implemented
 using <code>outer</code> and <code>rumSums</code>.</p>
-<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="3-2-kernel-methods.html#cb72-1"></a>kern &lt;-<span class="st"> </span><span class="cf">function</span>(x) <span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>x<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span><span class="dv">2</span>)  <span class="co">## Gaussian kernel</span></span>
-<span id="cb72-2"><a href="3-2-kernel-methods.html#cb72-2"></a>Kij &lt;-<span class="st"> </span><span class="kw">outer</span>(Nuuk_year<span class="op">$</span>Year, Nuuk_year<span class="op">$</span>Year, <span class="cf">function</span>(x, y) <span class="kw">kern</span>((x <span class="op">-</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span><span class="dv">10</span>))</span>
-<span id="cb72-3"><a href="3-2-kernel-methods.html#cb72-3"></a>S &lt;-<span class="st"> </span>Kij <span class="op">/</span><span class="st"> </span><span class="kw">rowSums</span>(Kij)</span>
-<span id="cb72-4"><a href="3-2-kernel-methods.html#cb72-4"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> S <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
-<pre><code>## Warning: Use of `Nuuk_year$Temperature` is discouraged. Use `Temperature`
-## instead.</code></pre>
+<div class="sourceCode" id="cb71"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb71-1"><a href="3-2-kernel-methods.html#cb71-1"></a>kern &lt;-<span class="st"> </span><span class="cf">function</span>(x) <span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>x<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span><span class="dv">2</span>)  <span class="co"># The Gaussian kernel</span></span>
+<span id="cb71-2"><a href="3-2-kernel-methods.html#cb71-2"></a>Kij &lt;-<span class="st"> </span><span class="kw">outer</span>(Nuuk_year<span class="op">$</span>Year, Nuuk_year<span class="op">$</span>Year, <span class="cf">function</span>(x, y) <span class="kw">kern</span>((x <span class="op">-</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span><span class="dv">10</span>))</span>
+<span id="cb71-3"><a href="3-2-kernel-methods.html#cb71-3"></a>S &lt;-<span class="st"> </span>Kij <span class="op">/</span><span class="st"> </span><span class="kw">rowSums</span>(Kij)</span>
+<span id="cb71-4"><a href="3-2-kernel-methods.html#cb71-4"></a>f_hat &lt;-<span class="st"> </span>S <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature</span>
+<span id="cb71-5"><a href="3-2-kernel-methods.html#cb71-5"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> f_hat), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:smooth-Nuuk"></span>
 <img src="CSwR_files/figure-html/smooth-Nuuk-1.png" alt="Nadaraya–Watson kernel smoother of the annual average temperature in Nuuk computed using the smoother matrix and the Gaussian kernel with bandwidth 10." width="70%" />
 <p class="caption">
@@ -415,15 +417,15 @@ which will make the kernel have quartiles in <span class="math inline">\(\pm 0.2
 matrix and the corresponding LOOCV value as a function of the bandwidth.
 For comparison with previous implementations the mean is computed instead of the
 sum.</p>
-<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="3-2-kernel-methods.html#cb74-1"></a>loocv &lt;-<span class="st"> </span><span class="cf">function</span>(h) {</span>
-<span id="cb74-2"><a href="3-2-kernel-methods.html#cb74-2"></a>  Kij &lt;-<span class="st"> </span><span class="kw">outer</span>(Nuuk_year<span class="op">$</span>Year, Nuuk_year<span class="op">$</span>Year, <span class="cf">function</span>(x, y) <span class="kw">kern</span>((x <span class="op">-</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>h))</span>
-<span id="cb74-3"><a href="3-2-kernel-methods.html#cb74-3"></a>  S &lt;-<span class="st"> </span>Kij <span class="op">/</span><span class="st"> </span><span class="kw">rowSums</span>(Kij)</span>
-<span id="cb74-4"><a href="3-2-kernel-methods.html#cb74-4"></a>  <span class="kw">mean</span>(((Nuuk_year<span class="op">$</span>Temperature <span class="op">-</span><span class="st"> </span>S <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span><span class="kw">diag</span>(S)))<span class="op">^</span><span class="dv">2</span>) </span>
-<span id="cb74-5"><a href="3-2-kernel-methods.html#cb74-5"></a>}</span></code></pre></div>
-<div class="sourceCode" id="cb75"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb75-1"><a href="3-2-kernel-methods.html#cb75-1"></a>h &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1</span>, <span class="dv">5</span>, <span class="fl">0.05</span>)</span>
-<span id="cb75-2"><a href="3-2-kernel-methods.html#cb75-2"></a>CV &lt;-<span class="st"> </span><span class="kw">sapply</span>(h, loocv)</span>
-<span id="cb75-3"><a href="3-2-kernel-methods.html#cb75-3"></a>h_opt &lt;-<span class="st"> </span>h[<span class="kw">which.min</span>(CV)]</span>
-<span id="cb75-4"><a href="3-2-kernel-methods.html#cb75-4"></a><span class="kw">qplot</span>(h, CV) <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>() <span class="op">+</span><span class="st"> </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> h_opt, <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="3-2-kernel-methods.html#cb72-1"></a>loocv &lt;-<span class="st"> </span><span class="cf">function</span>(h) {</span>
+<span id="cb72-2"><a href="3-2-kernel-methods.html#cb72-2"></a>  Kij &lt;-<span class="st"> </span><span class="kw">outer</span>(Nuuk_year<span class="op">$</span>Year, Nuuk_year<span class="op">$</span>Year, <span class="cf">function</span>(x, y) <span class="kw">kern</span>((x <span class="op">-</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>h))</span>
+<span id="cb72-3"><a href="3-2-kernel-methods.html#cb72-3"></a>  S &lt;-<span class="st"> </span>Kij <span class="op">/</span><span class="st"> </span><span class="kw">rowSums</span>(Kij)</span>
+<span id="cb72-4"><a href="3-2-kernel-methods.html#cb72-4"></a>  <span class="kw">mean</span>(((Nuuk_year<span class="op">$</span>Temperature <span class="op">-</span><span class="st"> </span>S <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span><span class="kw">diag</span>(S)))<span class="op">^</span><span class="dv">2</span>) </span>
+<span id="cb72-5"><a href="3-2-kernel-methods.html#cb72-5"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb73"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb73-1"><a href="3-2-kernel-methods.html#cb73-1"></a>h &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1</span>, <span class="dv">5</span>, <span class="fl">0.05</span>)</span>
+<span id="cb73-2"><a href="3-2-kernel-methods.html#cb73-2"></a>CV &lt;-<span class="st"> </span><span class="kw">sapply</span>(h, loocv)</span>
+<span id="cb73-3"><a href="3-2-kernel-methods.html#cb73-3"></a>h_opt &lt;-<span class="st"> </span>h[<span class="kw">which.min</span>(CV)]</span>
+<span id="cb73-4"><a href="3-2-kernel-methods.html#cb73-4"></a><span class="kw">qplot</span>(h, CV) <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>() <span class="op">+</span><span class="st"> </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> h_opt, <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:Nuuk-kernel-loocv"></span>
 <img src="CSwR_files/figure-html/Nuuk-kernel-loocv-1.png" alt="The leave-one-out cross-validation criterion for the kernel smoother using the Gaussian kernel as a function of the bandwidth $h$." width="70%" />
 <p class="caption">
@@ -432,14 +434,16 @@ Figure 3.8: The leave-one-out cross-validation criterion for the kernel smoother
 </div>
 <p>The optimal bandwith is 1.55. We compute the resulting optimal smoother
 and compare it to the smoother computed using <code>ksmooth</code>.</p>
-<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="3-2-kernel-methods.html#cb76-1"></a>Kij &lt;-<span class="st"> </span><span class="kw">outer</span>(Nuuk_year<span class="op">$</span>Year, Nuuk_year<span class="op">$</span>Year, <span class="cf">function</span>(x, y) <span class="kw">kern</span>((x <span class="op">-</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>h_opt))</span>
-<span id="cb76-2"><a href="3-2-kernel-methods.html#cb76-2"></a>S &lt;-<span class="st"> </span>Kij <span class="op">/</span><span class="st"> </span><span class="kw">rowSums</span>(Kij)</span>
-<span id="cb76-3"><a href="3-2-kernel-methods.html#cb76-3"></a>f_hat &lt;-<span class="st"> </span>S <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature</span>
-<span id="cb76-4"><a href="3-2-kernel-methods.html#cb76-4"></a>f_hat_ksmooth &lt;-<span class="st"> </span><span class="kw">ksmooth</span>(Nuuk_year<span class="op">$</span>Year, Nuuk_year<span class="op">$</span>Temperature, </span>
-<span id="cb76-5"><a href="3-2-kernel-methods.html#cb76-5"></a>                         <span class="dt">kernel =</span> <span class="st">&quot;normal&quot;</span>,</span>
-<span id="cb76-6"><a href="3-2-kernel-methods.html#cb76-6"></a>                         <span class="dt">bandwidth =</span> h_opt <span class="op">/</span><span class="st">  </span><span class="fl">0.3706506</span>,  <span class="co">## Rescaling!</span></span>
-<span id="cb76-7"><a href="3-2-kernel-methods.html#cb76-7"></a>                         <span class="dt">x.points =</span> Nuuk_year<span class="op">$</span>Year)</span>
-<span id="cb76-8"><a href="3-2-kernel-methods.html#cb76-8"></a><span class="kw">range</span>(f_hat <span class="op">-</span><span class="st"> </span>f_hat_ksmooth<span class="op">$</span>y)</span></code></pre></div>
+<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="3-2-kernel-methods.html#cb74-1"></a>Kij &lt;-<span class="st"> </span><span class="kw">outer</span>(Nuuk_year<span class="op">$</span>Year, Nuuk_year<span class="op">$</span>Year, <span class="cf">function</span>(x, y) <span class="kw">kern</span>((x <span class="op">-</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>h_opt))</span>
+<span id="cb74-2"><a href="3-2-kernel-methods.html#cb74-2"></a>S &lt;-<span class="st"> </span>Kij <span class="op">/</span><span class="st"> </span><span class="kw">rowSums</span>(Kij)</span>
+<span id="cb74-3"><a href="3-2-kernel-methods.html#cb74-3"></a>f_hat &lt;-<span class="st"> </span>S <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature</span>
+<span id="cb74-4"><a href="3-2-kernel-methods.html#cb74-4"></a>f_hat_ksmooth &lt;-<span class="st"> </span><span class="kw">ksmooth</span>(</span>
+<span id="cb74-5"><a href="3-2-kernel-methods.html#cb74-5"></a>  Nuuk_year<span class="op">$</span>Year, Nuuk_year<span class="op">$</span>Temperature, </span>
+<span id="cb74-6"><a href="3-2-kernel-methods.html#cb74-6"></a>  <span class="dt">kernel =</span> <span class="st">&quot;normal&quot;</span>,</span>
+<span id="cb74-7"><a href="3-2-kernel-methods.html#cb74-7"></a>  <span class="dt">bandwidth =</span> h_opt <span class="op">/</span><span class="st">  </span><span class="fl">0.3706506</span>,  <span class="co"># Rescaling!</span></span>
+<span id="cb74-8"><a href="3-2-kernel-methods.html#cb74-8"></a>  <span class="dt">x.points =</span> Nuuk_year<span class="op">$</span>Year</span>
+<span id="cb74-9"><a href="3-2-kernel-methods.html#cb74-9"></a>)</span>
+<span id="cb74-10"><a href="3-2-kernel-methods.html#cb74-10"></a><span class="kw">range</span>(f_hat <span class="op">-</span><span class="st"> </span>f_hat_ksmooth<span class="op">$</span>y)</span></code></pre></div>
 <pre><code>## [1] -4.535467e-05  4.598776e-05</code></pre>
 <p>The differences are of the order <span class="math inline">\(10^{-5}\)</span>, which is small but larger than
 can be explained by rounding errors alone. In fact, <code>ksmooth</code> truncates the
@@ -449,9 +453,9 @@ effectively equals zero. The truncation explains the relatively
 large differences between the two results that should otherwise be equivalent. It is an
 example where the approximate solution computed by <code>ksmooth</code> is acceptable because
 it substantially reduces the run time.</p>
-<div class="sourceCode" id="cb78"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb78-1"><a href="3-2-kernel-methods.html#cb78-1"></a>p_Nuuk <span class="op">+</span><span class="st"> </span></span>
-<span id="cb78-2"><a href="3-2-kernel-methods.html#cb78-2"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">runMean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">9</span>)), <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>) <span class="op">+</span></span>
-<span id="cb78-3"><a href="3-2-kernel-methods.html#cb78-3"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> f_hat), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="3-2-kernel-methods.html#cb76-1"></a>p_Nuuk <span class="op">+</span><span class="st"> </span></span>
+<span id="cb76-2"><a href="3-2-kernel-methods.html#cb76-2"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">run_mean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">9</span>)), <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>) <span class="op">+</span></span>
+<span id="cb76-3"><a href="3-2-kernel-methods.html#cb76-3"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> f_hat), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:Nuuk-NN-plot4"></span>
 <img src="CSwR_files/figure-html/Nuuk-NN-plot4-1.png" alt="Nadaraya–Watson kernel smoother of the annual average temperature in Nuuk for the optimal bandwidth using LOOCV (blue) compared to the $k$-nearest neighbor smoother with $k = 9$ (red)." width="70%" />
 <p class="caption">
@@ -516,7 +520,7 @@ gitbook.start({
 },
 "download": null,
 "toc": {
-"collapse": "section"
+"collapse": "subsection"
 }
 });
 });

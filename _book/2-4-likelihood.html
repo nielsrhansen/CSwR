@@ -347,13 +347,13 @@ behaves for the densities
 <span class="math display">\[\overline{f}_h(x) = \frac{1}{nh \sqrt{2 \pi}} \sum_{j=1}^n e^{- \frac{(x - x_j)^2}{2 h^2} }\]</span>
 for different choices of <span class="math inline">\(h\)</span>. Note that <span class="math inline">\(\overline{f}_h\)</span> is simply the
 kernel density estimator with the Gaussian kernel and bandwidth <span class="math inline">\(h\)</span>.</p>
-<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="2-4-likelihood.html#cb50-1"></a><span class="co">## The densities can easily be implemented using the density implementation</span></span>
-<span id="cb50-2"><a href="2-4-likelihood.html#cb50-2"></a><span class="co">## of the Gaussian density in R</span></span>
-<span id="cb50-3"><a href="2-4-likelihood.html#cb50-3"></a>f_h &lt;-<span class="st"> </span><span class="cf">function</span>(x, h) <span class="kw">mean</span>(<span class="kw">dnorm</span>(x, psi, h))</span>
-<span id="cb50-4"><a href="2-4-likelihood.html#cb50-4"></a><span class="co">## This function does not work as a vectorized function as it is, but there is </span></span>
-<span id="cb50-5"><a href="2-4-likelihood.html#cb50-5"></a><span class="co">## a convenience function, &#39;Vectorize&#39;, in R that turns the function into a </span></span>
-<span id="cb50-6"><a href="2-4-likelihood.html#cb50-6"></a><span class="co">## function that can actually be applied correctly to a vector. </span></span>
-<span id="cb50-7"><a href="2-4-likelihood.html#cb50-7"></a>f_h &lt;-<span class="st"> </span><span class="kw">Vectorize</span>(f_h)</span></code></pre></div>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="2-4-likelihood.html#cb49-1"></a><span class="co">## The densities can easily be implemented using the density implementation</span></span>
+<span id="cb49-2"><a href="2-4-likelihood.html#cb49-2"></a><span class="co">## of the Gaussian density in R</span></span>
+<span id="cb49-3"><a href="2-4-likelihood.html#cb49-3"></a>f_h &lt;-<span class="st"> </span><span class="cf">function</span>(x, h) <span class="kw">mean</span>(<span class="kw">dnorm</span>(x, psi, h))</span>
+<span id="cb49-4"><a href="2-4-likelihood.html#cb49-4"></a><span class="co">## This function does not work as a vectorized function as it is, but there is </span></span>
+<span id="cb49-5"><a href="2-4-likelihood.html#cb49-5"></a><span class="co">## a convenience function, &#39;Vectorize&#39;, in R that turns the function into a </span></span>
+<span id="cb49-6"><a href="2-4-likelihood.html#cb49-6"></a><span class="co">## function that can actually be applied correctly to a vector. </span></span>
+<span id="cb49-7"><a href="2-4-likelihood.html#cb49-7"></a>f_h &lt;-<span class="st"> </span><span class="kw">Vectorize</span>(f_h)</span></code></pre></div>
 <p>Figure <a href="2-4-likelihood.html#fig:gausKern">2.5</a> shows what some of
 these densities look like compared to the histogram of the <span class="math inline">\(\psi\)</span>-angle data.
 Clearly, for large <span class="math inline">\(h\)</span> these densities are smooth and slowly oscillating, while
@@ -369,15 +369,15 @@ Figure 2.5: The densities <span class="math inline">\(\overline{f}_h\)</span> fo
 </div>
 <p>The way that these densities adapt to the data points is reflected in the
 log-likelihood as well.</p>
-<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="2-4-likelihood.html#cb51-1"></a><span class="co"># To plot the log-likelihood we need to evaluate it in a grid of h-values.</span></span>
-<span id="cb51-2"><a href="2-4-likelihood.html#cb51-2"></a>hseq &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1</span>, <span class="fl">0.001</span>, <span class="fl">-0.001</span>)</span>
-<span id="cb51-3"><a href="2-4-likelihood.html#cb51-3"></a><span class="co"># For the following computation of the log-likelihood it is necessary </span></span>
-<span id="cb51-4"><a href="2-4-likelihood.html#cb51-4"></a><span class="co"># that f_h is vectorized. There are other ways to implement this computation</span></span>
-<span id="cb51-5"><a href="2-4-likelihood.html#cb51-5"></a><span class="co"># in R, and some are more efficient, but the computation of the log-likelihood </span></span>
-<span id="cb51-6"><a href="2-4-likelihood.html#cb51-6"></a><span class="co"># for each h scales as O(n^2) with n the number of data points. </span></span>
-<span id="cb51-7"><a href="2-4-likelihood.html#cb51-7"></a>ll &lt;-<span class="st"> </span><span class="kw">sapply</span>(hseq, <span class="cf">function</span>(h) <span class="kw">sum</span>(<span class="kw">log</span>(<span class="kw">f_h</span>(psi, h))))</span>
-<span id="cb51-8"><a href="2-4-likelihood.html#cb51-8"></a><span class="kw">qplot</span>(hseq, ll, <span class="dt">geom =</span> <span class="st">&quot;line&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">xlab</span>(<span class="st">&quot;h&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;Log-likelihood&quot;</span>)</span>
-<span id="cb51-9"><a href="2-4-likelihood.html#cb51-9"></a><span class="kw">qplot</span>(hseq, ll, <span class="dt">geom =</span> <span class="st">&quot;line&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_x_log10</span>(<span class="st">&quot;h&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="2-4-likelihood.html#cb50-1"></a><span class="co"># To plot the log-likelihood we need to evaluate it in a grid of h-values.</span></span>
+<span id="cb50-2"><a href="2-4-likelihood.html#cb50-2"></a>hseq &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1</span>, <span class="fl">0.001</span>, <span class="fl">-0.001</span>)</span>
+<span id="cb50-3"><a href="2-4-likelihood.html#cb50-3"></a><span class="co"># For the following computation of the log-likelihood it is necessary </span></span>
+<span id="cb50-4"><a href="2-4-likelihood.html#cb50-4"></a><span class="co"># that f_h is vectorized. There are other ways to implement this computation</span></span>
+<span id="cb50-5"><a href="2-4-likelihood.html#cb50-5"></a><span class="co"># in R, and some are more efficient, but the computation of the log-likelihood </span></span>
+<span id="cb50-6"><a href="2-4-likelihood.html#cb50-6"></a><span class="co"># for each h scales as O(n^2) with n the number of data points. </span></span>
+<span id="cb50-7"><a href="2-4-likelihood.html#cb50-7"></a>ll &lt;-<span class="st"> </span><span class="kw">sapply</span>(hseq, <span class="cf">function</span>(h) <span class="kw">sum</span>(<span class="kw">log</span>(<span class="kw">f_h</span>(psi, h))))</span>
+<span id="cb50-8"><a href="2-4-likelihood.html#cb50-8"></a><span class="kw">qplot</span>(hseq, ll, <span class="dt">geom =</span> <span class="st">&quot;line&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">xlab</span>(<span class="st">&quot;h&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;Log-likelihood&quot;</span>)</span>
+<span id="cb50-9"><a href="2-4-likelihood.html#cb50-9"></a><span class="kw">qplot</span>(hseq, ll, <span class="dt">geom =</span> <span class="st">&quot;line&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_x_log10</span>(<span class="st">&quot;h&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;&quot;</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:LogLike"></span>
 <img src="CSwR_files/figure-html/LogLike-1.png" alt="Log-likelihood, $\ell(\overline{f}_h)$, for the densities $\overline{f}_h$ as a function of $h$. Note the log-scale on the right." width="49%" /><img src="CSwR_files/figure-html/LogLike-2.png" alt="Log-likelihood, $\ell(\overline{f}_h)$, for the densities $\overline{f}_h$ as a function of $h$. Note the log-scale on the right." width="49%" />
 <p class="caption">
@@ -534,7 +534,7 @@ gitbook.start({
 },
 "download": null,
 "toc": {
-"collapse": "section"
+"collapse": "subsection"
 }
 });
 });

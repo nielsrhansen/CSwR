@@ -409,25 +409,25 @@ in a finite number of points.</p>
 the evaluation of the density estimate in a given number of equidistant
 points. The function mimics some of the defaults of <code>density()</code> so that it
 actually evaluates the estimate in the same points as <code>density()</code>.</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="2-2-kernel-density.html#cb31-1"></a><span class="co"># This is an implementation of the function &#39;kern_dens&#39; that computes </span></span>
-<span id="cb31-2"><a href="2-2-kernel-density.html#cb31-2"></a><span class="co"># evaluations of Gaussian kernel density estimates in a grid of points.</span></span>
-<span id="cb31-3"><a href="2-2-kernel-density.html#cb31-3"></a><span class="co">#</span></span>
-<span id="cb31-4"><a href="2-2-kernel-density.html#cb31-4"></a><span class="co"># The function has three formal arguments: &#39;x&#39; is the numeric vector of data </span></span>
-<span id="cb31-5"><a href="2-2-kernel-density.html#cb31-5"></a><span class="co"># points, &#39;h&#39; is the bandwidth and &#39;m&#39; is the number of grid points. </span></span>
-<span id="cb31-6"><a href="2-2-kernel-density.html#cb31-6"></a><span class="co"># The default value of 512 is chosen to match the default of &#39;density()&#39;. </span></span>
-<span id="cb31-7"><a href="2-2-kernel-density.html#cb31-7"></a>kern_dens &lt;-<span class="st"> </span><span class="cf">function</span>(x, h, <span class="dt">m =</span> <span class="dv">512</span>) {</span>
-<span id="cb31-8"><a href="2-2-kernel-density.html#cb31-8"></a>  rg &lt;-<span class="st"> </span><span class="kw">range</span>(x)</span>
-<span id="cb31-9"><a href="2-2-kernel-density.html#cb31-9"></a>  <span class="co"># xx is equivalent to grid points in &#39;density()&#39;</span></span>
-<span id="cb31-10"><a href="2-2-kernel-density.html#cb31-10"></a>  xx &lt;-<span class="st"> </span><span class="kw">seq</span>(rg[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, rg[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, <span class="dt">length.out =</span> m)</span>
-<span id="cb31-11"><a href="2-2-kernel-density.html#cb31-11"></a>  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(m) <span class="co"># The evaluations, initialized as a vector of zeros</span></span>
-<span id="cb31-12"><a href="2-2-kernel-density.html#cb31-12"></a>  <span class="co"># The actual computation is done using nested for-loops. The outer loop</span></span>
-<span id="cb31-13"><a href="2-2-kernel-density.html#cb31-13"></a>  <span class="co"># is over the grid points, and the inner loop is over the data points.</span></span>
-<span id="cb31-14"><a href="2-2-kernel-density.html#cb31-14"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="kw">seq_along</span>(xx))</span>
-<span id="cb31-15"><a href="2-2-kernel-density.html#cb31-15"></a>    <span class="cf">for</span> (j <span class="cf">in</span> <span class="kw">seq_along</span>(x))</span>
-<span id="cb31-16"><a href="2-2-kernel-density.html#cb31-16"></a>      y[i] &lt;-<span class="st"> </span>y[i] <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>(xx[i] <span class="op">-</span><span class="st"> </span>x[j])<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>h<span class="op">^</span><span class="dv">2</span>))  </span>
-<span id="cb31-17"><a href="2-2-kernel-density.html#cb31-17"></a>  y &lt;-<span class="st"> </span>y <span class="op">/</span><span class="st"> </span>(<span class="kw">sqrt</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi) <span class="op">*</span><span class="st"> </span>h <span class="op">*</span><span class="st"> </span><span class="kw">length</span>(x))</span>
-<span id="cb31-18"><a href="2-2-kernel-density.html#cb31-18"></a>  <span class="kw">list</span>(<span class="dt">x =</span> xx, <span class="dt">y =</span> y)</span>
-<span id="cb31-19"><a href="2-2-kernel-density.html#cb31-19"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="2-2-kernel-density.html#cb30-1"></a><span class="co"># This is an implementation of the function &#39;kern_dens&#39; that computes </span></span>
+<span id="cb30-2"><a href="2-2-kernel-density.html#cb30-2"></a><span class="co"># evaluations of Gaussian kernel density estimates in a grid of points.</span></span>
+<span id="cb30-3"><a href="2-2-kernel-density.html#cb30-3"></a><span class="co">#</span></span>
+<span id="cb30-4"><a href="2-2-kernel-density.html#cb30-4"></a><span class="co"># The function has three formal arguments: &#39;x&#39; is the numeric vector of data </span></span>
+<span id="cb30-5"><a href="2-2-kernel-density.html#cb30-5"></a><span class="co"># points, &#39;h&#39; is the bandwidth and &#39;m&#39; is the number of grid points. </span></span>
+<span id="cb30-6"><a href="2-2-kernel-density.html#cb30-6"></a><span class="co"># The default value of 512 is chosen to match the default of &#39;density()&#39;. </span></span>
+<span id="cb30-7"><a href="2-2-kernel-density.html#cb30-7"></a>kern_dens &lt;-<span class="st"> </span><span class="cf">function</span>(x, h, <span class="dt">m =</span> <span class="dv">512</span>) {</span>
+<span id="cb30-8"><a href="2-2-kernel-density.html#cb30-8"></a>  rg &lt;-<span class="st"> </span><span class="kw">range</span>(x)</span>
+<span id="cb30-9"><a href="2-2-kernel-density.html#cb30-9"></a>  <span class="co"># xx is equivalent to grid points in &#39;density()&#39;</span></span>
+<span id="cb30-10"><a href="2-2-kernel-density.html#cb30-10"></a>  xx &lt;-<span class="st"> </span><span class="kw">seq</span>(rg[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, rg[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, <span class="dt">length.out =</span> m)</span>
+<span id="cb30-11"><a href="2-2-kernel-density.html#cb30-11"></a>  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(m) <span class="co"># The evaluations, initialized as a vector of zeros</span></span>
+<span id="cb30-12"><a href="2-2-kernel-density.html#cb30-12"></a>  <span class="co"># The actual computation is done using nested for-loops. The outer loop</span></span>
+<span id="cb30-13"><a href="2-2-kernel-density.html#cb30-13"></a>  <span class="co"># is over the grid points, and the inner loop is over the data points.</span></span>
+<span id="cb30-14"><a href="2-2-kernel-density.html#cb30-14"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="kw">seq_along</span>(xx))</span>
+<span id="cb30-15"><a href="2-2-kernel-density.html#cb30-15"></a>    <span class="cf">for</span> (j <span class="cf">in</span> <span class="kw">seq_along</span>(x))</span>
+<span id="cb30-16"><a href="2-2-kernel-density.html#cb30-16"></a>      y[i] &lt;-<span class="st"> </span>y[i] <span class="op">+</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>(xx[i] <span class="op">-</span><span class="st"> </span>x[j])<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>h<span class="op">^</span><span class="dv">2</span>))  </span>
+<span id="cb30-17"><a href="2-2-kernel-density.html#cb30-17"></a>  y &lt;-<span class="st"> </span>y <span class="op">/</span><span class="st"> </span>(<span class="kw">sqrt</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi) <span class="op">*</span><span class="st"> </span>h <span class="op">*</span><span class="st"> </span><span class="kw">length</span>(x))</span>
+<span id="cb30-18"><a href="2-2-kernel-density.html#cb30-18"></a>  <span class="kw">list</span>(<span class="dt">x =</span> xx, <span class="dt">y =</span> y)</span>
+<span id="cb30-19"><a href="2-2-kernel-density.html#cb30-19"></a>}</span></code></pre></div>
 <p>Note that the function returns a list containing the grid points (<code>x</code>) where
 the density estimate is evaluated as well as the estimated density
 evaluations (<code>y</code>). Note also that the argument <code>m</code> above sets the number of
@@ -436,16 +436,16 @@ latter can be a bit confusing as <span class="math inline">\(n\)</span> is often
 number of data points.</p>
 <p>We will immediately test if the implementation works as expected – in this
 case by comparing it to our reference implementation <code>density()</code>.</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="2-2-kernel-density.html#cb32-1"></a>f_hat &lt;-<span class="st"> </span><span class="kw">kern_dens</span>(psi, <span class="fl">0.2</span>)</span>
-<span id="cb32-2"><a href="2-2-kernel-density.html#cb32-2"></a>f_hat_dens &lt;-<span class="st"> </span><span class="kw">density</span>(psi, <span class="fl">0.2</span>)</span>
-<span id="cb32-3"><a href="2-2-kernel-density.html#cb32-3"></a><span class="kw">plot</span>(f_hat, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">lwd =</span> <span class="dv">4</span>, <span class="dt">xlab =</span> <span class="st">&quot;x&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Density&quot;</span>)</span>
-<span id="cb32-4"><a href="2-2-kernel-density.html#cb32-4"></a><span class="kw">lines</span>(f_hat_dens, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>)</span>
-<span id="cb32-5"><a href="2-2-kernel-density.html#cb32-5"></a><span class="kw">plot</span>(f_hat<span class="op">$</span>x, f_hat<span class="op">$</span>y <span class="op">-</span><span class="st"> </span>f_hat_dens<span class="op">$</span>y, </span>
-<span id="cb32-6"><a href="2-2-kernel-density.html#cb32-6"></a>  <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, </span>
-<span id="cb32-7"><a href="2-2-kernel-density.html#cb32-7"></a>  <span class="dt">lwd =</span> <span class="dv">2</span>,</span>
-<span id="cb32-8"><a href="2-2-kernel-density.html#cb32-8"></a>  <span class="dt">xlab =</span> <span class="st">&quot;x&quot;</span>, </span>
-<span id="cb32-9"><a href="2-2-kernel-density.html#cb32-9"></a>  <span class="dt">ylab =</span> <span class="st">&quot;Difference&quot;</span></span>
-<span id="cb32-10"><a href="2-2-kernel-density.html#cb32-10"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="2-2-kernel-density.html#cb31-1"></a>f_hat &lt;-<span class="st"> </span><span class="kw">kern_dens</span>(psi, <span class="fl">0.2</span>)</span>
+<span id="cb31-2"><a href="2-2-kernel-density.html#cb31-2"></a>f_hat_dens &lt;-<span class="st"> </span><span class="kw">density</span>(psi, <span class="fl">0.2</span>)</span>
+<span id="cb31-3"><a href="2-2-kernel-density.html#cb31-3"></a><span class="kw">plot</span>(f_hat, <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">lwd =</span> <span class="dv">4</span>, <span class="dt">xlab =</span> <span class="st">&quot;x&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Density&quot;</span>)</span>
+<span id="cb31-4"><a href="2-2-kernel-density.html#cb31-4"></a><span class="kw">lines</span>(f_hat_dens, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb31-5"><a href="2-2-kernel-density.html#cb31-5"></a><span class="kw">plot</span>(f_hat<span class="op">$</span>x, f_hat<span class="op">$</span>y <span class="op">-</span><span class="st"> </span>f_hat_dens<span class="op">$</span>y, </span>
+<span id="cb31-6"><a href="2-2-kernel-density.html#cb31-6"></a>  <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, </span>
+<span id="cb31-7"><a href="2-2-kernel-density.html#cb31-7"></a>  <span class="dt">lwd =</span> <span class="dv">2</span>,</span>
+<span id="cb31-8"><a href="2-2-kernel-density.html#cb31-8"></a>  <span class="dt">xlab =</span> <span class="st">&quot;x&quot;</span>, </span>
+<span id="cb31-9"><a href="2-2-kernel-density.html#cb31-9"></a>  <span class="dt">ylab =</span> <span class="st">&quot;Difference&quot;</span></span>
+<span id="cb31-10"><a href="2-2-kernel-density.html#cb31-10"></a>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:kern-dens-fig"></span>
 <img src="CSwR_files/figure-html/kern-dens-fig-1.png" alt="Kernel density estimates with the Gaussian kernel (left) using R's implementation (black) and our implementation (red) together with differences of the estimates (right)." width="49%" /><img src="CSwR_files/figure-html/kern-dens-fig-2.png" alt="Kernel density estimates with the Gaussian kernel (left) using R's implementation (black) and our implementation (red) together with differences of the estimates (right)." width="49%" />
 <p class="caption">
@@ -464,20 +464,20 @@ on certain approximations for run time efficiency.</p>
 instead of using an explicit loop. It is fairly easy to change the implementation
 to be more vectorized by computing each evaluation in one single line using
 the <code>sum()</code> function and the fact that <code>exp()</code> and squaring are vectorized.</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="2-2-kernel-density.html#cb33-1"></a>kern_dens_vec &lt;-<span class="st"> </span><span class="cf">function</span>(x, h, <span class="dt">m =</span> <span class="dv">512</span>) {</span>
-<span id="cb33-2"><a href="2-2-kernel-density.html#cb33-2"></a>  rg &lt;-<span class="st"> </span><span class="kw">range</span>(x)</span>
-<span id="cb33-3"><a href="2-2-kernel-density.html#cb33-3"></a>  xx &lt;-<span class="st"> </span><span class="kw">seq</span>(rg[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, rg[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, <span class="dt">length.out =</span> m)</span>
-<span id="cb33-4"><a href="2-2-kernel-density.html#cb33-4"></a>  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(m) </span>
-<span id="cb33-5"><a href="2-2-kernel-density.html#cb33-5"></a>  <span class="co"># The inner loop from &#39;kern_dens&#39; has been vectorized, and only the </span></span>
-<span id="cb33-6"><a href="2-2-kernel-density.html#cb33-6"></a>  <span class="co"># outer loop over the grid points remains. </span></span>
-<span id="cb33-7"><a href="2-2-kernel-density.html#cb33-7"></a>  const &lt;-<span class="st"> </span>(<span class="kw">sqrt</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi) <span class="op">*</span><span class="st"> </span>h <span class="op">*</span><span class="st"> </span><span class="kw">length</span>(x))</span>
-<span id="cb33-8"><a href="2-2-kernel-density.html#cb33-8"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="kw">seq_along</span>(xx))</span>
-<span id="cb33-9"><a href="2-2-kernel-density.html#cb33-9"></a>      y[i] &lt;-<span class="st"> </span><span class="kw">sum</span>(<span class="kw">exp</span>(<span class="op">-</span>(xx[i] <span class="op">-</span><span class="st"> </span>x)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>h<span class="op">^</span><span class="dv">2</span>))) <span class="op">/</span><span class="st"> </span>const</span>
-<span id="cb33-10"><a href="2-2-kernel-density.html#cb33-10"></a>  <span class="kw">list</span>(<span class="dt">x =</span> xx, <span class="dt">y =</span> y)</span>
-<span id="cb33-11"><a href="2-2-kernel-density.html#cb33-11"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="2-2-kernel-density.html#cb32-1"></a>kern_dens_vec &lt;-<span class="st"> </span><span class="cf">function</span>(x, h, <span class="dt">m =</span> <span class="dv">512</span>) {</span>
+<span id="cb32-2"><a href="2-2-kernel-density.html#cb32-2"></a>  rg &lt;-<span class="st"> </span><span class="kw">range</span>(x)</span>
+<span id="cb32-3"><a href="2-2-kernel-density.html#cb32-3"></a>  xx &lt;-<span class="st"> </span><span class="kw">seq</span>(rg[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, rg[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, <span class="dt">length.out =</span> m)</span>
+<span id="cb32-4"><a href="2-2-kernel-density.html#cb32-4"></a>  y &lt;-<span class="st"> </span><span class="kw">numeric</span>(m) </span>
+<span id="cb32-5"><a href="2-2-kernel-density.html#cb32-5"></a>  <span class="co"># The inner loop from &#39;kern_dens&#39; has been vectorized, and only the </span></span>
+<span id="cb32-6"><a href="2-2-kernel-density.html#cb32-6"></a>  <span class="co"># outer loop over the grid points remains. </span></span>
+<span id="cb32-7"><a href="2-2-kernel-density.html#cb32-7"></a>  const &lt;-<span class="st"> </span>(<span class="kw">sqrt</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi) <span class="op">*</span><span class="st"> </span>h <span class="op">*</span><span class="st"> </span><span class="kw">length</span>(x))</span>
+<span id="cb32-8"><a href="2-2-kernel-density.html#cb32-8"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="kw">seq_along</span>(xx))</span>
+<span id="cb32-9"><a href="2-2-kernel-density.html#cb32-9"></a>      y[i] &lt;-<span class="st"> </span><span class="kw">sum</span>(<span class="kw">exp</span>(<span class="op">-</span>(xx[i] <span class="op">-</span><span class="st"> </span>x)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>h<span class="op">^</span><span class="dv">2</span>))) <span class="op">/</span><span class="st"> </span>const</span>
+<span id="cb32-10"><a href="2-2-kernel-density.html#cb32-10"></a>  <span class="kw">list</span>(<span class="dt">x =</span> xx, <span class="dt">y =</span> y)</span>
+<span id="cb32-11"><a href="2-2-kernel-density.html#cb32-11"></a>}</span></code></pre></div>
 <p>We test this new implementation by comparing it to our previous
 implementation.</p>
-<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="2-2-kernel-density.html#cb34-1"></a><span class="kw">range</span>(<span class="kw">kern_dens</span>(psi, <span class="fl">0.2</span>)<span class="op">$</span>y <span class="op">-</span><span class="st"> </span><span class="kw">kern_dens_vec</span>(psi, <span class="fl">0.2</span>)<span class="op">$</span>y)</span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="2-2-kernel-density.html#cb33-1"></a><span class="kw">range</span>(<span class="kw">kern_dens</span>(psi, <span class="fl">0.2</span>)<span class="op">$</span>y <span class="op">-</span><span class="st"> </span><span class="kw">kern_dens_vec</span>(psi, <span class="fl">0.2</span>)<span class="op">$</span>y)</span></code></pre></div>
 <pre><code>## [1] -5.551115e-16  3.885781e-16</code></pre>
 <p>The magnitude of the differences are of order at most <span class="math inline">\(10^{-16}\)</span>, which is what
 can be expected due to rounding errors. Thus we conclude that up to rounding
@@ -490,13 +490,13 @@ an entirely vectorized implementation in R. One of the solutions will use the
 that apply a function to each element in a vector or a list. In the
 parlance of functional programming the <code>*apply()</code> functions are variations
 of the functional, or higher-order-function, known as <a href="https://en.wikipedia.org/wiki/Map_(higher-order_function)">map</a>.</p>
-<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="2-2-kernel-density.html#cb36-1"></a>kern_dens_apply &lt;-<span class="st"> </span><span class="cf">function</span>(x, h, <span class="dt">m =</span> <span class="dv">512</span>) {</span>
-<span id="cb36-2"><a href="2-2-kernel-density.html#cb36-2"></a>  rg &lt;-<span class="st"> </span><span class="kw">range</span>(x)</span>
-<span id="cb36-3"><a href="2-2-kernel-density.html#cb36-3"></a>  xx &lt;-<span class="st"> </span><span class="kw">seq</span>(rg[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, rg[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, <span class="dt">length.out =</span> m)</span>
-<span id="cb36-4"><a href="2-2-kernel-density.html#cb36-4"></a>  const &lt;-<span class="st"> </span><span class="kw">sqrt</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi) <span class="op">*</span><span class="st"> </span>h <span class="op">*</span><span class="st"> </span><span class="kw">length</span>(x)</span>
-<span id="cb36-5"><a href="2-2-kernel-density.html#cb36-5"></a>  y &lt;-<span class="st"> </span><span class="kw">sapply</span>(xx, <span class="cf">function</span>(z) <span class="kw">sum</span>(<span class="kw">exp</span>(<span class="op">-</span>(z <span class="op">-</span><span class="st"> </span>x)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>h<span class="op">^</span><span class="dv">2</span>))) <span class="op">/</span><span class="st"> </span>const)</span>
-<span id="cb36-6"><a href="2-2-kernel-density.html#cb36-6"></a>  <span class="kw">list</span>(<span class="dt">x =</span> xx, <span class="dt">y =</span> y)</span>
-<span id="cb36-7"><a href="2-2-kernel-density.html#cb36-7"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="2-2-kernel-density.html#cb35-1"></a>kern_dens_apply &lt;-<span class="st"> </span><span class="cf">function</span>(x, h, <span class="dt">m =</span> <span class="dv">512</span>) {</span>
+<span id="cb35-2"><a href="2-2-kernel-density.html#cb35-2"></a>  rg &lt;-<span class="st"> </span><span class="kw">range</span>(x)</span>
+<span id="cb35-3"><a href="2-2-kernel-density.html#cb35-3"></a>  xx &lt;-<span class="st"> </span><span class="kw">seq</span>(rg[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, rg[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, <span class="dt">length.out =</span> m)</span>
+<span id="cb35-4"><a href="2-2-kernel-density.html#cb35-4"></a>  const &lt;-<span class="st"> </span><span class="kw">sqrt</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi) <span class="op">*</span><span class="st"> </span>h <span class="op">*</span><span class="st"> </span><span class="kw">length</span>(x)</span>
+<span id="cb35-5"><a href="2-2-kernel-density.html#cb35-5"></a>  y &lt;-<span class="st"> </span><span class="kw">sapply</span>(xx, <span class="cf">function</span>(z) <span class="kw">sum</span>(<span class="kw">exp</span>(<span class="op">-</span>(z <span class="op">-</span><span class="st"> </span>x)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>h<span class="op">^</span><span class="dv">2</span>))) <span class="op">/</span><span class="st"> </span>const)</span>
+<span id="cb35-6"><a href="2-2-kernel-density.html#cb35-6"></a>  <span class="kw">list</span>(<span class="dt">x =</span> xx, <span class="dt">y =</span> y)</span>
+<span id="cb35-7"><a href="2-2-kernel-density.html#cb35-7"></a>}</span></code></pre></div>
 <p>The <code>sapply()</code> call above will apply the function <code>function(z) sum(dnorm(...</code>
 to every element in the vector <code>xx</code> and return the result as a vector. The
 function is an example of an <em>anonymous function</em> that doesn’t get a name and
@@ -506,21 +506,21 @@ simple wrapper around <code>lapply()</code> that attempts to “simplify” the 
 a list to an array (and in this case to a vector).</p>
 <p>An alternative, and also completely vectorized, solution can be based on
 the functions <code>outer()</code> and <code>rowMeans()</code>.</p>
-<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="2-2-kernel-density.html#cb37-1"></a>kern_dens_outer &lt;-<span class="st"> </span><span class="cf">function</span>(x, h, <span class="dt">m =</span> <span class="dv">512</span>) {</span>
-<span id="cb37-2"><a href="2-2-kernel-density.html#cb37-2"></a>  rg &lt;-<span class="st"> </span><span class="kw">range</span>(x)</span>
-<span id="cb37-3"><a href="2-2-kernel-density.html#cb37-3"></a>  xx &lt;-<span class="st"> </span><span class="kw">seq</span>(rg[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, rg[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, <span class="dt">length.out =</span> m)</span>
-<span id="cb37-4"><a href="2-2-kernel-density.html#cb37-4"></a>  y &lt;-<span class="st"> </span><span class="kw">outer</span>(xx, x, <span class="cf">function</span>(zz, z) <span class="kw">exp</span>(<span class="op">-</span>(zz <span class="op">-</span><span class="st"> </span>z)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>h<span class="op">^</span><span class="dv">2</span>)))</span>
-<span id="cb37-5"><a href="2-2-kernel-density.html#cb37-5"></a>  y &lt;-<span class="st"> </span><span class="kw">rowMeans</span>(y) <span class="op">/</span><span class="st"> </span>(<span class="kw">sqrt</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi) <span class="op">*</span><span class="st"> </span>h)</span>
-<span id="cb37-6"><a href="2-2-kernel-density.html#cb37-6"></a>  <span class="kw">list</span>(<span class="dt">x =</span> xx, <span class="dt">y =</span> y)</span>
-<span id="cb37-7"><a href="2-2-kernel-density.html#cb37-7"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="2-2-kernel-density.html#cb36-1"></a>kern_dens_outer &lt;-<span class="st"> </span><span class="cf">function</span>(x, h, <span class="dt">m =</span> <span class="dv">512</span>) {</span>
+<span id="cb36-2"><a href="2-2-kernel-density.html#cb36-2"></a>  rg &lt;-<span class="st"> </span><span class="kw">range</span>(x)</span>
+<span id="cb36-3"><a href="2-2-kernel-density.html#cb36-3"></a>  xx &lt;-<span class="st"> </span><span class="kw">seq</span>(rg[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, rg[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span><span class="dv">3</span> <span class="op">*</span><span class="st"> </span>h, <span class="dt">length.out =</span> m)</span>
+<span id="cb36-4"><a href="2-2-kernel-density.html#cb36-4"></a>  y &lt;-<span class="st"> </span><span class="kw">outer</span>(xx, x, <span class="cf">function</span>(zz, z) <span class="kw">exp</span>(<span class="op">-</span>(zz <span class="op">-</span><span class="st"> </span>z)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>h<span class="op">^</span><span class="dv">2</span>)))</span>
+<span id="cb36-5"><a href="2-2-kernel-density.html#cb36-5"></a>  y &lt;-<span class="st"> </span><span class="kw">rowMeans</span>(y) <span class="op">/</span><span class="st"> </span>(<span class="kw">sqrt</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>pi) <span class="op">*</span><span class="st"> </span>h)</span>
+<span id="cb36-6"><a href="2-2-kernel-density.html#cb36-6"></a>  <span class="kw">list</span>(<span class="dt">x =</span> xx, <span class="dt">y =</span> y)</span>
+<span id="cb36-7"><a href="2-2-kernel-density.html#cb36-7"></a>}</span></code></pre></div>
 <p>The <code>outer()</code> function evaluates the kernel in all combinations
 of the grid and data points and returns a matrix of
 dimensions <span class="math inline">\(m \times n\)</span>. The function <code>rowMeans()</code> computes
 the means of each row and returns a vector of length <span class="math inline">\(m\)</span>.</p>
 <p>We should, of course, also remember to test these two last implementations.</p>
-<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="2-2-kernel-density.html#cb38-1"></a><span class="kw">range</span>(<span class="kw">kern_dens</span>(psi, <span class="fl">0.2</span>)<span class="op">$</span>y <span class="op">-</span><span class="st"> </span><span class="kw">kern_dens_apply</span>(psi, <span class="fl">0.2</span>)<span class="op">$</span>y)</span></code></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="2-2-kernel-density.html#cb37-1"></a><span class="kw">range</span>(<span class="kw">kern_dens</span>(psi, <span class="fl">0.2</span>)<span class="op">$</span>y <span class="op">-</span><span class="st"> </span><span class="kw">kern_dens_apply</span>(psi, <span class="fl">0.2</span>)<span class="op">$</span>y)</span></code></pre></div>
 <pre><code>## [1] -5.551115e-16  3.885781e-16</code></pre>
-<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="2-2-kernel-density.html#cb40-1"></a><span class="kw">range</span>(<span class="kw">kern_dens</span>(psi, <span class="fl">0.2</span>)<span class="op">$</span>y <span class="op">-</span><span class="st"> </span><span class="kw">kern_dens_outer</span>(psi, <span class="fl">0.2</span>)<span class="op">$</span>y)</span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="2-2-kernel-density.html#cb39-1"></a><span class="kw">range</span>(<span class="kw">kern_dens</span>(psi, <span class="fl">0.2</span>)<span class="op">$</span>y <span class="op">-</span><span class="st"> </span><span class="kw">kern_dens_outer</span>(psi, <span class="fl">0.2</span>)<span class="op">$</span>y)</span></code></pre></div>
 <pre><code>## [1] -4.996004e-16  3.885781e-16</code></pre>
 <p>The natural question is then how to choose between the different implementations?
 Besides being correct it is important that the code is easy to read
@@ -548,10 +548,10 @@ includes user experience, energy consumption and implementation and maintenance
 time. In this section we focus on benchmarking run time.</p>
 <p>The function <code>system.time</code> in R provides a simple way of benchmarking run time
 measured in seconds.</p>
-<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="2-2-kernel-density.html#cb42-1"></a><span class="kw">system.time</span>(<span class="kw">kern_dens</span>(psi, <span class="fl">0.2</span>))</span>
-<span id="cb42-2"><a href="2-2-kernel-density.html#cb42-2"></a><span class="kw">system.time</span>(<span class="kw">kern_dens_vec</span>(psi, <span class="fl">0.2</span>))</span>
-<span id="cb42-3"><a href="2-2-kernel-density.html#cb42-3"></a><span class="kw">system.time</span>(<span class="kw">kern_dens_apply</span>(psi, <span class="fl">0.2</span>))</span>
-<span id="cb42-4"><a href="2-2-kernel-density.html#cb42-4"></a><span class="kw">system.time</span>(<span class="kw">kern_dens_outer</span>(psi, <span class="fl">0.2</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="2-2-kernel-density.html#cb41-1"></a><span class="kw">system.time</span>(<span class="kw">kern_dens</span>(psi, <span class="fl">0.2</span>))</span>
+<span id="cb41-2"><a href="2-2-kernel-density.html#cb41-2"></a><span class="kw">system.time</span>(<span class="kw">kern_dens_vec</span>(psi, <span class="fl">0.2</span>))</span>
+<span id="cb41-3"><a href="2-2-kernel-density.html#cb41-3"></a><span class="kw">system.time</span>(<span class="kw">kern_dens_apply</span>(psi, <span class="fl">0.2</span>))</span>
+<span id="cb41-4"><a href="2-2-kernel-density.html#cb41-4"></a><span class="kw">system.time</span>(<span class="kw">kern_dens_outer</span>(psi, <span class="fl">0.2</span>))</span></code></pre></div>
 <pre><code>## kern_dens:
 ##    user  system elapsed 
 ##   0.031   0.000   0.031 
@@ -570,13 +570,13 @@ operating system code on behalf of your code, respectively.</p>
 <p>From this simple benchmark, <code>kern_dens()</code> is clearly substantially slower
 than the three other implementations. For more systematic benchmarking of run
 time, the R package microbenchmark is useful.</p>
-<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="2-2-kernel-density.html#cb44-1"></a><span class="kw">library</span>(microbenchmark)</span></code></pre></div>
-<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="2-2-kernel-density.html#cb45-1"></a>kern_bench &lt;-<span class="st"> </span><span class="kw">microbenchmark</span>(</span>
-<span id="cb45-2"><a href="2-2-kernel-density.html#cb45-2"></a>  <span class="kw">kern_dens</span>(psi, <span class="fl">0.2</span>),</span>
-<span id="cb45-3"><a href="2-2-kernel-density.html#cb45-3"></a>  <span class="kw">kern_dens_vec</span>(psi, <span class="fl">0.2</span>),</span>
-<span id="cb45-4"><a href="2-2-kernel-density.html#cb45-4"></a>  <span class="kw">kern_dens_apply</span>(psi, <span class="fl">0.2</span>),</span>
-<span id="cb45-5"><a href="2-2-kernel-density.html#cb45-5"></a>  <span class="kw">kern_dens_outer</span>(psi, <span class="fl">0.2</span>)</span>
-<span id="cb45-6"><a href="2-2-kernel-density.html#cb45-6"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="2-2-kernel-density.html#cb43-1"></a><span class="kw">library</span>(microbenchmark)</span></code></pre></div>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="2-2-kernel-density.html#cb44-1"></a>kern_bench &lt;-<span class="st"> </span><span class="kw">microbenchmark</span>(</span>
+<span id="cb44-2"><a href="2-2-kernel-density.html#cb44-2"></a>  <span class="kw">kern_dens</span>(psi, <span class="fl">0.2</span>),</span>
+<span id="cb44-3"><a href="2-2-kernel-density.html#cb44-3"></a>  <span class="kw">kern_dens_vec</span>(psi, <span class="fl">0.2</span>),</span>
+<span id="cb44-4"><a href="2-2-kernel-density.html#cb44-4"></a>  <span class="kw">kern_dens_apply</span>(psi, <span class="fl">0.2</span>),</span>
+<span id="cb44-5"><a href="2-2-kernel-density.html#cb44-5"></a>  <span class="kw">kern_dens_outer</span>(psi, <span class="fl">0.2</span>)</span>
+<span id="cb44-6"><a href="2-2-kernel-density.html#cb44-6"></a>)</span></code></pre></div>
 <p>The result stored in <code>kern_bench()</code> is a data frame with two columns. The first
 contains the R expressions evaluated, and the second is the evaluation
 time measured in nanoseconds. Each of the four expressions were evaluated 100 times,
@@ -585,7 +585,7 @@ can be used to change the number of evaluations per expression if needed.</p>
 <p>It may not be immediately obvious that <code>kern_bench()</code>
 is a data frame, because printing will automatically summarize the
 data, but the actual data structure is revealed by the R function <code>str()</code>.</p>
-<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="2-2-kernel-density.html#cb46-1"></a><span class="kw">str</span>(kern_bench)</span></code></pre></div>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="2-2-kernel-density.html#cb45-1"></a><span class="kw">str</span>(kern_bench)</span></code></pre></div>
 <pre><code>## Classes &#39;microbenchmark&#39; and &#39;data.frame&#39;:	400 obs. of  2 variables:
 ##  $ expr: Factor w/ 4 levels &quot;kern_dens(psi, 0.2)&quot;,..: 3 3 3 4 3 2 1 1 2 2 ...
 ##  $ time: num  3058121 3670484 3446023 4136851 3379003 ...</code></pre>
@@ -609,11 +609,11 @@ milliseconds.</p>
 times but also extremes and upper and lower quartiles. The distributions
 of run times can be investigated further using the <code>autoplot()</code> function, which is
 based on ggplot2 and thus easy to modify.</p>
-<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="2-2-kernel-density.html#cb49-1"></a><span class="kw">autoplot</span>(kern_bench) <span class="op">+</span><span class="st"> </span></span>
-<span id="cb49-2"><a href="2-2-kernel-density.html#cb49-2"></a><span class="st">  </span><span class="kw">geom_jitter</span>(<span class="dt">position =</span> <span class="kw">position_jitter</span>(<span class="fl">0.2</span>, <span class="dv">0</span>), </span>
-<span id="cb49-3"><a href="2-2-kernel-density.html#cb49-3"></a>              <span class="kw">aes</span>(<span class="dt">color =</span> expr), <span class="dt">alpha =</span> <span class="fl">0.4</span>) <span class="op">+</span><span class="st"> </span></span>
-<span id="cb49-4"><a href="2-2-kernel-density.html#cb49-4"></a><span class="st">  </span><span class="kw">aes</span>(<span class="dt">fill =</span> <span class="kw">I</span>(<span class="st">&quot;gray&quot;</span>)) <span class="op">+</span><span class="st"> </span></span>
-<span id="cb49-5"><a href="2-2-kernel-density.html#cb49-5"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="2-2-kernel-density.html#cb48-1"></a><span class="kw">autoplot</span>(kern_bench) <span class="op">+</span><span class="st"> </span></span>
+<span id="cb48-2"><a href="2-2-kernel-density.html#cb48-2"></a><span class="st">  </span><span class="kw">geom_jitter</span>(<span class="dt">position =</span> <span class="kw">position_jitter</span>(<span class="fl">0.2</span>, <span class="dv">0</span>), </span>
+<span id="cb48-3"><a href="2-2-kernel-density.html#cb48-3"></a>              <span class="kw">aes</span>(<span class="dt">color =</span> expr), <span class="dt">alpha =</span> <span class="fl">0.4</span>) <span class="op">+</span><span class="st"> </span></span>
+<span id="cb48-4"><a href="2-2-kernel-density.html#cb48-4"></a><span class="st">  </span><span class="kw">aes</span>(<span class="dt">fill =</span> <span class="kw">I</span>(<span class="st">&quot;gray&quot;</span>)) <span class="op">+</span><span class="st"> </span></span>
+<span id="cb48-5"><a href="2-2-kernel-density.html#cb48-5"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>)</span></code></pre></div>
 <p><img src="CSwR_files/figure-html/kern-bench-autoplot-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <p>This more refined benchmark study doesn’t change our initial impression from
 using <code>system.time()</code> substantially. The function <code>kern_dens()</code> is notably
@@ -749,7 +749,7 @@ gitbook.start({
 },
 "download": null,
 "toc": {
-"collapse": "section"
+"collapse": "subsection"
 }
 });
 });

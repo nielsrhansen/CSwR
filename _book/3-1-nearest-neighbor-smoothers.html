@@ -395,15 +395,15 @@ and computing the matrix-vector product. Indeed, this is often not the best
 way to compute the smoothed values.</p>
 <p>It is, on the other hand, useful to see how <span class="math inline">\(\mathbf{S}\)</span> can be constructed
 for the symmetric nearest neighbor smoother.</p>
-<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="3-1-nearest-neighbor-smoothers.html#cb55-1"></a>w &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rep</span>(<span class="dv">1</span><span class="op">/</span><span class="dv">11</span>, <span class="dv">11</span>), <span class="kw">rep</span>(<span class="dv">0</span>, <span class="dv">147</span> <span class="op">-</span><span class="st"> </span><span class="dv">10</span>))</span>
-<span id="cb55-2"><a href="3-1-nearest-neighbor-smoothers.html#cb55-2"></a>S &lt;-<span class="st"> </span><span class="kw">matrix</span>(w, <span class="dv">147</span> <span class="op">-</span><span class="st"> </span><span class="dv">10</span>, <span class="dv">147</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="3-1-nearest-neighbor-smoothers.html#cb54-1"></a>w &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rep</span>(<span class="dv">1</span><span class="op">/</span><span class="dv">11</span>, <span class="dv">11</span>), <span class="kw">rep</span>(<span class="dv">0</span>, <span class="dv">147</span> <span class="op">-</span><span class="st"> </span><span class="dv">10</span>))</span>
+<span id="cb54-2"><a href="3-1-nearest-neighbor-smoothers.html#cb54-2"></a>S &lt;-<span class="st"> </span><span class="kw">matrix</span>(w, <span class="dv">147</span> <span class="op">-</span><span class="st"> </span><span class="dv">10</span>, <span class="dv">147</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
 <pre><code>## Warning in matrix(w, 147 - 10, 147, byrow = TRUE): data length [148] is not a
 ## sub-multiple or multiple of the number of rows [137]</code></pre>
 <p>The construction above relies on vector recycling of <code>w</code> in the construction of <code>S</code>
 and the fact that <code>w</code> has length <span class="math inline">\(147 + 1\)</span>, which will effectively cause <code>w</code> to be
 translated by one to the right every time it is recycled for a new row. As seen,
 the code triggers a warning by R, but in this case we get what we want.</p>
-<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="3-1-nearest-neighbor-smoothers.html#cb57-1"></a>S</span></code></pre></div>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="3-1-nearest-neighbor-smoothers.html#cb56-1"></a>S</span></code></pre></div>
 <p><img src="CSwR_files/figure-html/S-NN-top-actual-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <p>We can use the matrix to smooth the annual average temperature in Nuuk using a
 running mean with a window of <span class="math inline">\(k = 11\)</span> years. That is, the smoothed temperature
@@ -411,12 +411,12 @@ at a given year is the average of the temperatures in the period
 from five years before to five years after. Note that to add the smoothed
 values to the previous plot we need to pad the values at the boundaries
 with <code>NA</code>s to get a vector of length 147.</p>
-<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="3-1-nearest-neighbor-smoothers.html#cb58-1"></a><span class="co">## Check first if data is sorted correctly.</span></span>
-<span id="cb58-2"><a href="3-1-nearest-neighbor-smoothers.html#cb58-2"></a><span class="co">## The test is backwards, but confirms that data isn&#39;t unsorted :-)</span></span>
-<span id="cb58-3"><a href="3-1-nearest-neighbor-smoothers.html#cb58-3"></a><span class="kw">is.unsorted</span>(Nuuk_year<span class="op">$</span>Year)</span></code></pre></div>
+<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="3-1-nearest-neighbor-smoothers.html#cb57-1"></a><span class="co"># Check first if data is sorted correctly.</span></span>
+<span id="cb57-2"><a href="3-1-nearest-neighbor-smoothers.html#cb57-2"></a><span class="co"># The test is backwards, but confirms that data isn&#39;t unsorted :-)</span></span>
+<span id="cb57-3"><a href="3-1-nearest-neighbor-smoothers.html#cb57-3"></a><span class="kw">is.unsorted</span>(Nuuk_year<span class="op">$</span>Year)</span></code></pre></div>
 <pre><code>## [1] FALSE</code></pre>
-<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="3-1-nearest-neighbor-smoothers.html#cb60-1"></a>f_hat &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rep</span>(<span class="ot">NA</span>, <span class="dv">5</span>), S <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature, <span class="kw">rep</span>(<span class="ot">NA</span>, <span class="dv">5</span>))</span>
-<span id="cb60-2"><a href="3-1-nearest-neighbor-smoothers.html#cb60-2"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> f_hat), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="3-1-nearest-neighbor-smoothers.html#cb59-1"></a>f_hat &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rep</span>(<span class="ot">NA</span>, <span class="dv">5</span>), S <span class="op">%*%</span><span class="st"> </span>Nuuk_year<span class="op">$</span>Temperature, <span class="kw">rep</span>(<span class="ot">NA</span>, <span class="dv">5</span>))</span>
+<span id="cb59-2"><a href="3-1-nearest-neighbor-smoothers.html#cb59-2"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> f_hat), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:Nuuk-NN-plot"></span>
 <img src="CSwR_files/figure-html/Nuuk-NN-plot-1.png" alt="Annual average temperature in Nuuk smoothed using the running mean with $k = 11$ neighbors." width="70%" />
 <p class="caption">
@@ -432,76 +432,78 @@ which can be used for a much more efficient implementation
 than the matrix-vector multiplication. It should be emphasized
 again that the identity above and the implementation below
 assume that data is sorted according to <span class="math inline">\(x\)</span>-values.</p>
-<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="3-1-nearest-neighbor-smoothers.html#cb61-1"></a><span class="co">## The vector &#39;y&#39; must be sorted according to the x-values</span></span>
-<span id="cb61-2"><a href="3-1-nearest-neighbor-smoothers.html#cb61-2"></a>runMean &lt;-<span class="st"> </span><span class="cf">function</span>(y, k) {</span>
-<span id="cb61-3"><a href="3-1-nearest-neighbor-smoothers.html#cb61-3"></a>  n &lt;-<span class="st"> </span><span class="kw">length</span>(y)</span>
-<span id="cb61-4"><a href="3-1-nearest-neighbor-smoothers.html#cb61-4"></a>  m &lt;-<span class="st"> </span><span class="kw">floor</span>((k <span class="op">-</span><span class="st"> </span><span class="dv">1</span>) <span class="op">/</span><span class="st"> </span><span class="dv">2</span>)</span>
-<span id="cb61-5"><a href="3-1-nearest-neighbor-smoothers.html#cb61-5"></a>  k &lt;-<span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>m <span class="op">+</span><span class="st"> </span><span class="dv">1</span>           <span class="co"># Ensures k to be odd and m = (k-1) / 2</span></span>
-<span id="cb61-6"><a href="3-1-nearest-neighbor-smoothers.html#cb61-6"></a>  y &lt;-<span class="st"> </span>y <span class="op">/</span><span class="st"> </span>k</span>
-<span id="cb61-7"><a href="3-1-nearest-neighbor-smoothers.html#cb61-7"></a>  s &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="ot">NA</span>, n)</span>
-<span id="cb61-8"><a href="3-1-nearest-neighbor-smoothers.html#cb61-8"></a>  s[m <span class="op">+</span><span class="st"> </span><span class="dv">1</span>] &lt;-<span class="st"> </span><span class="kw">sum</span>(y[<span class="dv">1</span><span class="op">:</span>k])</span>
-<span id="cb61-9"><a href="3-1-nearest-neighbor-smoothers.html#cb61-9"></a>  <span class="cf">for</span>(i <span class="cf">in</span> (m <span class="op">+</span><span class="st"> </span><span class="dv">1</span>)<span class="op">:</span>(n <span class="op">-</span><span class="st"> </span>m <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)) </span>
-<span id="cb61-10"><a href="3-1-nearest-neighbor-smoothers.html#cb61-10"></a>    s[i <span class="op">+</span><span class="st"> </span><span class="dv">1</span>] &lt;-<span class="st"> </span>s[i] <span class="op">-</span><span class="st"> </span>y[i <span class="op">-</span><span class="st"> </span>m] <span class="op">+</span><span class="st"> </span>y[i <span class="op">+</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>m]</span>
-<span id="cb61-11"><a href="3-1-nearest-neighbor-smoothers.html#cb61-11"></a>  s</span>
-<span id="cb61-12"><a href="3-1-nearest-neighbor-smoothers.html#cb61-12"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="3-1-nearest-neighbor-smoothers.html#cb60-1"></a><span class="co"># The vector &#39;y&#39; must be sorted according to the x-values</span></span>
+<span id="cb60-2"><a href="3-1-nearest-neighbor-smoothers.html#cb60-2"></a>run_mean &lt;-<span class="st"> </span><span class="cf">function</span>(y, k) {</span>
+<span id="cb60-3"><a href="3-1-nearest-neighbor-smoothers.html#cb60-3"></a>  n &lt;-<span class="st"> </span><span class="kw">length</span>(y)</span>
+<span id="cb60-4"><a href="3-1-nearest-neighbor-smoothers.html#cb60-4"></a>  m &lt;-<span class="st"> </span><span class="kw">floor</span>((k <span class="op">-</span><span class="st"> </span><span class="dv">1</span>) <span class="op">/</span><span class="st"> </span><span class="dv">2</span>)</span>
+<span id="cb60-5"><a href="3-1-nearest-neighbor-smoothers.html#cb60-5"></a>  k &lt;-<span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>m <span class="op">+</span><span class="st"> </span><span class="dv">1</span>           <span class="co"># Ensures k to be odd and m = (k-1) / 2</span></span>
+<span id="cb60-6"><a href="3-1-nearest-neighbor-smoothers.html#cb60-6"></a>  y &lt;-<span class="st"> </span>y <span class="op">/</span><span class="st"> </span>k</span>
+<span id="cb60-7"><a href="3-1-nearest-neighbor-smoothers.html#cb60-7"></a>  s &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="ot">NA</span>, n)</span>
+<span id="cb60-8"><a href="3-1-nearest-neighbor-smoothers.html#cb60-8"></a>  s[m <span class="op">+</span><span class="st"> </span><span class="dv">1</span>] &lt;-<span class="st"> </span><span class="kw">sum</span>(y[<span class="dv">1</span><span class="op">:</span>k])</span>
+<span id="cb60-9"><a href="3-1-nearest-neighbor-smoothers.html#cb60-9"></a>  <span class="cf">for</span>(i <span class="cf">in</span> (m <span class="op">+</span><span class="st"> </span><span class="dv">1</span>)<span class="op">:</span>(n <span class="op">-</span><span class="st"> </span>m <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)) </span>
+<span id="cb60-10"><a href="3-1-nearest-neighbor-smoothers.html#cb60-10"></a>    s[i <span class="op">+</span><span class="st"> </span><span class="dv">1</span>] &lt;-<span class="st"> </span>s[i] <span class="op">-</span><span class="st"> </span>y[i <span class="op">-</span><span class="st"> </span>m] <span class="op">+</span><span class="st"> </span>y[i <span class="op">+</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>m]</span>
+<span id="cb60-11"><a href="3-1-nearest-neighbor-smoothers.html#cb60-11"></a>  s</span>
+<span id="cb60-12"><a href="3-1-nearest-neighbor-smoothers.html#cb60-12"></a>}</span></code></pre></div>
 
-<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="3-1-nearest-neighbor-smoothers.html#cb62-1"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">runMean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">11</span>)), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="3-1-nearest-neighbor-smoothers.html#cb61-1"></a>p_Nuuk <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">run_mean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">11</span>)), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:Nuuk-NN-plot2"></span>
 <img src="CSwR_files/figure-html/Nuuk-NN-plot2-1.png" alt="Annual average temperature in Nuuk smoothed using the running mean with \(k = 11\) neighbors. This time using a different implementation than in Figure 3.2." width="70%" />
 <p class="caption">
 Figure 3.3: Annual average temperature in Nuuk smoothed using the running mean with <span class="math inline">\(k = 11\)</span> neighbors. This time using a different implementation than in Figure <a href="3-1-nearest-neighbor-smoothers.html#fig:Nuuk-NN-plot">3.2</a>.
 </p>
 </div>
-<p>The R function <code>filter</code> (from the stats package) can be used to compute running
+<p>The R function <code>filter()</code> (from the stats package) can be used to compute running
 means and general moving averages using any weight vector. We compare our two
-implementations to <code>filter</code>.</p>
-<div class="sourceCode" id="cb63"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb63-1"><a href="3-1-nearest-neighbor-smoothers.html#cb63-1"></a>f_hat_filter &lt;-<span class="st"> </span>stats<span class="op">::</span><span class="kw">filter</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="kw">rep</span>(<span class="dv">1</span><span class="op">/</span><span class="dv">11</span>, <span class="dv">11</span>))</span>
-<span id="cb63-2"><a href="3-1-nearest-neighbor-smoothers.html#cb63-2"></a><span class="kw">range</span>(f_hat_filter <span class="op">-</span><span class="st"> </span>f_hat, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+implementations to <code>filter()</code>.</p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="3-1-nearest-neighbor-smoothers.html#cb62-1"></a>f_hat_filter &lt;-<span class="st"> </span>stats<span class="op">::</span><span class="kw">filter</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="kw">rep</span>(<span class="dv">1</span><span class="op">/</span><span class="dv">11</span>, <span class="dv">11</span>))</span>
+<span id="cb62-2"><a href="3-1-nearest-neighbor-smoothers.html#cb62-2"></a><span class="kw">range</span>(f_hat_filter <span class="op">-</span><span class="st"> </span>f_hat, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
 <pre><code>## [1] -4.440892e-16  4.440892e-16</code></pre>
-<div class="sourceCode" id="cb65"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb65-1"><a href="3-1-nearest-neighbor-smoothers.html#cb65-1"></a><span class="kw">range</span>(f_hat_filter <span class="op">-</span><span class="st"> </span><span class="kw">runMean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">11</span>), <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="3-1-nearest-neighbor-smoothers.html#cb64-1"></a><span class="kw">range</span>(f_hat_filter <span class="op">-</span><span class="st"> </span><span class="kw">run_mean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">11</span>), <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
 <pre><code>## [1] -1.332268e-15  4.440892e-16</code></pre>
-<p>Note that <code>filter</code> uses the same boundary convention as used in <code>runMean</code>.</p>
-<p>A benchmark comparison between matrix-vector multiplication, <code>runMean</code> and <code>filter</code>
+<p>Note that <code>filter()</code> uses the same boundary convention as used in <code>run_mean()</code>.</p>
+<p>A benchmark comparison between matrix-vector multiplication, <code>run_mean()</code> and <code>filter()</code>
 gives the following table with median run time in microseconds.</p>
 <pre><code>##                                       expr     median
-## 1                          S1 %*% y[1:512]   411.5695
-## 2                         S2 %*% y[1:1024]  1710.1580
-## 3                         S3 %*% y[1:2048]  6982.5700
-## 4                         S4 %*% y[1:4096] 27277.8575
-## 5                runMean(y[1:512], k = 11)    86.3020
-## 6               runMean(y[1:1024], k = 11)   165.5745
-## 7               runMean(y[1:2048], k = 11)   319.1950
-## 8               runMean(y[1:4096], k = 11)   645.2315
-## 9   stats::filter(y[1:512], rep(1/11, 11))   103.0275
-## 10 stats::filter(y[1:1024], rep(1/11, 11))   145.8120
-## 11 stats::filter(y[1:2048], rep(1/11, 11))   197.1010
-## 12 stats::filter(y[1:4096], rep(1/11, 11))   335.9570</code></pre>
+## 1                          S1 %*% y[1:512]   453.5005
+## 2                         S2 %*% y[1:1024]  1828.7110
+## 3                         S3 %*% y[1:2048]  7365.5735
+## 4                         S4 %*% y[1:4096] 29878.1300
+## 5               run_mean(y[1:512], k = 11)    91.7830
+## 6              run_mean(y[1:1024], k = 11)   179.1365
+## 7              run_mean(y[1:2048], k = 11)   341.3805
+## 8              run_mean(y[1:4096], k = 11)   682.3330
+## 9   stats::filter(y[1:512], rep(1/11, 11))   115.6355
+## 10 stats::filter(y[1:1024], rep(1/11, 11))   176.5140
+## 11 stats::filter(y[1:2048], rep(1/11, 11))   211.5485
+## 12 stats::filter(y[1:4096], rep(1/11, 11))   362.8220</code></pre>
 <p>The matrix-vector computation is clearly much slower than the two alternatives,
 and the time to construct the <span class="math inline">\(\mathbf{S}\)</span>-matrix has not even been included
 in the benchmark above. There is also a difference in how the matrix-vector
 multiplication scales with the size of data compared to the alternatives.
 Whenever the data size doubles the run time approximately doubles for
-both <code>filter</code> and <code>runMean</code>, while it quadruples for the matrix-vector
+both <code>filter()</code> and <code>run_mean()</code>, while it quadruples for the matrix-vector
 multiplication. This shows the difference between an algorithm
 that scales like <span class="math inline">\(O(n)\)</span> and an algorithm that scales like <span class="math inline">\(O(n^2)\)</span>
 as the matrix-vector product does.</p>
-<p>Despite the fact that <code>filter</code> is actually implementing a more general
-algorithm than <code>runMean</code>, it is still faster. This reflects the fact that
+<p>Despite that <code>filter()</code> is implementing a more general
+algorithm than <code>run_mean()</code>, it is still faster, which reflects that
 it is implemented in C and compiled.</p>
 </div>
 <div id="choose-k-by-cross-validation" class="section level3">
 <h3><span class="header-section-number">3.1.3</span> Choose <span class="math inline">\(k\)</span> by cross-validation</h3>
-<p>Many (linear) smoothers have a natural definition of an “out-of-sample”
+<p>Cross-validation relies predictions of <span class="math inline">\(y_i\)</span> from <span class="math inline">\(x_i\)</span>
+for data points <span class="math inline">\((x_i, y_i)\)</span> left out of the data set when the predictor
+is fitted to data. Many (linear) smoothers have a natural definition of an “out-of-sample”
 prediction, that is, how <span class="math inline">\(\hat{f}(x)\)</span> is computed for <span class="math inline">\(x\)</span> not
 in the data. If so, it becomes possible to define
 <span class="math display">\[\hat{f}^{-i}_i = \hat{f}^{-i}(x_i)\]</span>
 as the prediction at <span class="math inline">\(x_i\)</span> using the smoother computed from data
-with <span class="math inline">\((x_i, y_i)\)</span> excluded. However, instead of relying on this,
-we <em>define</em>
+with <span class="math inline">\((x_i, y_i)\)</span> excluded. However, here we derectly <em>define</em>
 <span class="math display">\[\hat{f}^{-i}_i = \sum_{j \neq i} \frac{S_{ij}y_j}{1 - S_{ii}}\]</span>
-for any linear smoother. This definition will concur with <span class="math inline">\(\hat{f}^{-i}(x_i)\)</span>
-for most smoothers, but this has to be verified case-by-case.</p>
-<p>The running mean is a little speciel in this respect. In the
+for any linear smoother. This definition concurs with the
+“out-of-sample” predictor in <span class="math inline">\(x_i\)</span> for most smoothers,
+but this has to be verified case-by-case.</p>
+<p>The running mean is a little special in this respect. In the
 previous section, the
 running mean was only considered for odd <span class="math inline">\(k\)</span> and using
 a symmetric neighbor definition. This is convenient
@@ -522,14 +524,14 @@ can be computed without actually computing all the <span class="math inline">\(\
 We disregard boundary values (with the <code>NA</code> value), so to get
 a comparable quantity across different choices of <span class="math inline">\(k\)</span> we use <code>mean</code> instead of
 <code>sum</code> in the implementation.</p>
-<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="3-1-nearest-neighbor-smoothers.html#cb68-1"></a>loocv &lt;-<span class="st"> </span><span class="cf">function</span>(k, y) {</span>
-<span id="cb68-2"><a href="3-1-nearest-neighbor-smoothers.html#cb68-2"></a>  f_hat &lt;-<span class="st"> </span><span class="kw">runMean</span>(y, k)</span>
-<span id="cb68-3"><a href="3-1-nearest-neighbor-smoothers.html#cb68-3"></a>  <span class="kw">mean</span>(((y <span class="op">-</span><span class="st"> </span>f_hat) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span><span class="dv">1</span><span class="op">/</span>k))<span class="op">^</span><span class="dv">2</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>) </span>
-<span id="cb68-4"><a href="3-1-nearest-neighbor-smoothers.html#cb68-4"></a>}</span></code></pre></div>
-<div class="sourceCode" id="cb69"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb69-1"><a href="3-1-nearest-neighbor-smoothers.html#cb69-1"></a>k &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">3</span>, <span class="dv">40</span>, <span class="dv">2</span>)</span>
-<span id="cb69-2"><a href="3-1-nearest-neighbor-smoothers.html#cb69-2"></a>CV &lt;-<span class="st"> </span><span class="kw">sapply</span>(k, <span class="cf">function</span>(kk) <span class="kw">loocv</span>(kk, Nuuk_year<span class="op">$</span>Temperature))</span>
-<span id="cb69-3"><a href="3-1-nearest-neighbor-smoothers.html#cb69-3"></a>k_opt &lt;-<span class="st"> </span>k[<span class="kw">which.min</span>(CV)]</span>
-<span id="cb69-4"><a href="3-1-nearest-neighbor-smoothers.html#cb69-4"></a><span class="kw">qplot</span>(k, CV) <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>() <span class="op">+</span><span class="st"> </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> k_opt, <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb67"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb67-1"><a href="3-1-nearest-neighbor-smoothers.html#cb67-1"></a>loocv &lt;-<span class="st"> </span><span class="cf">function</span>(k, y) {</span>
+<span id="cb67-2"><a href="3-1-nearest-neighbor-smoothers.html#cb67-2"></a>  f_hat &lt;-<span class="st"> </span><span class="kw">run_mean</span>(y, k)</span>
+<span id="cb67-3"><a href="3-1-nearest-neighbor-smoothers.html#cb67-3"></a>  <span class="kw">mean</span>(((y <span class="op">-</span><span class="st"> </span>f_hat) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span><span class="dv">1</span><span class="op">/</span>k))<span class="op">^</span><span class="dv">2</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>) </span>
+<span id="cb67-4"><a href="3-1-nearest-neighbor-smoothers.html#cb67-4"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="3-1-nearest-neighbor-smoothers.html#cb68-1"></a>k &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">3</span>, <span class="dv">40</span>, <span class="dv">2</span>)</span>
+<span id="cb68-2"><a href="3-1-nearest-neighbor-smoothers.html#cb68-2"></a>CV &lt;-<span class="st"> </span><span class="kw">sapply</span>(k, loocv, <span class="dt">y =</span> Nuuk_year<span class="op">$</span>Temperature)</span>
+<span id="cb68-3"><a href="3-1-nearest-neighbor-smoothers.html#cb68-3"></a>k_opt &lt;-<span class="st"> </span>k[<span class="kw">which.min</span>(CV)]</span>
+<span id="cb68-4"><a href="3-1-nearest-neighbor-smoothers.html#cb68-4"></a><span class="kw">qplot</span>(k, CV) <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>() <span class="op">+</span><span class="st"> </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> k_opt, <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:Nuuk-running-loocv"></span>
 <img src="CSwR_files/figure-html/Nuuk-running-loocv-1.png" alt="The leave-one-out cross-validation criterion for the running mean as a function of the number of neighbors $k$." width="70%" />
 <p class="caption">
@@ -538,11 +540,11 @@ Figure 3.4: The leave-one-out cross-validation criterion for the running mean as
 </div>
 <p>The optimal choice of <span class="math inline">\(k\)</span> is 15, but the LOOCV criterion jumps quite a
 lot up and down with changing neighbor size, and <span class="math inline">\(k = 9\)</span> as well as <span class="math inline">\(k = 25\)</span>
-give a rather low values as well.</p>
-<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="3-1-nearest-neighbor-smoothers.html#cb70-1"></a>p_Nuuk <span class="op">+</span><span class="st"> </span></span>
-<span id="cb70-2"><a href="3-1-nearest-neighbor-smoothers.html#cb70-2"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">runMean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">9</span>)), <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>) <span class="op">+</span></span>
-<span id="cb70-3"><a href="3-1-nearest-neighbor-smoothers.html#cb70-3"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">runMean</span>(Nuuk_year<span class="op">$</span>Temperature, k_opt)), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>) <span class="op">+</span></span>
-<span id="cb70-4"><a href="3-1-nearest-neighbor-smoothers.html#cb70-4"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">runMean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">25</span>)), <span class="dt">color =</span> <span class="st">&quot;purple&quot;</span>)</span></code></pre></div>
+give rather low values as well.</p>
+<div class="sourceCode" id="cb69"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb69-1"><a href="3-1-nearest-neighbor-smoothers.html#cb69-1"></a>p_Nuuk <span class="op">+</span><span class="st"> </span></span>
+<span id="cb69-2"><a href="3-1-nearest-neighbor-smoothers.html#cb69-2"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">run_mean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">9</span>)), <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>) <span class="op">+</span></span>
+<span id="cb69-3"><a href="3-1-nearest-neighbor-smoothers.html#cb69-3"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">run_mean</span>(Nuuk_year<span class="op">$</span>Temperature, k_opt)), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>) <span class="op">+</span></span>
+<span id="cb69-4"><a href="3-1-nearest-neighbor-smoothers.html#cb69-4"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">y =</span> <span class="kw">run_mean</span>(Nuuk_year<span class="op">$</span>Temperature, <span class="dv">25</span>)), <span class="dt">color =</span> <span class="st">&quot;purple&quot;</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span id="fig:Nuuk-NN-plot3"></span>
 <img src="CSwR_files/figure-html/Nuuk-NN-plot3-1.png" alt="The $k$-nearest neighbor smoother with the optimal choice of $k$ based on LOOCV (blue) and with $k = 9$ (red) and $k = 25$ (purple)." width="70%" />
 <p class="caption">
@@ -601,7 +603,7 @@ gitbook.start({
 },
 "download": null,
 "toc": {
-"collapse": "section"
+"collapse": "subsection"
 }
 });
 });
