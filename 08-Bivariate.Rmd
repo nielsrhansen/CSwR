@@ -34,10 +34,12 @@ Nuuk <- read_table2("data/nuuk.dat.txt",
   filter(Year > 1866)
 
 Nuuk_year <- group_by(Nuuk, Year) %>% 
-  summarise(Temperature = mean(Temperature),
-            Median = median(Temperature),
-            High = max(Temperature), 
-            Low = min(Temperature))
+  summarise(
+    Temperature = mean(Temperature),
+    Median = median(Temperature),
+    High = max(Temperature), 
+    Low = min(Temperature)
+  )
 n <- nrow(Nuuk_year)
 ```
 
@@ -46,16 +48,23 @@ n <- nrow(Nuuk_year)
 ```{r NuukSmooth, dependson="NuukData", message=FALSE, fig.cap='(ref:NuukSmooth)', fig.show="hold", out.width="49%"}
 p_Nuuk <- ggplot(Nuuk_year, aes(x = Year, y = Temperature)) + geom_point()
 p_Nuuk + geom_smooth(se = FALSE) + 
-  geom_smooth(method = "lm", formula = y ~ poly(x, 10), 
-              color = "red", se = FALSE) + 
-  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cr"), 
-              color = "purple", se = FALSE)
+  geom_smooth(
+    method = "lm", 
+    formula = y ~ poly(x, 10),      # A degree-10 polynomial expansion
+    color = "red", 
+    se = FALSE
+  ) + 
+  geom_smooth(
+    method = "gam", 
+    formula = y ~ s(x, bs = "cr"),   # A spline smoother via 'mgcv::gam()'
+    color = "purple", 
+    se = FALSE
+  )
 
 ggplot(Nuuk, aes(x = Month, y = Temperature)) + 
   geom_line(aes(group = Year), alpha = 0.3) + 
   geom_point(alpha = 0.3) +
-  geom_smooth(color = "red", se = FALSE) 
-
+  geom_smooth(color = "red", se = FALSE)  # A spline smoother
 ```
 
 
@@ -173,8 +182,8 @@ values to the previous plot we need to pad the values at the boundaries
 with `NA`s to get a vector of length 147.
 
 ```{r Nuuk-NN-plot, dependson=c("NuukSmooth", "S-NN"), fig.cap = "Annual average temperature in Nuuk smoothed using the running mean with $k = 11$ neighbors.", warning=FALSE}
-## Check first if data is sorted correctly.
-## The test is backwards, but confirms that data isn't unsorted :-)
+# Check first if data is sorted correctly.
+# The test is backwards, but confirms that data isn't unsorted :-)
 is.unsorted(Nuuk_year$Year)
 f_hat <- c(rep(NA, 5), S %*% Nuuk_year$Temperature, rep(NA, 5))
 p_Nuuk + geom_line(aes(y = f_hat), color = "blue")
@@ -189,9 +198,9 @@ than the matrix-vector multiplication. It should be emphasized
 again that the identity above and the implementation below 
 assume that data is sorted according to $x$-values. 
 
-```{r runMean}
-## The vector 'y' must be sorted according to the x-values
-runMean <- function(y, k) {
+```{r run-mean}
+# The vector 'y' must be sorted according to the x-values
+run_mean <- function(y, k) {
   n <- length(y)
   m <- floor((k - 1) / 2)
   k <- 2 * m + 1           # Ensures k to be odd and m = (k-1) / 2
@@ -206,26 +215,26 @@ runMean <- function(y, k) {
 
 (ref:NN-smooth) Annual average temperature in Nuuk smoothed using the running mean with $k = 11$ neighbors. This time using a different implementation than in Figure \@ref(fig:Nuuk-NN-plot).
 
-```{r Nuuk-NN-plot2, dependson=c("NuukSmooth", "runMean"), fig.cap = "(ref:NN-smooth)", warning=FALSE}
-p_Nuuk + geom_line(aes(y = runMean(Nuuk_year$Temperature, 11)), color = "blue")
+```{r Nuuk-NN-plot2, dependson=c("NuukSmooth", "run-mean"), fig.cap = "(ref:NN-smooth)", warning=FALSE}
+p_Nuuk + geom_line(aes(y = run_mean(Nuuk_year$Temperature, 11)), color = "blue")
 ```
 
-The R function `filter` (from the stats package) can be used to compute running 
+The R function `filter()` (from the stats package) can be used to compute running 
 means and general moving averages using any weight vector. We compare our two 
-implementations to `filter`.
+implementations to `filter()`.
 
-```{r runMeanCheck, dependson="runMean"}
+```{r runMeanCheck, dependson="run-mean"}
 f_hat_filter <- stats::filter(Nuuk_year$Temperature, rep(1/11, 11))
 range(f_hat_filter - f_hat, na.rm = TRUE)
-range(f_hat_filter - runMean(Nuuk_year$Temperature, 11), na.rm = TRUE)
+range(f_hat_filter - run_mean(Nuuk_year$Temperature, 11), na.rm = TRUE)
 ```
 
-Note that `filter` uses the same boundary convention as used in `runMean`. 
+Note that `filter()` uses the same boundary convention as used in `run_mean()`. 
 
-A benchmark comparison between matrix-vector multiplication, `runMean` and `filter` 
+A benchmark comparison between matrix-vector multiplication, `run_mean()` and `filter()` 
 gives the following table with median run time in microseconds. 
 
-```{r runMeanBench, dependson="runMean", echo=FALSE, warning=FALSE}
+```{r runMeanBench, dependson="run-mean", echo=FALSE, warning=FALSE}
 y <- rnorm(4096)
 w <- c(rep(1/11, 11), rep(0, 512 - 10))
 S1 <- matrix(w, 512 - 10, 512, byrow = TRUE)
@@ -240,10 +249,10 @@ tmp <- microbenchmark(
   S2 %*% y[1:1024],
   S3 %*% y[1:2048],
   S4 %*% y[1:4096],
-  runMean(y[1:512], k = 11),
-  runMean(y[1:1024], k = 11),
-  runMean(y[1:2048], k = 11),
-  runMean(y[1:4096], k = 11),
+  run_mean(y[1:512], k = 11),
+  run_mean(y[1:1024], k = 11),
+  run_mean(y[1:2048], k = 11),
+  run_mean(y[1:4096], k = 11),
   stats::filter(y[1:512], rep(1/11, 11)),
   stats::filter(y[1:1024], rep(1/11, 11)),
   stats::filter(y[1:2048], rep(1/11, 11)),
@@ -257,29 +266,31 @@ and the time to construct the $\mathbf{S}$-matrix has not even been included
 in the benchmark above. There is also a difference in how the matrix-vector 
 multiplication scales with the size of data compared to the alternatives. 
 Whenever the data size doubles the run time approximately doubles for 
-both `filter` and `runMean`, while it quadruples for the matrix-vector 
+both `filter()` and `run_mean()`, while it quadruples for the matrix-vector 
 multiplication. This shows the difference between an algorithm 
 that scales like $O(n)$ and an algorithm that scales like $O(n^2)$ 
 as the matrix-vector product does.
 
-Despite the fact that `filter` is actually implementing a more general 
-algorithm than `runMean`, it is still faster. This reflects the fact that 
+Despite that `filter()` is implementing a more general 
+algorithm than `run_mean()`, it is still faster, which reflects that 
 it is implemented in C and compiled.
 
 ### Choose $k$ by cross-validation
 
-Many (linear) smoothers have a natural definition of an "out-of-sample" 
+Cross-validation relies predictions of $y_i$ from $x_i$ 
+for data points $(x_i, y_i)$ left out of the data set when the predictor 
+is fitted to data. Many (linear) smoothers have a natural definition of an "out-of-sample" 
 prediction, that is, how $\hat{f}(x)$ is computed for $x$ not 
 in the data. If so, it becomes possible to define 
 $$\hat{f}^{-i}_i = \hat{f}^{-i}(x_i)$$
 as the prediction at $x_i$ using the smoother computed from data 
-with $(x_i, y_i)$ excluded. However, instead of relying on this, 
-we *define*
+with $(x_i, y_i)$ excluded. However, here we derectly *define*
 $$\hat{f}^{-i}_i = \sum_{j \neq i} \frac{S_{ij}y_j}{1 - S_{ii}}$$
-for any linear smoother. This definition will concur with $\hat{f}^{-i}(x_i)$
-for most smoothers, but this has to be verified case-by-case.
+for any linear smoother. This definition concurs with the 
+"out-of-sample" predictor in $x_i$ for most smoothers, 
+but this has to be verified case-by-case.
 
-The running mean is a little speciel in this respect. In the 
+The running mean is a little special in this respect. In the 
 previous section, the 
 running mean was only considered for odd $k$ and using 
 a symmetric neighbor definition. This is convenient 
@@ -305,27 +316,27 @@ a comparable quantity across different choices of $k$ we use `mean` instead of
 
 ```{r LOOCV-runMean}
 loocv <- function(k, y) {
-  f_hat <- runMean(y, k)
+  f_hat <- run_mean(y, k)
   mean(((y - f_hat) / (1 - 1/k))^2, na.rm = TRUE) 
 }
 ```
 
 ```{r Nuuk-running-loocv, fig.cap="The leave-one-out cross-validation criterion for the running mean as a function of the number of neighbors $k$.", dependson=c("LOOCV-runMean", "NuukData")}
 k <- seq(3, 40, 2)
-CV <- sapply(k, function(kk) loocv(kk, Nuuk_year$Temperature))
+CV <- sapply(k, loocv, y = Nuuk_year$Temperature)
 k_opt <- k[which.min(CV)]
 qplot(k, CV) + geom_line() + geom_vline(xintercept = k_opt, color = "red")
 ```
 
 The optimal choice of $k$ is `r k_opt`, but the LOOCV criterion jumps quite a
 lot up and down with changing neighbor size, and $k = 9$ as well as $k = 25$ 
-give a rather low values as well.
+give rather low values as well.
 
-```{r Nuuk-NN-plot3, dependson=c("NuukData", "runMean", "Nuuk-running-loocv"), fig.cap = "The $k$-nearest neighbor smoother with the optimal choice of $k$ based on LOOCV (blue) and with $k = 9$ (red) and $k = 25$ (purple).", warning=FALSE}
+```{r Nuuk-NN-plot3, dependson=c("NuukData", "run-mean", "Nuuk-running-loocv"), fig.cap = "The $k$-nearest neighbor smoother with the optimal choice of $k$ based on LOOCV (blue) and with $k = 9$ (red) and $k = 25$ (purple).", warning=FALSE}
 p_Nuuk + 
-  geom_line(aes(y = runMean(Nuuk_year$Temperature, 9)), color = "red") +
-  geom_line(aes(y = runMean(Nuuk_year$Temperature, k_opt)), color = "blue") +
-  geom_line(aes(y = runMean(Nuuk_year$Temperature, 25)), color = "purple")
+  geom_line(aes(y = run_mean(Nuuk_year$Temperature, 9)), color = "red") +
+  geom_line(aes(y = run_mean(Nuuk_year$Temperature, k_opt)), color = "blue") +
+  geom_line(aes(y = run_mean(Nuuk_year$Temperature, 25)), color = "purple")
 ```
 
 ## Kernel methods
@@ -369,10 +380,13 @@ The basic kernel smoothing computation is also implemented in the
 `ksmooth` function from the stats package. 
 
 ```{r ksmooth-Nuuk, dependson=c("NuukData", "NuulSmooth"), fig.cap = "Nadaraya–Watson kernel smoother of the annual average temperature in Nuuk computed using `ksmooth` with the Gaussian kernel and bandwidth 10."}
-f_hat <- ksmooth(Nuuk_year$Year, Nuuk_year$Temperature, 
-                 kernel = "normal",
-                 bandwidth = 10, 
-                 x.points = Nuuk_year$Year)
+f_hat <- ksmooth(
+  Nuuk_year$Year, 
+  Nuuk_year$Temperature, 
+  kernel = "normal",
+  bandwidth = 10, 
+  x.points = Nuuk_year$Year
+)
 p_Nuuk + geom_line(aes(y = f_hat$y), color = "blue")
 ```
 
@@ -386,10 +400,11 @@ The computation of $\mathbf{S}$ for the Gaussian kernel is implemented
 using `outer` and `rumSums`. 
 
 ```{r smooth-Nuuk, dependson="NuukData", fig.cap = "Nadaraya–Watson kernel smoother of the annual average temperature in Nuuk computed using the smoother matrix and the Gaussian kernel with bandwidth 10."}
-kern <- function(x) exp(- x^2 / 2)  ## Gaussian kernel
+kern <- function(x) exp(- x^2 / 2)  # The Gaussian kernel
 Kij <- outer(Nuuk_year$Year, Nuuk_year$Year, function(x, y) kern((x - y) / 10))
 S <- Kij / rowSums(Kij)
-p_Nuuk + geom_line(aes(y = S %*% Nuuk_year$Temperature), color = "blue")
+f_hat <- S %*% Nuuk_year$Temperature
+p_Nuuk + geom_line(aes(y = f_hat), color = "blue")
 ```
 
 The implementation above will work with any kernel and any sequence of $x$-s. 
@@ -432,10 +447,12 @@ and compare it to the smoother computed using `ksmooth`.
 Kij <- outer(Nuuk_year$Year, Nuuk_year$Year, function(x, y) kern((x - y) / h_opt))
 S <- Kij / rowSums(Kij)
 f_hat <- S %*% Nuuk_year$Temperature
-f_hat_ksmooth <- ksmooth(Nuuk_year$Year, Nuuk_year$Temperature, 
-                         kernel = "normal",
-                         bandwidth = h_opt /  0.3706506,  ## Rescaling!
-                         x.points = Nuuk_year$Year)
+f_hat_ksmooth <- ksmooth(
+  Nuuk_year$Year, Nuuk_year$Temperature, 
+  kernel = "normal",
+  bandwidth = h_opt /  0.3706506,  # Rescaling!
+  x.points = Nuuk_year$Year
+)
 range(f_hat - f_hat_ksmooth$y)
 ```
 
@@ -448,9 +465,9 @@ large differences between the two results that should otherwise be equivalent. I
 example where the approximate solution computed by `ksmooth` is acceptable because 
 it substantially reduces the run time. 
 
-```{r Nuuk-NN-plot4, dependson=c("NuukData", "runMean", "Nuuk-opt-kernel"), fig.cap = "Nadaraya–Watson kernel smoother of the annual average temperature in Nuuk for the optimal bandwidth using LOOCV (blue) compared to the $k$-nearest neighbor smoother with $k = 9$ (red).", warning=FALSE}
+```{r Nuuk-NN-plot4, dependson=c("NuukData", "run-mean", "Nuuk-opt-kernel"), fig.cap = "Nadaraya–Watson kernel smoother of the annual average temperature in Nuuk for the optimal bandwidth using LOOCV (blue) compared to the $k$-nearest neighbor smoother with $k = 9$ (red).", warning=FALSE}
 p_Nuuk + 
-  geom_line(aes(y = runMean(Nuuk_year$Temperature, 9)), color = "red") +
+  geom_line(aes(y = run_mean(Nuuk_year$Temperature, 9)), color = "red") +
   geom_line(aes(y = f_hat), color = "blue")
 ```
 
@@ -484,7 +501,7 @@ We will present some benchmark comparisons below. First we compare the run time
 for the matrix multiplication `as.numeric(K %*% Nuuk_year$Temperature) * weights` 
 using a sparse matrix (as above) with the run time 
 using a dense matrix. The dense matrix is given as `Kdense = as.matrix(K)`. These
-run times are compared to using `filter`. In all computations, $k = 5$. 
+run times are compared to using `filter()`. In all computations, $k = 5$. 
 
 ```{r runmean_bench, echo =FALSE}
 y <- rnorm(4096)
@@ -533,7 +550,7 @@ the dense matrix multiplication will not change with $k$. For the
 other two it will increase (linearly) with increasing $k$. 
 
 For smoothing only once with a given smoother matrix the time to construct the matrix 
-should also be taken into account for fair comparison with `filter`. It turns out
+should also be taken into account for fair comparison with `filter()`. It turns out
 that the function `bandSparse` is not optimized for the specific running mean 
 banded matrix, and a faster C++ function for this job is given below.
 
@@ -576,10 +593,10 @@ bandSparseFast <- function(n, k) {
 weights4 <- c(rep(NA, 5), rep(1/11, 4096 - 10), rep(NA, 5))
 
 tmp <- microbenchmark(
-  runMean(y[1:512], k = 11),
-  runMean(y[1:1124], k = 11),
-  runMean(y[1:2048], k = 11),
-  runMean(y[1:4096], k = 11),
+  run_mean(y[1:512], k = 11),
+  run_mean(y[1:1124], k = 11),
+  run_mean(y[1:2048], k = 11),
+  run_mean(y[1:4096], k = 11),
   stats::filter(y[1:512], rep(1/11, 11)),
   stats::filter(y[1:1024], rep(1/11, 11)),
   stats::filter(y[1:2048], rep(1/11, 11)),
@@ -595,7 +612,7 @@ tmp <- microbenchmark(
   )
 sumbench <- summary(tmp)
 sumbench$n <- rep(c(512, 1024, 2048, 4096), 4)
-sumbench$method <- rep(c("runMean", "filter", "Sparse mat. fast", "Sparse mat."), each = 4)
+sumbench$method <- rep(c("run-mean", "filter", "Sparse mat. fast", "Sparse mat."), each = 4)
 ```
 
 ```{r fast_runmean_bench_fig, echo=FALSE, dependson="fast_runmean_bench"}
@@ -607,9 +624,9 @@ qplot(n, median, data = sumbench, color = method, size = I(4)) +
 
 The construction of the sparse matrix turns out to take up much more time than the 
 matrix-vector multiplication. The run time is still $O(n)$, but the constant is of 
-the order of a factor 16 larger than for `filter`. With the faster construction of 
+the order of a factor 16 larger than for `filter()`. With the faster construction of 
 the sparse matrix, the constant is reduced to being
-of the order 5 larger than for `filter`. For small $n$ there is some overhead 
+of the order 5 larger than for `filter()`. For small $n$ there is some overhead 
 from the constructor of the sparse matrix object even for the faster algorithm.
 
 If you implement an algorithm (like a smoother) using linear algebra (e.g. a 
@@ -618,11 +635,11 @@ compared to dense matrix numerical methods. The Matrix package for R implements
 sparse matrices, and you should always attempt to use methods for constructing 
 the sparse matrix that avoid dense intermediates. But even with a special 
 purpose constructor of a sparse band matrix, sparse linear algebra cannot 
-compete with optimized special purpose algorithms like `filter` or a 
-C++ implementation of `runMean`. The `filter` function even works more 
+compete with optimized special purpose algorithms like `filter()` or a 
+C++ implementation of `run_mean()`. The `filter()` function even works more 
 generally for kernels (weights) with *equidistant* data. 
 
-We conclude this section by verifying that `filter` actually computes
+We conclude this section by verifying that `filter()` actually computes
 the running mean up to numerical errors. 
 
 ```{r runmean_accuracy_fig, warning=FALSE, dependson=c("NuukData", "Nuuk_runmeans")}
@@ -655,7 +672,7 @@ p_Nuuk + geom_smooth(method = "lm", formula = y ~ poly(x, 19),
 We can extract the model matrix from the lm-object.
 
 ```{r Nuuk_model_matrix, dependson="NuukData"}
-intercept <- rep(1/sqrt(n), n)  ## To make intercept column have norm one
+intercept <- rep(1/sqrt(n), n)  # To make intercept column have norm one
 polylm <- lm(Temperature ~ intercept + poly(Year, 19) - 1, data = Nuuk_year)
 Phi <- model.matrix(polylm)
 ```
@@ -665,7 +682,8 @@ Phi <- model.matrix(polylm)
 XX <- Phi
 colnames(XX) <- c("intercept", paste(rep("pol", 19), 1:19, sep = ""))
 bind_cols(select(Nuuk_year, Year), as_tibble(XX)) %>% 
-  gather(key = "term", value = "value", -Year, factor_key = TRUE) %>% 
+  pivot_longer(-Year, names_to = "term", values_to = "value") %>% 
+  mutate(term = factor(term, levels = unique(term))) %>% 
   ggplot(aes(Year, value, color = term)) + 
   geom_line() + 
   facet_wrap(~ term) + 
@@ -695,16 +713,30 @@ sigmahat <- sqrt(sum(polylm$residuals^2) / polylm$df.residual)
 qplot(x = 1:20, y = abs(coef(polylm)), geom = "blank") + 
   ylab(expression(paste("|", hat(beta), "|"))) + 
   xlab("") + geom_abline(intercept = 1.96 * sigmahat, slope = 0, color = "red", size = 1) +
-  geom_point(size = 4) + annotate("text", x = 1.5, y = 1.96 * sigmahat + 2.5, 
-                                  label = "1.96 * hat(sigma)",
-                                  parse = TRUE)
+  geom_point(size = 4) + 
+  annotate(
+    "text", 
+    x = 1.5, 
+    y = 1.96 * sigmahat + 2.5, 
+    label = "1.96 * hat(sigma)",
+    parse = TRUE
+  )
 ```
 
 ```{r Nuuk-poly-fig2, echo=FALSE, dependson="Nuuk_runmeans", fig.cap="Polynomial fit using all 19 basis functions (blue) and using a degree 5 polynomial (red)."}
-p_Nuuk + geom_smooth(method = "lm", formula = y ~ poly(x, 19), 
-                se = FALSE, size = 1) + 
-  geom_smooth(method = "lm", formula = y ~ poly(x, 5), 
-                se = FALSE, size = 1, color = "red")
+p_Nuuk + geom_smooth(
+  method = "lm", 
+  formula = y ~ poly(x, 19), 
+  se = FALSE, 
+  size = 1
+) + 
+  geom_smooth(
+    method = "lm", 
+    formula = y ~ poly(x, 5), 
+    se = FALSE, 
+    size = 1, 
+    color = "red"
+  )
 ```
 
 ### Fourier expansions
@@ -730,8 +762,11 @@ or $y = \Phi \hat{\beta}.$
 
 
 ```{r Fourier, dependson="NuukData"}
-Phi <- outer(0:(n - 1), 0:(n - 1), 
-           function(k, m) exp(2 * pi * 1i * (k * m) / n) / sqrt(n))
+Phi <- outer(
+  0:(n - 1), 
+  0:(n - 1), 
+  function(k, m) exp(2 * pi * 1i * (k * m) / n) / sqrt(n)
+)
 ```
 
 The matrix $\Phi$ generates an interesting pattern.
@@ -921,7 +956,7 @@ given in terms of $\varphi''_i$ as above.
 ### Splines in R
 
 The splines package in R implements some of the basic functions needed to work 
-with splines. In particular, the `splineDesign` function that computes evaluations
+with splines. In particular, the `splineDesign()` function that computes evaluations
 of B-splines and their derivatives.
 
 ```{r splines-package, cache=FALSE}
@@ -929,8 +964,8 @@ library(splines)
 ```
 
 
-```{r splines, fig.cap="B-spline basis as computed by `splineDesign`."}
-## Note the specification of repeated boundary knots
+```{r splines, fig.cap="B-spline basis as computed by `splineDesign()`."}
+# Note the specification of repeated boundary knots
 knots <- c(0, 0, 0, seq(0, 1, 0.2), 1, 1, 1)
 xx <- seq(0, 1, 0.005)
 B_splines <- splineDesign(knots, xx)
@@ -958,12 +993,12 @@ for numerical integration, and the fact that this is an identity for quadratic
 polynomials, and not an approximation, means that Simpson's rule 
 applied appropriately leads to exact computation of 
 $\mathbf{\Omega}_{ij}$. All we need is the ability to evaluate 
-$\varphi''_i$ at certain points, and `splineDesign` can be used for that. 
+$\varphi''_i$ at certain points, and `splineDesign()` can be used for that. 
 
 ```{r Omega-Simpson}
 pen_mat <- function(inner_knots) {
   knots <- sort(c(rep(range(inner_knots), 3), inner_knots))
-  d <- diff(inner_knots)  ## the vector of knot differences; b - a 
+  d <- diff(inner_knots)  # The vector of knot differences; b - a 
   g_ab <- splineDesign(knots, inner_knots, derivs = 2) 
   knots_mid <- inner_knots[-length(inner_knots)] + d / 2
   g_ab_mid <- splineDesign(knots, knots_mid, derivs = 2)
@@ -975,34 +1010,39 @@ pen_mat <- function(inner_knots) {
 }
 ```
 
-It is laborious to write good tests of `pen_mat`. We would have to work out a 
+It is laborious to write good tests of `pen_mat()`. We would have to work out a 
 set of example matrices by other means, e.g. by hand. Alternatively, we can 
 compare to a simpler numerical integration technique using Riemann sums. 
 
 ```{r Omega-test1, dependson="Omega-Simpson"}
-tmp_deriv <- splineDesign(c(0, 0, 0, 0, 0.5, 1, 1, 1, 1), 
-                          seq(0, 1, 1e-5), derivs = 2)
-Omega_numeric <- crossprod(tmp_deriv[-1, ]) * 1e-5  ## Right Riemann sums
+spline_deriv <- splineDesign(
+  c(0, 0, 0, 0, 0.5, 1, 1, 1, 1), 
+  seq(0, 1, 1e-5), 
+  derivs = 2
+)
+Omega_numeric <- crossprod(spline_deriv[-1, ]) * 1e-5  # Right Riemann sums
 Omega <- pen_mat(c(0, 0.5, 1))
 Omega_numeric / Omega
-range((Omega_numeric - Omega) / (Omega + 0.001))  ## Relative error
+range((Omega_numeric - Omega) / (Omega + 0.001))  #  Relative error
 ```
 
 And we should also test an example with non-equidistant knots. 
 
 ```{r Omega-test2, dependson="Omega-Simpson"}
-tmp_deriv <- splineDesign(
+spline_deriv <- splineDesign(
   c(0, 0, 0, 0, 0.2, 0.3, 0.5, 0.6, 0.65, 0.7, 1, 1, 1, 1), 
-  seq(0, 1, 1e-5), derivs = 2)
-Omega_numeric <- crossprod(tmp_deriv[-1, ]) * 1e-5  ## Right Riemann sums
+  seq(0, 1, 1e-5), 
+  derivs = 2
+)
+Omega_numeric <- crossprod(spline_deriv[-1, ]) * 1e-5  # Right Riemann sums
 Omega <- pen_mat(c(0, 0.2, 0.3, 0.5, 0.6, 0.65, 0.7, 1))
-range((Omega_numeric - Omega) / (Omega + 0.001)) ## Relative error
+range((Omega_numeric - Omega) / (Omega + 0.001)) # Relative error
 ```
 
-These examples indicate that `pen_mat` computes $\mathbf{\Omega}$ correctly, 
+These examples indicate that `pen_mat()` computes $\mathbf{\Omega}$ correctly, 
 in particular as increasing the Riemann sum precision by 
 lowering the number $10^{-5}$ will decrease the relative error (not shown). 
-Of course, correctness ultimately depends on `splineDesign` computing 
+Of course, correctness ultimately depends on `splineDesign()` computing 
 the correct second derivatives, which hasn't been tested here.
 
 We can also test how our implementation of smoothing splines works 
@@ -1014,35 +1054,36 @@ inner_knots <- Nuuk_year$Year
 Phi <- splineDesign(c(rep(range(inner_knots), 3), inner_knots), inner_knots)
 Omega <- pen_mat(inner_knots)
 smoother <- function(lambda) 
-  Phi %*% solve(crossprod(Phi) + lambda * Omega, 
-                t(Phi) %*% Nuuk_year$Temperature)
-
+  Phi %*% solve(
+    crossprod(Phi) + lambda * Omega, 
+    t(Phi) %*% Nuuk_year$Temperature
+  )
 p_Nuuk + 
-  geom_line(aes(y = smoother(10)), color = "blue") +      ## Undersmooth
-  geom_line(aes(y = smoother(1000)), color = "red") +     ## Smooth
-  geom_line(aes(y = smoother(100000)), color = "purple")  ## Oversmooth
+  geom_line(aes(y = smoother(10)), color = "blue") +      # Undersmooth
+  geom_line(aes(y = smoother(1000)), color = "red") +     # Smooth
+  geom_line(aes(y = smoother(100000)), color = "purple")  # Oversmooth
 ```
 
-Smoothing splines can be computed using the R function `smooth.spline` 
+Smoothing splines can be computed using the R function `smooth.spline()` 
 from the stats package. It is possible to manually specify the amount of 
 smoothing using one of the arguments `lambda`, `spar` or `df` 
 (the latter being the trace of the smoother matrix). However,
-due to internal differences from the `splineDesign` basis 
-above, the `lambda` argument to `smooth.spline` does not match the 
+due to internal differences from the `splineDesign()` basis 
+above, the `lambda` argument to `smooth.spline()` does not match the 
 $\lambda$ parameter above. 
 
-If the amount of smoothing is not manually set, `smooth.spline` chooses 
+If the amount of smoothing is not manually set, `smooth.spline()` chooses 
 $\lambda$ by *generalized cross validation* (GCV), which minimizes
 $$\mathrm{GCV} = \sum_{i=1}^n \left(\frac{y_i - \hat{f}_i}{1 - \mathrm{df} / n}\right)^2,$$
 where 
 $$\mathrm{df} = \mathrm{trace}(\mathbf{S}) = \sum_{i=1}^n S_{ii}.$$
-Thus it corresponds to LOOCV with the diagonal entries, $S_{ii}$,
+GCV corresponds to LOOCV with the diagonal entries, $S_{ii}$,
 replaced by their average $\mathrm{df} / n$. The main reason for 
 using GCV over LOOCV is that for some smoothers, such as the 
 spline smoother, it is possible to compute the trace $\mathrm{df}$ easily 
 without computing $\mathbf{S}$ or even its diagonal elements. 
 
-To compare our results to `smooth.spline` we optimize the GCV criterion. 
+To compare our results to `smooth.spline()` we optimize the GCV criterion. 
 First we implement a function that computes GCV for a fixed value of $\lambda$.
 Here the implementation is relying on computing the smoother matrix, but 
 this is not the most efficient implementation. Section \@ref(efficient-splines)
@@ -1055,7 +1096,7 @@ easily computable from the diagonalization.
 ```{r gcv-smooth-spline}
 gcv <- function(lambda, y) {
   S <- Phi %*% solve(crossprod(Phi) + lambda * Omega, t(Phi))
-  df <- sum(diag(S))  ## The trace of the smoother matrix
+  df <- sum(diag(S))  # The trace of the smoother matrix
   sum(((y - S %*% y) / (1 - df / length(y)))^2, na.rm = TRUE) 
 }
 ```
@@ -1067,34 +1108,37 @@ choose the value of $\lambda$ that minimizes GCV.
 lambda <- seq(50, 250, 2)
 GCV <- sapply(lambda, gcv, y = Nuuk_year$Temperature)
 lambda_opt <- lambda[which.min(GCV)]
-qplot(lambda, GCV) + 
-  geom_vline(xintercept = lambda_opt, color = "red")
+qplot(lambda, GCV) + geom_vline(xintercept = lambda_opt, color = "red")
 ```
 
 Finally, we can visualize the resulting smoothing spline. 
 
 ```{r Nuuk-spline-opt, fig.cap="The smoothing spline that minimizes GCV over the tuning parameter $\\lambda$", dependson=c("Nuuk-spline-gcv", "NuukData")}
-temp_smooth_opt <- Phi %*% solve(crossprod(Phi) + lambda_opt * Omega, 
-                                 t(Phi) %*% Nuuk_year$Temperature)
+temp_smooth_opt <- Phi %*% solve(
+  crossprod(Phi) + lambda_opt * Omega, 
+  t(Phi) %*% Nuuk_year$Temperature
+)
 p_Nuuk + geom_line(aes(y = temp_smooth_opt), color = "blue")
 ```
 
 The smoothing spline that we found by minimizing GCV can be compared to 
-the smoothing spline that `smooth.spline` computes by minimizing GCV 
+the smoothing spline that `smooth.spline()` computes by minimizing GCV 
 as well.
 
-(ref:smoothspline) The smoothing spline that minimizes GCV as computed by `smooth.spline`.
+(ref:smoothspline) The smoothing spline that minimizes GCV as computed by `smooth.spline()`.
 
 ```{r Nuuk-spline-opt2, fig.cap='(ref:smoothspline)', dependson="NuukData"}
-temp_smooth_splines <- smooth.spline(Nuuk_year$Year, 
-                                     Nuuk_year$Temperature, 
-                                     all.knots = TRUE)  ## Don't use heuristic
+temp_smooth_splines <- smooth.spline(
+  Nuuk_year$Year, 
+  Nuuk_year$Temperature, 
+  all.knots = TRUE        # Don't use heuristic
+)  
 range(temp_smooth_splines$y - temp_smooth_opt)
 p_Nuuk + geom_line(aes(y = temp_smooth_splines$y), color = "blue")
 ```
 
 The differences between the smoothing spline computed by our implementation
-and by `smooth.spline` is hardly detectable visually, and they are at most 
+and by `smooth.spline()` is hardly detectable visually, and they are at most 
 of the order $10^{-3}$ as computed above. It is possible to further 
 decrease the differences by finding the optimal value of $\lambda$ with a 
 higher precision, but we will not pursue this here. 
@@ -1104,15 +1148,15 @@ higher precision, but we will not pursue this here.
 Using the full B-spline basis with knots in every observation is computationally
 heavy and from a practical viewpoint unnecessary. Smoothing using B-splines
 is therefore often done using a knot-selection heuristic that selects much fewer 
-knots than $n$, in particular if $n$ is large. This is also what `smooth.spline` 
+knots than $n$, in particular if $n$ is large. This is also what `smooth.spline()` 
 does unless `all.knots = TRUE`. The heuristic for selecting 
-the number of knots is a bit complicated, but it is implemented in the function `.nknots.smspl`, 
+the number of knots is a bit complicated, but it is implemented in the function `.nknots.smspl()`, 
 which can be inspected for details. Once the number of knots gets above 200 it
 grows extremely slowly with $n$. With the number of knots selected,
 a common heuristic for selecting their position is to use the quantiles of 
 the distribution of the $x$-values. That is, with 9 knots, say, the knots
 are positioned in the deciles (0.1-quantile, 0.2-quantile etc.). This is 
-effectively also what `smooth.spline` does, and this heuristic places most of 
+effectively also what `smooth.spline()` does, and this heuristic places most of 
 the knots where we have most of the data points. 
 
 Having implemented a knot-selection heuristic that results in $p$ B-spline 
@@ -1146,7 +1190,7 @@ $\widetilde{\mathbf{\Omega}} = D^{-1} \mathbf{V}^T \mathbf{\Omega} \mathbf{V} D^
 a positive semidefinite $p \times p$ matrix. By diagonalization,
 $$\widetilde{\mathbf{\Omega}} = \mathbf{W} \Gamma \mathbf{W}^T,$$
 where $\mathbf{W}$ is orthogonal and $\Gamma$ is a diagonal matrix with nonnegative 
-values in the diagonal, we find that 
+values in the diagonal, and we find that 
 
 \begin{align}
 \mathbf{S}_{\lambda} & = \mathbf{U} \mathbf{W} (I + \lambda  \Gamma)^{-1}  \mathbf{W}^T  \mathbf{U}^T \\
@@ -1159,7 +1203,7 @@ $n \times p$ matrix.
 The interpretation of this representation is as follows. 
 
 * First, the coefficients, $\hat{\beta} = \widetilde{\mathbf{U}}^Ty$, are computed for 
-expanding $y$ in the basis given by the columns of $\mathbf{U}$. 
+expanding $y$ in the basis given by the columns of $\widetilde{\mathbf{U}}$. 
 * Second, the $i$-th coefficient is shrunk towards 0,
 $$\hat{\beta}_i(\lambda) = \frac{\hat{\beta}_i}{1 + \lambda \gamma_i}.$$
 * Third, the smoothed values, $\widetilde{\mathbf{U}} \hat{\beta}(\lambda)$, 
@@ -1183,14 +1227,14 @@ Omega <- pen_mat(inner_knots)
 Phi_svd <- svd(Phi)
 Omega_tilde <- t(crossprod(Phi_svd$v, Omega %*% Phi_svd$v)) / Phi_svd$d
 Omega_tilde <- t(Omega_tilde) / Phi_svd$d
-## It is safer to use the numerical singular value decomposition ('svd')
-## for diagonalizing a positive semidefinite matrix than to use a 
-## more general numerical diagonalization implementation such as 'eigen'. 
+# It is safer to use the numerical singular value decomposition ('svd()')
+# for diagonalizing a positive semidefinite matrix than to use a 
+# more general numerical diagonalization implementation such as 'eigen()'. 
 Omega_tilde_svd <- svd(Omega_tilde)  
 U_tilde <- Phi_svd$u %*% Omega_tilde_svd$u
 ```
 
-```{r spline-gamma, dependson="spline-diagonalization", fig.cap="The eigenvalues $\\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues untransformed, while the right plot shows the eigenvalues log-transformed.", echo=FALSE, out.width="49%", fig.show='hold', fig.height=3, fig.width=4}
+```{r spline-gamma, dependson="spline-diagonalization", fig.cap="The eigenvalues $\\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues, ane the right plot shows the eigenvalues on a log-scale.", echo=FALSE, out.width="49%", fig.show='hold', fig.height=3, fig.width=4}
 p <- qplot(1:20, Omega_tilde_svd$d) + xlab("i") + ylab("Eigenvalues") 
 p
 p + scale_y_log10() + ylab("")
@@ -1199,7 +1243,8 @@ p + scale_y_log10() + ylab("")
 ```{r spline-basis, echo=FALSE, dependson=c("NuukData", "spline-diagonalization"), fig.cap="The columns of $\\widetilde{\\mathbf{U}}$  that consitute an orthonormal basis known as the Demmler-Reinch basis for computing the spline based smoother.", out.width="100%"}
 colnames(U_tilde) <- paste(rep("u", 20), 1:20, sep = "")
 bind_cols(select(Nuuk_year, Year), as_tibble(U_tilde)) %>% 
-  gather(key = "term", value = "value", -Year, factor_key = TRUE) %>% 
+  pivot_longer(-Year, names_to = "term", values_to = "value") %>% 
+  mutate(term = factor(term, levels = unique(term))) %>% 
   ggplot(aes(Year, value, color = term)) + 
   geom_line() + 
   facet_wrap(~ term) + 
