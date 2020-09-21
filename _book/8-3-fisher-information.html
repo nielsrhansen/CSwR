@@ -163,7 +163,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="2.3.1" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#rectangular"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
 <li class="chapter" data-level="2.3.2" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#ise-mise-and-mse-for-kernel-estimators"><i class="fa fa-check"></i><b>2.3.2</b> ISE, MISE and MSE for kernel estimators</a></li>
 <li class="chapter" data-level="2.3.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#plug-in-estimation-of-the-oracle-bandwidth"><i class="fa fa-check"></i><b>2.3.3</b> Plug-in estimation of the oracle bandwidth</a></li>
-<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
+<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cv"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
 </ul></li>
 <li class="chapter" data-level="2.4" data-path="2-4-likelihood.html"><a href="2-4-likelihood.html"><i class="fa fa-check"></i><b>2.4</b> Likelihood considerations</a><ul>
 <li class="chapter" data-level="2.4.1" data-path="2-4-likelihood.html"><a href="2-4-likelihood.html#sieves"><i class="fa fa-check"></i><b>2.4.1</b> Method of sieves</a></li>
@@ -229,7 +229,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="chapter" data-level="5" data-path="5-mci.html"><a href="5-mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
 <li class="chapter" data-level="5.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html"><i class="fa fa-check"></i><b>5.1</b> Assessment</a><ul>
-<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#using-the-central-limit-theorem"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
+<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#CLT-gamma"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
 <li class="chapter" data-level="5.1.2" data-path="5-1-assessment.html"><a href="5-1-assessment.html#concentration-inequalities"><i class="fa fa-check"></i><b>5.1.2</b> Concentration inequalities</a></li>
 <li class="chapter" data-level="5.1.3" data-path="5-1-assessment.html"><a href="5-1-assessment.html#exponential-tail-bound-for-gamma-distributed-variables"><i class="fa fa-check"></i><b>5.1.3</b> Exponential tail bound for Gamma distributed variables</a></li>
 </ul></li>
@@ -237,8 +237,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="5.2.1" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#unknown-normalization-constants"><i class="fa fa-check"></i><b>5.2.1</b> Unknown normalization constants</a></li>
 <li class="chapter" data-level="5.2.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#hd-int"><i class="fa fa-check"></i><b>5.2.2</b> Computing a high-dimensional integral</a></li>
 </ul></li>
-<li class="chapter" data-level="5.3" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
-<li class="chapter" data-level="5.3.1" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
+<li class="chapter" data-level="5.3" data-path="5-3-network.html"><a href="5-3-network.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="5-3-network.html"><a href="5-3-network.html#object-oriented-implementations"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementations</a></li>
 </ul></li>
 </ul></li>
 <li class="part"><span><b>Part III: Optimization</b></span></li>
@@ -394,34 +394,34 @@ three different possible terms in the sum. The implementation
 works directly on the tabulated data by computing all the three possible
 terms and then forming a weighted sum according to the number of times each
 term is present.</p>
-<div class="sourceCode" id="cb349"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb349-1"><a href="8-3-fisher-information.html#cb349-1"></a>empFisher &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, grad, <span class="dt">center =</span> <span class="ot">FALSE</span>) {</span>
-<span id="cb349-2"><a href="8-3-fisher-information.html#cb349-2"></a>  grad_MLE &lt;-<span class="st"> </span><span class="dv">0</span> <span class="co">## is supposed to be 0 in the MLE</span></span>
-<span id="cb349-3"><a href="8-3-fisher-information.html#cb349-3"></a>  <span class="cf">if</span> (center) </span>
-<span id="cb349-4"><a href="8-3-fisher-information.html#cb349-4"></a>     grad_MLE &lt;-<span class="st">  </span><span class="kw">grad</span>(par, x) <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(x)</span>
-<span id="cb349-5"><a href="8-3-fisher-information.html#cb349-5"></a>   grad1 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</span>
-<span id="cb349-6"><a href="8-3-fisher-information.html#cb349-6"></a>   grad2 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</span>
-<span id="cb349-7"><a href="8-3-fisher-information.html#cb349-7"></a>   grad3 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</span>
-<span id="cb349-8"><a href="8-3-fisher-information.html#cb349-8"></a>   x[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad1) <span class="op">%*%</span><span class="st"> </span>grad1 <span class="op">+</span><span class="st"> </span></span>
-<span id="cb349-9"><a href="8-3-fisher-information.html#cb349-9"></a><span class="st">     </span>x[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad2) <span class="op">%*%</span><span class="st"> </span>grad2 <span class="op">+</span><span class="st"> </span></span>
-<span id="cb349-10"><a href="8-3-fisher-information.html#cb349-10"></a><span class="st">     </span>x[<span class="dv">3</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad3) <span class="op">%*%</span><span class="st"> </span>grad3 </span>
-<span id="cb349-11"><a href="8-3-fisher-information.html#cb349-11"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb363"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb363-1"><a href="8-3-fisher-information.html#cb363-1"></a>empFisher &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, grad, <span class="dt">center =</span> <span class="ot">FALSE</span>) {</span>
+<span id="cb363-2"><a href="8-3-fisher-information.html#cb363-2"></a>  grad_MLE &lt;-<span class="st"> </span><span class="dv">0</span> <span class="co">## is supposed to be 0 in the MLE</span></span>
+<span id="cb363-3"><a href="8-3-fisher-information.html#cb363-3"></a>  <span class="cf">if</span> (center) </span>
+<span id="cb363-4"><a href="8-3-fisher-information.html#cb363-4"></a>     grad_MLE &lt;-<span class="st">  </span><span class="kw">grad</span>(par, x) <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(x)</span>
+<span id="cb363-5"><a href="8-3-fisher-information.html#cb363-5"></a>   grad1 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</span>
+<span id="cb363-6"><a href="8-3-fisher-information.html#cb363-6"></a>   grad2 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</span>
+<span id="cb363-7"><a href="8-3-fisher-information.html#cb363-7"></a>   grad3 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</span>
+<span id="cb363-8"><a href="8-3-fisher-information.html#cb363-8"></a>   x[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad1) <span class="op">%*%</span><span class="st"> </span>grad1 <span class="op">+</span><span class="st"> </span></span>
+<span id="cb363-9"><a href="8-3-fisher-information.html#cb363-9"></a><span class="st">     </span>x[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad2) <span class="op">%*%</span><span class="st"> </span>grad2 <span class="op">+</span><span class="st"> </span></span>
+<span id="cb363-10"><a href="8-3-fisher-information.html#cb363-10"></a><span class="st">     </span>x[<span class="dv">3</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad3) <span class="op">%*%</span><span class="st"> </span>grad3 </span>
+<span id="cb363-11"><a href="8-3-fisher-information.html#cb363-11"></a>}</span></code></pre></div>
 <p>We test the implementation with and without centering and compare
 the result to a numerically computed hessian using <code>optimHess</code> (it is
 possible to get <code>optim</code> to compute the Hessian numerically in the minimizer
 as a final step, but <code>optimHess</code> does this computation separately).</p>
-<div class="sourceCode" id="cb350"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb350-1"><a href="8-3-fisher-information.html#cb350-1"></a><span class="co">## The gradient of Q (equivalently the log-likelihood) was </span></span>
-<span id="cb350-2"><a href="8-3-fisher-information.html#cb350-2"></a><span class="co">## implemented earlier as &#39;grad_loglik&#39;.</span></span>
-<span id="cb350-3"><a href="8-3-fisher-information.html#cb350-3"></a>grad &lt;-<span class="st"> </span><span class="cf">function</span>(par, x) <span class="kw">grad_loglik</span>(par, x, prob, Dprob, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span>
-<span id="cb350-4"><a href="8-3-fisher-information.html#cb350-4"></a><span class="kw">empFisher</span>(phat, <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), grad)</span></code></pre></div>
+<div class="sourceCode" id="cb364"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb364-1"><a href="8-3-fisher-information.html#cb364-1"></a><span class="co">## The gradient of Q (equivalently the log-likelihood) was </span></span>
+<span id="cb364-2"><a href="8-3-fisher-information.html#cb364-2"></a><span class="co">## implemented earlier as &#39;grad_loglik&#39;.</span></span>
+<span id="cb364-3"><a href="8-3-fisher-information.html#cb364-3"></a>grad &lt;-<span class="st"> </span><span class="cf">function</span>(par, x) <span class="kw">grad_loglik</span>(par, x, prob, Dprob, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span>
+<span id="cb364-4"><a href="8-3-fisher-information.html#cb364-4"></a><span class="kw">empFisher</span>(phat, <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), grad)</span></code></pre></div>
 <pre><code>##           [,1]     [,2]
 ## [1,] 18487.558 1384.626
 ## [2,]  1384.626 6816.612</code></pre>
-<div class="sourceCode" id="cb352"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb352-1"><a href="8-3-fisher-information.html#cb352-1"></a><span class="kw">empFisher</span>(phat, <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), grad, <span class="dt">center =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb366"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb366-1"><a href="8-3-fisher-information.html#cb366-1"></a><span class="kw">empFisher</span>(phat, <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), grad, <span class="dt">center =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
 <pre><code>##           [,1]     [,2]
 ## [1,] 18487.558 1384.626
 ## [2,]  1384.626 6816.612</code></pre>
-<div class="sourceCode" id="cb354"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb354-1"><a href="8-3-fisher-information.html#cb354-1"></a><span class="kw">optimHess</span>(phat, loglik, grad_loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </span>
-<span id="cb354-2"><a href="8-3-fisher-information.html#cb354-2"></a>          <span class="dt">prob =</span> prob, <span class="dt">Dprob =</span> Dprob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb368"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb368-1"><a href="8-3-fisher-information.html#cb368-1"></a><span class="kw">optimHess</span>(phat, loglik, grad_loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </span>
+<span id="cb368-2"><a href="8-3-fisher-information.html#cb368-2"></a>          <span class="dt">prob =</span> prob, <span class="dt">Dprob =</span> Dprob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span></code></pre></div>
 <pre><code>##           [,1]     [,2]
 ## [1,] 18490.938 1384.629
 ## [2,]  1384.629 6816.769</code></pre>
@@ -461,21 +461,21 @@ is not computable either. It can, however, be shown that</p>
 its Jacobian, <span class="math inline">\(D_{\theta} \Phi(\hat{\theta})\)</span>, can be computed via numerical
 differentiation once we have implemented <span class="math inline">\(\Phi\)</span>. We also need the
 hessian of the map <span class="math inline">\(Q\)</span>, which we implement as an R function as well.</p>
-<div class="sourceCode" id="cb356"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb356-1"><a href="8-3-fisher-information.html#cb356-1"></a>Q &lt;-<span class="st"> </span><span class="cf">function</span>(p, pp, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), group) {</span>
-<span id="cb356-2"><a href="8-3-fisher-information.html#cb356-2"></a>  p[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>p[<span class="dv">2</span>]</span>
-<span id="cb356-3"><a href="8-3-fisher-information.html#cb356-3"></a>  pp[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>pp[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>pp[<span class="dv">2</span>]</span>
-<span id="cb356-4"><a href="8-3-fisher-information.html#cb356-4"></a>  <span class="op">-</span><span class="st"> </span>(x[group] <span class="op">*</span><span class="st"> </span><span class="kw">prob</span>(pp) <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(<span class="kw">prob</span>(pp), group)[group]) <span class="op">%*%</span><span class="st"> </span><span class="kw">log</span>(<span class="kw">prob</span>(p))</span>
-<span id="cb356-5"><a href="8-3-fisher-information.html#cb356-5"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb370"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb370-1"><a href="8-3-fisher-information.html#cb370-1"></a>Q &lt;-<span class="st"> </span><span class="cf">function</span>(p, pp, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), group) {</span>
+<span id="cb370-2"><a href="8-3-fisher-information.html#cb370-2"></a>  p[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>p[<span class="dv">2</span>]</span>
+<span id="cb370-3"><a href="8-3-fisher-information.html#cb370-3"></a>  pp[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>pp[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>pp[<span class="dv">2</span>]</span>
+<span id="cb370-4"><a href="8-3-fisher-information.html#cb370-4"></a>  <span class="op">-</span><span class="st"> </span>(x[group] <span class="op">*</span><span class="st"> </span><span class="kw">prob</span>(pp) <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(<span class="kw">prob</span>(pp), group)[group]) <span class="op">%*%</span><span class="st"> </span><span class="kw">log</span>(<span class="kw">prob</span>(p))</span>
+<span id="cb370-5"><a href="8-3-fisher-information.html#cb370-5"></a>}</span></code></pre></div>
 <p>The R package numDeriv contains functions that compute numerical derivatives.</p>
-<div class="sourceCode" id="cb357"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb357-1"><a href="8-3-fisher-information.html#cb357-1"></a><span class="kw">library</span>(numDeriv)</span></code></pre></div>
+<div class="sourceCode" id="cb371"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb371-1"><a href="8-3-fisher-information.html#cb371-1"></a><span class="kw">library</span>(numDeriv)</span></code></pre></div>
 <p>The Hessian of <span class="math inline">\(Q\)</span> can be computed using this package.</p>
-<div class="sourceCode" id="cb358"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb358-1"><a href="8-3-fisher-information.html#cb358-1"></a>iY &lt;-<span class="st"> </span><span class="kw">hessian</span>(Q, phat, <span class="dt">pp =</span> phat, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb372"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb372-1"><a href="8-3-fisher-information.html#cb372-1"></a>iY &lt;-<span class="st"> </span><span class="kw">hessian</span>(Q, phat, <span class="dt">pp =</span> phat, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span></code></pre></div>
 <p>Supplemented EM can then be implemented by computing the Jacobian of
 <span class="math inline">\(\Phi\)</span> using numDeriv as well.</p>
-<div class="sourceCode" id="cb359"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb359-1"><a href="8-3-fisher-information.html#cb359-1"></a>Phi &lt;-<span class="st"> </span><span class="cf">function</span>(pp) <span class="kw">MStep</span>(<span class="kw">EStep</span>(pp, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>)))</span>
-<span id="cb359-2"><a href="8-3-fisher-information.html#cb359-2"></a>DPhi &lt;-<span class="st"> </span><span class="kw">jacobian</span>(Phi, phat)  <span class="co">## Using numDeriv function &#39;jacobian&#39;</span></span>
-<span id="cb359-3"><a href="8-3-fisher-information.html#cb359-3"></a>iX &lt;-<span class="st"> </span>(<span class="kw">diag</span>(<span class="dv">1</span>, <span class="dv">2</span>) <span class="op">-</span><span class="st"> </span><span class="kw">t</span>(DPhi)) <span class="op">%*%</span><span class="st"> </span>iY</span>
-<span id="cb359-4"><a href="8-3-fisher-information.html#cb359-4"></a>iX</span></code></pre></div>
+<div class="sourceCode" id="cb373"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb373-1"><a href="8-3-fisher-information.html#cb373-1"></a>Phi &lt;-<span class="st"> </span><span class="cf">function</span>(pp) <span class="kw">MStep</span>(<span class="kw">EStep</span>(pp, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>)))</span>
+<span id="cb373-2"><a href="8-3-fisher-information.html#cb373-2"></a>DPhi &lt;-<span class="st"> </span><span class="kw">jacobian</span>(Phi, phat)  <span class="co">## Using numDeriv function &#39;jacobian&#39;</span></span>
+<span id="cb373-3"><a href="8-3-fisher-information.html#cb373-3"></a>iX &lt;-<span class="st"> </span>(<span class="kw">diag</span>(<span class="dv">1</span>, <span class="dv">2</span>) <span class="op">-</span><span class="st"> </span><span class="kw">t</span>(DPhi)) <span class="op">%*%</span><span class="st"> </span>iY</span>
+<span id="cb373-4"><a href="8-3-fisher-information.html#cb373-4"></a>iX</span></code></pre></div>
 <pre><code>##           [,1]     [,2]
 ## [1,] 18487.558 1384.626
 ## [2,]  1384.626 6816.612</code></pre>
@@ -492,12 +492,12 @@ interesting identity</p>
 <p>The last formula above explicitly gives the asymptotic variance for the incomplete
 observation <span class="math inline">\(X\)</span> as the asymptotic variance for the complete observation <span class="math inline">\(Y\)</span> plus
 a correction term.</p>
-<div class="sourceCode" id="cb361"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb361-1"><a href="8-3-fisher-information.html#cb361-1"></a>iYinv &lt;-<span class="st"> </span><span class="kw">solve</span>(iY)</span>
-<span id="cb361-2"><a href="8-3-fisher-information.html#cb361-2"></a>iYinv <span class="op">+</span><span class="st"> </span>iYinv <span class="op">%*%</span><span class="st"> </span><span class="kw">t</span>(<span class="kw">solve</span>(<span class="kw">diag</span>(<span class="dv">1</span>, <span class="dv">2</span>) <span class="op">-</span><span class="st"> </span>DPhi, DPhi))</span></code></pre></div>
+<div class="sourceCode" id="cb375"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb375-1"><a href="8-3-fisher-information.html#cb375-1"></a>iYinv &lt;-<span class="st"> </span><span class="kw">solve</span>(iY)</span>
+<span id="cb375-2"><a href="8-3-fisher-information.html#cb375-2"></a>iYinv <span class="op">+</span><span class="st"> </span>iYinv <span class="op">%*%</span><span class="st"> </span><span class="kw">t</span>(<span class="kw">solve</span>(<span class="kw">diag</span>(<span class="dv">1</span>, <span class="dv">2</span>) <span class="op">-</span><span class="st"> </span>DPhi, DPhi))</span></code></pre></div>
 <pre><code>##               [,1]          [,2]
 ## [1,]  5.492602e-05 -1.115686e-05
 ## [2,] -1.115686e-05  1.489667e-04</code></pre>
-<div class="sourceCode" id="cb363"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb363-1"><a href="8-3-fisher-information.html#cb363-1"></a><span class="kw">solve</span>(iX) <span class="co">## SEM-based, but different use of inversion</span></span></code></pre></div>
+<div class="sourceCode" id="cb377"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb377-1"><a href="8-3-fisher-information.html#cb377-1"></a><span class="kw">solve</span>(iX) <span class="co">## SEM-based, but different use of inversion</span></span></code></pre></div>
 <pre><code>##               [,1]          [,2]
 ## [1,]  5.492602e-05 -1.115686e-05
 ## [2,] -1.115686e-05  1.489667e-04</code></pre>

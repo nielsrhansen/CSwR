@@ -163,7 +163,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="2.3.1" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#rectangular"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
 <li class="chapter" data-level="2.3.2" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#ise-mise-and-mse-for-kernel-estimators"><i class="fa fa-check"></i><b>2.3.2</b> ISE, MISE and MSE for kernel estimators</a></li>
 <li class="chapter" data-level="2.3.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#plug-in-estimation-of-the-oracle-bandwidth"><i class="fa fa-check"></i><b>2.3.3</b> Plug-in estimation of the oracle bandwidth</a></li>
-<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
+<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cv"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
 </ul></li>
 <li class="chapter" data-level="2.4" data-path="2-4-likelihood.html"><a href="2-4-likelihood.html"><i class="fa fa-check"></i><b>2.4</b> Likelihood considerations</a><ul>
 <li class="chapter" data-level="2.4.1" data-path="2-4-likelihood.html"><a href="2-4-likelihood.html#sieves"><i class="fa fa-check"></i><b>2.4.1</b> Method of sieves</a></li>
@@ -229,7 +229,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="chapter" data-level="5" data-path="5-mci.html"><a href="5-mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
 <li class="chapter" data-level="5.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html"><i class="fa fa-check"></i><b>5.1</b> Assessment</a><ul>
-<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#using-the-central-limit-theorem"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
+<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#CLT-gamma"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
 <li class="chapter" data-level="5.1.2" data-path="5-1-assessment.html"><a href="5-1-assessment.html#concentration-inequalities"><i class="fa fa-check"></i><b>5.1.2</b> Concentration inequalities</a></li>
 <li class="chapter" data-level="5.1.3" data-path="5-1-assessment.html"><a href="5-1-assessment.html#exponential-tail-bound-for-gamma-distributed-variables"><i class="fa fa-check"></i><b>5.1.3</b> Exponential tail bound for Gamma distributed variables</a></li>
 </ul></li>
@@ -237,8 +237,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="5.2.1" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#unknown-normalization-constants"><i class="fa fa-check"></i><b>5.2.1</b> Unknown normalization constants</a></li>
 <li class="chapter" data-level="5.2.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#hd-int"><i class="fa fa-check"></i><b>5.2.2</b> Computing a high-dimensional integral</a></li>
 </ul></li>
-<li class="chapter" data-level="5.3" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
-<li class="chapter" data-level="5.3.1" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
+<li class="chapter" data-level="5.3" data-path="5-3-network.html"><a href="5-3-network.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="5-3-network.html"><a href="5-3-network.html#object-oriented-implementations"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementations</a></li>
 </ul></li>
 </ul></li>
 <li class="part"><span><b>Part III: Optimization</b></span></li>
@@ -463,41 +463,41 @@ For the log-likelihood loss we find the gradient
 
 <p>To clearly emulate the online nature of the algoritm, the implementation below
 generates the observations sequentially in the for-loop.</p>
-<div class="sourceCode" id="cb375"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb375-1"><a href="9-1-stochastic-gradient-algorithms.html#cb375-1"></a>N &lt;-<span class="st"> </span><span class="dv">2000</span></span>
-<span id="cb375-2"><a href="9-1-stochastic-gradient-algorithms.html#cb375-2"></a>beta =<span class="st"> </span><span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">3</span>)</span>
-<span id="cb375-3"><a href="9-1-stochastic-gradient-algorithms.html#cb375-3"></a>mu &lt;-<span class="st"> </span><span class="cf">function</span>(z, beta) <span class="kw">exp</span>(beta[<span class="dv">1</span>] <span class="op">+</span><span class="st"> </span>beta[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span>z)</span>
-<span id="cb375-4"><a href="9-1-stochastic-gradient-algorithms.html#cb375-4"></a>beta_SE &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">&quot;list&quot;</span>, N)</span>
-<span id="cb375-5"><a href="9-1-stochastic-gradient-algorithms.html#cb375-5"></a>beta_LL &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">&quot;list&quot;</span>, N)</span>
-<span id="cb375-6"><a href="9-1-stochastic-gradient-algorithms.html#cb375-6"></a>gamma0 &lt;-<span class="st"> </span><span class="fl">0.0002</span></span>
-<span id="cb375-7"><a href="9-1-stochastic-gradient-algorithms.html#cb375-7"></a>gamma1 &lt;-<span class="st"> </span><span class="fl">0.02</span></span>
-<span id="cb375-8"><a href="9-1-stochastic-gradient-algorithms.html#cb375-8"></a>K &lt;-<span class="st"> </span><span class="dv">100</span></span>
-<span id="cb375-9"><a href="9-1-stochastic-gradient-algorithms.html#cb375-9"></a></span>
-<span id="cb375-10"><a href="9-1-stochastic-gradient-algorithms.html#cb375-10"></a>beta_SE[[<span class="dv">1</span>]] &lt;-<span class="st"> </span>beta_LL[[<span class="dv">1</span>]] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>)</span>
-<span id="cb375-11"><a href="9-1-stochastic-gradient-algorithms.html#cb375-11"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="op">:</span>N) {</span>
-<span id="cb375-12"><a href="9-1-stochastic-gradient-algorithms.html#cb375-12"></a>  <span class="co">## Data</span></span>
-<span id="cb375-13"><a href="9-1-stochastic-gradient-algorithms.html#cb375-13"></a>  z &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>, <span class="dv">-1</span>, <span class="dv">1</span>)</span>
-<span id="cb375-14"><a href="9-1-stochastic-gradient-algorithms.html#cb375-14"></a>  y &lt;-<span class="st"> </span><span class="kw">rpois</span>(<span class="dv">1</span>, <span class="kw">mu</span>(z, beta))</span>
-<span id="cb375-15"><a href="9-1-stochastic-gradient-algorithms.html#cb375-15"></a>  <span class="co">## Decay schedule update</span></span>
-<span id="cb375-16"><a href="9-1-stochastic-gradient-algorithms.html#cb375-16"></a>  schedule &lt;-<span class="st">  </span>K <span class="op">/</span><span class="st"> </span>(K <span class="op">+</span><span class="st"> </span>i)</span>
-<span id="cb375-17"><a href="9-1-stochastic-gradient-algorithms.html#cb375-17"></a>  <span class="co">## Squared error update</span></span>
-<span id="cb375-18"><a href="9-1-stochastic-gradient-algorithms.html#cb375-18"></a>  mu_old &lt;-<span class="st"> </span><span class="kw">mu</span>(z, beta_SE[[i <span class="op">-</span><span class="st"> </span><span class="dv">1</span>]])</span>
-<span id="cb375-19"><a href="9-1-stochastic-gradient-algorithms.html#cb375-19"></a>  beta_SE[[i]] &lt;-<span class="st"> </span>beta_SE[[i <span class="op">-</span><span class="st"> </span><span class="dv">1</span>]]  <span class="op">-</span><span class="st"> </span></span>
-<span id="cb375-20"><a href="9-1-stochastic-gradient-algorithms.html#cb375-20"></a><span class="st">    </span>gamma0 <span class="op">*</span><span class="st"> </span>schedule <span class="op">*</span><span class="st"> </span>mu_old <span class="op">*</span><span class="st"> </span>(mu_old <span class="op">-</span><span class="st"> </span>y) <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, z)</span>
-<span id="cb375-21"><a href="9-1-stochastic-gradient-algorithms.html#cb375-21"></a>  <span class="co">## Log-likelihood update</span></span>
-<span id="cb375-22"><a href="9-1-stochastic-gradient-algorithms.html#cb375-22"></a>  mu_old &lt;-<span class="st"> </span><span class="kw">mu</span>(z, beta_LL[[i <span class="op">-</span><span class="st"> </span><span class="dv">1</span>]])</span>
-<span id="cb375-23"><a href="9-1-stochastic-gradient-algorithms.html#cb375-23"></a>  beta_LL[[i]] &lt;-<span class="st"> </span>beta_LL[[i <span class="op">-</span><span class="st"> </span><span class="dv">1</span>]]  <span class="op">-</span><span class="st"> </span></span>
-<span id="cb375-24"><a href="9-1-stochastic-gradient-algorithms.html#cb375-24"></a><span class="st">    </span>gamma1 <span class="op">*</span><span class="st"> </span>schedule <span class="op">*</span><span class="st"> </span>(mu_old <span class="op">-</span><span class="st"> </span>y) <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, z)</span>
-<span id="cb375-25"><a href="9-1-stochastic-gradient-algorithms.html#cb375-25"></a>}</span>
-<span id="cb375-26"><a href="9-1-stochastic-gradient-algorithms.html#cb375-26"></a></span>
-<span id="cb375-27"><a href="9-1-stochastic-gradient-algorithms.html#cb375-27"></a>beta_SE &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="kw">as.data.frame</span>(<span class="kw">do.call</span>(rbind, beta_SE)),</span>
-<span id="cb375-28"><a href="9-1-stochastic-gradient-algorithms.html#cb375-28"></a>                 <span class="kw">data.frame</span>(<span class="dt">iteration =</span> <span class="dv">1</span><span class="op">:</span>N, <span class="dt">loss =</span> <span class="st">&quot;squared error&quot;</span>))</span>
-<span id="cb375-29"><a href="9-1-stochastic-gradient-algorithms.html#cb375-29"></a></span>
-<span id="cb375-30"><a href="9-1-stochastic-gradient-algorithms.html#cb375-30"></a>beta_all &lt;-<span class="st"> </span><span class="kw">rbind</span>(</span>
-<span id="cb375-31"><a href="9-1-stochastic-gradient-algorithms.html#cb375-31"></a>  <span class="kw">cbind</span>(<span class="kw">as.data.frame</span>(<span class="kw">do.call</span>(rbind, beta_LL)),</span>
-<span id="cb375-32"><a href="9-1-stochastic-gradient-algorithms.html#cb375-32"></a>        <span class="kw">data.frame</span>(<span class="dt">iteration =</span> <span class="dv">1</span><span class="op">:</span>N, <span class="dt">loss =</span> <span class="st">&quot;log-likelihood&quot;</span>)),</span>
-<span id="cb375-33"><a href="9-1-stochastic-gradient-algorithms.html#cb375-33"></a>  beta_SE)</span>
-<span id="cb375-34"><a href="9-1-stochastic-gradient-algorithms.html#cb375-34"></a></span>
-<span id="cb375-35"><a href="9-1-stochastic-gradient-algorithms.html#cb375-35"></a><span class="kw">colnames</span>(beta_all)[<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;beta0&quot;</span>, <span class="st">&quot;beta1&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb389"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb389-1"><a href="9-1-stochastic-gradient-algorithms.html#cb389-1"></a>N &lt;-<span class="st"> </span><span class="dv">2000</span></span>
+<span id="cb389-2"><a href="9-1-stochastic-gradient-algorithms.html#cb389-2"></a>beta =<span class="st"> </span><span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">3</span>)</span>
+<span id="cb389-3"><a href="9-1-stochastic-gradient-algorithms.html#cb389-3"></a>mu &lt;-<span class="st"> </span><span class="cf">function</span>(z, beta) <span class="kw">exp</span>(beta[<span class="dv">1</span>] <span class="op">+</span><span class="st"> </span>beta[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span>z)</span>
+<span id="cb389-4"><a href="9-1-stochastic-gradient-algorithms.html#cb389-4"></a>beta_SE &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">&quot;list&quot;</span>, N)</span>
+<span id="cb389-5"><a href="9-1-stochastic-gradient-algorithms.html#cb389-5"></a>beta_LL &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">&quot;list&quot;</span>, N)</span>
+<span id="cb389-6"><a href="9-1-stochastic-gradient-algorithms.html#cb389-6"></a>gamma0 &lt;-<span class="st"> </span><span class="fl">0.0002</span></span>
+<span id="cb389-7"><a href="9-1-stochastic-gradient-algorithms.html#cb389-7"></a>gamma1 &lt;-<span class="st"> </span><span class="fl">0.02</span></span>
+<span id="cb389-8"><a href="9-1-stochastic-gradient-algorithms.html#cb389-8"></a>K &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb389-9"><a href="9-1-stochastic-gradient-algorithms.html#cb389-9"></a></span>
+<span id="cb389-10"><a href="9-1-stochastic-gradient-algorithms.html#cb389-10"></a>beta_SE[[<span class="dv">1</span>]] &lt;-<span class="st"> </span>beta_LL[[<span class="dv">1</span>]] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb389-11"><a href="9-1-stochastic-gradient-algorithms.html#cb389-11"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">2</span><span class="op">:</span>N) {</span>
+<span id="cb389-12"><a href="9-1-stochastic-gradient-algorithms.html#cb389-12"></a>  <span class="co">## Data</span></span>
+<span id="cb389-13"><a href="9-1-stochastic-gradient-algorithms.html#cb389-13"></a>  z &lt;-<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>, <span class="dv">-1</span>, <span class="dv">1</span>)</span>
+<span id="cb389-14"><a href="9-1-stochastic-gradient-algorithms.html#cb389-14"></a>  y &lt;-<span class="st"> </span><span class="kw">rpois</span>(<span class="dv">1</span>, <span class="kw">mu</span>(z, beta))</span>
+<span id="cb389-15"><a href="9-1-stochastic-gradient-algorithms.html#cb389-15"></a>  <span class="co">## Decay schedule update</span></span>
+<span id="cb389-16"><a href="9-1-stochastic-gradient-algorithms.html#cb389-16"></a>  schedule &lt;-<span class="st">  </span>K <span class="op">/</span><span class="st"> </span>(K <span class="op">+</span><span class="st"> </span>i)</span>
+<span id="cb389-17"><a href="9-1-stochastic-gradient-algorithms.html#cb389-17"></a>  <span class="co">## Squared error update</span></span>
+<span id="cb389-18"><a href="9-1-stochastic-gradient-algorithms.html#cb389-18"></a>  mu_old &lt;-<span class="st"> </span><span class="kw">mu</span>(z, beta_SE[[i <span class="op">-</span><span class="st"> </span><span class="dv">1</span>]])</span>
+<span id="cb389-19"><a href="9-1-stochastic-gradient-algorithms.html#cb389-19"></a>  beta_SE[[i]] &lt;-<span class="st"> </span>beta_SE[[i <span class="op">-</span><span class="st"> </span><span class="dv">1</span>]]  <span class="op">-</span><span class="st"> </span></span>
+<span id="cb389-20"><a href="9-1-stochastic-gradient-algorithms.html#cb389-20"></a><span class="st">    </span>gamma0 <span class="op">*</span><span class="st"> </span>schedule <span class="op">*</span><span class="st"> </span>mu_old <span class="op">*</span><span class="st"> </span>(mu_old <span class="op">-</span><span class="st"> </span>y) <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, z)</span>
+<span id="cb389-21"><a href="9-1-stochastic-gradient-algorithms.html#cb389-21"></a>  <span class="co">## Log-likelihood update</span></span>
+<span id="cb389-22"><a href="9-1-stochastic-gradient-algorithms.html#cb389-22"></a>  mu_old &lt;-<span class="st"> </span><span class="kw">mu</span>(z, beta_LL[[i <span class="op">-</span><span class="st"> </span><span class="dv">1</span>]])</span>
+<span id="cb389-23"><a href="9-1-stochastic-gradient-algorithms.html#cb389-23"></a>  beta_LL[[i]] &lt;-<span class="st"> </span>beta_LL[[i <span class="op">-</span><span class="st"> </span><span class="dv">1</span>]]  <span class="op">-</span><span class="st"> </span></span>
+<span id="cb389-24"><a href="9-1-stochastic-gradient-algorithms.html#cb389-24"></a><span class="st">    </span>gamma1 <span class="op">*</span><span class="st"> </span>schedule <span class="op">*</span><span class="st"> </span>(mu_old <span class="op">-</span><span class="st"> </span>y) <span class="op">*</span><span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, z)</span>
+<span id="cb389-25"><a href="9-1-stochastic-gradient-algorithms.html#cb389-25"></a>}</span>
+<span id="cb389-26"><a href="9-1-stochastic-gradient-algorithms.html#cb389-26"></a></span>
+<span id="cb389-27"><a href="9-1-stochastic-gradient-algorithms.html#cb389-27"></a>beta_SE &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="kw">as.data.frame</span>(<span class="kw">do.call</span>(rbind, beta_SE)),</span>
+<span id="cb389-28"><a href="9-1-stochastic-gradient-algorithms.html#cb389-28"></a>                 <span class="kw">data.frame</span>(<span class="dt">iteration =</span> <span class="dv">1</span><span class="op">:</span>N, <span class="dt">loss =</span> <span class="st">&quot;squared error&quot;</span>))</span>
+<span id="cb389-29"><a href="9-1-stochastic-gradient-algorithms.html#cb389-29"></a></span>
+<span id="cb389-30"><a href="9-1-stochastic-gradient-algorithms.html#cb389-30"></a>beta_all &lt;-<span class="st"> </span><span class="kw">rbind</span>(</span>
+<span id="cb389-31"><a href="9-1-stochastic-gradient-algorithms.html#cb389-31"></a>  <span class="kw">cbind</span>(<span class="kw">as.data.frame</span>(<span class="kw">do.call</span>(rbind, beta_LL)),</span>
+<span id="cb389-32"><a href="9-1-stochastic-gradient-algorithms.html#cb389-32"></a>        <span class="kw">data.frame</span>(<span class="dt">iteration =</span> <span class="dv">1</span><span class="op">:</span>N, <span class="dt">loss =</span> <span class="st">&quot;log-likelihood&quot;</span>)),</span>
+<span id="cb389-33"><a href="9-1-stochastic-gradient-algorithms.html#cb389-33"></a>  beta_SE)</span>
+<span id="cb389-34"><a href="9-1-stochastic-gradient-algorithms.html#cb389-34"></a></span>
+<span id="cb389-35"><a href="9-1-stochastic-gradient-algorithms.html#cb389-35"></a><span class="kw">colnames</span>(beta_all)[<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;beta0&quot;</span>, <span class="st">&quot;beta1&quot;</span>)</span></code></pre></div>
 <p><img src="CSwR_files/figure-html/unnamed-chunk-6-1.png" width="70%" style="display: block; margin: auto;" /><img src="CSwR_files/figure-html/unnamed-chunk-6-2.png" width="70%" style="display: block; margin: auto;" /></p>
 </div>
 <div id="stochastic-gradient-descent" class="section level3">

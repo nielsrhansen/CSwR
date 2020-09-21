@@ -163,7 +163,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="2.3.1" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#rectangular"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
 <li class="chapter" data-level="2.3.2" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#ise-mise-and-mse-for-kernel-estimators"><i class="fa fa-check"></i><b>2.3.2</b> ISE, MISE and MSE for kernel estimators</a></li>
 <li class="chapter" data-level="2.3.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#plug-in-estimation-of-the-oracle-bandwidth"><i class="fa fa-check"></i><b>2.3.3</b> Plug-in estimation of the oracle bandwidth</a></li>
-<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
+<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cv"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
 </ul></li>
 <li class="chapter" data-level="2.4" data-path="2-4-likelihood.html"><a href="2-4-likelihood.html"><i class="fa fa-check"></i><b>2.4</b> Likelihood considerations</a><ul>
 <li class="chapter" data-level="2.4.1" data-path="2-4-likelihood.html"><a href="2-4-likelihood.html#sieves"><i class="fa fa-check"></i><b>2.4.1</b> Method of sieves</a></li>
@@ -229,7 +229,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="chapter" data-level="5" data-path="5-mci.html"><a href="5-mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
 <li class="chapter" data-level="5.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html"><i class="fa fa-check"></i><b>5.1</b> Assessment</a><ul>
-<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#using-the-central-limit-theorem"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
+<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#CLT-gamma"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
 <li class="chapter" data-level="5.1.2" data-path="5-1-assessment.html"><a href="5-1-assessment.html#concentration-inequalities"><i class="fa fa-check"></i><b>5.1.2</b> Concentration inequalities</a></li>
 <li class="chapter" data-level="5.1.3" data-path="5-1-assessment.html"><a href="5-1-assessment.html#exponential-tail-bound-for-gamma-distributed-variables"><i class="fa fa-check"></i><b>5.1.3</b> Exponential tail bound for Gamma distributed variables</a></li>
 </ul></li>
@@ -237,8 +237,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="5.2.1" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#unknown-normalization-constants"><i class="fa fa-check"></i><b>5.2.1</b> Unknown normalization constants</a></li>
 <li class="chapter" data-level="5.2.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#hd-int"><i class="fa fa-check"></i><b>5.2.2</b> Computing a high-dimensional integral</a></li>
 </ul></li>
-<li class="chapter" data-level="5.3" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
-<li class="chapter" data-level="5.3.1" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
+<li class="chapter" data-level="5.3" data-path="5-3-network.html"><a href="5-3-network.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="5-3-network.html"><a href="5-3-network.html#object-oriented-implementations"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementations</a></li>
 </ul></li>
 </ul></li>
 <li class="part"><span><b>Part III: Optimization</b></span></li>
@@ -508,10 +508,10 @@ simplifies to
 <span class="math display">\[\hat{h}_n = \left(\frac{4}{3}\right)^{1/5} \tilde{\sigma} n^{-1/5},\]</span>
 with <span class="math inline">\(\tilde{\sigma}\)</span> plugged in as a robust estimate of <span class="math inline">\(\sigma\)</span>. <span class="citation">Silverman (<a href="#ref-Silverman:1986" role="doc-biblioref">1986</a>)</span>
 made the ad hoc suggestion to reduce the factor <span class="math inline">\((4/3)^{1/5} \simeq 1.06\)</span> to <span class="math inline">\(0.9\)</span>.
-This results in the bandwidth selector
+This results in the bandwidth estimate
 <span class="math display">\[\hat{h}_n = 0.9 \tilde{\sigma} n^{-1/5},\]</span>
 which has become known as <em>Silverman’s rule of thumb</em>.</p>
-<p>Silverman’s rule of thumb is the default bandwidth selector for <code>density()</code>
+<p>Silverman’s rule of thumb is the default bandwidth estimator for <code>density()</code>
 as implemented by the function <code>bw.nrd0()</code>. The <code>bw.nrd()</code> function implements
 bandwidth selection using the factor <span class="math inline">\(1.06\)</span> instead of <span class="math inline">\(0.9\)</span>. Though the theoretical
 derivations behind these implementations assume that <span class="math inline">\(f_0\)</span>
@@ -547,7 +547,7 @@ it can be selected when using <code>density()</code> by setting the argument <co
 This plug-in method is regarded as a solid default that performs well for
 many different data generating densities <span class="math inline">\(f_0\)</span>.</p>
 </div>
-<div id="cross-validation" class="section level3">
+<div id="cv" class="section level3">
 <h3><span class="header-section-number">2.3.4</span> Cross-validation</h3>
 <p>An alternative to relying on the asymptotic optimality arguments for
 integrated mean squared error and the corresponding plug-in estimates
@@ -555,7 +555,7 @@ of the bandwidth is known as <em>cross-validation</em>. The method mimics
 the idea of setting aside a subset of the data set, which is then <em>not</em>
 used for computing an estimate but only for validating the estimator’s
 performance. The benefit of cross-validation over simply setting
-aside a validation data set is that we don’t “waste” any of the data points
+aside a validation data set is that we do not “waste” any of the data points
 on validation only. All data points are used for the ultimate computation
 of the estimate. The deficit is that cross-validation is usually
 computationally more demanding.</p>
@@ -569,14 +569,12 @@ and
 That is, <span class="math inline">\(\hat{f}^{-i}_h\)</span> is the kernel density estimate based on data with
 indices in <span class="math inline">\(I^{-i}\)</span> and evaluated in <span class="math inline">\(x_i\)</span>. Since the density
 estimate evaluated in <span class="math inline">\(x_i\)</span> is not based on <span class="math inline">\(x_i\)</span>, the quantity <span class="math inline">\(\hat{f}^{-i}_h\)</span>
-can be used to assess how well the density estimates computed using a bandwidth
+can be used to assess how well the density estimate computed using a bandwidth
 <span class="math inline">\(h\)</span> concur with the data point <span class="math inline">\(x_i\)</span>. This can be summarized using the
 log-likelihood
 <span class="math display">\[\ell_{\mathrm{CV}}(h) = \sum_{i=1}^n \log (\hat{f}^{-i}_h),\]</span>
-that we will refer to as the cross-validated log-likelihood. Contrary to
-the log-likelihood considered in Section <a href="2-4-likelihood.html#likelihood">2.4</a>, the
-cross-validated log-likelihood will not just grow towards <span class="math inline">\(\infty\)</span> for <span class="math inline">\(h \to 0\)</span>,
-and we define
+that we will refer to as the cross-validated log-likelihood, and we define
+the bandwidth estimate as
 <span class="math display">\[\hat{h}_{\mathrm{CV}} = \textrm{arg max}_h \ \ \ell_{\mathrm{CV}}(h).\]</span>
 This cross-validation based bandwidth can then be used for computing kernel
 density estimates using the entire data set.</p>
@@ -599,7 +597,7 @@ without bias by
 and this leads to the statistic
 <span class="math display">\[\mathrm{UCV}(h) = \| \hat{f}_h\|_2^2 - \frac{2}{n} \sum_{i=1}^n \hat{f}^{-i}_h\]</span>
 known as the unbiased cross-validation criterion. The corresponding
-bandwidth selector is
+bandwidth estimate is
 <span class="math display">\[\hat{h}_{\mathrm{UCV}} = \textrm{arg min}_h \ \ \mathrm{UCV}(h).\]</span>
 Contrary to the log-likelihood based criterion, this criterion requires
 the computation of <span class="math inline">\(\| \hat{f}_h\|_2^2\)</span>. Bandwidth selection using UCV

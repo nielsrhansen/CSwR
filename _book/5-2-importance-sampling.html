@@ -31,7 +31,7 @@
   
   
 <link rel="prev" href="5-1-assessment.html"/>
-<link rel="next" href="5-3-network-failure.html"/>
+<link rel="next" href="5-3-network.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
@@ -163,7 +163,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="2.3.1" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#rectangular"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
 <li class="chapter" data-level="2.3.2" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#ise-mise-and-mse-for-kernel-estimators"><i class="fa fa-check"></i><b>2.3.2</b> ISE, MISE and MSE for kernel estimators</a></li>
 <li class="chapter" data-level="2.3.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#plug-in-estimation-of-the-oracle-bandwidth"><i class="fa fa-check"></i><b>2.3.3</b> Plug-in estimation of the oracle bandwidth</a></li>
-<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
+<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cv"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
 </ul></li>
 <li class="chapter" data-level="2.4" data-path="2-4-likelihood.html"><a href="2-4-likelihood.html"><i class="fa fa-check"></i><b>2.4</b> Likelihood considerations</a><ul>
 <li class="chapter" data-level="2.4.1" data-path="2-4-likelihood.html"><a href="2-4-likelihood.html#sieves"><i class="fa fa-check"></i><b>2.4.1</b> Method of sieves</a></li>
@@ -229,7 +229,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="chapter" data-level="5" data-path="5-mci.html"><a href="5-mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
 <li class="chapter" data-level="5.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html"><i class="fa fa-check"></i><b>5.1</b> Assessment</a><ul>
-<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#using-the-central-limit-theorem"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
+<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#CLT-gamma"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
 <li class="chapter" data-level="5.1.2" data-path="5-1-assessment.html"><a href="5-1-assessment.html#concentration-inequalities"><i class="fa fa-check"></i><b>5.1.2</b> Concentration inequalities</a></li>
 <li class="chapter" data-level="5.1.3" data-path="5-1-assessment.html"><a href="5-1-assessment.html#exponential-tail-bound-for-gamma-distributed-variables"><i class="fa fa-check"></i><b>5.1.3</b> Exponential tail bound for Gamma distributed variables</a></li>
 </ul></li>
@@ -237,8 +237,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="5.2.1" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#unknown-normalization-constants"><i class="fa fa-check"></i><b>5.2.1</b> Unknown normalization constants</a></li>
 <li class="chapter" data-level="5.2.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#hd-int"><i class="fa fa-check"></i><b>5.2.2</b> Computing a high-dimensional integral</a></li>
 </ul></li>
-<li class="chapter" data-level="5.3" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
-<li class="chapter" data-level="5.3.1" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
+<li class="chapter" data-level="5.3" data-path="5-3-network.html"><a href="5-3-network.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="5-3-network.html"><a href="5-3-network.html#object-oriented-implementations"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementations</a></li>
 </ul></li>
 </ul></li>
 <li class="part"><span><b>Part III: Optimization</b></span></li>
@@ -350,21 +350,44 @@ The <em>importance sampling</em> estimator is
 <span class="math display">\[\hat{\mu}_{\textrm{IS}}^* := \frac{1}{n} \sum_{i=1}^n h(X_i)w^*(X_i).\]</span>
 It has mean <span class="math inline">\(\mu\)</span>. Again by the LLN
 <span class="math display">\[\hat{\mu}_{\textrm{IS}}^* \rightarrow E(h(X_1) w^*(X_1)) = \mu.\]</span></p>
+<p>We will illustrate the use of importance sampling by computing the mean in
+the gamma distribution via simulations from a Gaussian distribution, cf. also
+Section <a href="5-1-assessment.html#CLT-gamma">5.1.1</a>.</p>
+<div class="sourceCode" id="cb202"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb202-1"><a href="5-2-importance-sampling.html#cb202-1"></a>x &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n, <span class="dv">10</span>, <span class="dv">3</span>)</span>
+<span id="cb202-2"><a href="5-2-importance-sampling.html#cb202-2"></a>w_star &lt;-<span class="st"> </span><span class="kw">dgamma</span>(x, <span class="dv">8</span>) <span class="op">/</span><span class="st"> </span><span class="kw">dnorm</span>(x, <span class="dv">10</span>, <span class="dv">3</span>) </span>
+<span id="cb202-3"><a href="5-2-importance-sampling.html#cb202-3"></a>mu_hat_IS &lt;-<span class="st"> </span>(<span class="kw">cumsum</span>(x <span class="op">*</span><span class="st"> </span>w_star) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span><span class="op">:</span>n))</span>
+<span id="cb202-4"><a href="5-2-importance-sampling.html#cb202-4"></a>mu_hat_IS[n]  <span class="co"># Theoretical value 8</span></span></code></pre></div>
+<pre><code>## [1] 7.995228</code></pre>
 <p>To assess the precision of the importance sampling estimate via the CLT we
-need the variance of the average as for plain Monte Carlo integration.
+need the variance of the average just as for plain Monte Carlo integration.
 By the CLT
 <span class="math display">\[\hat{\mu}_{\textrm{IS}}^* \overset{\textrm{approx}} \sim 
 \mathcal{N}(\mu, \sigma^{*2}_{\textrm{IS}} / n)\]</span>
 where
 <span class="math display">\[\sigma^{*2}_{\textrm{IS}} = V (h(X_1)w^*(X_1)) = \int (h(x) w^*(x) - \mu)^2 g(x) \ \mathrm{d}x.\]</span></p>
-<p>We may have <span class="math inline">\(\sigma^{*2}_{\textrm{IS}} &gt; \sigma^2_{\textrm{MC}}\)</span> or
-<span class="math inline">\(\sigma^{*2}_{\textrm{IS}} &lt; \sigma^2_{\textrm{MC}}\)</span> depending on <span class="math inline">\(h\)</span> and <span class="math inline">\(g\)</span>.
-By choosing <span class="math inline">\(g\)</span> cleverly so that <span class="math inline">\(h(x) w^*(x)\)</span> becomes as constant as possible,
-importance sampling can reduce the variance considerably compared to plain MC.</p>
-<p>The importance sampling variance can be estimated just as the MC variance
+<p>The importance sampling variance can be estimated similarly as the Monte Carlo variance
 <span class="math display">\[\hat{\sigma}^{*2}_{\textrm{IS}} = \frac{1}{n - 1} \sum_{i=1}^n (h(X_i)w^*(X_i) - \hat{\mu}_{\textrm{IS}}^*)^2,\]</span>
 and a 95% standard confidence interval is computed as
 <span class="math display">\[\hat{\mu}^*_{\textrm{IS}} \pm 1.96 \frac{\hat{\sigma}^*_{\textrm{IS}}}{\sqrt{n}}.\]</span></p>
+<div class="sourceCode" id="cb204"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb204-1"><a href="5-2-importance-sampling.html#cb204-1"></a>sigma_hat_IS &lt;-<span class="st"> </span><span class="kw">sd</span>(x <span class="op">*</span><span class="st"> </span>w_star)</span>
+<span id="cb204-2"><a href="5-2-importance-sampling.html#cb204-2"></a>sigma_hat_IS  <span class="co"># Theoretical value ??</span></span></code></pre></div>
+<pre><code>## [1] 3.499995</code></pre>
+<div class="figure" style="text-align: center"><span id="fig:gamma-IS-fig2"></span>
+<img src="CSwR_files/figure-html/gamma-IS-fig2-1.png" alt="Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution." width="500" />
+<p class="caption">
+Figure 5.3: Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution.
+</p>
+</div>
+<p>It may happen that <span class="math inline">\(\sigma^{*2}_{\textrm{IS}} &gt; \sigma^2_{\textrm{MC}}\)</span> or
+<span class="math inline">\(\sigma^{*2}_{\textrm{IS}} &lt; \sigma^2_{\textrm{MC}}\)</span> depending on <span class="math inline">\(h\)</span> and <span class="math inline">\(g\)</span>, but
+by choosing <span class="math inline">\(g\)</span> cleverly so that <span class="math inline">\(h(x) w^*(x)\)</span> becomes as constant as possible,
+importance sampling can often reduce the variance compared to plain
+Monte Carlo integration.</p>
+<p>For the mean of the gamma distribution above, <span class="math inline">\(\sigma^{*2}_{\textrm{IS}}\)</span>
+is about 50% larger than <span class="math inline">\(\sigma^2_{\textrm{MC}}\)</span>, so we loose precision
+by using importance sampling this way when compared to plain Monte Carlo integration.
+In Section <a href="5-3-network.html#network">5.3</a> we consider a different example where we achieve
+a considerable variance reduction by using importance sampling.</p>
 <div id="unknown-normalization-constants" class="section level3">
 <h3><span class="header-section-number">5.2.1</span> Unknown normalization constants</h3>
 <p>If <span class="math inline">\(f = c^{-1} q\)</span> with <span class="math inline">\(c\)</span> unknown then
@@ -372,12 +395,22 @@ and a 95% standard confidence interval is computed as
 and
 <span class="math display">\[\mu = \frac{\int h(x) w^*(x) g(x) \ d x}{\int w^*(x) g(x) \ d x},\]</span>
 where <span class="math inline">\(w^*(x) = q(x) / g(x).\)</span></p>
-<p>An importance sampling estimate of <span class="math inline">\(\mu\)</span> is thus
+<p>If <span class="math inline">\(X_1, \ldots, X_n\)</span> are then i.i.d. from the distribution with density <span class="math inline">\(g\)</span>,
+an importance sampling estimate of <span class="math inline">\(\mu\)</span> can be computed as
 <span class="math display">\[\hat{\mu}_{\textrm{IS}} = \frac{\sum_{i=1}^n h(X_i) w^*(X_i)}{\sum_{i=1}^n w^*(X_i)} = \sum_{i=1}^n h(X_i) w(X_i),\]</span>
 where <span class="math inline">\(w^*(X_i) = q(X_i) / g(X_i)\)</span> and
 <span class="math display">\[w(X_i) = \frac{w^*(X_i)}{\sum_{i=1}^n w^*(X_i)}\]</span>
 are the <em>standardized weights</em>. This works irrespectively of the value of the
-normalizing constant <span class="math inline">\(c\)</span>.</p>
+normalizing constant <span class="math inline">\(c\)</span>, and it actually works if also <span class="math inline">\(g\)</span> is unnormalized.</p>
+<p>Revisiting the mean of the gamma distribution, we can implement importance
+sampling via samples from a Gaussian distribution but using weights computed
+without the normalization constants.</p>
+<div class="sourceCode" id="cb206"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb206-1"><a href="5-2-importance-sampling.html#cb206-1"></a>w_star &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</span>
+<span id="cb206-2"><a href="5-2-importance-sampling.html#cb206-2"></a>x_pos &lt;-<span class="st"> </span>x[x <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>]</span>
+<span id="cb206-3"><a href="5-2-importance-sampling.html#cb206-3"></a>w_star[x <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>] &lt;-<span class="st"> </span><span class="kw">exp</span>((x_pos <span class="op">-</span><span class="st"> </span><span class="dv">10</span>)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span><span class="dv">18</span> <span class="op">-</span><span class="st"> </span>x_pos <span class="op">+</span><span class="st"> </span><span class="dv">7</span> <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(x_pos))</span>
+<span id="cb206-4"><a href="5-2-importance-sampling.html#cb206-4"></a>mu_hat_IS &lt;-<span class="st"> </span><span class="kw">cumsum</span>(x <span class="op">*</span><span class="st"> </span>w_star) <span class="op">/</span><span class="st"> </span><span class="kw">cumsum</span>(w_star)</span>
+<span id="cb206-5"><a href="5-2-importance-sampling.html#cb206-5"></a>mu_hat_IS[n]  <span class="co"># Theoretical value 8</span></span></code></pre></div>
+<pre><code>## [1] 8.102177</code></pre>
 <p>The variance of the IS estimator with standardized weights is a little more
 complicated, because the estimator is a ratio of random variables. From the
 multivariate CLT
@@ -394,39 +427,60 @@ where
 \gamma &amp; = \mathrm{cov}(h(X_1)w^*(X_1), w^*(X_1)) \\
 \sigma_{w^*}^2 &amp; = V (w^*(X_1)).
 \end{align}\]</span></p>
-<p>We can then apply the <span class="math inline">\(\Delta\)</span>-method with <span class="math inline">\(h(x, y) = x / y\)</span>. Note that
-<span class="math inline">\(Dh(x, y) = (1 / y, - x / y^2)\)</span>, whence
-<span class="math display">\[Dh(c\mu, c)   \left(\begin{array}{cc} \hat{\sigma}^{*2}_{\textrm{IS}} &amp; \gamma \\ \gamma &amp; \sigma^2_{w^*}
-\end{array} \right) Dh(c\mu, c)^T = c^{-2} (\sigma^{*2}_{\textrm{IS}} + \mu^2 \sigma_{w^*}^2 - 2 \mu \gamma).\]</span></p>
+<p>We can then apply the <span class="math inline">\(\Delta\)</span>-method with <span class="math inline">\(t(x, y) = x / y\)</span>. Note that
+<span class="math inline">\(Dt(x, y) = (1 / y, - x / y^2)\)</span>, whence
+<span class="math display">\[Dt(c\mu, c)   \left(\begin{array}{cc} \hat{\sigma}^{*2}_{\textrm{IS}} &amp; \gamma \\ \gamma &amp; \sigma^2_{w^*}
+\end{array} \right) Dt(c\mu, c)^T = c^{-2} (\sigma^{*2}_{\textrm{IS}} + \mu^2 \sigma_{w^*}^2 - 2 \mu \gamma).\]</span></p>
 <p>By the <span class="math inline">\(\Delta\)</span>-method
 <span class="math display">\[\hat{\mu}_{\textrm{IS}} \overset{\textrm{approx}}{\sim} 
 \mathcal{N}(\mu, c^{-2} (\sigma^{*2}_{\textrm{IS}} + \mu^2 \sigma_{w^*}^2 - 2 \mu \gamma) / n).\]</span>
-Note that for <span class="math inline">\(c \neq 1\)</span> it is necessary to estimate <span class="math inline">\(c\)</span> as
+The unknown quantities in the asymptotic variance must be estimated using e.g. 
+their empirical equivalents, and if <span class="math inline">\(c \neq 1\)</span> (we have used unnormalized densities)
+it is necessary to estimate <span class="math inline">\(c\)</span> as
 <span class="math inline">\(\hat{c} = \frac{1}{n} \sum_{i=1}^n w^*(X_i)\)</span>
 to compute an estimate of the variance.</p>
+<p>For the example with the mean of the gamma distribution, we find the following
+estimate of the variance.</p>
+<div class="sourceCode" id="cb208"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb208-1"><a href="5-2-importance-sampling.html#cb208-1"></a>c_hat &lt;-<span class="st"> </span><span class="kw">mean</span>(w_star)</span>
+<span id="cb208-2"><a href="5-2-importance-sampling.html#cb208-2"></a>sigma_hat_IS &lt;-<span class="st"> </span><span class="kw">sd</span>(x <span class="op">*</span><span class="st"> </span>w_star)</span>
+<span id="cb208-3"><a href="5-2-importance-sampling.html#cb208-3"></a>sigma_hat_w_star &lt;-<span class="st"> </span><span class="kw">sd</span>(w_star)</span>
+<span id="cb208-4"><a href="5-2-importance-sampling.html#cb208-4"></a>gamma_hat &lt;-<span class="st"> </span><span class="kw">cov</span>(x <span class="op">*</span><span class="st"> </span>w_star, w_star)</span>
+<span id="cb208-5"><a href="5-2-importance-sampling.html#cb208-5"></a>sigma_hat_IS_w &lt;-<span class="st"> </span><span class="kw">sqrt</span>(sigma_hat_IS<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span>mu_hat_IS[n]<span class="op">^</span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma_hat_w_star<span class="op">^</span><span class="dv">2</span> <span class="op">-</span><span class="st"> </span></span>
+<span id="cb208-6"><a href="5-2-importance-sampling.html#cb208-6"></a><span class="st">                         </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>mu_hat_IS[n] <span class="op">*</span><span class="st"> </span>gamma_hat) <span class="op">/</span><span class="st"> </span>c_hat</span>
+<span id="cb208-7"><a href="5-2-importance-sampling.html#cb208-7"></a>sigma_hat_IS_w</span></code></pre></div>
+<pre><code>## [1] 3.198314</code></pre>
+<div class="figure" style="text-align: center"><span id="fig:gamma-IS-fig3"></span>
+<img src="CSwR_files/figure-html/gamma-IS-fig3-1.png" alt="Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution and using standardized weights." width="500" />
+<p class="caption">
+Figure 5.4: Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution and using standardized weights.
+</p>
+</div>
+<p>In this example, the variance when using standardized weights is a little lower
+than using unstandardized weights, but still larger than the variance for
+the plain Monte Carlo average.</p>
 </div>
 <div id="hd-int" class="section level3">
 <h3><span class="header-section-number">5.2.2</span> Computing a high-dimensional integral</h3>
-<p>To illustrate the usage and limitations of importance sampling, consider
-the following <span class="math inline">\(p\)</span>-dimensional integral
-<span class="math display">\[\int e^{-\frac{1}{2}\left(x_1^2 + \sum_{i=2}^p (x_i - \alpha x_{i-1})^2\right)}  \mathrm{d} x.\]</span>
+<p>To further illustrate the usage but also the limitations of Monte Carlo
+integration, consider the following <span class="math inline">\(p\)</span>-dimensional integral
+<span class="math display">\[ \int e^{-\frac{1}{2}\left(x_1^2 + \sum_{i=2}^p (x_i - \alpha x_{i-1})^2\right)}  \mathrm{d} x.\]</span>
 Now this integral is not even expressed as an expectation w.r.t. any distribution
 in the first place – it is an integral w.r.t. Lebesgue measure in <span class="math inline">\(\mathbb{R}^p\)</span>.
-To use importance sampling it is therefore necessary to rewrite the integral
+We use the same idea as in importance sampling to rewrite the integral
 as an expectation w.r.t. a probability distribution. There might be many ways
 to do this, and the following is just one.</p>
 <p>Rewrite the exponent as
 <span class="math display">\[||x||_2^2 + \sum_{i = 2}^p \alpha^2 x_{i-1}^2 - 2\alpha x_i x_{i-1}\]</span>
-so that
-<span class="math display">\[\begin{align*}
-\int e^{-\frac{1}{2}\left(x_1^2 + \sum_{i=2}^p (x_i - \alpha x_{i-1})^2\right)}  \mathrm{d} x &amp; =  \int e^{- \frac{1}{2} \sum_{i = 2}^n \alpha^2 
+so that</p>
+<p><span class="math display">\[\begin{align*}
+\int e^{-\frac{1}{2}\left(x_1^2 + \sum_{i=2}^p (x_i - \alpha x_{i-1})^2\right)}  \mathrm{d} x &amp; =  \int e^{- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
 x_{i-1}^2 - 2\alpha x_i x_{i-1}}  e^{-\frac{||x||_2^2}{2}} \mathrm{d} x \\
-&amp; = (2 \pi)^{p/2} \int e^{- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
+&amp; =  (2 \pi)^{p/2} \int e^{- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
 x_{i-1}^2 - 2\alpha x_i x_{i-1}} f(x) \mathrm{d} x
-\end{align*}\]</span>
-where <span class="math inline">\(f\)</span> is the density for the <span class="math inline">\(\mathcal{N}(0, I_p)\)</span> distribution. Thus if
+\end{align*}\]</span></p>
+<p>where <span class="math inline">\(f\)</span> is the density for the <span class="math inline">\(\mathcal{N}(0, I_p)\)</span> distribution. Thus if
 <span class="math inline">\(X \sim \mathcal{N}(0, I_p)\)</span>,
-<span class="math display">\[\int e^{-\frac{1}{2}\left(x_1^2 + \sum_{i=2}^p (x_i - \alpha x_{i-1})^2\right)}  \mathrm{d} x = (2 \pi)^{n/2}  E\left( e^{- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
+<span class="math display">\[ \int e^{-\frac{1}{2}\left(x_1^2 + \sum_{i=2}^p (x_i - \alpha x_{i-1})^2\right)}  \mathrm{d} x = (2 \pi)^{p/2}  E\left( e^{- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
 X_{i-1}^2 - 2\alpha X_i X_{i-1}} \right).\]</span></p>
 <p>The Monte Carlo integration below computes
 <span class="math display">\[\mu = E\left( e^{- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
@@ -434,53 +488,47 @@ X_{i-1}^2 - 2\alpha X_i X_{i-1}} \right)\]</span>
 by generating <span class="math inline">\(p\)</span>-dimensional random
 variables from <span class="math inline">\(\mathcal{N}(0, I_p)\)</span>. It can actually be shown that <span class="math inline">\(\mu = 1\)</span>,
 but we skip the proof of that.</p>
-<p>We can view this example as an example of plain Monte Carlo integration, but
-it is also a variation of importance sampling. The initial integral was not
-an expectation but an integral w.r.t. Lebesgue measure. By changing the integration
-measure to the Gaussian distribution and reweighting the integrand we represented
-the integral in terms of an expectation. This is exactly the idea of importance
-sampling as well.</p>
 <p>First, we implement the function we want to integrate.</p>
-<div class="sourceCode" id="cb199"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb199-1"><a href="5-2-importance-sampling.html#cb199-1"></a>h &lt;-<span class="st"> </span><span class="cf">function</span>(x, <span class="dt">alpha =</span> <span class="fl">0.1</span>){ </span>
-<span id="cb199-2"><a href="5-2-importance-sampling.html#cb199-2"></a>  p &lt;-<span class="st"> </span><span class="kw">length</span>(x)</span>
-<span id="cb199-3"><a href="5-2-importance-sampling.html#cb199-3"></a>  tmp &lt;-<span class="st"> </span>alpha <span class="op">*</span><span class="st"> </span>x[<span class="dv">1</span><span class="op">:</span>(p <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)] </span>
-<span id="cb199-4"><a href="5-2-importance-sampling.html#cb199-4"></a>  <span class="kw">exp</span>( <span class="op">-</span><span class="st"> </span><span class="kw">sum</span>((tmp <span class="op">/</span><span class="st"> </span><span class="dv">2</span> <span class="op">-</span><span class="st"> </span>x[<span class="dv">2</span><span class="op">:</span>p]) <span class="op">*</span><span class="st"> </span>tmp))</span>
-<span id="cb199-5"><a href="5-2-importance-sampling.html#cb199-5"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb210"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb210-1"><a href="5-2-importance-sampling.html#cb210-1"></a>h &lt;-<span class="st"> </span><span class="cf">function</span>(x, <span class="dt">alpha =</span> <span class="fl">0.1</span>){ </span>
+<span id="cb210-2"><a href="5-2-importance-sampling.html#cb210-2"></a>  p &lt;-<span class="st"> </span><span class="kw">length</span>(x)</span>
+<span id="cb210-3"><a href="5-2-importance-sampling.html#cb210-3"></a>  tmp &lt;-<span class="st"> </span>alpha <span class="op">*</span><span class="st"> </span>x[<span class="dv">1</span><span class="op">:</span>(p <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)] </span>
+<span id="cb210-4"><a href="5-2-importance-sampling.html#cb210-4"></a>  <span class="kw">exp</span>( <span class="op">-</span><span class="st"> </span><span class="kw">sum</span>((tmp <span class="op">/</span><span class="st"> </span><span class="dv">2</span> <span class="op">-</span><span class="st"> </span>x[<span class="dv">2</span><span class="op">:</span>p]) <span class="op">*</span><span class="st"> </span>tmp))</span>
+<span id="cb210-5"><a href="5-2-importance-sampling.html#cb210-5"></a>}</span></code></pre></div>
 <p>Then we specify various parameters.</p>
-<div class="sourceCode" id="cb200"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb200-1"><a href="5-2-importance-sampling.html#cb200-1"></a>B &lt;-<span class="st"> </span><span class="dv">10000</span> <span class="co">## The number of random variables to generate</span></span>
-<span id="cb200-2"><a href="5-2-importance-sampling.html#cb200-2"></a>p &lt;-<span class="st"> </span><span class="dv">100</span>  <span class="co">## The dimension of each random variable</span></span></code></pre></div>
+<div class="sourceCode" id="cb211"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb211-1"><a href="5-2-importance-sampling.html#cb211-1"></a>n &lt;-<span class="st"> </span><span class="dv">10000</span> <span class="co"># The number of random variables to generate</span></span>
+<span id="cb211-2"><a href="5-2-importance-sampling.html#cb211-2"></a>p &lt;-<span class="st"> </span><span class="dv">100</span>   <span class="co"># The dimension of each random variable</span></span></code></pre></div>
 <p>The actual computation is implemented using the <code>apply</code> function. We
-first look at the case with <span class="math inline">\(\alpha = 0.2\)</span>.</p>
-<div class="sourceCode" id="cb201"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb201-1"><a href="5-2-importance-sampling.html#cb201-1"></a>x &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rnorm</span>(B <span class="op">*</span><span class="st"> </span>p), B, p)</span>
-<span id="cb201-2"><a href="5-2-importance-sampling.html#cb201-2"></a>evaluations &lt;-<span class="st"> </span><span class="kw">apply</span>(x, <span class="dv">1</span>, h, <span class="dt">alpha =</span> <span class="fl">0.2</span>)</span></code></pre></div>
+first look at the case with <span class="math inline">\(\alpha = 0.1\)</span>.</p>
+<div class="sourceCode" id="cb212"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb212-1"><a href="5-2-importance-sampling.html#cb212-1"></a>x &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rnorm</span>(n <span class="op">*</span><span class="st"> </span>p), n, p)</span>
+<span id="cb212-2"><a href="5-2-importance-sampling.html#cb212-2"></a>evaluations &lt;-<span class="st"> </span><span class="kw">apply</span>(x, <span class="dv">1</span>, h)</span></code></pre></div>
 <p>We can then plot the cumulative average and compare it to the
 actual value of the integral that we know is 1.</p>
-<div class="sourceCode" id="cb202"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb202-1"><a href="5-2-importance-sampling.html#cb202-1"></a><span class="kw">plot</span>(<span class="kw">cumsum</span>(evaluations) <span class="op">/</span><span class="st"> </span><span class="dv">1</span><span class="op">:</span>B, <span class="dt">pch =</span> <span class="dv">20</span>, <span class="dt">xlab =</span> <span class="st">&quot;n&quot;</span>)</span>
-<span id="cb202-2"><a href="5-2-importance-sampling.html#cb202-2"></a><span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">1</span>, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb213"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb213-1"><a href="5-2-importance-sampling.html#cb213-1"></a><span class="kw">plot</span>(<span class="kw">cumsum</span>(evaluations) <span class="op">/</span><span class="st"> </span><span class="dv">1</span><span class="op">:</span>n, <span class="dt">pch =</span> <span class="dv">20</span>, <span class="dt">xlab =</span> <span class="st">&quot;n&quot;</span>)</span>
+<span id="cb213-2"><a href="5-2-importance-sampling.html#cb213-2"></a><span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">1</span>, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)</span></code></pre></div>
 <p><img src="CSwR_files/figure-html/MC_path-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <p>If we want to control the error with probability 0.95 we can use Chebychev’s inequality
 and solve for <span class="math inline">\(\varepsilon\)</span> using the estimated variance.</p>
-<div class="sourceCode" id="cb203"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb203-1"><a href="5-2-importance-sampling.html#cb203-1"></a><span class="kw">plot</span>(<span class="kw">cumsum</span>(evaluations) <span class="op">/</span><span class="st"> </span><span class="dv">1</span><span class="op">:</span>B, <span class="dt">pch =</span> <span class="dv">20</span>, <span class="dt">xlab =</span> <span class="st">&quot;n&quot;</span>)</span>
-<span id="cb203-2"><a href="5-2-importance-sampling.html#cb203-2"></a><span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">1</span>, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)</span>
-<span id="cb203-3"><a href="5-2-importance-sampling.html#cb203-3"></a>me &lt;-<span class="st"> </span><span class="kw">cumsum</span>(evaluations) <span class="op">/</span><span class="st"> </span><span class="dv">1</span><span class="op">:</span>B</span>
-<span id="cb203-4"><a href="5-2-importance-sampling.html#cb203-4"></a>ve &lt;-<span class="st"> </span><span class="kw">var</span>(evaluations)</span>
-<span id="cb203-5"><a href="5-2-importance-sampling.html#cb203-5"></a>epsilon &lt;-<span class="st"> </span><span class="kw">sqrt</span>(ve <span class="op">/</span><span class="st"> </span>((<span class="dv">1</span><span class="op">:</span>B) <span class="op">*</span><span class="st"> </span><span class="fl">0.05</span>))</span>
-<span id="cb203-6"><a href="5-2-importance-sampling.html#cb203-6"></a><span class="kw">lines</span>(<span class="dv">1</span><span class="op">:</span>B, me <span class="op">+</span><span class="st"> </span>epsilon)</span>
-<span id="cb203-7"><a href="5-2-importance-sampling.html#cb203-7"></a><span class="kw">lines</span>(<span class="dv">1</span><span class="op">:</span>B, me <span class="op">-</span><span class="st"> </span>epsilon)</span></code></pre></div>
+<div class="sourceCode" id="cb214"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb214-1"><a href="5-2-importance-sampling.html#cb214-1"></a><span class="kw">plot</span>(<span class="kw">cumsum</span>(evaluations) <span class="op">/</span><span class="st"> </span><span class="dv">1</span><span class="op">:</span>n, <span class="dt">pch =</span> <span class="dv">20</span>, <span class="dt">xlab =</span> <span class="st">&quot;n&quot;</span>)</span>
+<span id="cb214-2"><a href="5-2-importance-sampling.html#cb214-2"></a><span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">1</span>, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)</span>
+<span id="cb214-3"><a href="5-2-importance-sampling.html#cb214-3"></a>mu_hat &lt;-<span class="st"> </span><span class="kw">cumsum</span>(evaluations) <span class="op">/</span><span class="st"> </span><span class="dv">1</span><span class="op">:</span>n</span>
+<span id="cb214-4"><a href="5-2-importance-sampling.html#cb214-4"></a>sigma_hat &lt;-<span class="st"> </span><span class="kw">sd</span>(evaluations)</span>
+<span id="cb214-5"><a href="5-2-importance-sampling.html#cb214-5"></a>epsilon &lt;-<span class="st"> </span>sigma_hat <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>((<span class="dv">1</span><span class="op">:</span>n) <span class="op">*</span><span class="st"> </span><span class="fl">0.05</span>)</span>
+<span id="cb214-6"><a href="5-2-importance-sampling.html#cb214-6"></a><span class="kw">lines</span>(<span class="dv">1</span><span class="op">:</span>n, mu_hat <span class="op">+</span><span class="st"> </span>epsilon)</span>
+<span id="cb214-7"><a href="5-2-importance-sampling.html#cb214-7"></a><span class="kw">lines</span>(<span class="dv">1</span><span class="op">:</span>n, mu_hat <span class="op">-</span><span class="st"> </span>epsilon)</span></code></pre></div>
 <p><img src="CSwR_files/figure-html/MC_cheb-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <p>The confidence bands provided by the
-central limit theorem are typically much more accurate estimates of the actual uncertainty
+central limit theorem are typically more accurate estimates of the actual uncertainty
 than the upper bounds provided by Chebychev’s inequality.</p>
-<div class="sourceCode" id="cb204"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb204-1"><a href="5-2-importance-sampling.html#cb204-1"></a><span class="kw">plot</span>(<span class="kw">cumsum</span>(evaluations) <span class="op">/</span><span class="st"> </span><span class="dv">1</span><span class="op">:</span>B, <span class="dt">pch =</span> <span class="dv">20</span>, <span class="dt">xlab =</span> <span class="st">&quot;n&quot;</span>)</span>
-<span id="cb204-2"><a href="5-2-importance-sampling.html#cb204-2"></a><span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">1</span>, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)</span>
-<span id="cb204-3"><a href="5-2-importance-sampling.html#cb204-3"></a><span class="kw">lines</span>(<span class="dv">1</span><span class="op">:</span>B, me <span class="op">+</span><span class="st"> </span><span class="dv">2</span><span class="op">*</span><span class="kw">sqrt</span>(ve<span class="op">/</span>(<span class="dv">1</span><span class="op">:</span>B)))</span>
-<span id="cb204-4"><a href="5-2-importance-sampling.html#cb204-4"></a><span class="kw">lines</span>(<span class="dv">1</span><span class="op">:</span>B, me <span class="op">-</span><span class="st"> </span><span class="dv">2</span><span class="op">*</span><span class="kw">sqrt</span>(ve<span class="op">/</span>(<span class="dv">1</span><span class="op">:</span>B)))</span></code></pre></div>
+<div class="sourceCode" id="cb215"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb215-1"><a href="5-2-importance-sampling.html#cb215-1"></a><span class="kw">plot</span>(<span class="kw">cumsum</span>(evaluations) <span class="op">/</span><span class="st"> </span><span class="dv">1</span><span class="op">:</span>n, <span class="dt">pch =</span> <span class="dv">20</span>, <span class="dt">xlab =</span> <span class="st">&quot;n&quot;</span>)</span>
+<span id="cb215-2"><a href="5-2-importance-sampling.html#cb215-2"></a><span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">1</span>, <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)</span>
+<span id="cb215-3"><a href="5-2-importance-sampling.html#cb215-3"></a><span class="kw">lines</span>(<span class="dv">1</span><span class="op">:</span>n, mu_hat <span class="op">+</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma_hat <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(<span class="dv">1</span><span class="op">:</span>n))</span>
+<span id="cb215-4"><a href="5-2-importance-sampling.html#cb215-4"></a><span class="kw">lines</span>(<span class="dv">1</span><span class="op">:</span>n, mu_hat <span class="op">-</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma_hat <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(<span class="dv">1</span><span class="op">:</span>n))</span></code></pre></div>
 <p><img src="CSwR_files/figure-html/MC_CLT-1.png" width="70%" style="display: block; margin: auto;" /></p>
-<p>To illustrate the limits of Monte Carlo integration we increase <span class="math inline">\(\alpha\)</span> to
+<p>To illustrate the limitations of Monte Carlo integration we increase <span class="math inline">\(\alpha\)</span> to
 <span class="math inline">\(\alpha = 0.4\)</span>.</p>
-<div class="sourceCode" id="cb205"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb205-1"><a href="5-2-importance-sampling.html#cb205-1"></a><span class="kw">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb205-2"><a href="5-2-importance-sampling.html#cb205-2"></a>x &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rnorm</span>(B <span class="op">*</span><span class="st"> </span>p), B, p)</span>
-<span id="cb205-3"><a href="5-2-importance-sampling.html#cb205-3"></a>evaluations &lt;-<span class="st"> </span><span class="kw">apply</span>(x, <span class="dv">1</span>, h, <span class="dt">alpha =</span> <span class="fl">0.4</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb216"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb216-1"><a href="5-2-importance-sampling.html#cb216-1"></a><span class="kw">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb216-2"><a href="5-2-importance-sampling.html#cb216-2"></a>x &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rnorm</span>(n <span class="op">*</span><span class="st"> </span>p), n, p)</span>
+<span id="cb216-3"><a href="5-2-importance-sampling.html#cb216-3"></a>evaluations &lt;-<span class="st"> </span><span class="kw">apply</span>(x, <span class="dv">1</span>, h, <span class="dt">alpha =</span> <span class="fl">0.4</span>)</span></code></pre></div>
 <p><img src="CSwR_files/figure-html/MC_CLT2-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <p>The sample path above is not carefully selected to be pathological. Due to
 occasional large values, the typical sample path will show occasional large jumps,
@@ -488,14 +536,23 @@ and the variance may easily be grossly underestimated.</p>
 <div class="figure" style="text-align: center"><span id="fig:MC-CLT3"></span>
 <img src="CSwR_files/figure-html/MC-CLT3-1.png" alt="Four sample paths of the cumulative average for $\alpha = 0.4$." width="100%" />
 <p class="caption">
-Figure 5.3: Four sample paths of the cumulative average for <span class="math inline">\(\alpha = 0.4\)</span>.
+Figure 5.5: Four sample paths of the cumulative average for <span class="math inline">\(\alpha = 0.4\)</span>.
 </p>
 </div>
-<p>To be fair, it is the choice of standard multivariate normal distribution as
+<p>To be fair, it is the choice of a standard multivariate normal distribution as
 the reference distribution for large <span class="math inline">\(\alpha\)</span> that is problematic rather than
 Monte Carlo integration and importance sampling as such. However, in high
-dimensions it an be quite difficult to choose a suitable distribution to sample
+dimensions it can be difficult to choose a suitable distribution to sample
 from.</p>
+<p>The difficulty for the specific integral is due to the exponent of the integrand,
+which can become large and positive if <span class="math inline">\(x_i \simeq x_{i-1}\)</span> for enough coordinates.
+This happens rarely for independent random variables, but large values of rare
+events can, nevertheless, contribute notably to the integral. The
+larger <span class="math inline">\(\alpha \in (0, 1)\)</span> is, the more pronounced is the problem with occasional
+large values of the integrand. It is possible to use importance sampling and
+instead sample from a distribution where the large values are more likely. For this
+particular example we would need to simulate from a distribution where the
+variables are dependent, and we will not pursue that.</p>
 </div>
 </div>
             </section>
@@ -504,7 +561,7 @@ from.</p>
         </div>
       </div>
 <a href="5-1-assessment.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="5-3-network-failure.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="5-3-network.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>

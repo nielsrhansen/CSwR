@@ -163,7 +163,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="2.3.1" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#rectangular"><i class="fa fa-check"></i><b>2.3.1</b> Revisiting the rectangular kernel</a></li>
 <li class="chapter" data-level="2.3.2" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#ise-mise-and-mse-for-kernel-estimators"><i class="fa fa-check"></i><b>2.3.2</b> ISE, MISE and MSE for kernel estimators</a></li>
 <li class="chapter" data-level="2.3.3" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#plug-in-estimation-of-the-oracle-bandwidth"><i class="fa fa-check"></i><b>2.3.3</b> Plug-in estimation of the oracle bandwidth</a></li>
-<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cross-validation"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
+<li class="chapter" data-level="2.3.4" data-path="2-3-bandwidth.html"><a href="2-3-bandwidth.html#cv"><i class="fa fa-check"></i><b>2.3.4</b> Cross-validation</a></li>
 </ul></li>
 <li class="chapter" data-level="2.4" data-path="2-4-likelihood.html"><a href="2-4-likelihood.html"><i class="fa fa-check"></i><b>2.4</b> Likelihood considerations</a><ul>
 <li class="chapter" data-level="2.4.1" data-path="2-4-likelihood.html"><a href="2-4-likelihood.html#sieves"><i class="fa fa-check"></i><b>2.4.1</b> Method of sieves</a></li>
@@ -229,7 +229,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="chapter" data-level="5" data-path="5-mci.html"><a href="5-mci.html"><i class="fa fa-check"></i><b>5</b> Monte Carlo integration</a><ul>
 <li class="chapter" data-level="5.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html"><i class="fa fa-check"></i><b>5.1</b> Assessment</a><ul>
-<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#using-the-central-limit-theorem"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
+<li class="chapter" data-level="5.1.1" data-path="5-1-assessment.html"><a href="5-1-assessment.html#CLT-gamma"><i class="fa fa-check"></i><b>5.1.1</b> Using the central limit theorem</a></li>
 <li class="chapter" data-level="5.1.2" data-path="5-1-assessment.html"><a href="5-1-assessment.html#concentration-inequalities"><i class="fa fa-check"></i><b>5.1.2</b> Concentration inequalities</a></li>
 <li class="chapter" data-level="5.1.3" data-path="5-1-assessment.html"><a href="5-1-assessment.html#exponential-tail-bound-for-gamma-distributed-variables"><i class="fa fa-check"></i><b>5.1.3</b> Exponential tail bound for Gamma distributed variables</a></li>
 </ul></li>
@@ -237,8 +237,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="5.2.1" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#unknown-normalization-constants"><i class="fa fa-check"></i><b>5.2.1</b> Unknown normalization constants</a></li>
 <li class="chapter" data-level="5.2.2" data-path="5-2-importance-sampling.html"><a href="5-2-importance-sampling.html#hd-int"><i class="fa fa-check"></i><b>5.2.2</b> Computing a high-dimensional integral</a></li>
 </ul></li>
-<li class="chapter" data-level="5.3" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
-<li class="chapter" data-level="5.3.1" data-path="5-3-network-failure.html"><a href="5-3-network-failure.html#object-oriented-implementation"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementation</a></li>
+<li class="chapter" data-level="5.3" data-path="5-3-network.html"><a href="5-3-network.html"><i class="fa fa-check"></i><b>5.3</b> Network failure</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="5-3-network.html"><a href="5-3-network.html#object-oriented-implementations"><i class="fa fa-check"></i><b>5.3.1</b> Object oriented implementations</a></li>
 </ul></li>
 </ul></li>
 <li class="part"><span><b>Part III: Optimization</b></span></li>
@@ -335,13 +335,30 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
             <section class="normal" id="section-">
 <div id="mci" class="section level1">
 <h1><span class="header-section-number">Chapter 5</span> Monte Carlo integration</h1>
-<p>A typical usage of simulation is Monte Carlo integration.
+<p>A typical usage of simulation of random variables is Monte Carlo integration.
 With <span class="math inline">\(X_1, \ldots, X_n\)</span> i.i.d. with density <span class="math inline">\(f\)</span>
 <span class="math display">\[\hat{\mu}_{\textrm{MC}} := \frac{1}{n} \sum_{i=1}^n h(X_i) 
 \rightarrow \mu := E(h(X_1)) = \int h(x) f(x) \ \mathrm{d}x\]</span>
 for <span class="math inline">\(n \to \infty\)</span> by the law of large numbers (LLN).</p>
-<p>The first question that we deal with below is the assessment of the
-average as an approximation of the integral.</p>
+<p>Monte Carlo integration is a clever idea, where we use the computer
+to simulate i.i.d. random variables and compute an average as
+an approximation of an integral. The idea may be applied in a statistical
+context, but it way also have applications outside of statistics and be
+a direct competitor to numerical integration. By increasing <span class="math inline">\(n\)</span> the LLN
+tells us that the average will eventually become a good approximation
+of the integral. However, the LLN does not quantify how large <span class="math inline">\(n\)</span> should
+be, and a fundamental question of Monte Carlo integration is therefore
+to quantify the precision of the average.</p>
+<p>This chapter first deals with the quantification of the precision — mostly
+via the asymptotic variance in the central limit theorem. This will
+on the one hand provide us with a quantification of precision for any
+specific Monte Carlo approximation, and it will on the other hand provide
+us with a way to compare different Monte Carlo integration techniques. The
+direct use of the average above requires that we can simulate from
+the distribution with density <span class="math inline">\(f\)</span>, but that might have low precision or it
+might just be plain difficult. In the second half of the chapter we will treat importance
+sampling, which is a technique for simulating from a different distribution
+and use a <em>weighted</em> average to obtain the approximation of the integral.</p>
 </div>
             </section>
 
