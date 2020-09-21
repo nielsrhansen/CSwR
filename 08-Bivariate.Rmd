@@ -192,7 +192,7 @@ p_Nuuk + geom_line(aes(y = f_hat), color = "blue")
 ### Implementing the running mean
 
 The running mean smoother fulfills the following identity
-$$\hat{f}_{i+1} = \hat{f}_{i} - y_{i - (k-1)/2} + y_{i + (k + 1)/2},$$
+$$\hat{f}_{i+1} = \hat{f}_{i} - y_{i - (k-1)/2} / k + y_{i + (k + 1)/2} / k,$$
 which can be used for a much more efficient implementation 
 than the matrix-vector multiplication. It should be emphasized 
 again that the identity above and the implementation below 
@@ -203,7 +203,7 @@ assume that data is sorted according to $x$-values.
 run_mean <- function(y, k) {
   n <- length(y)
   m <- floor((k - 1) / 2)
-  k <- 2 * m + 1           # Ensures k to be odd and m = (k-1) / 2
+  k <- 2 * m + 1           # Ensures k to be odd and m = (k - 1) / 2
   y <- y / k
   s <- rep(NA, n)
   s[m + 1] <- sum(y[1:k])
@@ -311,8 +311,8 @@ can be computed without actually computing all the $\hat{f}^{-i}_i$.
 
 For the running mean, all diagonal elements of the smoother matrix are identical. 
 We disregard boundary values (with the `NA` value), so to get 
-a comparable quantity across different choices of $k$ we use `mean` instead of 
-`sum` in the implementation. 
+a comparable quantity across different choices of $k$ we use `mean()` instead of 
+`sum()` in the implementation. 
 
 ```{r LOOCV-runMean}
 loocv <- function(k, y) {
@@ -1091,7 +1091,7 @@ provides a diagonalization of the smoother matrix jointly in the tuning
 parameters. This representation allows for efficient computation 
 with splines, and it will become clear why it is not necessary to compute 
 $\mathbf{S}$ or even its diagonal elements. The trace is nevertheless 
-easily computable from the diagonalization. 
+easily computable $\mathbf{S}$. 
 
 ```{r gcv-smooth-spline}
 gcv <- function(lambda, y) {
@@ -1114,11 +1114,11 @@ qplot(lambda, GCV) + geom_vline(xintercept = lambda_opt, color = "red")
 Finally, we can visualize the resulting smoothing spline. 
 
 ```{r Nuuk-spline-opt, fig.cap="The smoothing spline that minimizes GCV over the tuning parameter $\\lambda$", dependson=c("Nuuk-spline-gcv", "NuukData")}
-temp_smooth_opt <- Phi %*% solve(
+smooth_opt <- Phi %*% solve(
   crossprod(Phi) + lambda_opt * Omega, 
   t(Phi) %*% Nuuk_year$Temperature
 )
-p_Nuuk + geom_line(aes(y = temp_smooth_opt), color = "blue")
+p_Nuuk + geom_line(aes(y = smooth_opt), color = "blue")
 ```
 
 The smoothing spline that we found by minimizing GCV can be compared to 
@@ -1128,13 +1128,13 @@ as well.
 (ref:smoothspline) The smoothing spline that minimizes GCV as computed by `smooth.spline()`.
 
 ```{r Nuuk-spline-opt2, fig.cap='(ref:smoothspline)', dependson="NuukData"}
-temp_smooth_splines <- smooth.spline(
+smooth_splines <- smooth.spline(
   Nuuk_year$Year, 
   Nuuk_year$Temperature, 
   all.knots = TRUE        # Don't use heuristic
 )  
-range(temp_smooth_splines$y - temp_smooth_opt)
-p_Nuuk + geom_line(aes(y = temp_smooth_splines$y), color = "blue")
+range(smooth_splines$y - smooth_opt)
+p_Nuuk + geom_line(aes(y = smooth_splines$y), color = "blue")
 ```
 
 The differences between the smoothing spline computed by our implementation

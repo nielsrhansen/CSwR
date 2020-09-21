@@ -31,7 +31,7 @@ selected to achieve the right balance of adapting
 to data without adapting too much to the random variation in the data. 
 Choosing the right amount of regularization is just as important as choosing 
 the method to use in the first place. It may, in fact, be more important. 
-We actually don't have a complete implementation of a nonparametric estimator 
+We actually do not have a complete implementation of a nonparametric estimator 
 until we have implemented a data driven and automatic way of choosing the 
 amount of regularization. Implementing only the computations for 
 evaluating a kernel estimator, say, and leaving it completely 
@@ -92,7 +92,7 @@ curve(dnorm(x, psi_mean, psi_sd), add = TRUE, col = "red")
 ```
 
 As Figure \@ref(fig:psi-gauss) shows, if we fit a Gaussian distribution to the $\psi$-angle 
-data we get a density estimate that clearly doesn't match the 
+data we get a density estimate that clearly does not match the 
 histogram. The Gaussian density matches the data on the first and second moments, 
 but the histogram shows a clear bimodality that the Gaussian distribution by 
 definition cannot match. Thus we need a more flexible parametric model than
@@ -295,7 +295,7 @@ kern_dens_apply <- function(x, h, m = 512) {
 
 The `sapply()` call above will apply the function `function(z) sum(dnorm(...` 
 to every element in the vector `xx` and return the result as a vector. The 
-function is an example of an *anonymous function* that doesn't get a name and 
+function is an example of an *anonymous function* that does not get a name and 
 exists only during the `sapply()` evaluation. Instead of `sapply()` it is possible 
 to use `lapply()` that returns a list. In fact, `sapply()` is a 
 simple wrapper around `lapply()` that attempts to "simplify" the result from 
@@ -438,7 +438,7 @@ autoplot(kern_bench) +
   theme(legend.position = "none")
 ```
 
-This more refined benchmark study doesn't change our initial impression from 
+This more refined benchmark study does not change our initial impression from 
 using `system.time()` substantially. The function `kern_dens()` is notably
 slower than the three vectorized implementations, but we are now able to 
 more clearly see the minor differences among them. For instance, `kern_dens_vec()`
@@ -759,11 +759,11 @@ simplifies to
 $$\hat{h}_n = \left(\frac{4}{3}\right)^{1/5} \tilde{\sigma} n^{-1/5},$$
 with $\tilde{\sigma}$ plugged in as a robust estimate of $\sigma$. @Silverman:1986 
 made the ad hoc suggestion to reduce the factor $(4/3)^{1/5} \simeq 1.06$ to $0.9$.
-This results in the bandwidth selector 
+This results in the bandwidth estimate 
 $$\hat{h}_n = 0.9 \tilde{\sigma} n^{-1/5},$$
 which has become known as *Silverman's rule of thumb*.  
 
-Silverman's rule of thumb is the default bandwidth selector for `density()`
+Silverman's rule of thumb is the default bandwidth estimator for `density()`
 as implemented by the function `bw.nrd0()`. The `bw.nrd()` function implements 
 bandwidth selection using the factor $1.06$ instead of $0.9$. Though the theoretical 
 derivations behind these implementations assume that $f_0$ 
@@ -801,7 +801,7 @@ it can be selected when using `density()` by setting the argument `bw = "SJ"`.
 This plug-in method is regarded as a solid default that performs well for 
 many different data generating densities $f_0$. 
 
-### Cross-validation
+### Cross-validation {#cv}
 
 An alternative to relying on the asymptotic optimality arguments for 
 integrated mean squared error and the corresponding plug-in estimates 
@@ -809,7 +809,7 @@ of the bandwidth is known as *cross-validation*. The method mimics
 the idea of setting aside a subset of the data set, which is then *not*
 used for computing an estimate but only for validating the estimator's 
 performance. The benefit of cross-validation over simply setting 
-aside a validation data set is that we don't "waste" any of the data points
+aside a validation data set is that we do not "waste" any of the data points
 on validation only. All data points are used for the ultimate computation
 of the estimate. The deficit is that cross-validation is usually 
 computationally more demanding. 
@@ -824,14 +824,12 @@ $$\hat{f}^{-i}_h = \frac{1}{h n_i} \sum_{j \in I^{-i}} K\left(\frac{x_i - x_j}{h
 That is, $\hat{f}^{-i}_h$ is the kernel density estimate based on data with 
 indices in $I^{-i}$ and evaluated in $x_i$. Since the density 
 estimate evaluated in $x_i$ is not based on $x_i$, the quantity $\hat{f}^{-i}_h$ 
-can be used to assess how well the density estimates computed using a bandwidth
+can be used to assess how well the density estimate computed using a bandwidth
 $h$ concur with the data point $x_i$. This can be summarized using the 
 log-likelihood 
 $$\ell_{\mathrm{CV}}(h) = \sum_{i=1}^n \log (\hat{f}^{-i}_h),$$
-that we will refer to as the cross-validated log-likelihood. Contrary to 
-the log-likelihood considered in Section \@ref(likelihood), the 
-cross-validated log-likelihood will not just grow towards $\infty$ for $h \to 0$,
-and we define 
+that we will refer to as the cross-validated log-likelihood, and we define 
+the bandwidth estimate as
 $$\hat{h}_{\mathrm{CV}} = \textrm{arg max}_h \ \ \ell_{\mathrm{CV}}(h).$$
 This cross-validation based bandwidth can then be used for computing kernel 
 density estimates using the entire data set. 
@@ -856,7 +854,7 @@ $$\frac{2}{n} \sum_{i=1}^n \hat{f}^{-i}_h,$$
 and this leads to the statistic
 $$\mathrm{UCV}(h) = \| \hat{f}_h\|_2^2 - \frac{2}{n} \sum_{i=1}^n \hat{f}^{-i}_h$$
 known as the unbiased cross-validation criterion. The corresponding 
-bandwidth selector is 
+bandwidth estimate is 
 $$\hat{h}_{\mathrm{UCV}} = \textrm{arg min}_h \ \ \mathrm{UCV}(h).$$
 Contrary to the log-likelihood based criterion, this criterion requires 
 the computation of $\| \hat{f}_h\|_2^2$. Bandwidth selection using UCV 
@@ -865,13 +863,14 @@ used with `density()` by setting the argument `bw = "ucv"`.
 
 ## Likelihood considerations {#likelihood}
 
-It is natural to ask why we don't go all-in and simply try to find the maximum
-likelihood estimate of the density among all possible densities? Why use this
-ad hoc idea behind kernel density estimation?
+In Section \@ref(cv) the cross-validated likelihood was used for bandwidth selection. 
+It is natural to ask why we did not go all-in and simply maximized the
+likelihood over all possible densities to find a maximum likelihood estimator 
+instead of using the ad hoc idea behind kernel density estimation.
 
 The log-likelihood
 $$\ell(f) = \sum_{i=j}^n \log f(x_j)$$
-is well defined as a function of the density $f$ -- even when $f$ isn't restricted 
+is well defined as a function of the density $f$ -- even when $f$ is not restricted 
 to belong to a finite-dimensional parametric model. 
 To investigate if a nonparametric MLE is meaningful we consider how the likelihood
 behaves for the densities 
@@ -949,7 +948,7 @@ n \log(nh\sqrt{2 \pi}) \\
 \end{align*}
 
 for $h \to 0$. Hence, $\ell(\overline{f}_h) \to \infty$ for $h \to 0$. This demonstrates that the MLE 
-of the density doesn't exist in the set of all distributions with densities.
+of the density does not exist in the set of all distributions with densities.
 
 In the sense of [weak convergence](https://en.wikipedia.org/wiki/Convergence_of_measures#Weak_convergence_of_measures) it actually holds that 
 $$\overline{f}_h \cdot m \overset{\mathrm{wk}}{\longrightarrow} 
@@ -1044,7 +1043,7 @@ chosen basis functions.
 The quote is not a mathematical statement but an empirical observation. 
 With a handful of parameters you already have a quite flexible class of 
 densities that will fit many real data sets well. But remember 
-that a reasonably good fit doesn't mean
+that a reasonably good fit does not mean
 that you have found the "true" data generating model. Though data is 
 in some situations not as scarce a resource today as when von Neumann made
 elephants wiggle their trunks, the quote still suggests that $h$ should grow
