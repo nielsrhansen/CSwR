@@ -73,11 +73,14 @@ may still converge to a local minimum.
 This section will give a brief introduction to convergence analysis 
 of optimization algorithms. We will see what kind of conditions on $H$ can be 
 used to show  convergence results and some of the basic proof techniques.
-We will only scratch the surface here with the hope that it can motivate
-the algorithms that will be introduced in subsequent sections and chapters as well 
+We will only scratch the surface here with the intention that it can motivate
+the algorithms introduced in subsequent sections and chapters as well 
 as the empirical techniques introduced below for practical assessment of 
 convergence.
 
+Indeed, theory rarely provides us with sharp quantitative results on 
+the rate of convergence and we will need computational techniques to monitor and measure convergence of algorithms in practice. Otherwise we cannot compare 
+the efficiency of different algorithms. 
 
 ### Descent algorithms
 
@@ -206,13 +209,13 @@ For the gradient descent map this gives that
 
 since the eigenvalues of $I - \frac{1}{L+1} D^2H(\tilde{\theta})$ are all between 
 $1 - L/(L + 1)$ and $1 - l/(L+1)$. This shows that $\Phi_{\nabla}$ is a 
-contraction on $\mathrm{lev}(\theta_0)$ with $c = 1 - l/(L + 1) < 1$. 
-This provides an alternative proof,
+contraction for the $2$-norm on $\mathrm{lev}(\theta_0)$ with 
+$c = 1 - l/(L + 1) < 1$. This provides an alternative proof,
 via Banach's fixed point theorem, of convergence of the gradient descent algorithm 
 in Example \@ref(exm:grad-descent) for a *strongly* convex $H$ with uniformly 
 bounded Hessian.
 
-The number $c$ quantifies how fast the iterations converge toward the fixed point.
+The number $c$ quantifies how fast $\theta_n$ converges toward the fixed point.
 The smaller $c$ is, the faster is the convergence. Details are given in the next section, 
 but it is worth noticing here that $c = 1 - l/(L + 1)$ is independent of the 
 dimension of $\Theta$ for given bounds $l$ and $L$. It way also be 
@@ -220,88 +223,185 @@ worth noticing that $\kappa = (L + 1) / l$ is an upper bound on the
 [conditioning number](https://en.wikipedia.org/wiki/Condition_number#Matrices)
 of the matrix $D^2H(\theta)$ uniformly in $\theta \in \mathrm{lev}(\theta_0)$. 
 A large conditioning number of the second derivative indicates that the graph 
-of $H$ looks like a narrow ravine, this will force $\kappa^{-1}$ to be small,
+of $H$ looks like a narrow ravine, which will force $\kappa^{-1}$ to be small,
 thus $c$ to be close to one and the convergence to be slow. 
 
 ### Convergence rate
 
-Banach's fixed point theorem tells us more. It actually tells us that 
+Banach's fixed point theorem tells us more than just convergence. 
+It actually tells us that 
 $$\|\theta_n - \theta_{\infty}\| = \|\Phi(\theta_{n-1}) - \theta_{\infty}\| \leq c \|\theta_{n-1} - \theta_{\infty}\| \leq c^n \|\theta_0 - \theta_{\infty}\|.$$
 That is, $\|\theta_n - \theta_{\infty}\| \to 0$ with at least geometric rate $c < 1$. 
 
 To discuss how fast numerical optimization algorithms converge in general, 
 there is a refined notion of asymptotic convergence *order* as well as 
-*rate*. We say that the algorithm has asymptotic convergence order $q$ with 
-asymptotic rate $r \in (0, 1)$ if 
+*rate*. 
+
+```{definition, order-rate}
+We say that a convergent sequence $(\theta_n)_{n \geq 1}$ in $\mathbb{R}^p$ has asymptotic convergence order $q$ with asymptotic rate $r \in (0, 1)$ if 
 $$\lim_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|^q} = r.$$
+````
+
 If the order is $q = 1$ we say that the convergence is linear, if $q = 2$
 we say that the convergence is quadratic and so on. If 
 $$\limsup_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|} = 1$$
-we say that convergence is sublinear. Clearly, 
+we say that convergence is sublinear.
 Banach's fixed point theorem implies a convergence that is at least as fast as 
-linear convergence with asymptotic rate $c$. If the smallest possible $c$ 
-is close to 1, the convergence may be relatively slow, but it is still 
-linear and thus (asymptotically) faster than sublinear convergence. 
+linear convergence with asymptotic rate $c$. 
+Moreover, if $\Phi$ is just a contraction for $n \geq N_0$ for some $N_0$, 
+then for $n \geq N_0$
+$$\|\theta_{n + 1} - \theta_{n}\| \leq c \| \theta_{n} - \theta_{n-1}\|.$$
+The convergence may be superlinear, but if it is linear, the rate is bounded by $c$.
+To indicate if $\Phi$ is asymptotically a contraction, we can introduce
+$$R_n = \frac{\|\theta_{n + 1} - \theta_{n}\|}{\|\theta_{n} - \theta_{n- 1}\|}$$
+and monitor its behavior as $n \to \infty$. The constant
+$$r = \limsup_{n \to \infty} R_n$$
+is then asymptotically the smallest possible contraction constant. 
+If convergence is sublinear and $R_n \to 1$ the sequence is 
+called logarithmically convergent (by definition), while $r \in (0,1)$ is an 
+indication of linear convergence with rate $r$, and $r = 0$ is an indication of 
+superlinear convergence.
 
-It is, of course, also possible to investigate how $H(\theta_n)$
-converges toward a local minimum, or how the gradient, $\nabla H(\theta_n)$, 
-converges toward zero. We will use the same terminology of order 
-and rate for these sequences. 
-
-For applications it is of interest 
-to estimate order and rate from running the algorithm. One way to do it is by running the algorithm 
-for a large number, $N$, say, of iterations -- ideally so that 
-$\theta_N = \theta_{\infty}$ up to computer precision. If the order is $q$ and the rate is $r$ then
+In practice, we can plot the ratio $R_n$ as the algorithm is running, and 
+use $R_n$ as an estimate of the rate $r$ for large $n$. However, 
+this can be a quite unstable method for estimating the rate. Alternatively, 
+we can run the algorithm for a large number, $N$, say, of iterations. 
+Ideally so that $\theta_N = \theta_{\infty}$ up to computer precision. 
+Then if we have linear convergence with rate $r$,
+$$
+\| \theta_n - \theta_N \| \simeq r \| \theta_{n-1} - \theta_N \| \simeq \ldots 
+\simeq r^{n - N_0} \| \theta_{N_0} - \theta_N \|
+$$
+for $n \geq N_0$ and $N_0$ sufficiently large. That is, 
+$$\log \|\theta_{n} - \theta_{N}\| \simeq n \log(r) + d,$$
+for $n \geq N_0$, and we can plot and monitor $\log \|\theta_{n} - \theta_{N}\|$.
+It should decay approximately linearly as a function of $n$ with slope 
+$\log(r) < 0$, which can be estimated by least squares. If the algorithm has sublinear convergence
+we will see this as a slower-than-linear decay. Finally, it is also possible to 
+estimate the order $q$ as well as the rate $r$ by using that 
 $$\log \|\theta_{n} - \theta_{N}\| \simeq q \log \|\theta_{n-1} - \theta_{N}\| + \log(r)$$
-for $n = N_0, \ldots, N$ for some $N_0$. We can use that to estimate $q$ and $\log(r)$
-by fitting a linear function by least squares to these log-log transformed norms of errors. 
+for $n \geq N_0$. We can estimate $q$ and $\log(r)$
+by fitting a linear function by least squares to these log-log transformed norms 
+of errors. 
 
-Alternatively, if $\Phi$ is 
-a contraction for $n \geq N_0$ for some $N_0$, then for $n \geq N_0$
-$$\|\theta_{n + 1} - \theta_{n}\| \leq r^n \| \theta_1 - \theta_0\|.$$
-The convergence may be superlinear, but if it linear, the rate is bounded by $r$. 
-If the inequality is approximately an equality, the convergence 
-is linear and the asymptotic rate is $r$. Moreover, 
-$$R_n = \frac{\|\theta_{n + 1} - \theta_{n}\|}{\|\theta_{n} - \theta_{n- 1}\|} \rightarrow r.$$
-We can monitor and plot the ratio $R_n$ as the algorithm is running, and we can 
-use $R_n$ as an estimate of $r$ for large $n$. If $R_n \to 1$
-the algorithm is called logarithmically convergent (by definition) and it has sublinear convergence. 
-Observing $R_n \rightarrow 0$ is an indication of superlinear convergence, 
-while observing $R_n \rightarrow r \in (0,1)$ is an indication of linear convergence with rate $r$. 
+It is, of course, possible to investigate convergence 
+in terms of the sequences $H(\theta_n)$ and $\nabla H(\theta_n)$ instead. Here  $\nabla H(\theta_n)$ is particularly appealing as we know that the limit should be $0$.
+We use the same terminology of order and rate for these sequences. That is, 
+using the gradient to quantify convergence, the order is $q$ and the 
+rate is $r \in (0, 1)$ if 
+$$\lim_{n \to \infty} \frac{\|\nabla H(\theta_n)\|}{\|\nabla H(\theta_{n-1})\|^q} = r.$$
+If the order is linear, the rate can then be estimated from
+$$\log \|\nabla H(\theta_n)\| \simeq n \log(r) + d$$
+for $n \geq N_0$ by least squares. 
 
-We can also consider  
-$$\log \|\theta_{n + 1} - \theta_{n}\| \simeq n \log(r) + d,$$
-and we can plot and monitor $\log \|\theta_{n + 1} - \theta_{n}\|$ as the algorithm is running.
-It should decay approximately linearly as a function of $n$ with slope $\log(r) < 0$
-that can be estimated by least squares. If the algorithm has sublinear convergence
-we will see this as a slower-than-linear decay. 
+It is important to notice that all rates discussed above are *per iteration*,
+which is natural when investigating a single algorithm. However, different 
+algorithms may spend different amounts of time per iteration, and it does not 
+make sense to make a comparison of per iteration rates across different 
+algorithms. If one iteration takes $\delta$ time units (seconds, say) 
+the *per time unit* rate is 
+$$r^{1/\delta}.$$ 
+If $t_n$ denotes the run time of $n$ iterations, we could 
+estimate $\delta$ as $t_N / N$ for $N$ sufficiently large. 
 
-As mentioned above, we can monitor the convergence of the sequences 
-$H(\theta_n)$ or $\nabla H(\theta_n)$, instead of $\theta_n$, using the 
-same techniques as described for $\theta_n$. Here  $\nabla H(\theta_n)$ is particularly appealing
-as we know that the limit should be $0$. Thus we can directly monitor 
-$\log \| \nabla H(\theta_n) \|$ as a function of $n$, plot it against
-$\log \| \nabla H(\theta_{n-1}) \|$ and estimate asymptotic order and rate. 
+We will throughout systematically investigate convergence 
+as a function of $t_n$ instead of $n$, and we will estimate rates per time unit
+directly by least squares regression on $t_n$ instead of $n$. 
 
 ### Stopping criteria
 
-All the stopping criteria considered here depend on choosing a *tolerance parameter*
-$\varepsilon > 0$. 
+The discussion above on theoretical convergence properties and practical 
+methods for measuring convergence rates has left one important 
+practical question unanswered. No algorithm can run for an infinite number 
+of iterations, thus all algorithms need a criterion for when
+to stop. 
 
-**Small relative descent:** Stop when 
-$$H(\theta_{n-1}) - H(\theta_n) \leq \varepsilon (|H(\theta_n)| + \varepsilon).$$
-The reason for this formulation, and in particular the added $\varepsilon$ 
-on the right hand side, is for the criterion to be well behaved even if $H(\theta_n)$
-comes close to zero. 
+We say that an algorithm *has converged* by iteration $n$ if 
+$$H(\theta_n) - H(\theta_{\infty}) < \varepsilon_0$$
+for an error tolerance $\varepsilon_0 > 0$. Unfortunately, we cannot
+compute $H(\theta_n) - H(\theta_{\infty})$, and the choice of an 
+appropriate stopping criterion is notoriously difficult. 
+Below we give four of the most commonly used criteria and 
+discuss benefits and deficits for each of them. They can be used 
+individually and in combinations, but unfortunately none of them 
+provides convergence guarantees. It is nevertheless common to abuse 
+the terminology and say that an algorithm has converged when a stopping 
+criterion is reached, but this can be misleading. 
 
-**Small gradient:** Stop when 
-$$\|\nabla H(\theta_n)\| \leq \varepsilon.$$
-Note that many different norms, $\|\cdot\|$, may be used. If the coordinates
-of the gradient generally are of different orders of magnitude a norm 
-that rescales the coordinates can be chosen. 
+**Maximal number of iterations:** Stop when 
+$$n = N$$ 
+for a fixed maximal number of iterations $N$. 
+This is arguably the simplest criterion, but, obviously, 
+reaching a maximal number of iterations provides no evidence in 
+itself that $H(\theta_N)$ is sufficiently close to a (local) minimum. For 
+a specific problem we could from experience know of a sufficiently large
+$N$ so that the algorithm has typically converged after $N$ iterations, but
+the most important use of this criterion is in combination with another 
+criteria so that it works as a safeguard against an infinite loop.
+
+The other three stopping criteria all depend on choosing a *tolerance parameter* $\varepsilon > 0$, which will play different roles in the three 
+criteria.
 
 **Small relative change:** Stop when 
 $$\|\theta_n - \theta_{n-1}\| \leq \varepsilon(\|\theta_n\| + \varepsilon).$$
+The idea is that when $\theta_n \simeq \theta_{n-1}$ the sequence has approximately
+reached the limit $\theta_{\infty}$ and we can stop. It is possible to use an
+absolute criterion such as $\|\theta_n - \theta_{n-1}\| < \varepsilon$, but then 
+the criterion would be sensitive to a rescaling of the parameters. Thus fixing a 
+reasonable tolerance parameter across many problems makes more sense for the 
+relative then the absolute criterion. The main reason for adding $\varepsilon$
+on the right hand size is to make the criterion well behaved even if 
+$\|\theta_n\|$ is close to zero. 
+
+The main benefit of this criterion is that it does not require evaluations 
+of the objective function. Some algorithms, such as the EM-algorithm, does not
+need to evaluate the objective function, and it may even be difficult to do so. 
+In those cases this criterion can be used. The main deficit is that a 
+single iteration with little change in the parameter can happen for many 
+reasons besides convergence, and it does not imply that
+$H(\theta_{n}) - H(\theta_{\infty})$ is small.
+
+**Small relative descent:** Stop when 
+$$H(\theta_{n-1}) - H(\theta_n) \leq \varepsilon (|H(\theta_n)| + \varepsilon).$$
+This criterion only makes sense if the algorithm is a descent algorithm.
+As discussed above, an absolute criterion would be sensitive to rescaling of 
+the objective function, and the added $\varepsilon$ 
+on the right hand side is to ensure a reasonable behavior if $H(\theta_n)$
+is close to zero. 
+
+This criterion is natural for descent algorithms; we stop when the algorithm
+does not decrease the value of the objective function sufficiently. 
+The use of a relative criterion makes is possible to choose a tolerance 
+parameter that works reasonably well for many problems. A conventional choice 
+is $\varepsilon \simeq 10^{-8}$ (and often chosen as the square root of the 
+[machine epsilon](https://en.wikipedia.org/wiki/Machine_epsilon)), though 
+the theoretical support for this choice is weak. The deficit of the 
+algorithm is as for the criterion above: a small descent does not imply that $H(\theta_{n}) - H(\theta_{\infty})$ is small, and it could happen if the 
+algorithm enters a part of $\Theta$ where $H$ is very flat, say. 
+
+**Small gradient:** Stop when 
+$$\|\nabla H(\theta_n)\| \leq \varepsilon.$$
+This criterion directly measures if $\theta_n$ is close to being a stationary 
+point, but a small value of $\|\nabla H(\theta_n)\|$ is still no guarantee that
+$H(\theta_{n}) - H(\theta_{\infty})$ is small. The criterion also requires
+the computation of the gradient. 
+
+Observe, in addition, that different norms, $\|\cdot\|$, can be used, and
+if the coordinates of the gradient generally are of different orders of 
+magnitude a norm that rescales the coordinates can be chosen. 
+
+Neither of the four criteria above give a theoretical convergence guarantee, but 
+in some special cases it is possible to develop criteria with a stronger 
+theoretical support. If we can find a continuous function $\tilde{H}$ satisfying 
+$H(\theta_{\infty}) = \tilde{H}(\theta_{\infty})$ and 
+$$H(\theta_{\infty}) \geq \tilde{H}(\theta)$$
+for all $\theta$  then 
+$$0 \leq H(\theta_{n}) - H(\theta_{\infty}) \leq 
+H(\theta_{n}) - \tilde{H}(\theta_{n}),$$ 
+and the right hand side directly quantifies convergence. Convex duality 
+theory gives for many convex optimization problems such a function, $\tilde{H}$,
+and in those cases a convergence criterion based on $H(\theta_{n}) - \tilde{H}(\theta_{n})$ actually comes with a theoretical guarantee on
+how close we are to the theoretical minimum.
 
 ## Descent direction algorithms
 
@@ -432,8 +532,9 @@ of various parameters for the numerical optimization algorithms.
 ```{r implement, dependson="vegetables-data"}
 X <- model.matrix(sale ~ log(normalSale), data = vegetables)
 y <- vegetables$sale
-## The function `drop` drops the dimensions attribute
-t_map <- drop(crossprod(X, y))  ## More efficient than drop(t(X) %*% y)
+# The function drop() drops the dim attribute and turns, for instance,
+# a matrix with one column into a vector
+t_map <- drop(crossprod(X, y))  # More efficient than drop(t(X) %*% y)
 
 H <- function(beta) 
   (drop(sum(exp(X %*% beta)) - beta %*% t_map)) / nrow(X)
@@ -454,35 +555,40 @@ If a function is passed to this argument, it will be evaluated in each iteration
 of the algorithm. This gives us the possibility of logging or 
 printing values of variables during evaluation, which can be highly useful 
 for understanding the inner workings of the algorithm. Monitoring or logging 
-intermediate values during the evaluation of code is often refered to as 
-*tracing*. The tracer function implemented below can be used to construct 
-a tracer object with a trace function that can be passed to the callback 
-argument. It can be adapted as we like to provide the information we want. 
+intermediate values during the evaluation of code is often referred to as 
+*tracing*. 
 
 ```{r GD}
-GD <- function(par, 
-               d = 0.8, 
-               c = 0.1, 
-               gamma0 = 0.01, 
-               epsilon = 1e-4, 
-               cb = NULL) {
-  repeat {
+GD <- function(
+  par, 
+  H,
+  gr,
+  d = 0.8, 
+  c = 0.1, 
+  gamma0 = 0.01, 
+  epsilon = 1e-4, 
+  maxit = 1000,
+  cb = NULL
+) {
+  for(i in 1:maxit) {
     value <- H(par)
-    grad <- grad_H(par)
+    grad <- gr(par)
     h_prime <- sum(grad^2)
     if(!is.null(cb)) cb()
-    ## Convergence criterion based on gradient norm
+    # Convergence criterion based on gradient norm
     if(h_prime <= epsilon) break
     gamma <- gamma0
-    ## First proposed descent step
+    # First proposed descent step
     par1 <- par - gamma * grad
-    ## Backtracking while descent is insufficient
+    # Backtracking while descent is insufficient
     while(H(par1) > value - c * gamma * h_prime) {
       gamma <- d * gamma
       par1 <- par - gamma * grad
     }
     par <- par1
   }
+  if(i == maxit)
+    warning("Maximal number, ", maxit, ", of iterations reached")
   par
 }
 ```
@@ -491,15 +597,15 @@ Gradient descent is very slow for the large Poisson model with individual
 store effects, so we consider only the simple model with two parameters. 
 
 ```{r GD-test, dependson=c("Implement", "GD")}
-pois_GD <- GD(rep(0, ncol(X)))
+pois_GD <- GD(rep(0, ncol(X)), H, grad_H)
 ```
 
 The gradient descent implementation is tested by comparing the minimizer to
-the estimated parameters as computed by `glm`.
+the estimated parameters as computed by `glm()`.
 
 ```{r GD-comp, dependson=c("GD-test", "pois-model-null"), echo=2:3, results='hold'}
 old_options = options(digits=10)
-as.numeric(coefficients(pois_model_null))  ## as.numeric just to strip names
+as.numeric(coefficients(pois_model_null))  # as.numeric to strip names
 as.numeric(pois_GD)
 options(digits = old_options$digits)
 ```
@@ -523,126 +629,30 @@ options(digits = old_options$digits)
 ```
 
 To investigate what actually went on inside the gradient descent 
-algorithm we implement a trace function. In fact, we implement a 
-function for constructing a tracer object, which has a way of saving 
-and printing trace information during the evaluation of the 
-gradient descent algorithm -- or any other algorithm that implements
-a similar trace functionality. The tracer object does this by storing 
-information in the enclosing environment of the trace function 
-that is passed to the `GD` function. This trace function looks up 
-variables in the evaluation environment of `GD`, stores them and 
-prints them if requested, and store run time information as well. 
-After the algorithm has converged the trace information can be accessed
-via the `summary` method for the tracer object. This implementation
-of tracer objects should not be confused with the `trace` function from 
-the R base package. It has a related functionality that can be used 
-with any function and is used for debugging. The tracer object as implemented
-here can be used with functions such as `GD` above that explicitly support calling
-a trace function, and it monitors the internal state during evaluation
-of the function without interrupting evaluation. 
+algorithm we will use the callback argument to trace the internals 
+of a class to `GD()`. The `tracer()` function from the CSwR package 
+can be used to construct 
+a tracer object with a `tracer()` function that we can pass as the callback 
+argument.  The tracer object and its `tracer()` function work by storing 
+information in the enclosing environment of `tracer()`. When used as 
+the callback argument to e.g. `GD()` the `tracer()` function will look up 
+variables in the evaluation environment of `GD()`, store them and 
+print them if requested, and store run time information as well. 
 
-```{r tracer}
-## Function 'tracer' constructs a tracer object containing a 'trace' and 
-## a 'get' function. The 'trace' function can print object values from its
-## calling environment (the parent frame) when evaluated, and it can also 
-## store those object values in a local list. The time between 'trace' calls
-## can be recorded as well. It is measured by the 'hires_time' function from the 
-## bench package. The 'get' function can subsequently access the traced values
-## in the list, though the user will typically do so via the S3 methods 'print' 
-## or 'summary' below.
-## 
-## The call of the 'trace' function can be manually inserted into the body of 
-## any function, it can be inserted using 'base::trace', or it can be passed
-## as an argument to any function with a callback argument. 
-##
-## Arguments of 'tracer' are:
-##
-## object: a character vector of names of the objects in the calling 
-##         environment of the 'trace' function that are to be traced. Objects 
-##         created by the 'expr' argument can be traced. 
-## N:      an integer specifying if and how often trace information is printed. 
-##         N = 0 means never, and otherwise trace information is printed every 
-##         N-th iteration. N = 1 is the default.
-## save:   a logical value. Sets if the trace information is saved.
-## time:   a logical value. Sets if run time information is saved.
-## expr:   an expression that will be evaluated in the calling environment 
-##         of the 'trace' function.
-## ...:    other arguments passed to `format` for printing.
-
-tracer <- function(objects = NULL, N = 1, save = TRUE, time = TRUE, expr = NULL, ...) {
-  n <- 1
-  values_save <- list()
-  last_time <- bench::hires_time()
-  trace <- function() {
-    time_diff <- bench::hires_time() - last_time
-    if(is.expression(expr))
-      eval(expr, envir = parent.frame())
-    if(is.null(objects))
-      objects <- ls(parent.frame())
-    
-    values <- mget(objects, envir = parent.frame(), ifnotfound = list(NA))
-    if(N && (n == 1 || n %% N == 0))
-      cat("n = ", n, ": ",  paste(names(values), " = ", format(values, ...), 
-                                  "; ", sep = ""), "\n", sep = "")
-    if(save) {
-      if(time)
-        values[[".time"]] <- time_diff
-      values_save[[n]] <<- values
-    }
-    n <<- n + 1
-    last_time <<- bench::hires_time()
-    invisible(NULL)
-  }
-  get <- function(simplify = FALSE) {
-    if(simplify) {
-      col_names <- unique(unlist(lapply(values_save, names)))
-      values_save <- lapply(
-        col_names, 
-        function(x) do.call(rbind, unlist(lapply(values_save, function(y) y[x]), 
-                                          recursive = FALSE))
-      )
-      names(values_save) <- col_names
-      values_save <- lapply(col_names, function(x) {
-        x_val <- values_save[[x]] 
-        if(!is.null(ncol(x_val)) && ncol(x_val) == 1) {
-          colnames(x_val) <- x
-        } else {
-          if(is.null(colnames(x_val)))
-            colnames(x_val) <- 1:ncol(x_val)
-          colnames(x_val) <- paste(x, ".", colnames(x_val), sep = "")
-        }
-        x_val
-      })
-      values_save <- do.call(cbind, values_save)
-      row.names(values_save) <- 1:nrow(values_save)
-    }
-    values_save
-  }
-  structure(list(trace = trace, get = get), class = "tracer")
-}
-
-
-## Methods for subsetting, printing and summarizing tracer objects
-'[.tracer' <- function(x, i, j, ..., drop = TRUE) {
-  values <- x$get(...)[i] 
-  if (drop && length(i) == 1)
-    values <- values[[1]]
-  values
-}
-print.tracer <- function(x, ...) print(x$get(...))
-summary.tracer <- function(x, ...) {
-  x <- suppressWarnings(x$get(simplify = TRUE))
-  x[, ".time"] <- c(0, cumsum(x[-1, ".time"]))
-  as.data.frame(x)
-}
-```
+When `GD()` has returned, the trace information can be accessed
+via the `summary()` method for the tracer object. The tracer objects 
+and their `tracer()` function should not be confused with the `trace()` 
+function from the R base package, but the tracer object's `tracer()` function
+can be passed as the `tracer` argument to `trace()` to interactively 
+inject tracing code into any R function. Here, the tracer objects will 
+only be used together with a callback argument.
 
 We use the tracer object with our gradient descent implementation
 and print trace information every 50th iteration. 
 
 ```{r GD-trace, dependson=c("tracer", "GD", "Implement", "vegetables-data")}
 GD_tracer <- tracer(c("value", "h_prime", "gamma"), N = 50)
-system.time(pois_GD <- GD(rep(0, ncol(X)), cb = GD_tracer$trace))
+pois_GD <- GD(rep(0, ncol(X)), H, grad_H, cb = GD_tracer$tracer)
 ```
 
 We see that the gradient descent algorithm runs for a little more than 350
@@ -652,16 +662,13 @@ $0.004096 = 0.8^4 \times 0.01$ and
 $0.00512 = 0.8^3 \times 0.01$, thus the backtracking 
 takes 3 to 4 iterations to find a step length with sufficient descent.
  
-The printed trace does not reveal the run time information. The run time 
-information is computed and stored as differences between process timings at each iteration
-of the algorithm, and the precision is at best of the order of one millisecond
-(see `?proc.time`). Hence the run time associated to one single iteration may be 
-fairly inaccurate for fast iterations, but the cumulative run time can still 
-give a reasonable indication of time usage over many iterations. This information
+The printed trace does not reveal the run time information. The 
+run time is measured for each iteration of the algorithm and the 
+cumulative run time is of greater interest. This information
 is, however, best inspected and computed after the algorithm has converged,
 and it is computed and returned by the summary method for tracer objects.
 
-```{r GD-trace-summary, dependson=c("tracer", "GD-trace")}
+```{r this-summary, dependson=c("tracer", "GD-trace")}
 tail(summary(GD_tracer))
 ```
 
@@ -674,7 +681,7 @@ GD_tracer[377]
 ```
 
 
-```{r GD-trace-plot, echo=FALSE, fig.cap="Gradient norm (left) and value of the negative log-likelihood (right) above the limit value $H(\\theta_{\\infty})$. The straight line is fitted to the data points except the first ten using least squares, and the rate is computed from this estimate and reported per ms.", dependson="GD-trace", out.width="100%", fig.width=8, fig.height=3}
+```{r GD-trace-plot, echo=FALSE, fig.cap="Gradient norm (left) and value of the negative log-likelihood (right) above the limit value $H(\\theta_{\\infty})$. The straight line is fitted to the data points except the first ten using least squares, and the rate is computed from this estimate and reported per ms.", dependson="GD-trace", out.width="100%", fig.width=8, fig.height=3, message=FALSE}
 trace_GD <- summary(GD_tracer)
 
 rate1 <- exp(coef(lm(log(h_prime) ~ I(1000 * .time), data = trace_GD, subset = 11:nrow(trace_GD))))[2]
@@ -699,10 +706,21 @@ p2 <- ggplot(data = trace_GD, aes(x = 1000 * .time, y = value - value_Inf)) +
 grid.arrange(p1, p2, ncol = 2)
 ```
 
+```{r, echo=FALSE, eval=FALSE}
+
+rate3 <- exp(coef(lm.fit(cbind(1, 11:nrow(trace_GD)), log(trace_GD$h_prime[11:nrow(trace_GD)])))[2])
+
+delta <- trace_GD$.time[nrow(trace_GD)] / nrow(trace_GD)
+
+plot(diff(trace_GD$.time), ylim = c(0, 0.0003))
+abline(h = delta, col = "red")
+rate3^(1/(1000 * delta))
+```
+
 
 ### Conjugate gradients
 
-The gradient direction is typically not the best descent direction. It is too 
+The gradient direction is not the best descent direction. It is too 
 local, and convergence can be quite slow. One of the better algorithms that 
 is still a "first order algorithm" (using only gradient information) is the [*nonlinear conjugate
 gradient*](https://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method) algorithm. 
@@ -711,7 +729,7 @@ the descent direction is initialized as the negative gradient
 $\rho_0 = - \nabla H(\theta_{0})$ and then updated as
 $$\rho_{n} = - \nabla H(\theta_{n}) + \frac{\|\nabla H(\theta_n)\|_2^2}{\|\nabla H(\theta_{n-1})\|_2^2} \rho_{n-1}.$$
 That is, the descent direction, $\rho_{n}$, is the negative gradient but modified according to 
-the previous descent direction. There is plenty of opportunity to vary the the prefactor 
+the previous descent direction. There is plenty of opportunity to vary the prefactor 
 of $\rho_{n-1}$, and the one presented here is what makes it the Fletcher--Reeves
 version. Other versions go by the names of their inventors such as Polak–Ribière
 or Hestenes--Stiefel.
@@ -726,37 +744,42 @@ direction if $\rho_{n}$ is.
 We implement the conjugate gradient method in a slightly different way. Instead
 of introducing the more advanced curvature condition, we simply reset the 
 algorithm to use the gradient direction in any case where a non-descent direction
-has been chosen. Resets of descent direction every $p$th iteration is recommended 
+has been chosen. Resets of descent direction every $p$-th iteration is recommended 
 anyway for the nonlinear conjugate gradient algorithm.
 
 ```{r CG}
-CG <- function(par, 
-               d = 0.8, 
-               c = 0.1, 
-               gamma0 = 1, 
-               epsilon = 1e-6, 
-               cb = NULL) {
+CG <- function(
+  par, 
+  H,
+  gr,
+  d = 0.8, 
+  c = 0.1, 
+  gamma0 = 1, 
+  epsilon = 1e-6,
+  maxit = 1000,
+  cb = NULL
+) {
   p <- length(par)
   m <- 1
   rho0 <- numeric(p)
-  repeat {
+  for(i in 1:maxit) {
     value <- H(par)
-    grad <- grad_H(par)
+    grad <- gr(par)
     grad_norm_sq <- sum(grad^2)
     if(!is.null(cb)) cb()
     if(grad_norm_sq <= epsilon) break
     gamma <- gamma0
-    ## Descent direction
+    # Descent direction
     rho <- - grad + grad_norm_sq * rho0
     h_prime <- drop(t(grad) %*% rho)
-    ## Reset to gradient descent if m > p or rho is not a descent direction
+    # Reset to gradient descent if m > p or rho is not a descent direction
     if(m > p || h_prime >= 0) {
       rho <- - grad
       h_prime <- - grad_norm_sq 
       m <- 1
     }
     par1 <- par + gamma * rho
-    ## Backtracking
+    # Backtracking
     while(H(par1) > value + c * gamma * h_prime) {
       gamma <- d * gamma
       par1 <- par + gamma * rho
@@ -765,6 +788,8 @@ CG <- function(par,
     par <- par1
     m <- m + 1
   }
+  if(i == maxit)
+    warning("Maximal number, ", maxit, ", of iterations reached")
   par
 }
 ```
@@ -773,11 +798,11 @@ CG <- function(par,
 ```{r CG-test-null, echo=2:3, dependson=c("Implement", "tracer", "vegetables-data", "CG")}
 old_options = options(digits = 5)
 CG_tracer <- tracer(c("value", "gamma", "grad_norm_sq"), N = 10)
-pois_CG <- CG(rep(0, ncol(X)), cb = CG_tracer$trace)
+pois_CG <- CG(rep(0, ncol(X)), H, grad_H, cb = CG_tracer$tracer)
 options(digits = old_options$digits)
 ```
 
-```{r GD-CG-trace-plot, echo=FALSE, fig.cap="Gradient norms (top) and negative log-likelihoods (bottom) for gradient descent (left) and conjugate gradient (right).", fig.height=6, fig.width=8, dependson=c("CG-test-null", "GD-trace-plot"), out.width="100%"}
+```{r GD-CG-trace-plot, echo=FALSE, fig.cap="Gradient norms (top) and negative log-likelihoods (bottom) for gradient descent (left) and conjugate gradient (right).", fig.height=6, fig.width=8, dependson=c("CG-test-null", "GD-trace-plot"), out.width="100%", message=FALSE}
 trace_CG <- summary(CG_tracer)
 
 rate3 <- exp(coef(lm(log(grad_norm_sq) ~ I(1000 * .time), data = trace_CG, subset = 11:nrow(trace_CG))))[2]
@@ -806,18 +831,18 @@ grid.arrange(p1 + cc1 + ggtitle("Gradient descent") + xlab(""),
              p2 + cc2, p4 + cc2, nrow = 2)
 ```
 
+
 This algorithm is fast enough to fit the large Poisson regression model.
 
 ```{r X-update, dependson=c("Implement", "vegetables-data")}
-X <- model.matrix(sale ~ store + log(normalSale) - 1, 
-                  data = vegetables)
+X <- model.matrix(sale ~ store + log(normalSale) - 1, data = vegetables)
 t_map <- drop(crossprod(X, y)) 
 ```
 
 ```{r CG-test, echo=2:3, dependson=c("Implement", "X-update", "tracer", "vegetables-data", "CG")}
 old_options = options(digits = 5)
 CG_tracer <- tracer(c("value", "gamma", "grad_norm_sq"), N = 100)
-pois_CG <- CG(rep(0, ncol(X)), cb = CG_tracer$trace)
+pois_CG <- CG(rep(0, ncol(X)), H, grad_H, cb = CG_tracer$tracer)
 options(digits = old_options$digits)
 ```
 
@@ -825,11 +850,18 @@ options(digits = old_options$digits)
 tail(summary(CG_tracer))
 ```
 
-Using `optim` with the conjugate gradient method.
+Using `optim()` with the conjugate gradient method.
 
 ```{r CG-optim, dependson=c("X-update", "implement")}
-system.time(pois_optim_CG <- optim(rep(0, length = ncol(X)), H, grad_H, 
-                                   method = "CG", control = list(maxit = 10000)))
+system.time(
+  pois_optim_CG <- optim(
+    rep(0, length = ncol(X)), 
+    H, 
+    grad_H, 
+    method = "CG", 
+    control = list(maxit = 10000)
+  )
+)
 ```
 
 ```{r CG-results, dependson="CG-optim"}
@@ -939,35 +971,43 @@ for very large $p$.
 
 A variety of alternatives to the Newton algorithm exist that replace
 the Hessian by another matrix that can be easier to compute and update. 
-It should be noted that if we choose a matrix $B_n$ in the $n$th 
+It should be noted that if we choose a matrix $B_n$ in the $n$-th 
 iteration, then $- B_n \nabla H(\theta_n)$
 is a descent direction whenever $B_n$ is a positive definite matrix. 
 
 Newton implementation (with trace).
 
 ```{r Newton}
-Newton <- function(par, 
-                   d = 0.8, 
-                   c = 0.1, 
-                   gamma0 = 1, 
-                   epsilon = 1e-10, 
-                   cb = NULL) {
-    repeat {
-      value <- H(par)
-      grad <- grad_H(par)
-      if(!is.null(cb)) cb()
-      if(sum(grad^2) <= epsilon) break
-      Hessian <- Hessian_H(par) 
-      rho <- - drop(solve(Hessian, grad)) 
-      gamma <- gamma0
+Newton <- function(
+  par, 
+  H,
+  gr,
+  hess,
+  d = 0.8, 
+  c = 0.1, 
+  gamma0 = 1, 
+  epsilon = 1e-10, 
+  maxit = 50,
+  cb = NULL
+) {
+  for(i in 1:maxit) {
+    value <- H(par)
+    grad <- gr(par)
+    if(!is.null(cb)) cb()
+    if(sum(grad^2) <= epsilon) break
+    Hessian <- hess(par) 
+    rho <- - drop(solve(Hessian, grad)) 
+    gamma <- gamma0
+    par1 <- par + gamma * rho
+    h_prime <- t(grad) %*% rho 
+    while(H(par1) > value +  c * gamma * h_prime) { 
+      gamma <- d * gamma 
       par1 <- par + gamma * rho
-      h_prime <- t(grad) %*% rho 
-      while(H(par1) > value +  c * gamma * h_prime) { 
-        gamma <- d * gamma 
-        par1 <- par + gamma * rho
-      }
-     par <- par1 
     }
+    par <- par1 
+  }
+  if(i == maxit)
+    warning("Maximal number, ", maxit, ", of iterations reached")
   par
 }
 ```
@@ -984,7 +1024,13 @@ Hessian_H <- function(beta)
 
 ```{r Newton-test, dependson=c("Implement", "Hessian", "vegetables-data", "X-update", "Newton")}
 Newton_tracer <- tracer(c("value", "h_prime", "gamma"), N = 1)
-pois_Newton <- Newton(rep(0, ncol(X)), cb = Newton_tracer$trace)
+pois_Newton <- Newton(
+  rep(0, ncol(X)), 
+  H,
+  grad_H,
+  Hessian_H,
+  cb = Newton_tracer$tracer
+)
 ```
 
 
@@ -1003,7 +1049,7 @@ options(digits = old_options$digits)
 summary(Newton_tracer)
 ```
 
-The R function `glm.fit` uses a Newton algorithm (without backtracking) 
+The R function `glm.fit()` uses a Newton algorithm (without backtracking) 
 and is about a factor five faster on this example. 
 
 ```{r pois-glm.fit, dependson=c("Implement", "Newton-test")}
@@ -1012,7 +1058,8 @@ system.time(glm.fit(X, y, family = poisson()))
 
 One should be careful when comparing run times for different optimization 
 algorithms, but in this case they have achieved about the same precision 
-with `glm.fit` even obtaining the smallest negative log-likelihood value.
+with the faster `glm.fit()` that even obtained the smallest negative
+log-likelihood value of the two.
 
 ### Quasi-Newton algorithms
 
@@ -1023,12 +1070,18 @@ algorithm that requires the computation of the full Hessian in each
 iteration. 
 
 We will only consider the application of the BFGS algorithm via the 
-implementation in the R function `optim`.
+implementation in the R function `optim()`.
 
 ```{r BFGS, dependson=c("X-update", "implement")}
 system.time(
-  pois_BFGS <- optim(rep(0, length = ncol(X)), H, grad_H, 
-               method = "BFGS", control = list(maxit = 10000)))
+  pois_BFGS <- optim(
+    rep(0, length = ncol(X)), 
+    H, 
+    grad_H, 
+    method = "BFGS", 
+    control = list(maxit = 10000)
+  )
+)
 ```
 
 ```{r BFGS-results, dependson="BFGS"}
@@ -1057,12 +1110,17 @@ X <- Matrix(X)
 ```
 
 Without changing any other code, we get an immediate 
-run time improvement using e.g. `optim` and the BFGS algorithm.
+run time improvement using e.g. `optim()` and the BFGS algorithm.
 
 ```{r BFGS-sparse, dependson=c("X-update", "implement", "sparse")}
 system.time(
-  pois_BFGS_sparse <- optim(rep(0, length = ncol(X)), H, grad_H, 
-                            method = "BFGS", control = list(maxit = 10000))
+  pois_BFGS_sparse <- optim(
+    rep(0, length = ncol(X)), 
+    H, 
+    grad_H, 
+    method = "BFGS", 
+    control = list(maxit = 10000)
+  )
 )
 ```
 
@@ -1073,8 +1131,11 @@ a function from the R package MatrixModels.
 
 ```{r sparse-model-matrix, dependson="vegetables-data"}
 library(MatrixModels)
-X <- model.Matrix(sale ~ store + log(normalSale) - 1, 
-                   data = vegetables, sparse = TRUE)
+X <- model.Matrix(
+  sale ~ store + log(normalSale) - 1, 
+  data = vegetables, 
+  sparse = TRUE
+)
 class(X)
 ```
 
@@ -1082,9 +1143,15 @@ The Newton implementation benefits enormously from using sparse matrices
 because the bottleneck is the computation of the Hessian. 
 
 ```{r time-sparse-model-matrix, echo=2:4, dependson=c("Implement", "Hessian", "Newton", "tracer", "sparse-model-matrix")}
-pois_Newton <- Newton(rep(0, ncol(X)))  ## Ensures more correct timings, pehaps due to lazy-loading?
+pois_Newton <- Newton(rep(0, ncol(X)), H, grad_H, Hessian_H)  ## Ensures more correct timings, perhaps due to lazy-loading?
 Newton_tracer <- tracer(c("value", "h_prime", "gamma"), N = 0)
-pois_Newton <- Newton(rep(0, ncol(X)), cb = Newton_tracer$trace)
+pois_Newton <- Newton(
+  rep(0, ncol(X)),
+  H, 
+  grad_H,
+  Hessian_H,
+  cb = Newton_tracer$tracer
+)
 summary(Newton_tracer)
 ```
 
@@ -1093,8 +1160,7 @@ also more memory efficient. It is memory (and time) inefficient to use dense int
 and for truly large scale problems impossible. Using sparse model matrices 
 for regression models allows us to work with larger models that have 
 more variables, more factor levels and more observations than if we use dense
-model matrices. For the Poisson regression model the memory used by either representation
-can be found. 
+model matrices. For the Poisson regression model the memory used by either representation can be found. 
 
 ```{r X-size, dependson="sparse-model-matrix", echo=c(2, 4), results='hold'}
 cat("Sparse matrix memory usage:\n")
@@ -1111,7 +1177,7 @@ storing a matrix to using 100 Mb could be the difference between
 not being able to work with the matrix on a standard laptop to
 running the computations with no problems. Using `model.Matrix` makes
 it possible to construct sparse model matrices directly and avoid 
-all dense intermediates. This is exploited in the `glm4` function from 
+all dense intermediates. This is exploited in the `glm4()` function from 
 the MatrixModels package for fitting regression models, which can 
 thus be useful in cases where your model matrix becomes very large but sparse. 
 There are two main cases where the model matrix becomes sparse. 
