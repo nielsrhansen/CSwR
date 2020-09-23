@@ -470,71 +470,71 @@ the EM algorithm for multinomial cell collapsing.</p>
 <p>The EM algorithm can be implemented by two simple functions that compute
 the conditional expectations above (the E-step) and then maximization
 of the complete observation log-likelihood.</p>
-<div class="sourceCode" id="cb351"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb351-1"><a href="8-1-basic-properties.html#cb351-1"></a>EStep0 &lt;-<span class="st"> </span><span class="cf">function</span>(p, x, group) {</span>
-<span id="cb351-2"><a href="8-1-basic-properties.html#cb351-2"></a>  x[group] <span class="op">*</span><span class="st"> </span>p <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(p, group)[group]</span>
-<span id="cb351-3"><a href="8-1-basic-properties.html#cb351-3"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb349"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb349-1"><a href="8-1-basic-properties.html#cb349-1"></a>EStep0 &lt;-<span class="st"> </span><span class="cf">function</span>(p, x, group) {</span>
+<span id="cb349-2"><a href="8-1-basic-properties.html#cb349-2"></a>  x[group] <span class="op">*</span><span class="st"> </span>p <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(p, group)[group]</span>
+<span id="cb349-3"><a href="8-1-basic-properties.html#cb349-3"></a>}</span></code></pre></div>
 <p>The MLE of the complete log-likelihood is a linear estimator,
 as is the case in many examples with explicit MLEs.</p>
-<div class="sourceCode" id="cb352"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb352-1"><a href="8-1-basic-properties.html#cb352-1"></a>MStep0 &lt;-<span class="st"> </span><span class="cf">function</span>(n, X)</span>
-<span id="cb352-2"><a href="8-1-basic-properties.html#cb352-2"></a>  <span class="kw">as.vector</span>(X <span class="op">%*%</span><span class="st"> </span>n <span class="op">/</span><span class="st"> </span>(<span class="kw">sum</span>(n)))</span></code></pre></div>
+<div class="sourceCode" id="cb350"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb350-1"><a href="8-1-basic-properties.html#cb350-1"></a>MStep0 &lt;-<span class="st"> </span><span class="cf">function</span>(n, X)</span>
+<span id="cb350-2"><a href="8-1-basic-properties.html#cb350-2"></a>  <span class="kw">as.vector</span>(X <span class="op">%*%</span><span class="st"> </span>n <span class="op">/</span><span class="st"> </span>(<span class="kw">sum</span>(n)))</span></code></pre></div>
 <p>The <code>EStep0</code> and <code>MStep0</code> functions are abstract implementations. They require
 specification of the arguments <code>group</code> and <code>X</code>, respectively, to become concrete.</p>
 <p>The M-step is only implemented in the case where the complete-data MLE is a
 <em>linear estimator</em>, that is, a linear map of the complete data vector <span class="math inline">\(y\)</span>
 that can be expressed in terms of a matrix <span class="math inline">\(\mathbf{X}\)</span>.</p>
-<div class="sourceCode" id="cb353"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb353-1"><a href="8-1-basic-properties.html#cb353-1"></a>EStep &lt;-<span class="st"> </span><span class="cf">function</span>(par, x)</span>
-<span id="cb353-2"><a href="8-1-basic-properties.html#cb353-2"></a>  <span class="kw">EStep0</span>(<span class="kw">prob</span>(par), x, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span>
-<span id="cb353-3"><a href="8-1-basic-properties.html#cb353-3"></a></span>
-<span id="cb353-4"><a href="8-1-basic-properties.html#cb353-4"></a>MStep &lt;-<span class="st"> </span><span class="cf">function</span>(n) {</span>
-<span id="cb353-5"><a href="8-1-basic-properties.html#cb353-5"></a>  X &lt;-<span class="st"> </span><span class="kw">matrix</span>(</span>
-<span id="cb353-6"><a href="8-1-basic-properties.html#cb353-6"></a>  <span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>,</span>
-<span id="cb353-7"><a href="8-1-basic-properties.html#cb353-7"></a>    <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">0</span>) <span class="op">/</span><span class="st"> </span><span class="dv">2</span>,</span>
-<span id="cb353-8"><a href="8-1-basic-properties.html#cb353-8"></a>  <span class="dv">2</span>, <span class="dv">6</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</span>
-<span id="cb353-9"><a href="8-1-basic-properties.html#cb353-9"></a>  </span>
-<span id="cb353-10"><a href="8-1-basic-properties.html#cb353-10"></a>  <span class="kw">MStep0</span>(n, X)</span>
-<span id="cb353-11"><a href="8-1-basic-properties.html#cb353-11"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb351"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb351-1"><a href="8-1-basic-properties.html#cb351-1"></a>EStep &lt;-<span class="st"> </span><span class="cf">function</span>(par, x)</span>
+<span id="cb351-2"><a href="8-1-basic-properties.html#cb351-2"></a>  <span class="kw">EStep0</span>(<span class="kw">prob</span>(par), x, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span>
+<span id="cb351-3"><a href="8-1-basic-properties.html#cb351-3"></a></span>
+<span id="cb351-4"><a href="8-1-basic-properties.html#cb351-4"></a>MStep &lt;-<span class="st"> </span><span class="cf">function</span>(n) {</span>
+<span id="cb351-5"><a href="8-1-basic-properties.html#cb351-5"></a>  X &lt;-<span class="st"> </span><span class="kw">matrix</span>(</span>
+<span id="cb351-6"><a href="8-1-basic-properties.html#cb351-6"></a>  <span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>,</span>
+<span id="cb351-7"><a href="8-1-basic-properties.html#cb351-7"></a>    <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">0</span>) <span class="op">/</span><span class="st"> </span><span class="dv">2</span>,</span>
+<span id="cb351-8"><a href="8-1-basic-properties.html#cb351-8"></a>  <span class="dv">2</span>, <span class="dv">6</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb351-9"><a href="8-1-basic-properties.html#cb351-9"></a>  </span>
+<span id="cb351-10"><a href="8-1-basic-properties.html#cb351-10"></a>  <span class="kw">MStep0</span>(n, X)</span>
+<span id="cb351-11"><a href="8-1-basic-properties.html#cb351-11"></a>}</span></code></pre></div>
 <p>The EM algorithm is finally implemented as an iterative, alternating call
 of <code>EStep</code> and <code>MStep</code> until convergence as measured in terms of the relative
 change from iteration to iteration being sufficiently small.</p>
-<div class="sourceCode" id="cb354"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb354-1"><a href="8-1-basic-properties.html#cb354-1"></a>EM &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, <span class="dt">epsilon =</span> <span class="fl">1e-6</span>, <span class="dt">trace =</span> <span class="ot">NULL</span>) {</span>
-<span id="cb354-2"><a href="8-1-basic-properties.html#cb354-2"></a>  <span class="cf">repeat</span>{</span>
-<span id="cb354-3"><a href="8-1-basic-properties.html#cb354-3"></a>    par0 &lt;-<span class="st"> </span>par</span>
-<span id="cb354-4"><a href="8-1-basic-properties.html#cb354-4"></a>    par &lt;-<span class="st"> </span><span class="kw">MStep</span>(<span class="kw">EStep</span>(par, x))</span>
-<span id="cb354-5"><a href="8-1-basic-properties.html#cb354-5"></a>    <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(trace)) <span class="kw">trace</span>()</span>
-<span id="cb354-6"><a href="8-1-basic-properties.html#cb354-6"></a>    <span class="cf">if</span>(<span class="kw">sum</span>((par <span class="op">-</span><span class="st"> </span>par0)<span class="op">^</span><span class="dv">2</span>) <span class="op">&lt;=</span><span class="st"> </span>epsilon <span class="op">*</span><span class="st"> </span>(<span class="kw">sum</span>(par<span class="op">^</span><span class="dv">2</span>) <span class="op">+</span><span class="st"> </span>epsilon))</span>
-<span id="cb354-7"><a href="8-1-basic-properties.html#cb354-7"></a>      <span class="cf">break</span></span>
-<span id="cb354-8"><a href="8-1-basic-properties.html#cb354-8"></a>  } </span>
-<span id="cb354-9"><a href="8-1-basic-properties.html#cb354-9"></a>  par  <span class="co">## Remember to return the parameter estimate</span></span>
-<span id="cb354-10"><a href="8-1-basic-properties.html#cb354-10"></a>}</span>
-<span id="cb354-11"><a href="8-1-basic-properties.html#cb354-11"></a>  </span>
-<span id="cb354-12"><a href="8-1-basic-properties.html#cb354-12"></a>phat &lt;-<span class="st"> </span><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>))</span>
-<span id="cb354-13"><a href="8-1-basic-properties.html#cb354-13"></a>phat</span></code></pre></div>
+<div class="sourceCode" id="cb352"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb352-1"><a href="8-1-basic-properties.html#cb352-1"></a>EM &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, <span class="dt">epsilon =</span> <span class="fl">1e-6</span>, <span class="dt">trace =</span> <span class="ot">NULL</span>) {</span>
+<span id="cb352-2"><a href="8-1-basic-properties.html#cb352-2"></a>  <span class="cf">repeat</span>{</span>
+<span id="cb352-3"><a href="8-1-basic-properties.html#cb352-3"></a>    par0 &lt;-<span class="st"> </span>par</span>
+<span id="cb352-4"><a href="8-1-basic-properties.html#cb352-4"></a>    par &lt;-<span class="st"> </span><span class="kw">MStep</span>(<span class="kw">EStep</span>(par, x))</span>
+<span id="cb352-5"><a href="8-1-basic-properties.html#cb352-5"></a>    <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(trace)) <span class="kw">trace</span>()</span>
+<span id="cb352-6"><a href="8-1-basic-properties.html#cb352-6"></a>    <span class="cf">if</span>(<span class="kw">sum</span>((par <span class="op">-</span><span class="st"> </span>par0)<span class="op">^</span><span class="dv">2</span>) <span class="op">&lt;=</span><span class="st"> </span>epsilon <span class="op">*</span><span class="st"> </span>(<span class="kw">sum</span>(par<span class="op">^</span><span class="dv">2</span>) <span class="op">+</span><span class="st"> </span>epsilon))</span>
+<span id="cb352-7"><a href="8-1-basic-properties.html#cb352-7"></a>      <span class="cf">break</span></span>
+<span id="cb352-8"><a href="8-1-basic-properties.html#cb352-8"></a>  } </span>
+<span id="cb352-9"><a href="8-1-basic-properties.html#cb352-9"></a>  par  <span class="co">## Remember to return the parameter estimate</span></span>
+<span id="cb352-10"><a href="8-1-basic-properties.html#cb352-10"></a>}</span>
+<span id="cb352-11"><a href="8-1-basic-properties.html#cb352-11"></a>  </span>
+<span id="cb352-12"><a href="8-1-basic-properties.html#cb352-12"></a>phat &lt;-<span class="st"> </span><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>))</span>
+<span id="cb352-13"><a href="8-1-basic-properties.html#cb352-13"></a>phat</span></code></pre></div>
 <pre><code>## [1] 0.07083693 0.18877365</code></pre>
 <p>We check what is going on in each step of the EM algorithm.</p>
-<div class="sourceCode" id="cb356"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb356-1"><a href="8-1-basic-properties.html#cb356-1"></a>EM_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="st">&quot;par&quot;</span>)</span>
-<span id="cb356-2"><a href="8-1-basic-properties.html#cb356-2"></a><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), <span class="dt">trace =</span> EM_tracer<span class="op">$</span>trace)</span></code></pre></div>
+<div class="sourceCode" id="cb354"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb354-1"><a href="8-1-basic-properties.html#cb354-1"></a>EM_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="st">&quot;par&quot;</span>)</span>
+<span id="cb354-2"><a href="8-1-basic-properties.html#cb354-2"></a><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), <span class="dt">trace =</span> EM_tracer<span class="op">$</span>tracer)</span></code></pre></div>
 <pre><code>## n = 1: par = 0.08038585, 0.22464192; 
 ## n = 2: par = 0.07118928, 0.19546961; 
 ## n = 3: par = 0.07084985, 0.18993393; 
 ## n = 4: par = 0.07083738, 0.18894757; 
 ## n = 5: par = 0.07083693, 0.18877365;</code></pre>
 <pre><code>## [1] 0.07083693 0.18877365</code></pre>
-<div class="sourceCode" id="cb359"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb359-1"><a href="8-1-basic-properties.html#cb359-1"></a>EM_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;par0&quot;</span>, <span class="st">&quot;par&quot;</span>), <span class="dt">N =</span> <span class="dv">0</span>)</span>
-<span id="cb359-2"><a href="8-1-basic-properties.html#cb359-2"></a>phat &lt;-<span class="st"> </span><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), <span class="dt">epsilon =</span> <span class="fl">1e-20</span>, </span>
-<span id="cb359-3"><a href="8-1-basic-properties.html#cb359-3"></a>           <span class="dt">trace =</span> EM_tracer<span class="op">$</span>trace)</span></code></pre></div>
-<div class="sourceCode" id="cb360"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb360-1"><a href="8-1-basic-properties.html#cb360-1"></a>EM_trace &lt;-<span class="st"> </span><span class="kw">summary</span>(EM_tracer)</span>
-<span id="cb360-2"><a href="8-1-basic-properties.html#cb360-2"></a>  EM_trace &lt;-<span class="st"> </span><span class="kw">transform</span>(</span>
-<span id="cb360-3"><a href="8-1-basic-properties.html#cb360-3"></a>  EM_trace, </span>
-<span id="cb360-4"><a href="8-1-basic-properties.html#cb360-4"></a>  <span class="dt">n =</span> <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(EM_trace),</span>
-<span id="cb360-5"><a href="8-1-basic-properties.html#cb360-5"></a>  <span class="dt">par_norm_diff =</span> <span class="kw">sqrt</span>((par0<span class="fl">.1</span> <span class="op">-</span><span class="st"> </span>par<span class="fl">.1</span>)<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span>(par0<span class="fl">.2</span> <span class="op">-</span><span class="st"> </span>par<span class="fl">.2</span>)<span class="op">^</span><span class="dv">2</span>)</span>
-<span id="cb360-6"><a href="8-1-basic-properties.html#cb360-6"></a>)</span>
-<span id="cb360-7"><a href="8-1-basic-properties.html#cb360-7"></a><span class="kw">qplot</span>(n, <span class="kw">log</span>(par_norm_diff), <span class="dt">data =</span> EM_trace)</span></code></pre></div>
+<div class="sourceCode" id="cb357"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb357-1"><a href="8-1-basic-properties.html#cb357-1"></a>EM_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;par0&quot;</span>, <span class="st">&quot;par&quot;</span>), <span class="dt">N =</span> <span class="dv">0</span>)</span>
+<span id="cb357-2"><a href="8-1-basic-properties.html#cb357-2"></a>phat &lt;-<span class="st"> </span><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), <span class="dt">epsilon =</span> <span class="fl">1e-20</span>, </span>
+<span id="cb357-3"><a href="8-1-basic-properties.html#cb357-3"></a>           <span class="dt">trace =</span> EM_tracer<span class="op">$</span>tracer)</span></code></pre></div>
+<div class="sourceCode" id="cb358"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb358-1"><a href="8-1-basic-properties.html#cb358-1"></a>EM_trace &lt;-<span class="st"> </span><span class="kw">summary</span>(EM_tracer)</span>
+<span id="cb358-2"><a href="8-1-basic-properties.html#cb358-2"></a>  EM_trace &lt;-<span class="st"> </span><span class="kw">transform</span>(</span>
+<span id="cb358-3"><a href="8-1-basic-properties.html#cb358-3"></a>  EM_trace, </span>
+<span id="cb358-4"><a href="8-1-basic-properties.html#cb358-4"></a>  <span class="dt">n =</span> <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(EM_trace),</span>
+<span id="cb358-5"><a href="8-1-basic-properties.html#cb358-5"></a>  <span class="dt">par_norm_diff =</span> <span class="kw">sqrt</span>((par0<span class="fl">.1</span> <span class="op">-</span><span class="st"> </span>par<span class="fl">.1</span>)<span class="op">^</span><span class="dv">2</span> <span class="op">+</span><span class="st"> </span>(par0<span class="fl">.2</span> <span class="op">-</span><span class="st"> </span>par<span class="fl">.2</span>)<span class="op">^</span><span class="dv">2</span>)</span>
+<span id="cb358-6"><a href="8-1-basic-properties.html#cb358-6"></a>)</span>
+<span id="cb358-7"><a href="8-1-basic-properties.html#cb358-7"></a><span class="kw">qplot</span>(n, <span class="kw">log</span>(par_norm_diff), <span class="dt">data =</span> EM_trace)</span></code></pre></div>
 <p><img src="CSwR_files/figure-html/moth_EM_figure-1.png" width="70%" style="display: block; margin: auto;" /></p>
 <p>Note the log-axis. The EM-algorithm converges linearly (this is the terminology,
 see [Algorithms and Convergence]). The log-rate of the convergence can be estimated
 by least-squares.</p>
-<div class="sourceCode" id="cb361"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb361-1"><a href="8-1-basic-properties.html#cb361-1"></a>log_rate_fit &lt;-<span class="st"> </span><span class="kw">lm</span>(<span class="kw">log</span>(par_norm_diff) <span class="op">~</span><span class="st"> </span>n,  <span class="dt">data =</span> EM_trace)</span>
-<span id="cb361-2"><a href="8-1-basic-properties.html#cb361-2"></a><span class="kw">exp</span>(<span class="kw">coefficients</span>(log_rate_fit)[<span class="st">&quot;n&quot;</span>])</span></code></pre></div>
+<div class="sourceCode" id="cb359"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb359-1"><a href="8-1-basic-properties.html#cb359-1"></a>log_rate_fit &lt;-<span class="st"> </span><span class="kw">lm</span>(<span class="kw">log</span>(par_norm_diff) <span class="op">~</span><span class="st"> </span>n,  <span class="dt">data =</span> EM_trace)</span>
+<span id="cb359-2"><a href="8-1-basic-properties.html#cb359-2"></a><span class="kw">exp</span>(<span class="kw">coefficients</span>(log_rate_fit)[<span class="st">&quot;n&quot;</span>])</span></code></pre></div>
 <pre><code>##         n 
 ## 0.1750251</code></pre>
 <p>The rate is very small in this case implying fast convergence. This is not always the case.
