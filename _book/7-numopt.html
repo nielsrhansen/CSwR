@@ -339,7 +339,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 computation of parameter estimates. Typically by maximizing the likelihood
 function or by maximizing or minimizing another estimation criterion. The focus of this
 chapter is on optimization algorithms for (penalized) maximum likelihood
-estimation, in particular for exponential families. Out of tradition we
+estimation. Out of tradition we
 formulate all results and algorithms in terms of minimization and
 not maximization.</p>
 <p>The generic optimization problem considered is the minimization of
@@ -348,33 +348,33 @@ open set and <span class="math inline">\(H\)</span> twice differentiable. In app
 the negative log-likelihood function, or <span class="math inline">\(H = -\ell + J\)</span>, where <span class="math inline">\(J : \Theta \to \mathbb{R}\)</span>
 is a <em>penalty function</em>, likewise twice differentiable, that does not
 depend upon data.</p>
-<p>There are a couple of observations regarding statistical optimization
-problems that are worthwhile to make once and for all. The <span class="math inline">\(-\ell\)</span>
+<p>Statistical optimization problems share some properties
+that we should pay attention to. The <span class="math inline">\(-\ell\)</span>
 term in the objective function to be minimized is a sum over the
 data, and the more data we have the more computationally demanding
 it is to evaluate <span class="math inline">\(H\)</span> and its derivatives. There are exceptions, though,
-when a sufficient statistic can be computed upfront. Additionally, high precision in
-the computed (local) minimizer is rarely needed. If the numerical
+when a sufficient statistic can be computed upfront, but generally
+we must expect run time to grow with data size. Additionally, high precision in
+the computed (local) minimizer is typically not necessary. If the numerical
 error is already orders of magnitudes smaller than the statistical
 uncertainty of the parameter estimate being computed, further
-optimization will not make a difference in any relevant way.</p>
-<p>In fact, blindly pursuing the global maximum of the likelihood can very well
-lead you astray if your model is not as well
-behaved as an exponential family is. In situations where <span class="math inline">\(H\)</span> is
+optimization makes no relevant difference.</p>
+<p>In fact, blindly pursuing the global maximum of the likelihood can
+lead you astray if your model is not well
+behaved. In situations where <span class="math inline">\(H\)</span> is
 not convex, as is the case for finite mixtures, there are common examples where
 the likelihood is unbounded, yet there will be a local minimizer that is a
 good estimate. Though we typically phrase our algorithms
 as optimization algorithms, what we are really pursuing
 when <span class="math inline">\(H\)</span> is not convex are stationary points; solutions to <span class="math inline">\(\nabla H(\theta) = 0\)</span>.
 And rather than being fixated on computing the global minimizer of <span class="math inline">\(H\)</span>
-to the greatest numerical precision, we should find as many
-approximately stationary points as possible, and more generally explore
-the likelihood surface. In this respect, optimization
+to the greatest numerical precision, we should instead explore
+the likelihood surface and find as many
+approximately stationary points as possible. In this respect, optimization
 in statistics differs from certain other applications of optimization. Finding
-the optimum is not “the thing”. It is a surrogate for “the thing”, which is
-to fit models to data <em>and</em> understand the statistical precision of our fitted
-model. That is, as a minimum we should quantify the uncertainty of
-(relevant aspects of) the fitted model that is due to the finite sample size.</p>
+the maximizer of the likelihood is not “the thing”. It is a surrogate for
+exploring model fits, and we should also remeber to understand the
+statistical precision of our fitted model. As a minimum we should quantify the uncertainty of (relevant aspects of) the fitted model that is due to the finite sample size.</p>
 <p>For the generic minimization problem considered in this chapter, the practical
 challenge when implementing algorithms in R is typically
 to implement efficient evaluation of <span class="math inline">\(H\)</span> and its derivatives. In particular,

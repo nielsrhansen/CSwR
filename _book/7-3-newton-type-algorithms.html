@@ -451,7 +451,7 @@ implementation in the R function <code>optim()</code>.</p>
 <span id="cb331-8"><a href="7-3-newton-type-algorithms.html#cb331-8"></a>  )</span>
 <span id="cb331-9"><a href="7-3-newton-type-algorithms.html#cb331-9"></a>)</span></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   0.514   0.034   0.551</code></pre>
+##   0.489   0.008   0.520</code></pre>
 <div class="sourceCode" id="cb333"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb333-1"><a href="7-3-newton-type-algorithms.html#cb333-1"></a><span class="kw">range</span>(pois_BFGS<span class="op">$</span>par <span class="op">-</span><span class="st"> </span><span class="kw">coefficients</span>(pois_model))</span></code></pre></div>
 <pre><code>## [1] -0.00954968  0.08481093</code></pre>
 <div class="sourceCode" id="cb335"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb335-1"><a href="7-3-newton-type-algorithms.html#cb335-1"></a>pois_BFGS[<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;counts&quot;</span>)]</span></code></pre></div>
@@ -474,50 +474,45 @@ and if we convert it into a sparse matrix, all the matrix-vector products
 will be more run time efficient. Sparse matrices are implemented in the
 R package Matrix.</p>
 <div class="sourceCode" id="cb337"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb337-1"><a href="7-3-newton-type-algorithms.html#cb337-1"></a><span class="kw">library</span>(Matrix)</span></code></pre></div>
-<pre><code>## 
-## Attaching package: &#39;Matrix&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:tidyr&#39;:
-## 
-##     expand, pack, unpack</code></pre>
-<div class="sourceCode" id="cb340"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb340-1"><a href="7-3-newton-type-algorithms.html#cb340-1"></a>X &lt;-<span class="st"> </span><span class="kw">Matrix</span>(X)</span></code></pre></div>
+<div class="sourceCode" id="cb338"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb338-1"><a href="7-3-newton-type-algorithms.html#cb338-1"></a>X &lt;-<span class="st"> </span><span class="kw">Matrix</span>(X)</span></code></pre></div>
 <p>Without changing any other code, we get an immediate
 run time improvement using e.g. <code>optim()</code> and the BFGS algorithm.</p>
-<div class="sourceCode" id="cb341"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb341-1"><a href="7-3-newton-type-algorithms.html#cb341-1"></a><span class="kw">system.time</span>(</span>
-<span id="cb341-2"><a href="7-3-newton-type-algorithms.html#cb341-2"></a>  pois_BFGS_sparse &lt;-<span class="st"> </span><span class="kw">optim</span>(</span>
-<span id="cb341-3"><a href="7-3-newton-type-algorithms.html#cb341-3"></a>    <span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), </span>
-<span id="cb341-4"><a href="7-3-newton-type-algorithms.html#cb341-4"></a>    H, </span>
-<span id="cb341-5"><a href="7-3-newton-type-algorithms.html#cb341-5"></a>    grad_H, </span>
-<span id="cb341-6"><a href="7-3-newton-type-algorithms.html#cb341-6"></a>    <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, </span>
-<span id="cb341-7"><a href="7-3-newton-type-algorithms.html#cb341-7"></a>    <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)</span>
-<span id="cb341-8"><a href="7-3-newton-type-algorithms.html#cb341-8"></a>  )</span>
-<span id="cb341-9"><a href="7-3-newton-type-algorithms.html#cb341-9"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb339"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb339-1"><a href="7-3-newton-type-algorithms.html#cb339-1"></a><span class="kw">system.time</span>(</span>
+<span id="cb339-2"><a href="7-3-newton-type-algorithms.html#cb339-2"></a>  pois_BFGS_sparse &lt;-<span class="st"> </span><span class="kw">optim</span>(</span>
+<span id="cb339-3"><a href="7-3-newton-type-algorithms.html#cb339-3"></a>    <span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), </span>
+<span id="cb339-4"><a href="7-3-newton-type-algorithms.html#cb339-4"></a>    H, </span>
+<span id="cb339-5"><a href="7-3-newton-type-algorithms.html#cb339-5"></a>    grad_H, </span>
+<span id="cb339-6"><a href="7-3-newton-type-algorithms.html#cb339-6"></a>    <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, </span>
+<span id="cb339-7"><a href="7-3-newton-type-algorithms.html#cb339-7"></a>    <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)</span>
+<span id="cb339-8"><a href="7-3-newton-type-algorithms.html#cb339-8"></a>  )</span>
+<span id="cb339-9"><a href="7-3-newton-type-algorithms.html#cb339-9"></a>)</span></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   0.115   0.001   0.116</code></pre>
+##   0.140   0.002   0.142</code></pre>
 <p>We should in real applications avoid constructing a dense intermediate
 model matrix as a step toward constructing a sparse model matrix. This
 is possible by constructing the sparse model matrix directly using
 a function from the R package MatrixModels.</p>
-<div class="sourceCode" id="cb343"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb343-1"><a href="7-3-newton-type-algorithms.html#cb343-1"></a><span class="kw">library</span>(MatrixModels)</span>
-<span id="cb343-2"><a href="7-3-newton-type-algorithms.html#cb343-2"></a>X &lt;-<span class="st"> </span><span class="kw">model.Matrix</span>(</span>
-<span id="cb343-3"><a href="7-3-newton-type-algorithms.html#cb343-3"></a>  sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, </span>
-<span id="cb343-4"><a href="7-3-newton-type-algorithms.html#cb343-4"></a>  <span class="dt">data =</span> vegetables, </span>
-<span id="cb343-5"><a href="7-3-newton-type-algorithms.html#cb343-5"></a>  <span class="dt">sparse =</span> <span class="ot">TRUE</span></span>
-<span id="cb343-6"><a href="7-3-newton-type-algorithms.html#cb343-6"></a>)</span>
-<span id="cb343-7"><a href="7-3-newton-type-algorithms.html#cb343-7"></a><span class="kw">class</span>(X)</span></code></pre></div>
+<div class="sourceCode" id="cb341"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb341-1"><a href="7-3-newton-type-algorithms.html#cb341-1"></a><span class="kw">library</span>(MatrixModels)</span>
+<span id="cb341-2"><a href="7-3-newton-type-algorithms.html#cb341-2"></a>X &lt;-<span class="st"> </span><span class="kw">model.Matrix</span>(</span>
+<span id="cb341-3"><a href="7-3-newton-type-algorithms.html#cb341-3"></a>  sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, </span>
+<span id="cb341-4"><a href="7-3-newton-type-algorithms.html#cb341-4"></a>  <span class="dt">data =</span> vegetables, </span>
+<span id="cb341-5"><a href="7-3-newton-type-algorithms.html#cb341-5"></a>  <span class="dt">sparse =</span> <span class="ot">TRUE</span></span>
+<span id="cb341-6"><a href="7-3-newton-type-algorithms.html#cb341-6"></a>)</span>
+<span id="cb341-7"><a href="7-3-newton-type-algorithms.html#cb341-7"></a><span class="kw">class</span>(X)</span></code></pre></div>
 <pre><code>## [1] &quot;dsparseModelMatrix&quot;
 ## attr(,&quot;package&quot;)
 ## [1] &quot;MatrixModels&quot;</code></pre>
 <p>The Newton implementation benefits enormously from using sparse matrices
 because the bottleneck is the computation of the Hessian.</p>
-<div class="sourceCode" id="cb345"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb345-1"><a href="7-3-newton-type-algorithms.html#cb345-1"></a>Newton_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">0</span>)</span>
-<span id="cb345-2"><a href="7-3-newton-type-algorithms.html#cb345-2"></a>pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(</span>
-<span id="cb345-3"><a href="7-3-newton-type-algorithms.html#cb345-3"></a>  <span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)),</span>
-<span id="cb345-4"><a href="7-3-newton-type-algorithms.html#cb345-4"></a>  H, </span>
-<span id="cb345-5"><a href="7-3-newton-type-algorithms.html#cb345-5"></a>  grad_H,</span>
-<span id="cb345-6"><a href="7-3-newton-type-algorithms.html#cb345-6"></a>  Hessian_H,</span>
-<span id="cb345-7"><a href="7-3-newton-type-algorithms.html#cb345-7"></a>  <span class="dt">cb =</span> Newton_tracer<span class="op">$</span>tracer</span>
-<span id="cb345-8"><a href="7-3-newton-type-algorithms.html#cb345-8"></a>)</span>
-<span id="cb345-9"><a href="7-3-newton-type-algorithms.html#cb345-9"></a><span class="kw">summary</span>(Newton_tracer)</span></code></pre></div>
+<div class="sourceCode" id="cb343"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb343-1"><a href="7-3-newton-type-algorithms.html#cb343-1"></a>Newton_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">0</span>)</span>
+<span id="cb343-2"><a href="7-3-newton-type-algorithms.html#cb343-2"></a>pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(</span>
+<span id="cb343-3"><a href="7-3-newton-type-algorithms.html#cb343-3"></a>  <span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)),</span>
+<span id="cb343-4"><a href="7-3-newton-type-algorithms.html#cb343-4"></a>  H, </span>
+<span id="cb343-5"><a href="7-3-newton-type-algorithms.html#cb343-5"></a>  grad_H,</span>
+<span id="cb343-6"><a href="7-3-newton-type-algorithms.html#cb343-6"></a>  Hessian_H,</span>
+<span id="cb343-7"><a href="7-3-newton-type-algorithms.html#cb343-7"></a>  <span class="dt">cb =</span> Newton_tracer<span class="op">$</span>tracer</span>
+<span id="cb343-8"><a href="7-3-newton-type-algorithms.html#cb343-8"></a>)</span>
+<span id="cb343-9"><a href="7-3-newton-type-algorithms.html#cb343-9"></a><span class="kw">summary</span>(Newton_tracer)</span></code></pre></div>
 <pre><code>##         value       h_prime    gamma       .time
 ## 1     1.00000            NA       NA 0.000000000
 ## 2   -14.83270 -4.140563e+03 0.022518 0.006051082
@@ -535,8 +530,8 @@ and for truly large scale problems impossible. Using sparse model matrices
 for regression models allows us to work with larger models that have
 more variables, more factor levels and more observations than if we use dense
 model matrices. For the Poisson regression model the memory used by either representation can be found.</p>
-<div class="sourceCode" id="cb347"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb347-1"><a href="7-3-newton-type-algorithms.html#cb347-1"></a><span class="kw">object.size</span>(X)</span>
-<span id="cb347-2"><a href="7-3-newton-type-algorithms.html#cb347-2"></a><span class="kw">object.size</span>(<span class="kw">as.matrix</span>(X))</span></code></pre></div>
+<div class="sourceCode" id="cb345"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb345-1"><a href="7-3-newton-type-algorithms.html#cb345-1"></a><span class="kw">object.size</span>(X)</span>
+<span id="cb345-2"><a href="7-3-newton-type-algorithms.html#cb345-2"></a><span class="kw">object.size</span>(<span class="kw">as.matrix</span>(X))</span></code></pre></div>
 <pre><code>## Sparse matrix memory usage:
 ## 123440 bytes
 ## Dense matrix memory usage:

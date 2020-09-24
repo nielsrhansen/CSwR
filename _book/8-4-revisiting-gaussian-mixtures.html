@@ -340,38 +340,38 @@ distribution of <span class="math inline">\(Y\)</span> is
 <span class="math display">\[ f(y) = p \frac{1}{\sqrt{2 \pi \sigma_1^2}} e^{-\frac{(y - \mu_1)^2}{2 \sigma_1^2}} + 
 (1 - p)\frac{1}{\sqrt{2 \pi \sigma_2^2}}e^{-\frac{(y - \mu_2)^2}{2 \sigma_2^2}}.\]</span>
 The following is a simulation of data from such a mixture model.</p>
-<div class="sourceCode" id="cb377"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb377-1"><a href="8-4-revisiting-gaussian-mixtures.html#cb377-1"></a>sigma1 &lt;-<span class="st"> </span><span class="dv">1</span></span>
-<span id="cb377-2"><a href="8-4-revisiting-gaussian-mixtures.html#cb377-2"></a>sigma2 &lt;-<span class="st"> </span><span class="dv">2</span></span>
-<span id="cb377-3"><a href="8-4-revisiting-gaussian-mixtures.html#cb377-3"></a>mu1 &lt;-<span class="st"> </span><span class="fl">-0.5</span></span>
-<span id="cb377-4"><a href="8-4-revisiting-gaussian-mixtures.html#cb377-4"></a>mu2 &lt;-<span class="st"> </span><span class="dv">4</span></span>
-<span id="cb377-5"><a href="8-4-revisiting-gaussian-mixtures.html#cb377-5"></a>p &lt;-<span class="st"> </span><span class="fl">0.5</span></span>
-<span id="cb377-6"><a href="8-4-revisiting-gaussian-mixtures.html#cb377-6"></a>n &lt;-<span class="st"> </span><span class="dv">1000</span></span>
-<span id="cb377-7"><a href="8-4-revisiting-gaussian-mixtures.html#cb377-7"></a>z &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="ot">TRUE</span>, <span class="ot">FALSE</span>), n, <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p))</span>
-<span id="cb377-8"><a href="8-4-revisiting-gaussian-mixtures.html#cb377-8"></a>y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</span>
-<span id="cb377-9"><a href="8-4-revisiting-gaussian-mixtures.html#cb377-9"></a>n1 &lt;-<span class="st"> </span><span class="kw">sum</span>(z)</span>
-<span id="cb377-10"><a href="8-4-revisiting-gaussian-mixtures.html#cb377-10"></a>y[z] &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n1, mu1, sigma1)</span>
-<span id="cb377-11"><a href="8-4-revisiting-gaussian-mixtures.html#cb377-11"></a>y[<span class="op">!</span>z] &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n <span class="op">-</span><span class="st"> </span>n1, mu2, sigma2)</span></code></pre></div>
+<div class="sourceCode" id="cb375"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb375-1"><a href="8-4-revisiting-gaussian-mixtures.html#cb375-1"></a>sigma1 &lt;-<span class="st"> </span><span class="dv">1</span></span>
+<span id="cb375-2"><a href="8-4-revisiting-gaussian-mixtures.html#cb375-2"></a>sigma2 &lt;-<span class="st"> </span><span class="dv">2</span></span>
+<span id="cb375-3"><a href="8-4-revisiting-gaussian-mixtures.html#cb375-3"></a>mu1 &lt;-<span class="st"> </span><span class="fl">-0.5</span></span>
+<span id="cb375-4"><a href="8-4-revisiting-gaussian-mixtures.html#cb375-4"></a>mu2 &lt;-<span class="st"> </span><span class="dv">4</span></span>
+<span id="cb375-5"><a href="8-4-revisiting-gaussian-mixtures.html#cb375-5"></a>p &lt;-<span class="st"> </span><span class="fl">0.5</span></span>
+<span id="cb375-6"><a href="8-4-revisiting-gaussian-mixtures.html#cb375-6"></a>n &lt;-<span class="st"> </span><span class="dv">1000</span></span>
+<span id="cb375-7"><a href="8-4-revisiting-gaussian-mixtures.html#cb375-7"></a>z &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="ot">TRUE</span>, <span class="ot">FALSE</span>), n, <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">prob =</span> <span class="kw">c</span>(p, <span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p))</span>
+<span id="cb375-8"><a href="8-4-revisiting-gaussian-mixtures.html#cb375-8"></a>y &lt;-<span class="st"> </span><span class="kw">numeric</span>(n)</span>
+<span id="cb375-9"><a href="8-4-revisiting-gaussian-mixtures.html#cb375-9"></a>n1 &lt;-<span class="st"> </span><span class="kw">sum</span>(z)</span>
+<span id="cb375-10"><a href="8-4-revisiting-gaussian-mixtures.html#cb375-10"></a>y[z] &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n1, mu1, sigma1)</span>
+<span id="cb375-11"><a href="8-4-revisiting-gaussian-mixtures.html#cb375-11"></a>y[<span class="op">!</span>z] &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n <span class="op">-</span><span class="st"> </span>n1, mu2, sigma2)</span></code></pre></div>
 <p>We implement the log-likelihood assuming that the variances are known. Note
 that the implementation takes just one single parameter argument, which is
 then supposed to be a vector of all parameters in the model. Internally to
 the function one has to decide for each entry in the parameter vector what
 parameter in the model it corresponds to.</p>
-<div class="sourceCode" id="cb378"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb378-1"><a href="8-4-revisiting-gaussian-mixtures.html#cb378-1"></a>loglik &lt;-<span class="st"> </span><span class="cf">function</span>(par, y) {</span>
-<span id="cb378-2"><a href="8-4-revisiting-gaussian-mixtures.html#cb378-2"></a>  p &lt;-<span class="st"> </span>par[<span class="dv">1</span>]</span>
-<span id="cb378-3"><a href="8-4-revisiting-gaussian-mixtures.html#cb378-3"></a>  <span class="cf">if</span>(p <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>p <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>)</span>
-<span id="cb378-4"><a href="8-4-revisiting-gaussian-mixtures.html#cb378-4"></a>    <span class="kw">return</span>(<span class="ot">Inf</span>)</span>
-<span id="cb378-5"><a href="8-4-revisiting-gaussian-mixtures.html#cb378-5"></a>  </span>
-<span id="cb378-6"><a href="8-4-revisiting-gaussian-mixtures.html#cb378-6"></a>  mu1 &lt;-<span class="st"> </span>par[<span class="dv">2</span>]</span>
-<span id="cb378-7"><a href="8-4-revisiting-gaussian-mixtures.html#cb378-7"></a>  mu2 &lt;-<span class="st"> </span>par[<span class="dv">3</span>]</span>
-<span id="cb378-8"><a href="8-4-revisiting-gaussian-mixtures.html#cb378-8"></a>  <span class="op">-</span><span class="kw">sum</span>(<span class="kw">log</span>(p <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>(y <span class="op">-</span><span class="st"> </span>mu1)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma1<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma1 <span class="op">+</span><span class="st"> </span></span>
-<span id="cb378-9"><a href="8-4-revisiting-gaussian-mixtures.html#cb378-9"></a><span class="st">             </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>(y <span class="op">-</span><span class="st"> </span>mu2)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma2<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma2))</span>
-<span id="cb378-10"><a href="8-4-revisiting-gaussian-mixtures.html#cb378-10"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb376"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb376-1"><a href="8-4-revisiting-gaussian-mixtures.html#cb376-1"></a>loglik &lt;-<span class="st"> </span><span class="cf">function</span>(par, y) {</span>
+<span id="cb376-2"><a href="8-4-revisiting-gaussian-mixtures.html#cb376-2"></a>  p &lt;-<span class="st"> </span>par[<span class="dv">1</span>]</span>
+<span id="cb376-3"><a href="8-4-revisiting-gaussian-mixtures.html#cb376-3"></a>  <span class="cf">if</span>(p <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span> <span class="op">||</span><span class="st"> </span>p <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>)</span>
+<span id="cb376-4"><a href="8-4-revisiting-gaussian-mixtures.html#cb376-4"></a>    <span class="kw">return</span>(<span class="ot">Inf</span>)</span>
+<span id="cb376-5"><a href="8-4-revisiting-gaussian-mixtures.html#cb376-5"></a>  </span>
+<span id="cb376-6"><a href="8-4-revisiting-gaussian-mixtures.html#cb376-6"></a>  mu1 &lt;-<span class="st"> </span>par[<span class="dv">2</span>]</span>
+<span id="cb376-7"><a href="8-4-revisiting-gaussian-mixtures.html#cb376-7"></a>  mu2 &lt;-<span class="st"> </span>par[<span class="dv">3</span>]</span>
+<span id="cb376-8"><a href="8-4-revisiting-gaussian-mixtures.html#cb376-8"></a>  <span class="op">-</span><span class="kw">sum</span>(<span class="kw">log</span>(p <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>(y <span class="op">-</span><span class="st"> </span>mu1)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma1<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma1 <span class="op">+</span><span class="st"> </span></span>
+<span id="cb376-9"><a href="8-4-revisiting-gaussian-mixtures.html#cb376-9"></a><span class="st">             </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span>(y <span class="op">-</span><span class="st"> </span>mu2)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma2<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma2))</span>
+<span id="cb376-10"><a href="8-4-revisiting-gaussian-mixtures.html#cb376-10"></a>}</span></code></pre></div>
 <p>Without further implementations, <code>optim</code> can find the
 maximum-likelihood estimate if we have a sensible initial parameter guess.
 In this case we use the true parameters, which can be used when
 algorithms are tested, but they are, of course, not available for
 real applications.</p>
-<div class="sourceCode" id="cb379"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb379-1"><a href="8-4-revisiting-gaussian-mixtures.html#cb379-1"></a><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.5</span>, <span class="fl">-0.5</span>, <span class="dv">4</span>), loglik, <span class="dt">y =</span> y)[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]</span></code></pre></div>
+<div class="sourceCode" id="cb377"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb377-1"><a href="8-4-revisiting-gaussian-mixtures.html#cb377-1"></a><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.5</span>, <span class="fl">-0.5</span>, <span class="dv">4</span>), loglik, <span class="dt">y =</span> y)[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]</span></code></pre></div>
 <pre><code>## $par
 ## [1]  0.4934452 -0.5495679  4.0979106
 ## 
@@ -379,7 +379,7 @@ real applications.</p>
 ## [1] 1384.334</code></pre>
 <p>However, if we initialize the optimization badly, it does not find the maximum
 but a local maximum instead.</p>
-<div class="sourceCode" id="cb381"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb381-1"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-1"></a><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.9</span>, <span class="dv">3</span>, <span class="dv">1</span>), loglik, <span class="dt">y =</span> y)[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]</span></code></pre></div>
+<div class="sourceCode" id="cb379"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb379-1"><a href="8-4-revisiting-gaussian-mixtures.html#cb379-1"></a><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.9</span>, <span class="dv">3</span>, <span class="dv">1</span>), loglik, <span class="dt">y =</span> y)[<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]</span></code></pre></div>
 <pre><code>## $par
 ## [1] 0.2334382 5.6763596 0.6255516
 ## 
@@ -394,37 +394,37 @@ The M-step becomes identical to the MLE, which can be found explicitly,
 but where the indicators <span class="math inline">\(1(Z_i = 1)\)</span> and <span class="math inline">\(1(Z_i = 2) = 1 - 1(Z_i = 1)\)</span> are
 replaced by the conditional probabilities <span class="math inline">\(p_i(\mathbf{y})\)</span> and
 <span class="math inline">\(1 - p_i(\mathbf{y})\)</span>, respectively.</p>
-<div class="sourceCode" id="cb383"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb383-1"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-1"></a>EStep &lt;-<span class="st"> </span><span class="cf">function</span>(par, y) {</span>
-<span id="cb383-2"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-2"></a>  p &lt;-<span class="st"> </span>par[<span class="dv">1</span>]</span>
-<span id="cb383-3"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-3"></a>  mu1 &lt;-<span class="st"> </span>par[<span class="dv">2</span>]</span>
-<span id="cb383-4"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-4"></a>  mu2 &lt;-<span class="st"> </span>par[<span class="dv">3</span>]</span>
-<span id="cb383-5"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-5"></a>  a &lt;-<span class="st"> </span>p <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>(y <span class="op">-</span><span class="st"> </span>mu1)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma1<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma1 </span>
-<span id="cb383-6"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-6"></a>  b &lt;-<span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>(y <span class="op">-</span><span class="st"> </span>mu2)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma2<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma2</span>
-<span id="cb383-7"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-7"></a>  b <span class="op">/</span><span class="st"> </span>(a <span class="op">+</span><span class="st"> </span>b)</span>
-<span id="cb383-8"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-8"></a>}</span>
-<span id="cb383-9"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-9"></a></span>
-<span id="cb383-10"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-10"></a>MStep &lt;-<span class="st"> </span><span class="cf">function</span>(y, pz) {</span>
-<span id="cb383-11"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-11"></a>  n &lt;-<span class="st"> </span><span class="kw">length</span>(y)</span>
-<span id="cb383-12"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-12"></a>  N2 &lt;-<span class="st"> </span><span class="kw">sum</span>(pz)</span>
-<span id="cb383-13"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-13"></a>  N1 &lt;-<span class="st"> </span>n <span class="op">-</span><span class="st"> </span>N2</span>
-<span id="cb383-14"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-14"></a>  <span class="kw">c</span>(N1 <span class="op">/</span><span class="st"> </span>n, <span class="kw">sum</span>((<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>pz) <span class="op">*</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>N1, <span class="kw">sum</span>(pz <span class="op">*</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>N2)</span>
-<span id="cb383-15"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-15"></a>}</span>
-<span id="cb383-16"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-16"></a></span>
-<span id="cb383-17"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-17"></a>EM &lt;-<span class="st"> </span><span class="cf">function</span>(par, y, <span class="dt">epsilon =</span> <span class="fl">1e-12</span>) {</span>
-<span id="cb383-18"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-18"></a>  <span class="cf">repeat</span>{</span>
-<span id="cb383-19"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-19"></a>    par0 &lt;-<span class="st"> </span>par</span>
-<span id="cb383-20"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-20"></a>    par &lt;-<span class="st"> </span><span class="kw">MStep</span>(y, <span class="kw">EStep</span>(par, y))</span>
-<span id="cb383-21"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-21"></a>    <span class="cf">if</span>(<span class="kw">sum</span>((par <span class="op">-</span><span class="st"> </span>par0)<span class="op">^</span><span class="dv">2</span>) <span class="op">&lt;=</span><span class="st"> </span>epsilon <span class="op">*</span><span class="st"> </span>(<span class="kw">sum</span>(par<span class="op">^</span><span class="dv">2</span>) <span class="op">+</span><span class="st"> </span>epsilon))</span>
-<span id="cb383-22"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-22"></a>      <span class="cf">break</span></span>
-<span id="cb383-23"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-23"></a>  } </span>
-<span id="cb383-24"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-24"></a>  par  <span class="co">## Remember to return the parameter estimate</span></span>
-<span id="cb383-25"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-25"></a>}</span>
-<span id="cb383-26"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-26"></a></span>
-<span id="cb383-27"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-27"></a><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.5</span>, <span class="fl">-0.5</span>, <span class="dv">4</span>), y)</span></code></pre></div>
+<div class="sourceCode" id="cb381"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb381-1"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-1"></a>EStep &lt;-<span class="st"> </span><span class="cf">function</span>(par, y) {</span>
+<span id="cb381-2"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-2"></a>  p &lt;-<span class="st"> </span>par[<span class="dv">1</span>]</span>
+<span id="cb381-3"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-3"></a>  mu1 &lt;-<span class="st"> </span>par[<span class="dv">2</span>]</span>
+<span id="cb381-4"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-4"></a>  mu2 &lt;-<span class="st"> </span>par[<span class="dv">3</span>]</span>
+<span id="cb381-5"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-5"></a>  a &lt;-<span class="st"> </span>p <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>(y <span class="op">-</span><span class="st"> </span>mu1)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma1<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma1 </span>
+<span id="cb381-6"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-6"></a>  b &lt;-<span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p) <span class="op">*</span><span class="st"> </span><span class="kw">exp</span>(<span class="op">-</span><span class="st"> </span>(y <span class="op">-</span><span class="st"> </span>mu2)<span class="op">^</span><span class="dv">2</span> <span class="op">/</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>sigma2<span class="op">^</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>sigma2</span>
+<span id="cb381-7"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-7"></a>  b <span class="op">/</span><span class="st"> </span>(a <span class="op">+</span><span class="st"> </span>b)</span>
+<span id="cb381-8"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-8"></a>}</span>
+<span id="cb381-9"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-9"></a></span>
+<span id="cb381-10"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-10"></a>MStep &lt;-<span class="st"> </span><span class="cf">function</span>(y, pz) {</span>
+<span id="cb381-11"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-11"></a>  n &lt;-<span class="st"> </span><span class="kw">length</span>(y)</span>
+<span id="cb381-12"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-12"></a>  N2 &lt;-<span class="st"> </span><span class="kw">sum</span>(pz)</span>
+<span id="cb381-13"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-13"></a>  N1 &lt;-<span class="st"> </span>n <span class="op">-</span><span class="st"> </span>N2</span>
+<span id="cb381-14"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-14"></a>  <span class="kw">c</span>(N1 <span class="op">/</span><span class="st"> </span>n, <span class="kw">sum</span>((<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>pz) <span class="op">*</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>N1, <span class="kw">sum</span>(pz <span class="op">*</span><span class="st"> </span>y) <span class="op">/</span><span class="st"> </span>N2)</span>
+<span id="cb381-15"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-15"></a>}</span>
+<span id="cb381-16"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-16"></a></span>
+<span id="cb381-17"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-17"></a>EM &lt;-<span class="st"> </span><span class="cf">function</span>(par, y, <span class="dt">epsilon =</span> <span class="fl">1e-12</span>) {</span>
+<span id="cb381-18"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-18"></a>  <span class="cf">repeat</span>{</span>
+<span id="cb381-19"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-19"></a>    par0 &lt;-<span class="st"> </span>par</span>
+<span id="cb381-20"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-20"></a>    par &lt;-<span class="st"> </span><span class="kw">MStep</span>(y, <span class="kw">EStep</span>(par, y))</span>
+<span id="cb381-21"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-21"></a>    <span class="cf">if</span>(<span class="kw">sum</span>((par <span class="op">-</span><span class="st"> </span>par0)<span class="op">^</span><span class="dv">2</span>) <span class="op">&lt;=</span><span class="st"> </span>epsilon <span class="op">*</span><span class="st"> </span>(<span class="kw">sum</span>(par<span class="op">^</span><span class="dv">2</span>) <span class="op">+</span><span class="st"> </span>epsilon))</span>
+<span id="cb381-22"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-22"></a>      <span class="cf">break</span></span>
+<span id="cb381-23"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-23"></a>  } </span>
+<span id="cb381-24"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-24"></a>  par  <span class="co">## Remember to return the parameter estimate</span></span>
+<span id="cb381-25"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-25"></a>}</span>
+<span id="cb381-26"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-26"></a></span>
+<span id="cb381-27"><a href="8-4-revisiting-gaussian-mixtures.html#cb381-27"></a><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.5</span>, <span class="fl">-0.5</span>, <span class="dv">4</span>), y)</span></code></pre></div>
 <pre><code>## [1]  0.4934443 -0.5497060  4.0982383</code></pre>
 <p>The EM algorithm may, just as any other optimization algorithm,
 end up in a <em>local</em> maximum, if it is started wrongly.</p>
-<div class="sourceCode" id="cb385"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb385-1"><a href="8-4-revisiting-gaussian-mixtures.html#cb385-1"></a><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.9</span>, <span class="dv">3</span>, <span class="dv">1</span>), y)</span></code></pre></div>
+<div class="sourceCode" id="cb383"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb383-1"><a href="8-4-revisiting-gaussian-mixtures.html#cb383-1"></a><span class="kw">EM</span>(<span class="kw">c</span>(<span class="fl">0.9</span>, <span class="dv">3</span>, <span class="dv">1</span>), y)</span></code></pre></div>
 <pre><code>## [1] 0.2334722 5.6759456 0.6256279</code></pre>
 
 </div>

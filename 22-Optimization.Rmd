@@ -4,7 +4,7 @@ The main application of numerical optimization in statistics is for the
 computation of parameter estimates. Typically by maximizing the likelihood 
 function or by maximizing or minimizing another estimation criterion. The focus of this
 chapter is on optimization algorithms for (penalized) maximum likelihood 
-estimation, in particular for exponential families. Out of tradition we 
+estimation. Out of tradition we 
 formulate all results and algorithms in terms of minimization and 
 not maximization. 
 
@@ -15,34 +15,34 @@ the negative log-likelihood function, or $H = -\ell + J$, where $J : \Theta \to 
 is a *penalty function*, likewise twice differentiable, that does not
 depend upon data. 
 
-There are a couple of observations regarding statistical optimization
-problems that are worthwhile to make once and for all. The $-\ell$ 
+Statistical optimization problems share some properties 
+that we should pay attention to. The $-\ell$ 
 term in the objective function to be minimized is a sum over the 
 data, and the more data we have the more computationally demanding 
 it is to evaluate $H$ and its derivatives. There are exceptions, though, 
-when a sufficient statistic can be computed upfront. Additionally, high precision in
-the computed (local) minimizer is rarely needed. If the numerical 
+when a sufficient statistic can be computed upfront, but generally 
+we must expect run time to grow with data size. Additionally, high precision in
+the computed (local) minimizer is typically not necessary. If the numerical 
 error is already orders of magnitudes smaller than the statistical 
 uncertainty of the parameter estimate being computed, further 
-optimization will not make a difference in any relevant way. 
+optimization makes no relevant difference.
 
-In fact, blindly pursuing the global maximum of the likelihood can very well 
-lead you astray if your model is not as well 
-behaved as an exponential family is. In situations where $H$ is 
+In fact, blindly pursuing the global maximum of the likelihood can 
+lead you astray if your model is not well 
+behaved. In situations where $H$ is 
 not convex, as is the case for finite mixtures, there are common examples where 
 the likelihood is unbounded, yet there will be a local minimizer that is a 
 good estimate. Though we typically phrase our algorithms 
 as optimization algorithms, what we are really pursuing
 when $H$ is not convex are stationary points; solutions to $\nabla H(\theta) = 0$. 
 And rather than being fixated on computing the global minimizer of $H$ 
-to the greatest numerical precision, we should find as many 
-approximately stationary points as possible, and more generally explore 
-the likelihood surface. In this respect, optimization 
+to the greatest numerical precision, we should instead explore 
+the likelihood surface and find as many 
+approximately stationary points as possible. In this respect, optimization 
 in statistics differs from certain other applications of optimization. Finding
-the optimum is not "the thing". It is a surrogate for "the thing", which is
-to fit models to data *and* understand the statistical precision of our fitted
-model. That is, as a minimum we should quantify the uncertainty of 
-(relevant aspects of) the fitted model that is due to the finite sample size.
+the maximizer of the likelihood is not "the thing". It is a surrogate for 
+exploring model fits, and we should also remeber to understand the 
+statistical precision of our fitted model. As a minimum we should quantify the uncertainty of (relevant aspects of) the fitted model that is due to the finite sample size.
 
 For the generic minimization problem considered in this chapter, the practical 
 challenge when implementing algorithms in R is typically 
@@ -153,7 +153,7 @@ then the gradient descent algorithm of Example \@ref(exm:grad-descent) is a stri
 algorithm that converges toward that minimum. A sufficient condition 
 on $H$ for this to hold is that the eigenvalues of (the symmetric) matrix 
 $D^2H(\theta)$ for all $\theta$ are contained in an interval $[l, L]$ 
-with $0 < l \leq L$. In this case, $H$ is a *strongly convex function* 
+with $0 < l \leq L.$ In this case, $H$ is a *strongly convex function* 
 with a unique global minimizer. 
 
 ### Maps and fixed points
@@ -337,7 +337,7 @@ itself that $H(\theta_N)$ is sufficiently close to a (local) minimum. For
 a specific problem we could from experience know of a sufficiently large
 $N$ so that the algorithm has typically converged after $N$ iterations, but
 the most important use of this criterion is in combination with another 
-criteria so that it works as a safeguard against an infinite loop.
+criterion so that it works as a safeguard against an infinite loop.
 
 The other three stopping criteria all depend on choosing a *tolerance parameter* $\varepsilon > 0$, which will play different roles in the three 
 criteria.
@@ -384,9 +384,8 @@ $$\|\nabla H(\theta_n)\| \leq \varepsilon.$$
 This criterion directly measures if $\theta_n$ is close to being a stationary 
 point, but a small value of $\|\nabla H(\theta_n)\|$ is still no guarantee that
 $H(\theta_{n}) - H(\theta_{\infty})$ is small. The criterion also requires
-the computation of the gradient. 
-
-Observe, in addition, that different norms, $\|\cdot\|$, can be used, and
+the computation of the gradient. In addition, that different norms, 
+$\|\cdot\|$, can be used, and
 if the coordinates of the gradient generally are of different orders of 
 magnitude a norm that rescales the coordinates can be chosen. 
 
@@ -395,13 +394,16 @@ in some special cases it is possible to develop criteria with a stronger
 theoretical support. If we can find a continuous function $\tilde{H}$ satisfying 
 $H(\theta_{\infty}) = \tilde{H}(\theta_{\infty})$ and 
 $$H(\theta_{\infty}) \geq \tilde{H}(\theta)$$
-for all $\theta$  then 
+for all $\theta \in \Theta$ (or just in $\mathrm{lev}(\theta_0)$ for a descent
+algorithm)  then 
 $$0 \leq H(\theta_{n}) - H(\theta_{\infty}) \leq 
 H(\theta_{n}) - \tilde{H}(\theta_{n}),$$ 
 and the right hand side directly quantifies convergence. Convex duality 
 theory gives for many convex optimization problems such a function, $\tilde{H}$,
 and in those cases a convergence criterion based on $H(\theta_{n}) - \tilde{H}(\theta_{n})$ actually comes with a theoretical guarantee on
-how close we are to the theoretical minimum.
+how close we are to the theoretical minimum. We will not pursue 
+the necessary convex duality theory here, but it is useful to know 
+that in some cases we can do better than the ad hoc criteria above.
 
 ## Descent direction algorithms
 
@@ -537,10 +539,10 @@ y <- vegetables$sale
 t_map <- drop(crossprod(X, y))  # More efficient than drop(t(X) %*% y)
 
 H <- function(beta) 
-  (drop(sum(exp(X %*% beta)) - beta %*% t_map)) / nrow(X)
+  drop(sum(exp(X %*% beta)) - beta %*% t_map) / nrow(X)
 
 grad_H <- function(beta) 
-  (colSums(drop(exp(X %*% beta)) * X) - t_map) / nrow(X)
+  (drop(crossprod(X, exp(X %*% beta))) - t_map) / nrow(X)
 ```
 
 We implement a gradient descent algorithm with backtracking
@@ -630,7 +632,7 @@ options(digits = old_options$digits)
 
 To investigate what actually went on inside the gradient descent 
 algorithm we will use the callback argument to trace the internals 
-of a class to `GD()`. The `tracer()` function from the CSwR package 
+of a call to `GD()`. The `tracer()` function from the CSwR package 
 can be used to construct 
 a tracer object with a `tracer()` function that we can pass as the callback 
 argument.  The tracer object and its `tracer()` function work by storing 
@@ -722,8 +724,8 @@ rate3^(1/(1000 * delta))
 
 The gradient direction is not the best descent direction. It is too 
 local, and convergence can be quite slow. One of the better algorithms that 
-is still a "first order algorithm" (using only gradient information) is the [*nonlinear conjugate
-gradient*](https://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method) algorithm. 
+is still a *first order algorithm* (using only gradient information) is the [nonlinear conjugate
+gradient](https://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method) algorithm. 
 In the Fletcher--Reeves version of the algorithm
 the descent direction is initialized as the negative gradient
 $\rho_0 = - \nabla H(\theta_{0})$ and then updated as
