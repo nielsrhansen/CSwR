@@ -31,7 +31,7 @@
   
   
 <link rel="prev" href="7-1-algorithms-and-convergence.html"/>
-<link rel="next" href="7-3-newton-type-algorithms.html"/>
+<link rel="next" href="7-3-Newton.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
@@ -271,10 +271,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="7.2.3" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#conjugate-gradients"><i class="fa fa-check"></i><b>7.2.3</b> Conjugate gradients</a></li>
 <li class="chapter" data-level="7.2.4" data-path="7-2-descent-direction-algorithms.html"><a href="7-2-descent-direction-algorithms.html#pep-moth-descent"><i class="fa fa-check"></i><b>7.2.4</b> Peppered Moths</a></li>
 </ul></li>
-<li class="chapter" data-level="7.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html"><i class="fa fa-check"></i><b>7.3</b> Newton-type algorithms</a><ul>
-<li class="chapter" data-level="7.3.1" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#poisson-regression"><i class="fa fa-check"></i><b>7.3.1</b> Poisson regression</a></li>
-<li class="chapter" data-level="7.3.2" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>7.3.2</b> Quasi-Newton algorithms</a></li>
-<li class="chapter" data-level="7.3.3" data-path="7-3-newton-type-algorithms.html"><a href="7-3-newton-type-algorithms.html#sparsity"><i class="fa fa-check"></i><b>7.3.3</b> Sparsity</a></li>
+<li class="chapter" data-level="7.3" data-path="7-3-Newton.html"><a href="7-3-Newton.html"><i class="fa fa-check"></i><b>7.3</b> Newton-type algorithms</a><ul>
+<li class="chapter" data-level="7.3.1" data-path="7-3-Newton.html"><a href="7-3-Newton.html#poisson-regression"><i class="fa fa-check"></i><b>7.3.1</b> Poisson regression</a></li>
+<li class="chapter" data-level="7.3.2" data-path="7-3-Newton.html"><a href="7-3-Newton.html#quasi-newton-algorithms"><i class="fa fa-check"></i><b>7.3.2</b> Quasi-Newton algorithms</a></li>
+<li class="chapter" data-level="7.3.3" data-path="7-3-Newton.html"><a href="7-3-Newton.html#sparsity"><i class="fa fa-check"></i><b>7.3.3</b> Sparsity</a></li>
 </ul></li>
 <li class="chapter" data-level="7.4" data-path="7-4-misc-.html"><a href="7-4-misc-.html"><i class="fa fa-check"></i><b>7.4</b> Misc.</a></li>
 </ul></li>
@@ -431,85 +431,109 @@ and <span class="math inline">\(c = 0.1\)</span> or even smaller are sensible ch
 like the Newton algorithm to be dealt with below, there is a natural
 choice of <span class="math inline">\(\gamma_0 = 1\)</span>. But for other algorithms a good choice depends
 crucially on the scale of the parameters, and there is then no general
-advice on choosing <span class="math inline">\(\gamma_0\)</span> that can be justified theoretically.</p>
+advice on choosing <span class="math inline">\(\gamma_0\)</span>.</p>
 </div>
 <div id="gradient-descent" class="section level3">
 <h3><span class="header-section-number">7.2.2</span> Gradient descent</h3>
-<p>We return to the Poisson regression example and implement functions
-in R for computing the negative log-likelihood and its gradient.
-We exploit the <code>model.matrix</code> function to construct the model matrix
-from the data via a formula. The sufficient statistic is
-computed upfront, and the implementations use this vector
-and relies on linear algebra and vectorized computations. We
-choose to normalize by the number of observations <span class="math inline">\(n\)</span> (the number
-of rows in the model matrix). This does have a small computational
-cost, but the resulting numerical values become less dependent
-upon <span class="math inline">\(n\)</span>, which makes it easier to choose sensible default values
-of various parameters for the numerical optimization algorithms.</p>
-<div class="sourceCode" id="cb286"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb286-1"><a href="7-2-descent-direction-algorithms.html#cb286-1"></a>X &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(sale <span class="op">~</span><span class="st"> </span><span class="kw">log</span>(normalSale), <span class="dt">data =</span> vegetables)</span>
-<span id="cb286-2"><a href="7-2-descent-direction-algorithms.html#cb286-2"></a>y &lt;-<span class="st"> </span>vegetables<span class="op">$</span>sale</span>
-<span id="cb286-3"><a href="7-2-descent-direction-algorithms.html#cb286-3"></a><span class="co"># The function drop() drops the dim attribute and turns, for instance,</span></span>
-<span id="cb286-4"><a href="7-2-descent-direction-algorithms.html#cb286-4"></a><span class="co"># a matrix with one column into a vector</span></span>
-<span id="cb286-5"><a href="7-2-descent-direction-algorithms.html#cb286-5"></a>t_map &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">crossprod</span>(X, y))  <span class="co"># More efficient than drop(t(X) %*% y)</span></span>
-<span id="cb286-6"><a href="7-2-descent-direction-algorithms.html#cb286-6"></a></span>
-<span id="cb286-7"><a href="7-2-descent-direction-algorithms.html#cb286-7"></a>H &lt;-<span class="st"> </span><span class="cf">function</span>(beta) </span>
-<span id="cb286-8"><a href="7-2-descent-direction-algorithms.html#cb286-8"></a>  <span class="kw">drop</span>(<span class="kw">sum</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">-</span><span class="st"> </span>beta <span class="op">%*%</span><span class="st"> </span>t_map) <span class="op">/</span><span class="st"> </span><span class="kw">nrow</span>(X)</span>
-<span id="cb286-9"><a href="7-2-descent-direction-algorithms.html#cb286-9"></a></span>
-<span id="cb286-10"><a href="7-2-descent-direction-algorithms.html#cb286-10"></a>grad_H &lt;-<span class="st"> </span><span class="cf">function</span>(beta) </span>
-<span id="cb286-11"><a href="7-2-descent-direction-algorithms.html#cb286-11"></a>  (<span class="kw">drop</span>(<span class="kw">crossprod</span>(X, <span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta))) <span class="op">-</span><span class="st"> </span>t_map) <span class="op">/</span><span class="st"> </span><span class="kw">nrow</span>(X)</span></code></pre></div>
-<p>We implement a gradient descent algorithm with backtracking
-that uses the <em>squared</em> norm of the gradient as a stopping criterion.
+<p>We implement gradient descent with backtracking below as the function <code>GD()</code>.
 For gradient descent, the sufficient descent condition amounts to
 choosing the smallest <span class="math inline">\(k \geq 0\)</span> such that</p>
 <p><span class="math display">\[H(\theta_{n} + d^k \gamma_0 \nabla H(\theta_{n})) \leq H(\theta_n) -  cd^k \gamma_0 \|\nabla H(\theta_{n})\|_2^2.\]</span></p>
-<p>We include a callback argument (the <code>cb</code> argument) in the implementation.
+<p>The <code>GD()</code> function takes the starting point, <span class="math inline">\(\theta_0\)</span>, the objective function,
+<span class="math inline">\(H\)</span>, and its gradient, <span class="math inline">\(\nabla H\)</span>, as arguments. The four parameters <span class="math inline">\(d\)</span>, <span class="math inline">\(c\)</span>, <span class="math inline">\(\gamma_0\)</span> and
+<span class="math inline">\(\varepsilon\)</span> that control the algorithm can also be specified as additional arguments,
+but are given some reasonable default values. The implementation uses the <em>squared</em> norm of
+the gradient as a stopping criterion, but it also has a maximal number of
+iterations as a safeguard. Note that if the maximal number is reached, a
+warning is printed.</p>
+<p>Finally, we include a callback argument (the <code>cb</code> argument).
 If a function is passed to this argument, it will be evaluated in each iteration
 of the algorithm. This gives us the possibility of logging or
 printing values of variables during evaluation, which can be highly useful
 for understanding the inner workings of the algorithm. Monitoring or logging
-intermediate values during the evaluation of code is often referred to as
+intermediate values during the evaluation of code is referred to as
 <em>tracing</em>.</p>
-<div class="sourceCode" id="cb287"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb287-1"><a href="7-2-descent-direction-algorithms.html#cb287-1"></a>GD &lt;-<span class="st"> </span><span class="cf">function</span>(</span>
-<span id="cb287-2"><a href="7-2-descent-direction-algorithms.html#cb287-2"></a>  par, </span>
-<span id="cb287-3"><a href="7-2-descent-direction-algorithms.html#cb287-3"></a>  H,</span>
-<span id="cb287-4"><a href="7-2-descent-direction-algorithms.html#cb287-4"></a>  gr,</span>
-<span id="cb287-5"><a href="7-2-descent-direction-algorithms.html#cb287-5"></a>  <span class="dt">d =</span> <span class="fl">0.8</span>, </span>
-<span id="cb287-6"><a href="7-2-descent-direction-algorithms.html#cb287-6"></a>  <span class="dt">c =</span> <span class="fl">0.1</span>, </span>
-<span id="cb287-7"><a href="7-2-descent-direction-algorithms.html#cb287-7"></a>  <span class="dt">gamma0 =</span> <span class="fl">0.01</span>, </span>
-<span id="cb287-8"><a href="7-2-descent-direction-algorithms.html#cb287-8"></a>  <span class="dt">epsilon =</span> <span class="fl">1e-4</span>, </span>
-<span id="cb287-9"><a href="7-2-descent-direction-algorithms.html#cb287-9"></a>  <span class="dt">maxit =</span> <span class="dv">1000</span>,</span>
-<span id="cb287-10"><a href="7-2-descent-direction-algorithms.html#cb287-10"></a>  <span class="dt">cb =</span> <span class="ot">NULL</span></span>
-<span id="cb287-11"><a href="7-2-descent-direction-algorithms.html#cb287-11"></a>) {</span>
-<span id="cb287-12"><a href="7-2-descent-direction-algorithms.html#cb287-12"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>maxit) {</span>
-<span id="cb287-13"><a href="7-2-descent-direction-algorithms.html#cb287-13"></a>    value &lt;-<span class="st"> </span><span class="kw">H</span>(par)</span>
-<span id="cb287-14"><a href="7-2-descent-direction-algorithms.html#cb287-14"></a>    grad &lt;-<span class="st"> </span><span class="kw">gr</span>(par)</span>
-<span id="cb287-15"><a href="7-2-descent-direction-algorithms.html#cb287-15"></a>    h_prime &lt;-<span class="st"> </span><span class="kw">sum</span>(grad<span class="op">^</span><span class="dv">2</span>)</span>
-<span id="cb287-16"><a href="7-2-descent-direction-algorithms.html#cb287-16"></a>    <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(cb)) <span class="kw">cb</span>()</span>
-<span id="cb287-17"><a href="7-2-descent-direction-algorithms.html#cb287-17"></a>    <span class="co"># Convergence criterion based on gradient norm</span></span>
-<span id="cb287-18"><a href="7-2-descent-direction-algorithms.html#cb287-18"></a>    <span class="cf">if</span>(h_prime <span class="op">&lt;=</span><span class="st"> </span>epsilon) <span class="cf">break</span></span>
-<span id="cb287-19"><a href="7-2-descent-direction-algorithms.html#cb287-19"></a>    gamma &lt;-<span class="st"> </span>gamma0</span>
-<span id="cb287-20"><a href="7-2-descent-direction-algorithms.html#cb287-20"></a>    <span class="co"># First proposed descent step</span></span>
-<span id="cb287-21"><a href="7-2-descent-direction-algorithms.html#cb287-21"></a>    par1 &lt;-<span class="st"> </span>par <span class="op">-</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>grad</span>
-<span id="cb287-22"><a href="7-2-descent-direction-algorithms.html#cb287-22"></a>    <span class="co"># Backtracking while descent is insufficient</span></span>
-<span id="cb287-23"><a href="7-2-descent-direction-algorithms.html#cb287-23"></a>    <span class="cf">while</span>(<span class="kw">H</span>(par1) <span class="op">&gt;</span><span class="st"> </span>value <span class="op">-</span><span class="st"> </span>c <span class="op">*</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>h_prime) {</span>
-<span id="cb287-24"><a href="7-2-descent-direction-algorithms.html#cb287-24"></a>      gamma &lt;-<span class="st"> </span>d <span class="op">*</span><span class="st"> </span>gamma</span>
-<span id="cb287-25"><a href="7-2-descent-direction-algorithms.html#cb287-25"></a>      par1 &lt;-<span class="st"> </span>par <span class="op">-</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>grad</span>
-<span id="cb287-26"><a href="7-2-descent-direction-algorithms.html#cb287-26"></a>    }</span>
-<span id="cb287-27"><a href="7-2-descent-direction-algorithms.html#cb287-27"></a>    par &lt;-<span class="st"> </span>par1</span>
-<span id="cb287-28"><a href="7-2-descent-direction-algorithms.html#cb287-28"></a>  }</span>
-<span id="cb287-29"><a href="7-2-descent-direction-algorithms.html#cb287-29"></a>  <span class="cf">if</span>(i <span class="op">==</span><span class="st"> </span>maxit)</span>
-<span id="cb287-30"><a href="7-2-descent-direction-algorithms.html#cb287-30"></a>    <span class="kw">warning</span>(<span class="st">&quot;Maximal number, &quot;</span>, maxit, <span class="st">&quot;, of iterations reached&quot;</span>)</span>
-<span id="cb287-31"><a href="7-2-descent-direction-algorithms.html#cb287-31"></a>  par</span>
-<span id="cb287-32"><a href="7-2-descent-direction-algorithms.html#cb287-32"></a>}</span></code></pre></div>
-<p>Gradient descent is very slow for the large Poisson model with individual
+<div class="sourceCode" id="cb286"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb286-1"><a href="7-2-descent-direction-algorithms.html#cb286-1"></a>GD &lt;-<span class="st"> </span><span class="cf">function</span>(</span>
+<span id="cb286-2"><a href="7-2-descent-direction-algorithms.html#cb286-2"></a>  par, </span>
+<span id="cb286-3"><a href="7-2-descent-direction-algorithms.html#cb286-3"></a>  H,</span>
+<span id="cb286-4"><a href="7-2-descent-direction-algorithms.html#cb286-4"></a>  gr,</span>
+<span id="cb286-5"><a href="7-2-descent-direction-algorithms.html#cb286-5"></a>  <span class="dt">d =</span> <span class="fl">0.8</span>, </span>
+<span id="cb286-6"><a href="7-2-descent-direction-algorithms.html#cb286-6"></a>  <span class="dt">c =</span> <span class="fl">0.1</span>, </span>
+<span id="cb286-7"><a href="7-2-descent-direction-algorithms.html#cb286-7"></a>  <span class="dt">gamma0 =</span> <span class="fl">0.01</span>, </span>
+<span id="cb286-8"><a href="7-2-descent-direction-algorithms.html#cb286-8"></a>  <span class="dt">epsilon =</span> <span class="fl">1e-4</span>, </span>
+<span id="cb286-9"><a href="7-2-descent-direction-algorithms.html#cb286-9"></a>  <span class="dt">maxit =</span> <span class="dv">1000</span>,</span>
+<span id="cb286-10"><a href="7-2-descent-direction-algorithms.html#cb286-10"></a>  <span class="dt">cb =</span> <span class="ot">NULL</span></span>
+<span id="cb286-11"><a href="7-2-descent-direction-algorithms.html#cb286-11"></a>) {</span>
+<span id="cb286-12"><a href="7-2-descent-direction-algorithms.html#cb286-12"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>maxit) {</span>
+<span id="cb286-13"><a href="7-2-descent-direction-algorithms.html#cb286-13"></a>    value &lt;-<span class="st"> </span><span class="kw">H</span>(par)</span>
+<span id="cb286-14"><a href="7-2-descent-direction-algorithms.html#cb286-14"></a>    grad &lt;-<span class="st"> </span><span class="kw">gr</span>(par)</span>
+<span id="cb286-15"><a href="7-2-descent-direction-algorithms.html#cb286-15"></a>    h_prime &lt;-<span class="st"> </span><span class="kw">sum</span>(grad<span class="op">^</span><span class="dv">2</span>)</span>
+<span id="cb286-16"><a href="7-2-descent-direction-algorithms.html#cb286-16"></a>    <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(cb)) <span class="kw">cb</span>()</span>
+<span id="cb286-17"><a href="7-2-descent-direction-algorithms.html#cb286-17"></a>    <span class="co"># Convergence criterion based on gradient norm</span></span>
+<span id="cb286-18"><a href="7-2-descent-direction-algorithms.html#cb286-18"></a>    <span class="cf">if</span>(h_prime <span class="op">&lt;=</span><span class="st"> </span>epsilon) <span class="cf">break</span></span>
+<span id="cb286-19"><a href="7-2-descent-direction-algorithms.html#cb286-19"></a>    gamma &lt;-<span class="st"> </span>gamma0</span>
+<span id="cb286-20"><a href="7-2-descent-direction-algorithms.html#cb286-20"></a>    <span class="co"># Proposed descent step</span></span>
+<span id="cb286-21"><a href="7-2-descent-direction-algorithms.html#cb286-21"></a>    par1 &lt;-<span class="st"> </span>par <span class="op">-</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>grad</span>
+<span id="cb286-22"><a href="7-2-descent-direction-algorithms.html#cb286-22"></a>    <span class="co"># Backtracking while descent is insufficient</span></span>
+<span id="cb286-23"><a href="7-2-descent-direction-algorithms.html#cb286-23"></a>    <span class="cf">while</span>(<span class="kw">H</span>(par1) <span class="op">&gt;</span><span class="st"> </span>value <span class="op">-</span><span class="st"> </span>c <span class="op">*</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>h_prime) {</span>
+<span id="cb286-24"><a href="7-2-descent-direction-algorithms.html#cb286-24"></a>      gamma &lt;-<span class="st"> </span>d <span class="op">*</span><span class="st"> </span>gamma</span>
+<span id="cb286-25"><a href="7-2-descent-direction-algorithms.html#cb286-25"></a>      par1 &lt;-<span class="st"> </span>par <span class="op">-</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>grad</span>
+<span id="cb286-26"><a href="7-2-descent-direction-algorithms.html#cb286-26"></a>    }</span>
+<span id="cb286-27"><a href="7-2-descent-direction-algorithms.html#cb286-27"></a>    par &lt;-<span class="st"> </span>par1</span>
+<span id="cb286-28"><a href="7-2-descent-direction-algorithms.html#cb286-28"></a>  }</span>
+<span id="cb286-29"><a href="7-2-descent-direction-algorithms.html#cb286-29"></a>  <span class="cf">if</span>(i <span class="op">==</span><span class="st"> </span>maxit)</span>
+<span id="cb286-30"><a href="7-2-descent-direction-algorithms.html#cb286-30"></a>    <span class="kw">warning</span>(<span class="st">&quot;Maximal number, &quot;</span>, maxit, <span class="st">&quot;, of iterations reached&quot;</span>)</span>
+<span id="cb286-31"><a href="7-2-descent-direction-algorithms.html#cb286-31"></a>  par</span>
+<span id="cb286-32"><a href="7-2-descent-direction-algorithms.html#cb286-32"></a>}</span></code></pre></div>
+<p>We will use the Poisson regression example to illustrate the use of
+gradient descent and other optimization algorithms, and we need to
+implement functions in R for computing the negative log-likelihood and
+its gradient.</p>
+<p>The implementation below uses a function factory to produce a
+list containing a parameter vector, the negative log-likelihood function
+and its gradient. We anticipate that for the Newton algorithm in Section
+<a href="7-3-Newton.html#Newton">7.3</a> we also need an implementation of the Hessian, which is
+thus included here as well.</p>
+<p>We will exploit the <code>model.matrix()</code> function to construct the model matrix
+from the data via a formula, and the sufficient statistic is also
+computed. The implementations use linear algebra and vectorized computations
+relying on access to the model matrix and the sufficient statistics in
+their enclosing environment.</p>
+<div class="sourceCode" id="cb287"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb287-1"><a href="7-2-descent-direction-algorithms.html#cb287-1"></a>poisson_model &lt;-<span class="st"> </span><span class="cf">function</span>(form, data, response) {</span>
+<span id="cb287-2"><a href="7-2-descent-direction-algorithms.html#cb287-2"></a>  X &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(form, data)</span>
+<span id="cb287-3"><a href="7-2-descent-direction-algorithms.html#cb287-3"></a>  y &lt;-<span class="st"> </span>data[[response]]</span>
+<span id="cb287-4"><a href="7-2-descent-direction-algorithms.html#cb287-4"></a>  <span class="co"># The function drop() drops the dim attribute and turns, for instance,</span></span>
+<span id="cb287-5"><a href="7-2-descent-direction-algorithms.html#cb287-5"></a>  <span class="co"># a matrix with one column into a vector</span></span>
+<span id="cb287-6"><a href="7-2-descent-direction-algorithms.html#cb287-6"></a>  t_map &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">crossprod</span>(X, y))  <span class="co"># More efficient than drop(t(X) %*% y)</span></span>
+<span id="cb287-7"><a href="7-2-descent-direction-algorithms.html#cb287-7"></a>  n &lt;-<span class="st"> </span><span class="kw">nrow</span>(X)</span>
+<span id="cb287-8"><a href="7-2-descent-direction-algorithms.html#cb287-8"></a>  p &lt;-<span class="st"> </span><span class="kw">ncol</span>(X)</span>
+<span id="cb287-9"><a href="7-2-descent-direction-algorithms.html#cb287-9"></a>  </span>
+<span id="cb287-10"><a href="7-2-descent-direction-algorithms.html#cb287-10"></a>  H &lt;-<span class="st"> </span><span class="cf">function</span>(beta) </span>
+<span id="cb287-11"><a href="7-2-descent-direction-algorithms.html#cb287-11"></a>    <span class="kw">drop</span>(<span class="kw">sum</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">-</span><span class="st"> </span>beta <span class="op">%*%</span><span class="st"> </span>t_map) <span class="op">/</span>n</span>
+<span id="cb287-12"><a href="7-2-descent-direction-algorithms.html#cb287-12"></a>  </span>
+<span id="cb287-13"><a href="7-2-descent-direction-algorithms.html#cb287-13"></a>  grad_H &lt;-<span class="st"> </span><span class="cf">function</span>(beta) </span>
+<span id="cb287-14"><a href="7-2-descent-direction-algorithms.html#cb287-14"></a>    (<span class="kw">drop</span>(<span class="kw">crossprod</span>(X, <span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta))) <span class="op">-</span><span class="st"> </span>t_map) <span class="op">/</span><span class="st"> </span>n</span>
+<span id="cb287-15"><a href="7-2-descent-direction-algorithms.html#cb287-15"></a>  </span>
+<span id="cb287-16"><a href="7-2-descent-direction-algorithms.html#cb287-16"></a>  Hessian_H &lt;-<span class="st"> </span><span class="cf">function</span>(beta)</span>
+<span id="cb287-17"><a href="7-2-descent-direction-algorithms.html#cb287-17"></a>    <span class="kw">crossprod</span>(X, <span class="kw">drop</span>(<span class="kw">exp</span>(X <span class="op">%*%</span><span class="st"> </span>beta)) <span class="op">*</span><span class="st"> </span>X) <span class="op">/</span><span class="st"> </span>n</span>
+<span id="cb287-18"><a href="7-2-descent-direction-algorithms.html#cb287-18"></a>  </span>
+<span id="cb287-19"><a href="7-2-descent-direction-algorithms.html#cb287-19"></a>  <span class="kw">list</span>(<span class="dt">par =</span> <span class="kw">rep</span>(<span class="dv">0</span>, p), <span class="dt">H =</span> H, <span class="dt">grad_H =</span> grad_H, <span class="dt">Hessian_H =</span> Hessian_H)</span>
+<span id="cb287-20"><a href="7-2-descent-direction-algorithms.html#cb287-20"></a>}</span></code></pre></div>
+<p>We choose to normalize the log-likelihood by the number of observations <span class="math inline">\(n\)</span> (the number
+of rows in the model matrix). This does have a small computational
+cost, but the resulting numerical values become less dependent
+upon <span class="math inline">\(n\)</span>, which makes it easier to choose sensible default values
+of various parameters for the numerical optimization algorithms.
+Gradient descent is very slow for the large Poisson model with individual
 store effects, so we consider only the simple model with two parameters.</p>
-<div class="sourceCode" id="cb288"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb288-1"><a href="7-2-descent-direction-algorithms.html#cb288-1"></a>pois_GD &lt;-<span class="st"> </span><span class="kw">GD</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), H, grad_H)</span></code></pre></div>
+<div class="sourceCode" id="cb288"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb288-1"><a href="7-2-descent-direction-algorithms.html#cb288-1"></a>veg_pois &lt;-<span class="st"> </span><span class="kw">poisson_model</span>(<span class="op">~</span><span class="st"> </span><span class="kw">log</span>(normalSale), vegetables, <span class="dt">response =</span> <span class="st">&quot;sale&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb289"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb289-1"><a href="7-2-descent-direction-algorithms.html#cb289-1"></a>pois_GD &lt;-<span class="st"> </span><span class="kw">GD</span>(veg_pois<span class="op">$</span>par, veg_pois<span class="op">$</span>H, veg_pois<span class="op">$</span>grad_H)</span></code></pre></div>
 <p>The gradient descent implementation is tested by comparing the minimizer to
 the estimated parameters as computed by <code>glm()</code>.</p>
-<div class="sourceCode" id="cb289"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb289-1"><a href="7-2-descent-direction-algorithms.html#cb289-1"></a><span class="kw">as.numeric</span>(<span class="kw">coefficients</span>(pois_model_null))  <span class="co"># as.numeric to strip names</span></span>
-<span id="cb289-2"><a href="7-2-descent-direction-algorithms.html#cb289-2"></a><span class="kw">as.numeric</span>(pois_GD)</span></code></pre></div>
-<pre><code>## [1] 1.4614403396 0.9215698864
-## [1] 1.4603520741 0.9219357553</code></pre>
+<div class="sourceCode" id="cb290"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb290-1"><a href="7-2-descent-direction-algorithms.html#cb290-1"></a><span class="kw">rbind</span>(<span class="dt">pois_glm =</span> <span class="kw">coefficients</span>(pois_model_null), pois_GD)</span></code></pre></div>
+<pre><code>##          (Intercept) log(normalSale)
+## pois_glm    1.461440       0.9215699
+## pois_GD     1.460352       0.9219358</code></pre>
 <p>We get the same result up to the first two decimals. The convergence
 criterion on our gradient descent algorithm was quite loose (<span class="math inline">\(\varepsilon = 10^{-4}\)</span>,
 which means that the norm of the gradient is smaller than <span class="math inline">\(10^{-2}\)</span> when
@@ -517,17 +541,16 @@ the algorithm stops). This choice of <span class="math inline">\(\varepsilon\)</
 implies that the algorithm stops when the gradient is so small that the changes
 are at most of norm <span class="math inline">\(10^{-4}\)</span>.</p>
 <p>Comparing the resulting values of the negative log-likelihood shows agreement
-up to the first five decimals, but we notice that the value for the
-parameters fitted using <code>glm</code> is just slightly smaller.</p>
-<div class="sourceCode" id="cb291"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb291-1"><a href="7-2-descent-direction-algorithms.html#cb291-1"></a><span class="kw">H</span>(<span class="kw">coefficients</span>(pois_model_null))</span>
-<span id="cb291-2"><a href="7-2-descent-direction-algorithms.html#cb291-2"></a><span class="kw">H</span>(pois_GD)</span></code></pre></div>
+up to the first five decimals, but we notice that the negative log-likelihood
+for the parameters fitted using <code>glm()</code> is just slightly smaller.</p>
+<div class="sourceCode" id="cb292"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb292-1"><a href="7-2-descent-direction-algorithms.html#cb292-1"></a>veg_pois<span class="op">$</span><span class="kw">H</span>(<span class="kw">coefficients</span>(pois_model_null))</span>
+<span id="cb292-2"><a href="7-2-descent-direction-algorithms.html#cb292-2"></a>veg_pois<span class="op">$</span><span class="kw">H</span>(pois_GD)</span></code></pre></div>
 <pre><code>## [1] -124.406827879897
 ## [1] -124.406825325047</code></pre>
 <p>To investigate what actually went on inside the gradient descent
 algorithm we will use the callback argument to trace the internals
-of a call to <code>GD()</code>. The <code>tracer()</code> function from the CSwR package
-can be used to construct
-a tracer object with a <code>tracer()</code> function that we can pass as the callback
+of a call to <code>GD()</code>. The <code>tracer()</code> function from the <a href="https://github.com/nielsrhansen/CSwR/tree/master/CSwR_package">CSwR package</a>
+can be used to construct a tracer object with a <code>tracer()</code> function that we can pass as the callback
 argument. The tracer object and its <code>tracer()</code> function work by storing
 information in the enclosing environment of <code>tracer()</code>. When used as
 the callback argument to e.g. <code>GD()</code> the <code>tracer()</code> function will look up
@@ -542,8 +565,8 @@ inject tracing code into any R function. Here, the tracer objects will
 only be used together with a callback argument.</p>
 <p>We use the tracer object with our gradient descent implementation
 and print trace information every 50th iteration.</p>
-<div class="sourceCode" id="cb293"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb293-1"><a href="7-2-descent-direction-algorithms.html#cb293-1"></a>GD_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">50</span>)</span>
-<span id="cb293-2"><a href="7-2-descent-direction-algorithms.html#cb293-2"></a>pois_GD &lt;-<span class="st"> </span><span class="kw">GD</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), H, grad_H, <span class="dt">cb =</span> GD_tracer<span class="op">$</span>tracer)</span></code></pre></div>
+<div class="sourceCode" id="cb294"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb294-1"><a href="7-2-descent-direction-algorithms.html#cb294-1"></a>GD_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">50</span>)</span>
+<span id="cb294-2"><a href="7-2-descent-direction-algorithms.html#cb294-2"></a>pois_GD &lt;-<span class="st"> </span><span class="kw">GD</span>(veg_pois<span class="op">$</span>par, veg_pois<span class="op">$</span>H, veg_pois<span class="op">$</span>grad_H, <span class="dt">cb =</span> GD_tracer<span class="op">$</span>tracer)</span></code></pre></div>
 <pre><code>## n = 1: value = 1; h_prime = 14268.59; gamma = NA; 
 ## n = 50: value = -123.9395; h_prime = 15.45722; gamma = 0.004096; 
 ## n = 100: value = -124.3243; h_prime = 3.133931; gamma = 0.00512; 
@@ -561,20 +584,20 @@ takes 3 to 4 iterations to find a step length with sufficient descent.</p>
 <p>The printed trace does not reveal the run time information. The
 run time is measured for each iteration of the algorithm and the
 cumulative run time is of greater interest. This information
-is, however, best inspected and computed after the algorithm has converged,
-and it is computed and returned by the summary method for tracer objects.</p>
-<div class="sourceCode" id="cb295"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb295-1"><a href="7-2-descent-direction-algorithms.html#cb295-1"></a><span class="kw">tail</span>(<span class="kw">summary</span>(GD_tracer))</span></code></pre></div>
+can be computed and inspected after the algorithm has converged,
+and it is returned by the summary method for tracer objects.</p>
+<div class="sourceCode" id="cb296"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb296-1"><a href="7-2-descent-direction-algorithms.html#cb296-1"></a><span class="kw">tail</span>(<span class="kw">summary</span>(GD_tracer))</span></code></pre></div>
 <pre><code>##         value      h_prime    gamma      .time
-## 372 -124.4068 1.125779e-04 0.005120 0.06862399
-## 373 -124.4068 1.218925e-04 0.005120 0.06877549
-## 374 -124.4068 1.323878e-04 0.005120 0.06892534
-## 375 -124.4068 1.441965e-04 0.005120 0.06907459
-## 376 -124.4068 1.574572e-04 0.005120 0.06923358
-## 377 -124.4068 7.600796e-05 0.004096 0.06939990</code></pre>
+## 372 -124.4068 1.125779e-04 0.005120 0.06352470
+## 373 -124.4068 1.218925e-04 0.005120 0.06364027
+## 374 -124.4068 1.323878e-04 0.005120 0.06375466
+## 375 -124.4068 1.441965e-04 0.005120 0.06387087
+## 376 -124.4068 1.574572e-04 0.005120 0.06398542
+## 377 -124.4068 7.600796e-05 0.004096 0.06411624</code></pre>
 <p>The trace information is stored in a list. The summary method transforms
 the trace information into a data frame with one row per iteration. We can also access
 individual entries of the list of trace information via subsetting.</p>
-<div class="sourceCode" id="cb297"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb297-1"><a href="7-2-descent-direction-algorithms.html#cb297-1"></a>GD_tracer[<span class="dv">377</span>] </span></code></pre></div>
+<div class="sourceCode" id="cb298"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb298-1"><a href="7-2-descent-direction-algorithms.html#cb298-1"></a>GD_tracer[<span class="dv">377</span>] </span></code></pre></div>
 <pre><code>## $value
 ## [1] -124.4068
 ## 
@@ -585,7 +608,7 @@ individual entries of the list of trace information via subsetting.</p>
 ## [1] 0.004096
 ## 
 ## $.time
-## [1] 0.000166322</code></pre>
+## [1] 0.000130819</code></pre>
 <div class="figure" style="text-align: center"><span id="fig:GD-trace-plot"></span>
 <img src="CSwR_files/figure-html/GD-trace-plot-1.png" alt="Gradient norm (left) and value of the negative log-likelihood (right) above the limit value $H(\theta_{\infty})$. The straight line is fitted to the data points except the first ten using least squares, and the rate is computed from this estimate and reported per ms." width="100%" />
 <p class="caption">
@@ -619,52 +642,52 @@ of introducing the more advanced curvature condition, we simply reset the
 algorithm to use the gradient direction in any case where a non-descent direction
 has been chosen. Resets of descent direction every <span class="math inline">\(p\)</span>-th iteration is recommended
 anyway for the nonlinear conjugate gradient algorithm.</p>
-<div class="sourceCode" id="cb299"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb299-1"><a href="7-2-descent-direction-algorithms.html#cb299-1"></a>CG &lt;-<span class="st"> </span><span class="cf">function</span>(</span>
-<span id="cb299-2"><a href="7-2-descent-direction-algorithms.html#cb299-2"></a>  par, </span>
-<span id="cb299-3"><a href="7-2-descent-direction-algorithms.html#cb299-3"></a>  H,</span>
-<span id="cb299-4"><a href="7-2-descent-direction-algorithms.html#cb299-4"></a>  gr,</span>
-<span id="cb299-5"><a href="7-2-descent-direction-algorithms.html#cb299-5"></a>  <span class="dt">d =</span> <span class="fl">0.8</span>, </span>
-<span id="cb299-6"><a href="7-2-descent-direction-algorithms.html#cb299-6"></a>  <span class="dt">c =</span> <span class="fl">0.1</span>, </span>
-<span id="cb299-7"><a href="7-2-descent-direction-algorithms.html#cb299-7"></a>  <span class="dt">gamma0 =</span> <span class="dv">1</span>, </span>
-<span id="cb299-8"><a href="7-2-descent-direction-algorithms.html#cb299-8"></a>  <span class="dt">epsilon =</span> <span class="fl">1e-6</span>,</span>
-<span id="cb299-9"><a href="7-2-descent-direction-algorithms.html#cb299-9"></a>  <span class="dt">maxit =</span> <span class="dv">1000</span>,</span>
-<span id="cb299-10"><a href="7-2-descent-direction-algorithms.html#cb299-10"></a>  <span class="dt">cb =</span> <span class="ot">NULL</span></span>
-<span id="cb299-11"><a href="7-2-descent-direction-algorithms.html#cb299-11"></a>) {</span>
-<span id="cb299-12"><a href="7-2-descent-direction-algorithms.html#cb299-12"></a>  p &lt;-<span class="st"> </span><span class="kw">length</span>(par)</span>
-<span id="cb299-13"><a href="7-2-descent-direction-algorithms.html#cb299-13"></a>  m &lt;-<span class="st"> </span><span class="dv">1</span></span>
-<span id="cb299-14"><a href="7-2-descent-direction-algorithms.html#cb299-14"></a>  rho0 &lt;-<span class="st"> </span><span class="kw">numeric</span>(p)</span>
-<span id="cb299-15"><a href="7-2-descent-direction-algorithms.html#cb299-15"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>maxit) {</span>
-<span id="cb299-16"><a href="7-2-descent-direction-algorithms.html#cb299-16"></a>    value &lt;-<span class="st"> </span><span class="kw">H</span>(par)</span>
-<span id="cb299-17"><a href="7-2-descent-direction-algorithms.html#cb299-17"></a>    grad &lt;-<span class="st"> </span><span class="kw">gr</span>(par)</span>
-<span id="cb299-18"><a href="7-2-descent-direction-algorithms.html#cb299-18"></a>    grad_norm_sq &lt;-<span class="st"> </span><span class="kw">sum</span>(grad<span class="op">^</span><span class="dv">2</span>)</span>
-<span id="cb299-19"><a href="7-2-descent-direction-algorithms.html#cb299-19"></a>    <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(cb)) <span class="kw">cb</span>()</span>
-<span id="cb299-20"><a href="7-2-descent-direction-algorithms.html#cb299-20"></a>    <span class="cf">if</span>(grad_norm_sq <span class="op">&lt;=</span><span class="st"> </span>epsilon) <span class="cf">break</span></span>
-<span id="cb299-21"><a href="7-2-descent-direction-algorithms.html#cb299-21"></a>    gamma &lt;-<span class="st"> </span>gamma0</span>
-<span id="cb299-22"><a href="7-2-descent-direction-algorithms.html#cb299-22"></a>    <span class="co"># Descent direction</span></span>
-<span id="cb299-23"><a href="7-2-descent-direction-algorithms.html#cb299-23"></a>    rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad <span class="op">+</span><span class="st"> </span>grad_norm_sq <span class="op">*</span><span class="st"> </span>rho0</span>
-<span id="cb299-24"><a href="7-2-descent-direction-algorithms.html#cb299-24"></a>    h_prime &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">t</span>(grad) <span class="op">%*%</span><span class="st"> </span>rho)</span>
-<span id="cb299-25"><a href="7-2-descent-direction-algorithms.html#cb299-25"></a>    <span class="co"># Reset to gradient descent if m &gt; p or rho is not a descent direction</span></span>
-<span id="cb299-26"><a href="7-2-descent-direction-algorithms.html#cb299-26"></a>    <span class="cf">if</span>(m <span class="op">&gt;</span><span class="st"> </span>p <span class="op">||</span><span class="st"> </span>h_prime <span class="op">&gt;=</span><span class="st"> </span><span class="dv">0</span>) {</span>
-<span id="cb299-27"><a href="7-2-descent-direction-algorithms.html#cb299-27"></a>      rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad</span>
-<span id="cb299-28"><a href="7-2-descent-direction-algorithms.html#cb299-28"></a>      h_prime &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad_norm_sq </span>
-<span id="cb299-29"><a href="7-2-descent-direction-algorithms.html#cb299-29"></a>      m &lt;-<span class="st"> </span><span class="dv">1</span></span>
-<span id="cb299-30"><a href="7-2-descent-direction-algorithms.html#cb299-30"></a>    }</span>
-<span id="cb299-31"><a href="7-2-descent-direction-algorithms.html#cb299-31"></a>    par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</span>
-<span id="cb299-32"><a href="7-2-descent-direction-algorithms.html#cb299-32"></a>    <span class="co"># Backtracking</span></span>
-<span id="cb299-33"><a href="7-2-descent-direction-algorithms.html#cb299-33"></a>    <span class="cf">while</span>(<span class="kw">H</span>(par1) <span class="op">&gt;</span><span class="st"> </span>value <span class="op">+</span><span class="st"> </span>c <span class="op">*</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>h_prime) {</span>
-<span id="cb299-34"><a href="7-2-descent-direction-algorithms.html#cb299-34"></a>      gamma &lt;-<span class="st"> </span>d <span class="op">*</span><span class="st"> </span>gamma</span>
-<span id="cb299-35"><a href="7-2-descent-direction-algorithms.html#cb299-35"></a>      par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</span>
-<span id="cb299-36"><a href="7-2-descent-direction-algorithms.html#cb299-36"></a>    }</span>
-<span id="cb299-37"><a href="7-2-descent-direction-algorithms.html#cb299-37"></a>    rho0 &lt;-<span class="st"> </span>rho <span class="op">/</span><span class="st"> </span>grad_norm_sq</span>
-<span id="cb299-38"><a href="7-2-descent-direction-algorithms.html#cb299-38"></a>    par &lt;-<span class="st"> </span>par1</span>
-<span id="cb299-39"><a href="7-2-descent-direction-algorithms.html#cb299-39"></a>    m &lt;-<span class="st"> </span>m <span class="op">+</span><span class="st"> </span><span class="dv">1</span></span>
-<span id="cb299-40"><a href="7-2-descent-direction-algorithms.html#cb299-40"></a>  }</span>
-<span id="cb299-41"><a href="7-2-descent-direction-algorithms.html#cb299-41"></a>  <span class="cf">if</span>(i <span class="op">==</span><span class="st"> </span>maxit)</span>
-<span id="cb299-42"><a href="7-2-descent-direction-algorithms.html#cb299-42"></a>    <span class="kw">warning</span>(<span class="st">&quot;Maximal number, &quot;</span>, maxit, <span class="st">&quot;, of iterations reached&quot;</span>)</span>
-<span id="cb299-43"><a href="7-2-descent-direction-algorithms.html#cb299-43"></a>  par</span>
-<span id="cb299-44"><a href="7-2-descent-direction-algorithms.html#cb299-44"></a>}</span></code></pre></div>
-<div class="sourceCode" id="cb300"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb300-1"><a href="7-2-descent-direction-algorithms.html#cb300-1"></a>CG_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;gamma&quot;</span>, <span class="st">&quot;grad_norm_sq&quot;</span>), <span class="dt">N =</span> <span class="dv">10</span>)</span>
-<span id="cb300-2"><a href="7-2-descent-direction-algorithms.html#cb300-2"></a>pois_CG &lt;-<span class="st"> </span><span class="kw">CG</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), H, grad_H, <span class="dt">cb =</span> CG_tracer<span class="op">$</span>tracer)</span></code></pre></div>
+<div class="sourceCode" id="cb300"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb300-1"><a href="7-2-descent-direction-algorithms.html#cb300-1"></a>CG &lt;-<span class="st"> </span><span class="cf">function</span>(</span>
+<span id="cb300-2"><a href="7-2-descent-direction-algorithms.html#cb300-2"></a>  par, </span>
+<span id="cb300-3"><a href="7-2-descent-direction-algorithms.html#cb300-3"></a>  H,</span>
+<span id="cb300-4"><a href="7-2-descent-direction-algorithms.html#cb300-4"></a>  gr,</span>
+<span id="cb300-5"><a href="7-2-descent-direction-algorithms.html#cb300-5"></a>  <span class="dt">d =</span> <span class="fl">0.8</span>, </span>
+<span id="cb300-6"><a href="7-2-descent-direction-algorithms.html#cb300-6"></a>  <span class="dt">c =</span> <span class="fl">0.1</span>, </span>
+<span id="cb300-7"><a href="7-2-descent-direction-algorithms.html#cb300-7"></a>  <span class="dt">gamma0 =</span> <span class="dv">1</span>, </span>
+<span id="cb300-8"><a href="7-2-descent-direction-algorithms.html#cb300-8"></a>  <span class="dt">epsilon =</span> <span class="fl">1e-6</span>,</span>
+<span id="cb300-9"><a href="7-2-descent-direction-algorithms.html#cb300-9"></a>  <span class="dt">maxit =</span> <span class="dv">1000</span>,</span>
+<span id="cb300-10"><a href="7-2-descent-direction-algorithms.html#cb300-10"></a>  <span class="dt">cb =</span> <span class="ot">NULL</span></span>
+<span id="cb300-11"><a href="7-2-descent-direction-algorithms.html#cb300-11"></a>) {</span>
+<span id="cb300-12"><a href="7-2-descent-direction-algorithms.html#cb300-12"></a>  p &lt;-<span class="st"> </span><span class="kw">length</span>(par)</span>
+<span id="cb300-13"><a href="7-2-descent-direction-algorithms.html#cb300-13"></a>  m &lt;-<span class="st"> </span><span class="dv">1</span></span>
+<span id="cb300-14"><a href="7-2-descent-direction-algorithms.html#cb300-14"></a>  rho0 &lt;-<span class="st"> </span><span class="kw">numeric</span>(p)</span>
+<span id="cb300-15"><a href="7-2-descent-direction-algorithms.html#cb300-15"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>maxit) {</span>
+<span id="cb300-16"><a href="7-2-descent-direction-algorithms.html#cb300-16"></a>    value &lt;-<span class="st"> </span><span class="kw">H</span>(par)</span>
+<span id="cb300-17"><a href="7-2-descent-direction-algorithms.html#cb300-17"></a>    grad &lt;-<span class="st"> </span><span class="kw">gr</span>(par)</span>
+<span id="cb300-18"><a href="7-2-descent-direction-algorithms.html#cb300-18"></a>    grad_norm_sq &lt;-<span class="st"> </span><span class="kw">sum</span>(grad<span class="op">^</span><span class="dv">2</span>)</span>
+<span id="cb300-19"><a href="7-2-descent-direction-algorithms.html#cb300-19"></a>    <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(cb)) <span class="kw">cb</span>()</span>
+<span id="cb300-20"><a href="7-2-descent-direction-algorithms.html#cb300-20"></a>    <span class="cf">if</span>(grad_norm_sq <span class="op">&lt;=</span><span class="st"> </span>epsilon) <span class="cf">break</span></span>
+<span id="cb300-21"><a href="7-2-descent-direction-algorithms.html#cb300-21"></a>    gamma &lt;-<span class="st"> </span>gamma0</span>
+<span id="cb300-22"><a href="7-2-descent-direction-algorithms.html#cb300-22"></a>    <span class="co"># Descent direction</span></span>
+<span id="cb300-23"><a href="7-2-descent-direction-algorithms.html#cb300-23"></a>    rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad <span class="op">+</span><span class="st"> </span>grad_norm_sq <span class="op">*</span><span class="st"> </span>rho0</span>
+<span id="cb300-24"><a href="7-2-descent-direction-algorithms.html#cb300-24"></a>    h_prime &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">t</span>(grad) <span class="op">%*%</span><span class="st"> </span>rho)</span>
+<span id="cb300-25"><a href="7-2-descent-direction-algorithms.html#cb300-25"></a>    <span class="co"># Reset to gradient descent if m &gt; p or rho is not a descent direction</span></span>
+<span id="cb300-26"><a href="7-2-descent-direction-algorithms.html#cb300-26"></a>    <span class="cf">if</span>(m <span class="op">&gt;</span><span class="st"> </span>p <span class="op">||</span><span class="st"> </span>h_prime <span class="op">&gt;=</span><span class="st"> </span><span class="dv">0</span>) {</span>
+<span id="cb300-27"><a href="7-2-descent-direction-algorithms.html#cb300-27"></a>      rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad</span>
+<span id="cb300-28"><a href="7-2-descent-direction-algorithms.html#cb300-28"></a>      h_prime &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span>grad_norm_sq </span>
+<span id="cb300-29"><a href="7-2-descent-direction-algorithms.html#cb300-29"></a>      m &lt;-<span class="st"> </span><span class="dv">1</span></span>
+<span id="cb300-30"><a href="7-2-descent-direction-algorithms.html#cb300-30"></a>    }</span>
+<span id="cb300-31"><a href="7-2-descent-direction-algorithms.html#cb300-31"></a>    par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</span>
+<span id="cb300-32"><a href="7-2-descent-direction-algorithms.html#cb300-32"></a>    <span class="co"># Backtracking</span></span>
+<span id="cb300-33"><a href="7-2-descent-direction-algorithms.html#cb300-33"></a>    <span class="cf">while</span>(<span class="kw">H</span>(par1) <span class="op">&gt;</span><span class="st"> </span>value <span class="op">+</span><span class="st"> </span>c <span class="op">*</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>h_prime) {</span>
+<span id="cb300-34"><a href="7-2-descent-direction-algorithms.html#cb300-34"></a>      gamma &lt;-<span class="st"> </span>d <span class="op">*</span><span class="st"> </span>gamma</span>
+<span id="cb300-35"><a href="7-2-descent-direction-algorithms.html#cb300-35"></a>      par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</span>
+<span id="cb300-36"><a href="7-2-descent-direction-algorithms.html#cb300-36"></a>    }</span>
+<span id="cb300-37"><a href="7-2-descent-direction-algorithms.html#cb300-37"></a>    rho0 &lt;-<span class="st"> </span>rho <span class="op">/</span><span class="st"> </span>grad_norm_sq</span>
+<span id="cb300-38"><a href="7-2-descent-direction-algorithms.html#cb300-38"></a>    par &lt;-<span class="st"> </span>par1</span>
+<span id="cb300-39"><a href="7-2-descent-direction-algorithms.html#cb300-39"></a>    m &lt;-<span class="st"> </span>m <span class="op">+</span><span class="st"> </span><span class="dv">1</span></span>
+<span id="cb300-40"><a href="7-2-descent-direction-algorithms.html#cb300-40"></a>  }</span>
+<span id="cb300-41"><a href="7-2-descent-direction-algorithms.html#cb300-41"></a>  <span class="cf">if</span>(i <span class="op">==</span><span class="st"> </span>maxit)</span>
+<span id="cb300-42"><a href="7-2-descent-direction-algorithms.html#cb300-42"></a>    <span class="kw">warning</span>(<span class="st">&quot;Maximal number, &quot;</span>, maxit, <span class="st">&quot;, of iterations reached&quot;</span>)</span>
+<span id="cb300-43"><a href="7-2-descent-direction-algorithms.html#cb300-43"></a>  par</span>
+<span id="cb300-44"><a href="7-2-descent-direction-algorithms.html#cb300-44"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb301"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb301-1"><a href="7-2-descent-direction-algorithms.html#cb301-1"></a>CG_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;gamma&quot;</span>, <span class="st">&quot;grad_norm_sq&quot;</span>), <span class="dt">N =</span> <span class="dv">10</span>)</span>
+<span id="cb301-2"><a href="7-2-descent-direction-algorithms.html#cb301-2"></a>pois_CG &lt;-<span class="st"> </span><span class="kw">CG</span>(veg_pois<span class="op">$</span>par, veg_pois<span class="op">$</span>H, veg_pois<span class="op">$</span>grad_H, <span class="dt">cb =</span> CG_tracer<span class="op">$</span>tracer)</span></code></pre></div>
 <pre><code>## n = 1: value = 1; gamma = NA; grad_norm_sq = 14269; 
 ## n = 10: value = -123.15; gamma = 0.018014; grad_norm_sq = 129.78; 
 ## n = 20: value = -123.92; gamma = 0.022518; grad_norm_sq = 77.339; 
@@ -680,40 +703,40 @@ Figure 7.2: Gradient norms (top) and negative log-likelihoods (bottom) for gradi
 </p>
 </div>
 <p>This algorithm is fast enough to fit the large Poisson regression model.</p>
-<div class="sourceCode" id="cb302"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb302-1"><a href="7-2-descent-direction-algorithms.html#cb302-1"></a>X &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(sale <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> vegetables)</span>
-<span id="cb302-2"><a href="7-2-descent-direction-algorithms.html#cb302-2"></a>t_map &lt;-<span class="st"> </span><span class="kw">drop</span>(<span class="kw">crossprod</span>(X, y)) </span></code></pre></div>
-<div class="sourceCode" id="cb303"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb303-1"><a href="7-2-descent-direction-algorithms.html#cb303-1"></a>CG_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;gamma&quot;</span>, <span class="st">&quot;grad_norm_sq&quot;</span>), <span class="dt">N =</span> <span class="dv">100</span>)</span>
-<span id="cb303-2"><a href="7-2-descent-direction-algorithms.html#cb303-2"></a>pois_CG &lt;-<span class="st"> </span><span class="kw">CG</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), H, grad_H, <span class="dt">cb =</span> CG_tracer<span class="op">$</span>tracer)</span></code></pre></div>
+<div class="sourceCode" id="cb303"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb303-1"><a href="7-2-descent-direction-algorithms.html#cb303-1"></a>veg_pois &lt;-<span class="st"> </span><span class="kw">poisson_model</span>(<span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, vegetables, <span class="dt">response =</span> <span class="st">&quot;sale&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb304"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb304-1"><a href="7-2-descent-direction-algorithms.html#cb304-1"></a>CG_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;gamma&quot;</span>, <span class="st">&quot;grad_norm_sq&quot;</span>), <span class="dt">N =</span> <span class="dv">100</span>)</span>
+<span id="cb304-2"><a href="7-2-descent-direction-algorithms.html#cb304-2"></a>pois_CG &lt;-<span class="st"> </span><span class="kw">CG</span>(veg_pois<span class="op">$</span>par, veg_pois<span class="op">$</span>H, veg_pois<span class="op">$</span>grad_H, <span class="dt">cb =</span> CG_tracer<span class="op">$</span>tracer)</span></code></pre></div>
 <pre><code>## n = 1: value = 1; gamma = NA; grad_norm_sq = 12737; 
-## n = 100: value = -127.7; gamma = 0.014412; grad_norm_sq = 4.6263; 
-## n = 200: value = -128.02; gamma = 0.014412; grad_norm_sq = 0.41723; 
-## n = 300: value = -128.35; gamma = 0.0024179; grad_norm_sq = 0.063094; 
-## n = 400: value = -128.56; gamma = 0.04398; grad_norm_sq = 0.64184; 
-## n = 500: value = -128.58; gamma = 0.028147; grad_norm_sq = 0.012616; 
-## n = 600: value = -128.59; gamma = 0.0030223; grad_norm_sq = 0.00028513; 
-## n = 700: value = -128.59; gamma = 0.0030223; grad_norm_sq = 1.0811e-05; 
-## n = 800: value = -128.59; gamma = 0.0019343; grad_norm_sq = 4.2685e-06;</code></pre>
-<div class="sourceCode" id="cb305"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb305-1"><a href="7-2-descent-direction-algorithms.html#cb305-1"></a><span class="kw">tail</span>(<span class="kw">summary</span>(CG_tracer))</span></code></pre></div>
+## n = 100: value = -127.9; gamma = 0.018014; grad_norm_sq = 1.676; 
+## n = 200: value = -128.28; gamma = 0.011529; grad_norm_sq = 2.5128; 
+## n = 300: value = -128.55; gamma = 0.0037779; grad_norm_sq = 0.068176; 
+## n = 400: value = -128.59; gamma = 0.022518; grad_norm_sq = 0.0028747; 
+## n = 500: value = -128.59; gamma = 0.0092234; grad_norm_sq = 0.0652; 
+## n = 600: value = -128.59; gamma = 0.018014; grad_norm_sq = 0.00020555; 
+## n = 700: value = -128.59; gamma = 0.0019343; grad_norm_sq = 5.3952e-06; 
+## n = 800: value = -128.59; gamma = 0.005903; grad_norm_sq = 3.7118e-06; 
+## n = 900: value = -128.59; gamma = 0.0037779; grad_norm_sq = 1.0621e-06;</code></pre>
+<div class="sourceCode" id="cb306"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb306-1"><a href="7-2-descent-direction-algorithms.html#cb306-1"></a><span class="kw">tail</span>(<span class="kw">summary</span>(CG_tracer))</span></code></pre></div>
 <pre><code>##         value       gamma grad_norm_sq    .time
-## 890 -128.5894 0.134217728 2.968376e-04 12.72016
-## 891 -128.5894 0.003777893 2.511863e-06 12.73632
-## 892 -128.5894 0.004722366 1.510951e-06 12.75013
-## 893 -128.5894 1.000000000 1.835397e-04 12.75276
-## 894 -128.5894 0.005902958 3.238532e-05 12.76613
-## 895 -128.5894 0.003777893 6.586532e-07 12.78467</code></pre>
+## 899 -128.5894 0.005902958 5.214667e-06 11.65685
+## 900 -128.5894 0.003777893 1.062092e-06 11.67087
+## 901 -128.5894 0.068719477 2.119915e-05 11.67842
+## 902 -128.5894 0.107374182 2.047029e-04 11.68518
+## 903 -128.5894 0.004722366 7.056181e-06 11.70461
+## 904 -128.5894 0.003777893 8.881615e-07 11.71881</code></pre>
 <p>Using <code>optim()</code> with the conjugate gradient method.</p>
-<div class="sourceCode" id="cb307"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb307-1"><a href="7-2-descent-direction-algorithms.html#cb307-1"></a><span class="kw">system.time</span>(</span>
-<span id="cb307-2"><a href="7-2-descent-direction-algorithms.html#cb307-2"></a>  pois_optim_CG &lt;-<span class="st"> </span><span class="kw">optim</span>(</span>
-<span id="cb307-3"><a href="7-2-descent-direction-algorithms.html#cb307-3"></a>    <span class="kw">rep</span>(<span class="dv">0</span>, <span class="dt">length =</span> <span class="kw">ncol</span>(X)), </span>
-<span id="cb307-4"><a href="7-2-descent-direction-algorithms.html#cb307-4"></a>    H, </span>
-<span id="cb307-5"><a href="7-2-descent-direction-algorithms.html#cb307-5"></a>    grad_H, </span>
-<span id="cb307-6"><a href="7-2-descent-direction-algorithms.html#cb307-6"></a>    <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>, </span>
-<span id="cb307-7"><a href="7-2-descent-direction-algorithms.html#cb307-7"></a>    <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)</span>
-<span id="cb307-8"><a href="7-2-descent-direction-algorithms.html#cb307-8"></a>  )</span>
-<span id="cb307-9"><a href="7-2-descent-direction-algorithms.html#cb307-9"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb308"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb308-1"><a href="7-2-descent-direction-algorithms.html#cb308-1"></a><span class="kw">system.time</span>(</span>
+<span id="cb308-2"><a href="7-2-descent-direction-algorithms.html#cb308-2"></a>  pois_optim_CG &lt;-<span class="st"> </span><span class="kw">optim</span>(</span>
+<span id="cb308-3"><a href="7-2-descent-direction-algorithms.html#cb308-3"></a>    veg_pois<span class="op">$</span>par, </span>
+<span id="cb308-4"><a href="7-2-descent-direction-algorithms.html#cb308-4"></a>    veg_pois<span class="op">$</span>H, </span>
+<span id="cb308-5"><a href="7-2-descent-direction-algorithms.html#cb308-5"></a>    veg_pois<span class="op">$</span>grad_H, </span>
+<span id="cb308-6"><a href="7-2-descent-direction-algorithms.html#cb308-6"></a>    <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>, </span>
+<span id="cb308-7"><a href="7-2-descent-direction-algorithms.html#cb308-7"></a>    <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)</span>
+<span id="cb308-8"><a href="7-2-descent-direction-algorithms.html#cb308-8"></a>  )</span>
+<span id="cb308-9"><a href="7-2-descent-direction-algorithms.html#cb308-9"></a>)</span></code></pre></div>
 <pre><code>##    user  system elapsed 
-##  11.936   0.110  12.150</code></pre>
-<div class="sourceCode" id="cb309"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb309-1"><a href="7-2-descent-direction-algorithms.html#cb309-1"></a>pois_optim_CG[<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;counts&quot;</span>)]</span></code></pre></div>
+##  10.593   0.032  10.650</code></pre>
+<div class="sourceCode" id="cb310"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb310-1"><a href="7-2-descent-direction-algorithms.html#cb310-1"></a>pois_optim_CG[<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;counts&quot;</span>)]</span></code></pre></div>
 <pre><code>## $value
 ## [1] -128.5895
 ## 
@@ -736,29 +759,29 @@ can also be written as
 where <span class="math inline">\(\mathrm{D}p(\theta)\)</span> is the Jacobian of the parametrization <span class="math inline">\(\theta \mapsto p(\theta)\)</span>,
 and <span class="math inline">\(\mathbf{\tilde{x}}(\theta)\)</span> is the vector with
 <span class="math display">\[\mathbf{\tilde{x}}(\theta)_k = \frac{ x_{j(k)}}{M(p(\theta))_{j(k)}}.\]</span></p>
-<div class="sourceCode" id="cb311"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb311-1"><a href="7-2-descent-direction-algorithms.html#cb311-1"></a>grad_loglik &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, prob, Dprob, group) {</span>
-<span id="cb311-2"><a href="7-2-descent-direction-algorithms.html#cb311-2"></a>  p &lt;-<span class="st"> </span><span class="kw">prob</span>(par)</span>
-<span id="cb311-3"><a href="7-2-descent-direction-algorithms.html#cb311-3"></a>  <span class="cf">if</span>(<span class="kw">is.null</span>(p)) <span class="kw">return</span>(<span class="kw">rep</span>(<span class="ot">NA</span>, <span class="kw">length</span>(par)))</span>
-<span id="cb311-4"><a href="7-2-descent-direction-algorithms.html#cb311-4"></a>  <span class="op">-</span><span class="st"> </span>(x[group] <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(p, group)[group]) <span class="op">%*%</span><span class="st"> </span><span class="kw">Dprob</span>(par)</span>
-<span id="cb311-5"><a href="7-2-descent-direction-algorithms.html#cb311-5"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb312"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb312-1"><a href="7-2-descent-direction-algorithms.html#cb312-1"></a>grad_loglik &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, prob, Dprob, group) {</span>
+<span id="cb312-2"><a href="7-2-descent-direction-algorithms.html#cb312-2"></a>  p &lt;-<span class="st"> </span><span class="kw">prob</span>(par)</span>
+<span id="cb312-3"><a href="7-2-descent-direction-algorithms.html#cb312-3"></a>  <span class="cf">if</span>(<span class="kw">is.null</span>(p)) <span class="kw">return</span>(<span class="kw">rep</span>(<span class="ot">NA</span>, <span class="kw">length</span>(par)))</span>
+<span id="cb312-4"><a href="7-2-descent-direction-algorithms.html#cb312-4"></a>  <span class="op">-</span><span class="st"> </span>(x[group] <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(p, group)[group]) <span class="op">%*%</span><span class="st"> </span><span class="kw">Dprob</span>(par)</span>
+<span id="cb312-5"><a href="7-2-descent-direction-algorithms.html#cb312-5"></a>}</span></code></pre></div>
 <p>The Jacobian needs to be implemented for the specific example
 of peppered moths.</p>
-<div class="sourceCode" id="cb312"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb312-1"><a href="7-2-descent-direction-algorithms.html#cb312-1"></a>Dprob &lt;-<span class="st"> </span><span class="cf">function</span>(p) {</span>
-<span id="cb312-2"><a href="7-2-descent-direction-algorithms.html#cb312-2"></a>  p[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>p[<span class="dv">2</span>]</span>
-<span id="cb312-3"><a href="7-2-descent-direction-algorithms.html#cb312-3"></a>  <span class="kw">matrix</span>(</span>
-<span id="cb312-4"><a href="7-2-descent-direction-algorithms.html#cb312-4"></a>    <span class="kw">c</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>],             <span class="dv">0</span>, </span>
-<span id="cb312-5"><a href="7-2-descent-direction-algorithms.html#cb312-5"></a>      <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>],             <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>], </span>
-<span id="cb312-6"><a href="7-2-descent-direction-algorithms.html#cb312-6"></a>      <span class="dv">2</span><span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>] <span class="op">-</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>],  <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>],</span>
-<span id="cb312-7"><a href="7-2-descent-direction-algorithms.html#cb312-7"></a>      <span class="dv">0</span>,                    <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>],         </span>
-<span id="cb312-8"><a href="7-2-descent-direction-algorithms.html#cb312-8"></a>      <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>],            <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>] <span class="op">-</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>], </span>
-<span id="cb312-9"><a href="7-2-descent-direction-algorithms.html#cb312-9"></a>      <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>],           <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>]),</span>
-<span id="cb312-10"><a href="7-2-descent-direction-algorithms.html#cb312-10"></a>    <span class="dt">ncol =</span> <span class="dv">2</span>, <span class="dt">nrow =</span> <span class="dv">6</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</span>
-<span id="cb312-11"><a href="7-2-descent-direction-algorithms.html#cb312-11"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb313"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb313-1"><a href="7-2-descent-direction-algorithms.html#cb313-1"></a>Dprob &lt;-<span class="st"> </span><span class="cf">function</span>(p) {</span>
+<span id="cb313-2"><a href="7-2-descent-direction-algorithms.html#cb313-2"></a>  p[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>p[<span class="dv">2</span>]</span>
+<span id="cb313-3"><a href="7-2-descent-direction-algorithms.html#cb313-3"></a>  <span class="kw">matrix</span>(</span>
+<span id="cb313-4"><a href="7-2-descent-direction-algorithms.html#cb313-4"></a>    <span class="kw">c</span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>],             <span class="dv">0</span>, </span>
+<span id="cb313-5"><a href="7-2-descent-direction-algorithms.html#cb313-5"></a>      <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>],             <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>], </span>
+<span id="cb313-6"><a href="7-2-descent-direction-algorithms.html#cb313-6"></a>      <span class="dv">2</span><span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>] <span class="op">-</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>],  <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">1</span>],</span>
+<span id="cb313-7"><a href="7-2-descent-direction-algorithms.html#cb313-7"></a>      <span class="dv">0</span>,                    <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>],         </span>
+<span id="cb313-8"><a href="7-2-descent-direction-algorithms.html#cb313-8"></a>      <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>],            <span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>] <span class="op">-</span><span class="st"> </span><span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">2</span>], </span>
+<span id="cb313-9"><a href="7-2-descent-direction-algorithms.html#cb313-9"></a>      <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>],           <span class="dv">-2</span> <span class="op">*</span><span class="st"> </span>p[<span class="dv">3</span>]),</span>
+<span id="cb313-10"><a href="7-2-descent-direction-algorithms.html#cb313-10"></a>    <span class="dt">ncol =</span> <span class="dv">2</span>, <span class="dt">nrow =</span> <span class="dv">6</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb313-11"><a href="7-2-descent-direction-algorithms.html#cb313-11"></a>}</span></code></pre></div>
 <p>We can then use the conjugate gradient algorithm to compute the
 maximum-likelihood estimate.</p>
-<div class="sourceCode" id="cb313"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb313-1"><a href="7-2-descent-direction-algorithms.html#cb313-1"></a><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), loglik, grad_loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </span>
-<span id="cb313-2"><a href="7-2-descent-direction-algorithms.html#cb313-2"></a>      <span class="dt">prob =</span> prob, <span class="dt">Dprob =</span> Dprob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>), </span>
-<span id="cb313-3"><a href="7-2-descent-direction-algorithms.html#cb313-3"></a>      <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb314"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb314-1"><a href="7-2-descent-direction-algorithms.html#cb314-1"></a><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), loglik, grad_loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </span>
+<span id="cb314-2"><a href="7-2-descent-direction-algorithms.html#cb314-2"></a>      <span class="dt">prob =</span> prob, <span class="dt">Dprob =</span> Dprob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>), </span>
+<span id="cb314-3"><a href="7-2-descent-direction-algorithms.html#cb314-3"></a>      <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>)</span></code></pre></div>
 <pre><code>## $par
 ## [1] 0.07083691 0.18873652
 ## 
@@ -784,9 +807,9 @@ approach to implement the gradient above. The gradient could then
 be used for other optimization algorithms, still using <code>optim</code>, such as
 conjugate gradient. In fact, you can use conjugate gradient without
 computing and implementing the gradient.</p>
-<div class="sourceCode" id="cb315"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb315-1"><a href="7-2-descent-direction-algorithms.html#cb315-1"></a><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </span>
-<span id="cb315-2"><a href="7-2-descent-direction-algorithms.html#cb315-2"></a>      <span class="dt">prob =</span> prob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>), </span>
-<span id="cb315-3"><a href="7-2-descent-direction-algorithms.html#cb315-3"></a>      <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb316"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb316-1"><a href="7-2-descent-direction-algorithms.html#cb316-1"></a><span class="kw">optim</span>(<span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.3</span>), loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </span>
+<span id="cb316-2"><a href="7-2-descent-direction-algorithms.html#cb316-2"></a>      <span class="dt">prob =</span> prob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>), </span>
+<span id="cb316-3"><a href="7-2-descent-direction-algorithms.html#cb316-3"></a>      <span class="dt">method =</span> <span class="st">&quot;CG&quot;</span>)</span></code></pre></div>
 <pre><code>## $par
 ## [1] 0.07084109 0.18873718
 ## 
@@ -802,17 +825,17 @@ computing and implementing the gradient.</p>
 ## 
 ## $message
 ## NULL</code></pre>
-<p>If we don’t implement a gradient, a numerical gradient is
-used by <code>optim</code>. This can very well result in a slower algorithm than if the
+<p>If we do not implement a gradient, a numerical gradient is
+used by <code>optim()</code>. This can result in a slower algorithm than if the
 gradient is implemented, but more seriously, in can result in convergence
 problems. This is because there is a subtle tradeoff between numerical
 accuracy and accuracy of the finite difference approximation used to
-approximate the gradient. We didn’t
+approximate the gradient. We did not
 experience convergence problems in the example above, but one way to remedy such problems
 is to set the <code>parscale</code> or <code>fnscale</code> entries in the <code>control</code>
-list argument to <code>optim</code>.</p>
+list argument to <code>optim()</code>.</p>
 <p>In the following chapter the peppered moth example is used to illustrate
-the EM algorithm. It is important to understand that the EM algorithm doesn’t
+the EM algorithm. It is important to understand that the EM algorithm does not
 rely on the ability to compute the likelihood or the gradient of the
 likelihood for that matter. In many real applications
 of the EM algorithm the computation of the likelihood is challenging or even
@@ -832,7 +855,7 @@ applicable.</p>
         </div>
       </div>
 <a href="7-1-algorithms-and-convergence.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="7-3-newton-type-algorithms.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="7-3-Newton.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>

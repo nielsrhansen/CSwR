@@ -4,11 +4,11 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>8.3 Fisher information | Computational Statistics with R</title>
+  <title>7.3 Newton-type algorithms | Computational Statistics with R</title>
   <meta name="description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   <meta name="generator" content="bookdown 0.20 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="8.3 Fisher information | Computational Statistics with R" />
+  <meta property="og:title" content="7.3 Newton-type algorithms | Computational Statistics with R" />
   <meta property="og:type" content="book" />
   
   
@@ -16,7 +16,7 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="8.3 Fisher information | Computational Statistics with R" />
+  <meta name="twitter:title" content="7.3 Newton-type algorithms | Computational Statistics with R" />
   
   <meta name="twitter:description" content="Lecture notes providing an introduction to computational statistics using the R programming language." />
   
@@ -30,8 +30,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="8-2-EM-exp.html"/>
-<link rel="next" href="8-4-revisiting-gaussian-mixtures.html"/>
+<link rel="prev" href="7-2-descent-direction-algorithms.html"/>
+<link rel="next" href="7-4-misc-.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
@@ -333,194 +333,245 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="fisher-information" class="section level2">
-<h2><span class="header-section-number">8.3</span> Fisher information</h2>
-<p>For statistics relying on classical asymptotic theory
-we need an estimate of the Fisher information, e.g. the observed Fisher information
-(Hessian of the negative log-likelihood for the observed data). For numerical
-optimization of <span class="math inline">\(Q\)</span> or variants
-of the EM algorithm (like EM gradient or acceleration methods) the gradient and Hessian of <span class="math inline">\(Q\)</span>
-can be useful. However, these do not directly inform us on the Fisher information.
-In this section we show some interesting and useful relations between
-the derivatives of the log-likelihood for the observed data and derivatives of
-<span class="math inline">\(Q\)</span> with the primary purpose of estimating the Fisher information.</p>
-<p>First we look at the peppered moth example, where we note that with <span class="math inline">\(p = p(\theta)\)</span>
-being some parametrization of the cell probabilities,
-<span class="math display">\[Q(\theta \mid \theta&#39;) = \sum_{k=1}^K \frac{x_{j(k)} p_k(\theta&#39;)}{M(p(\theta&#39;))_{j(k)}} \log p_k(\theta),\]</span>
-where <span class="math inline">\(j(k)\)</span> is defined by <span class="math inline">\(k \in A_{j(k)}\)</span>. The gradient of <span class="math inline">\(Q\)</span> w.r.t.
-<span class="math inline">\(\theta\)</span> is therefore</p>
-<p><span class="math display">\[\nabla_{\theta} Q(\theta \mid \theta&#39;) = 
-\sum_{k = 1}^K \frac{x_{j(k)} p_k(\theta&#39;)}{M(p(\theta&#39;))_{j(k)} p_k(\theta)} \nabla_{\theta} p_k(\theta&#39;).\]</span></p>
-<p>We recognize from previous computations in Section <a href="7-2-descent-direction-algorithms.html#pep-moth-descent">7.2.4</a>
-that when we evaluate <span class="math inline">\(\nabla_{\theta} Q(\theta \mid \theta&#39;)\)</span> in <span class="math inline">\(\theta = \theta&#39;\)</span>
-we get</p>
-<p><span class="math display">\[\nabla_{\theta} Q(\theta&#39; \mid \theta&#39;) = \sum_{i = 1}^K \frac{x_{j(i)} }{M(p(\theta&#39;))_{j(i)}} \nabla_{\theta} p_i(\theta&#39;) = \nabla_{\theta} \ell(\theta&#39;),\]</span></p>
-<p>thus the gradient of <span class="math inline">\(\ell\)</span> in <span class="math inline">\(\theta&#39;\)</span> is actually
-identical to the gradient of <span class="math inline">\(Q(\cdot \mid \theta&#39;)\)</span> in <span class="math inline">\(\theta&#39;\)</span>. This
-is not a coincidence, and it holds generally that
-<span class="math display">\[\nabla_{\theta} Q(\theta&#39; \mid \theta&#39;) = \nabla_{\theta} \ell(\theta&#39;).\]</span>
-This follows from the fact we derived in the proof of Theorem <a href="8-1-basic-properties.html#thm:EM-inequality">8.1</a>
-that <span class="math inline">\(\theta&#39;\)</span> minimizes</p>
-<p><span class="math display">\[\theta \mapsto \ell(\theta) - Q(\theta \mid \theta&#39;).\]</span></p>
-<p>Another way to phrase this is that the minorant of <span class="math inline">\(\ell(\theta)\)</span> touches
-<span class="math inline">\(\ell\)</span> tangentially in <span class="math inline">\(\theta&#39;\)</span>.</p>
-<p>In the case where the observation <span class="math inline">\(\mathbf{y}\)</span> consists of <span class="math inline">\(n\)</span> i.i.d. observations
-from the model with parameter <span class="math inline">\(\theta_0\)</span>, <span class="math inline">\(\ell\)</span> as well as <span class="math inline">\(Q(\cdot \mid \theta&#39;)\)</span> are sums of terms for which
-the gradient identity above holds for each term. In particular,
-<span class="math display">\[\nabla_{\theta} \ell(\theta_0) = \sum_{i=1}^n \nabla_{\theta} \ell_i(\theta_0) = \sum_{i=1}^n \nabla_{\theta} Q_i(\theta_0 \mid \theta_0),\]</span>
-and using the second Bartlett identity</p>
-<p><span class="math display">\[\mathcal{I}(\theta_0) = V_{\theta_0}(\nabla_{\theta} \ell(\theta_0))\]</span></p>
-<p>we see that</p>
-<p><span class="math display">\[\hat{\mathcal{I}}(\theta_0) =  \sum_{i=1}^n \big(\nabla_{\theta} Q_i(\theta_0 \mid \theta_0) - n^{-1} \nabla_{\theta} \ell(\theta_0)\big)\big(\nabla_{\theta} Q_i(\theta_0 \mid \theta_0) - n^{-1} \nabla_{\theta} \ell(\theta_0)\big)^T\]</span></p>
-<p>is almost an unbiased estimator of the
-Fisher information. It does have mean <span class="math inline">\(\mathcal{I}(\theta_0)\)</span>, but it is not an
-estimator as <span class="math inline">\(\theta_0\)</span> is not known. Using a plug-in-estimator,
-<span class="math inline">\(\hat{\theta}\)</span>, of <span class="math inline">\(\theta_0\)</span> we get a real estimator</p>
-<p><span class="math display">\[\hat{\mathcal{I}} = \hat{\mathcal{I}}(\hat{\theta}) =  \sum_{i=1}^n \big(\nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) - n^{-1} \nabla_{\theta} \ell(\hat{\theta})\big)\big(\nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) - n^{-1} \nabla_{\theta} \ell(\hat{\theta})\big)^T,\]</span></p>
-<p>though <span class="math inline">\(\hat{\mathcal{I}}\)</span> will no longer necessarily be unbiased.</p>
-<p>We refer to <span class="math inline">\(\hat{\mathcal{I}}\)</span> as the <em>empirical Fisher information</em> given by
-the estimator <span class="math inline">\(\hat{\theta}\)</span>. In most cases, <span class="math inline">\(\hat{\theta}\)</span> is the maximum-likelihood
-estimator, in which case <span class="math inline">\(\nabla_{\theta} \ell(\hat{\theta}) = 0\)</span> and the empirical
-Fisher information simplifies to
-<span class="math display">\[\hat{\mathcal{I}} = \sum_{i=1}^n \nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) \nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta})^T.\]</span>
-However, <span class="math inline">\(\nabla_{\theta} \ell(\hat{\theta})\)</span> is in practice only approximately
-equal to zero, and it is unclear if it should be dropped.</p>
-<p>For the peppered moths, where data is collected as i.i.d. samples of <span class="math inline">\(n\)</span>
-individual specimens and tabulated according to phenotype, we implement
-the empirical Fisher information with the optional possibility of centering
-the gradients before computing the information estimate. We note that only
-three different observations of phenotype are possible, giving rise to
-three different possible terms in the sum. The implementation
-works directly on the tabulated data by computing all the three possible
-terms and then forming a weighted sum according to the number of times each
-term is present.</p>
-<div class="sourceCode" id="cb357"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb357-1"><a href="8-3-fisher-information.html#cb357-1"></a>empFisher &lt;-<span class="st"> </span><span class="cf">function</span>(par, x, grad, <span class="dt">center =</span> <span class="ot">FALSE</span>) {</span>
-<span id="cb357-2"><a href="8-3-fisher-information.html#cb357-2"></a>  grad_MLE &lt;-<span class="st"> </span><span class="dv">0</span> <span class="co">## is supposed to be 0 in the MLE</span></span>
-<span id="cb357-3"><a href="8-3-fisher-information.html#cb357-3"></a>  <span class="cf">if</span> (center) </span>
-<span id="cb357-4"><a href="8-3-fisher-information.html#cb357-4"></a>     grad_MLE &lt;-<span class="st">  </span><span class="kw">grad</span>(par, x) <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(x)</span>
-<span id="cb357-5"><a href="8-3-fisher-information.html#cb357-5"></a>   grad1 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</span>
-<span id="cb357-6"><a href="8-3-fisher-information.html#cb357-6"></a>   grad2 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</span>
-<span id="cb357-7"><a href="8-3-fisher-information.html#cb357-7"></a>   grad3 &lt;-<span class="st"> </span><span class="kw">grad</span>(par, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>)) <span class="op">-</span><span class="st"> </span>grad_MLE</span>
-<span id="cb357-8"><a href="8-3-fisher-information.html#cb357-8"></a>   x[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad1) <span class="op">%*%</span><span class="st"> </span>grad1 <span class="op">+</span><span class="st"> </span></span>
-<span id="cb357-9"><a href="8-3-fisher-information.html#cb357-9"></a><span class="st">     </span>x[<span class="dv">2</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad2) <span class="op">%*%</span><span class="st"> </span>grad2 <span class="op">+</span><span class="st"> </span></span>
-<span id="cb357-10"><a href="8-3-fisher-information.html#cb357-10"></a><span class="st">     </span>x[<span class="dv">3</span>] <span class="op">*</span><span class="st"> </span><span class="kw">t</span>(grad3) <span class="op">%*%</span><span class="st"> </span>grad3 </span>
-<span id="cb357-11"><a href="8-3-fisher-information.html#cb357-11"></a>}</span></code></pre></div>
-<p>We test the implementation with and without centering and compare
-the result to a numerically computed hessian using <code>optimHess</code> (it is
-possible to get <code>optim</code> to compute the Hessian numerically in the minimizer
-as a final step, but <code>optimHess</code> does this computation separately).</p>
-<div class="sourceCode" id="cb358"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb358-1"><a href="8-3-fisher-information.html#cb358-1"></a><span class="co">## The gradient of Q (equivalently the log-likelihood) was </span></span>
-<span id="cb358-2"><a href="8-3-fisher-information.html#cb358-2"></a><span class="co">## implemented earlier as &#39;grad_loglik&#39;.</span></span>
-<span id="cb358-3"><a href="8-3-fisher-information.html#cb358-3"></a>grad &lt;-<span class="st"> </span><span class="cf">function</span>(par, x) <span class="kw">grad_loglik</span>(par, x, prob, Dprob, <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span>
-<span id="cb358-4"><a href="8-3-fisher-information.html#cb358-4"></a><span class="kw">empFisher</span>(phat, <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), grad)</span></code></pre></div>
-<pre><code>##           [,1]     [,2]
-## [1,] 18487.558 1384.626
-## [2,]  1384.626 6816.612</code></pre>
-<div class="sourceCode" id="cb360"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb360-1"><a href="8-3-fisher-information.html#cb360-1"></a><span class="kw">empFisher</span>(phat, <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), grad, <span class="dt">center =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
-<pre><code>##           [,1]     [,2]
-## [1,] 18487.558 1384.626
-## [2,]  1384.626 6816.612</code></pre>
-<div class="sourceCode" id="cb362"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb362-1"><a href="8-3-fisher-information.html#cb362-1"></a><span class="kw">optimHess</span>(phat, loglik, grad_loglik, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), </span>
-<span id="cb362-2"><a href="8-3-fisher-information.html#cb362-2"></a>          <span class="dt">prob =</span> prob, <span class="dt">Dprob =</span> Dprob, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span></code></pre></div>
-<pre><code>##           [,1]     [,2]
-## [1,] 18490.938 1384.629
-## [2,]  1384.629 6816.769</code></pre>
-<p>Note that the numerically computed Hessian (the <em>observed</em> Fisher information)
-and the empirical Fisher information are different
-estimates of the same quantity. Thus they are <em>not</em> supposed to be identical on
-a given data set, but they are supposed to be estimates of the same thing
-and thus to be similar.</p>
-<p>An alternative to the empirical Fisher information or a direct computation of
-the observed Fisher information is supplemented EM (SEM). This is a general method
-for computing the observed Fisher
-information that relies only on EM steps and a numerical differentiation scheme.
-Define the EM map <span class="math inline">\(\Phi : \Theta \mapsto \Theta\)</span> by</p>
-<p><span class="math display">\[\Phi(\theta&#39;) = \textrm{arg max}_{\theta} \ Q(\theta \mid \theta&#39;).\]</span></p>
-<p>A global maximum of the likelihood is a fixed point of <span class="math inline">\(\Phi\)</span>, and the
-EM algorithm searches for a fixed point for <span class="math inline">\(\Phi\)</span>, that is, a solution to</p>
-<p><span class="math display">\[\Phi(\theta) = \theta.\]</span></p>
-<p>Variations of the EM-algorithm can often be seen as other ways to
-find a fixed point for <span class="math inline">\(\Phi\)</span>. From
-<span class="math display">\[\ell(\theta) = Q(\theta \mid \theta&#39;) + H(\theta \mid \theta&#39;)\]</span>
-it follows that the observed Fisher information equals</p>
-<p><span class="math display">\[\hat{i}_X := - D^2_{\theta} \ell(\hat{\theta}) = 
-\underbrace{-D^2_{\theta} Q(\hat{\theta} \mid \theta&#39;)}_{= \hat{i}_Y(\theta&#39;)} - D
-\underbrace{^2_{\theta} H(\hat{\theta} \mid \theta&#39;)}_{= \hat{i}_{Y \mid X}(\theta&#39;)}.\]</span></p>
-<p>It is possible to compute <span class="math inline">\(\hat{i}_Y := \hat{i}_Y(\hat{\theta})\)</span>.
-For peppered moths (and exponential families)
-it is as difficult as computing the Fisher information for complete observations.</p>
-<p>We want to compute <span class="math inline">\(\hat{i}_X\)</span> but <span class="math inline">\(\hat{i}_{Y \mid X} := \hat{i}_{Y \mid X}(\hat{\theta})\)</span>
-is not computable either. It can, however, be shown that</p>
-<p><span class="math display">\[D_{\theta} \Phi(\hat{\theta})^T = \hat{i}_{Y\mid X} \left(\hat{i}_Y\right)^{-1}.\]</span></p>
-<p>Hence
-<span class="math display">\[\begin{align}
-\hat{i}_X &amp; = \left(I - \hat{i}_{Y\mid X} \left(\hat{i}_Y\right)^{-1}\right) \hat{i}_Y \\
-&amp; = \left(I - D_{\theta} \Phi(\hat{\theta})^T\right) \hat{i}_Y.
-\end{align}\]</span></p>
-<p>Though the EM map <span class="math inline">\(\Phi\)</span> might not have a simple analytic expression,
-its Jacobian, <span class="math inline">\(D_{\theta} \Phi(\hat{\theta})\)</span>, can be computed via numerical
-differentiation once we have implemented <span class="math inline">\(\Phi\)</span>. We also need the
-hessian of the map <span class="math inline">\(Q\)</span>, which we implement as an R function as well.</p>
-<div class="sourceCode" id="cb364"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb364-1"><a href="8-3-fisher-information.html#cb364-1"></a>Q &lt;-<span class="st"> </span><span class="cf">function</span>(p, pp, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>), group) {</span>
-<span id="cb364-2"><a href="8-3-fisher-information.html#cb364-2"></a>  p[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>p[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>p[<span class="dv">2</span>]</span>
-<span id="cb364-3"><a href="8-3-fisher-information.html#cb364-3"></a>  pp[<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>pp[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>pp[<span class="dv">2</span>]</span>
-<span id="cb364-4"><a href="8-3-fisher-information.html#cb364-4"></a>  <span class="op">-</span><span class="st"> </span>(x[group] <span class="op">*</span><span class="st"> </span><span class="kw">prob</span>(pp) <span class="op">/</span><span class="st"> </span><span class="kw">M</span>(<span class="kw">prob</span>(pp), group)[group]) <span class="op">%*%</span><span class="st"> </span><span class="kw">log</span>(<span class="kw">prob</span>(p))</span>
-<span id="cb364-5"><a href="8-3-fisher-information.html#cb364-5"></a>}</span></code></pre></div>
-<p>The R package numDeriv contains functions that compute numerical derivatives.</p>
-<div class="sourceCode" id="cb365"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb365-1"><a href="8-3-fisher-information.html#cb365-1"></a><span class="kw">library</span>(numDeriv)</span></code></pre></div>
-<p>The Hessian of <span class="math inline">\(Q\)</span> can be computed using this package.</p>
-<div class="sourceCode" id="cb366"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb366-1"><a href="8-3-fisher-information.html#cb366-1"></a>iY &lt;-<span class="st"> </span><span class="kw">hessian</span>(Q, phat, <span class="dt">pp =</span> phat, <span class="dt">group =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span></code></pre></div>
-<p>Supplemented EM can then be implemented by computing the Jacobian of
-<span class="math inline">\(\Phi\)</span> using numDeriv as well.</p>
-<div class="sourceCode" id="cb367"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb367-1"><a href="8-3-fisher-information.html#cb367-1"></a>Phi &lt;-<span class="st"> </span><span class="cf">function</span>(pp) <span class="kw">MStep</span>(<span class="kw">EStep</span>(pp, <span class="dt">x =</span> <span class="kw">c</span>(<span class="dv">85</span>, <span class="dv">196</span>, <span class="dv">341</span>)))</span>
-<span id="cb367-2"><a href="8-3-fisher-information.html#cb367-2"></a>DPhi &lt;-<span class="st"> </span><span class="kw">jacobian</span>(Phi, phat)  <span class="co">## Using numDeriv function &#39;jacobian&#39;</span></span>
-<span id="cb367-3"><a href="8-3-fisher-information.html#cb367-3"></a>iX &lt;-<span class="st"> </span>(<span class="kw">diag</span>(<span class="dv">1</span>, <span class="dv">2</span>) <span class="op">-</span><span class="st"> </span><span class="kw">t</span>(DPhi)) <span class="op">%*%</span><span class="st"> </span>iY</span>
-<span id="cb367-4"><a href="8-3-fisher-information.html#cb367-4"></a>iX</span></code></pre></div>
-<pre><code>##           [,1]     [,2]
-## [1,] 18487.558 1384.626
-## [2,]  1384.626 6816.612</code></pre>
-<p>For statistics, we actually need the inverse Fisher information, which can
-be computed by inverting <span class="math inline">\(\hat{i}_X\)</span>, but we also have the following
-interesting identity</p>
-<p><span class="math display">\[\begin{align}
-\hat{i}_X^{-1} &amp; = \hat{i}_Y^{-1} \left(I - D_{\theta} \Phi(\hat{\theta})^T\right)^{-1} \\
- &amp; = \hat{i}_Y^{-1} \left(I + \sum_{n=1}^{\infty} \left(D_{\theta} \Phi(\hat{\theta})^T\right)^n \right) \\
- &amp; = \hat{i}_Y^{-1} + \hat{i}_Y^{-1} D_{\theta} \Phi(\hat{\theta})^T \left(I - D_{\theta} \Phi(\hat{\theta})^T\right)^{-1}
-\end{align}\]</span></p>
-<p>where the second identity follows by the
-<a href="https://en.wikipedia.org/wiki/Neumann_series">Neumann series</a>.</p>
-<p>The last formula above explicitly gives the asymptotic variance for the incomplete
-observation <span class="math inline">\(X\)</span> as the asymptotic variance for the complete observation <span class="math inline">\(Y\)</span> plus
-a correction term.</p>
-<div class="sourceCode" id="cb369"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb369-1"><a href="8-3-fisher-information.html#cb369-1"></a>iYinv &lt;-<span class="st"> </span><span class="kw">solve</span>(iY)</span>
-<span id="cb369-2"><a href="8-3-fisher-information.html#cb369-2"></a>iYinv <span class="op">+</span><span class="st"> </span>iYinv <span class="op">%*%</span><span class="st"> </span><span class="kw">t</span>(<span class="kw">solve</span>(<span class="kw">diag</span>(<span class="dv">1</span>, <span class="dv">2</span>) <span class="op">-</span><span class="st"> </span>DPhi, DPhi))</span></code></pre></div>
-<pre><code>##               [,1]          [,2]
-## [1,]  5.492602e-05 -1.115686e-05
-## [2,] -1.115686e-05  1.489667e-04</code></pre>
-<div class="sourceCode" id="cb371"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb371-1"><a href="8-3-fisher-information.html#cb371-1"></a><span class="kw">solve</span>(iX) <span class="co">## SEM-based, but different use of inversion</span></span></code></pre></div>
-<pre><code>##               [,1]          [,2]
-## [1,]  5.492602e-05 -1.115686e-05
-## [2,] -1.115686e-05  1.489667e-04</code></pre>
-<p>The SEM implementation above relies on the <code>hessian</code> and <code>jacobian</code> functions from the
-numDeriv package for numerical differentiation.</p>
-<p>It is possible to implement the computation of the hessian of <span class="math inline">\(Q\)</span> analytically
-for the peppered moths, but to illustrate functionality of the numDeriv package
-we implemented the computation numerically above.</p>
-<p>Variants on the strategy for computing <span class="math inline">\(D_{\theta} \Phi(\hat{\theta})\)</span> via
-numerical differentiation have been suggested in the literature, specifically
-using difference quotient approximations along the
-sequence of EM steps. This is not going to work as well as standard numerical
-differentiation since this method ignores numerical errors, and when the algorithm
-gets sufficiently close to the MLE, the numerical errors will dominate in
-the difference quotients.</p>
+<div id="Newton" class="section level2">
+<h2><span class="header-section-number">7.3</span> Newton-type algorithms</h2>
+<p>The Newton algorithm is very similar to gradient descent
+except that the gradient descent direction is replaced by
+<span class="math display">\[\rho_n = - D^2 H(\theta_n)^{-1} \nabla H(\theta_n).\]</span></p>
+<p>The Newton algorithm is typically much more efficient than gradient
+descent and will converge in few iterations. However, the storage of the
+<span class="math inline">\(p \times p\)</span> Hessian, its computation, and the solution of the equation
+to compute <span class="math inline">\(\rho_n\)</span> all scale like <span class="math inline">\(p^2\)</span> and this can make the algorithm useless
+for very large <span class="math inline">\(p\)</span>.</p>
+<p>A variety of alternatives to the Newton algorithm exist that replace
+the Hessian by another matrix that can be easier to compute and update.
+It should be noted that if we choose a matrix <span class="math inline">\(B_n\)</span> in the <span class="math inline">\(n\)</span>-th
+iteration, then <span class="math inline">\(- B_n \nabla H(\theta_n)\)</span>
+is a descent direction whenever <span class="math inline">\(B_n\)</span> is a positive definite matrix.</p>
+<p>Newton implementation (with trace).</p>
+<div class="sourceCode" id="cb318"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb318-1"><a href="7-3-Newton.html#cb318-1"></a>Newton &lt;-<span class="st"> </span><span class="cf">function</span>(</span>
+<span id="cb318-2"><a href="7-3-Newton.html#cb318-2"></a>  par, </span>
+<span id="cb318-3"><a href="7-3-Newton.html#cb318-3"></a>  H,</span>
+<span id="cb318-4"><a href="7-3-Newton.html#cb318-4"></a>  gr,</span>
+<span id="cb318-5"><a href="7-3-Newton.html#cb318-5"></a>  hess,</span>
+<span id="cb318-6"><a href="7-3-Newton.html#cb318-6"></a>  <span class="dt">d =</span> <span class="fl">0.8</span>, </span>
+<span id="cb318-7"><a href="7-3-Newton.html#cb318-7"></a>  <span class="dt">c =</span> <span class="fl">0.1</span>, </span>
+<span id="cb318-8"><a href="7-3-Newton.html#cb318-8"></a>  <span class="dt">gamma0 =</span> <span class="dv">1</span>, </span>
+<span id="cb318-9"><a href="7-3-Newton.html#cb318-9"></a>  <span class="dt">epsilon =</span> <span class="fl">1e-10</span>, </span>
+<span id="cb318-10"><a href="7-3-Newton.html#cb318-10"></a>  <span class="dt">maxit =</span> <span class="dv">50</span>,</span>
+<span id="cb318-11"><a href="7-3-Newton.html#cb318-11"></a>  <span class="dt">cb =</span> <span class="ot">NULL</span></span>
+<span id="cb318-12"><a href="7-3-Newton.html#cb318-12"></a>) {</span>
+<span id="cb318-13"><a href="7-3-Newton.html#cb318-13"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>maxit) {</span>
+<span id="cb318-14"><a href="7-3-Newton.html#cb318-14"></a>    value &lt;-<span class="st"> </span><span class="kw">H</span>(par)</span>
+<span id="cb318-15"><a href="7-3-Newton.html#cb318-15"></a>    grad &lt;-<span class="st"> </span><span class="kw">gr</span>(par)</span>
+<span id="cb318-16"><a href="7-3-Newton.html#cb318-16"></a>    <span class="cf">if</span>(<span class="op">!</span><span class="kw">is.null</span>(cb)) <span class="kw">cb</span>()</span>
+<span id="cb318-17"><a href="7-3-Newton.html#cb318-17"></a>    <span class="cf">if</span>(<span class="kw">sum</span>(grad<span class="op">^</span><span class="dv">2</span>) <span class="op">&lt;=</span><span class="st"> </span>epsilon) <span class="cf">break</span></span>
+<span id="cb318-18"><a href="7-3-Newton.html#cb318-18"></a>    Hessian &lt;-<span class="st"> </span><span class="kw">hess</span>(par) </span>
+<span id="cb318-19"><a href="7-3-Newton.html#cb318-19"></a>    rho &lt;-<span class="st"> </span><span class="op">-</span><span class="st"> </span><span class="kw">drop</span>(<span class="kw">solve</span>(Hessian, grad)) </span>
+<span id="cb318-20"><a href="7-3-Newton.html#cb318-20"></a>    gamma &lt;-<span class="st"> </span>gamma0</span>
+<span id="cb318-21"><a href="7-3-Newton.html#cb318-21"></a>    par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</span>
+<span id="cb318-22"><a href="7-3-Newton.html#cb318-22"></a>    h_prime &lt;-<span class="st"> </span><span class="kw">t</span>(grad) <span class="op">%*%</span><span class="st"> </span>rho </span>
+<span id="cb318-23"><a href="7-3-Newton.html#cb318-23"></a>    <span class="cf">while</span>(<span class="kw">H</span>(par1) <span class="op">&gt;</span><span class="st"> </span>value <span class="op">+</span><span class="st">  </span>c <span class="op">*</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>h_prime) { </span>
+<span id="cb318-24"><a href="7-3-Newton.html#cb318-24"></a>      gamma &lt;-<span class="st"> </span>d <span class="op">*</span><span class="st"> </span>gamma </span>
+<span id="cb318-25"><a href="7-3-Newton.html#cb318-25"></a>      par1 &lt;-<span class="st"> </span>par <span class="op">+</span><span class="st"> </span>gamma <span class="op">*</span><span class="st"> </span>rho</span>
+<span id="cb318-26"><a href="7-3-Newton.html#cb318-26"></a>    }</span>
+<span id="cb318-27"><a href="7-3-Newton.html#cb318-27"></a>    par &lt;-<span class="st"> </span>par1 </span>
+<span id="cb318-28"><a href="7-3-Newton.html#cb318-28"></a>  }</span>
+<span id="cb318-29"><a href="7-3-Newton.html#cb318-29"></a>  <span class="cf">if</span>(i <span class="op">==</span><span class="st"> </span>maxit)</span>
+<span id="cb318-30"><a href="7-3-Newton.html#cb318-30"></a>    <span class="kw">warning</span>(<span class="st">&quot;Maximal number, &quot;</span>, maxit, <span class="st">&quot;, of iterations reached&quot;</span>)</span>
+<span id="cb318-31"><a href="7-3-Newton.html#cb318-31"></a>  par</span>
+<span id="cb318-32"><a href="7-3-Newton.html#cb318-32"></a>}</span></code></pre></div>
+<div id="poisson-regression" class="section level3">
+<h3><span class="header-section-number">7.3.1</span> Poisson regression</h3>
+<p>We use the implementation of the Hessian matrix.</p>
+<div class="sourceCode" id="cb319"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb319-1"><a href="7-3-Newton.html#cb319-1"></a>Newton_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">0</span>)</span>
+<span id="cb319-2"><a href="7-3-Newton.html#cb319-2"></a>pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(</span>
+<span id="cb319-3"><a href="7-3-Newton.html#cb319-3"></a>  veg_pois<span class="op">$</span>par, </span>
+<span id="cb319-4"><a href="7-3-Newton.html#cb319-4"></a>  veg_pois<span class="op">$</span>H, </span>
+<span id="cb319-5"><a href="7-3-Newton.html#cb319-5"></a>  veg_pois<span class="op">$</span>grad_H, </span>
+<span id="cb319-6"><a href="7-3-Newton.html#cb319-6"></a>  veg_pois<span class="op">$</span>Hessian_H, </span>
+<span id="cb319-7"><a href="7-3-Newton.html#cb319-7"></a>  <span class="dt">cb =</span> Newton_tracer<span class="op">$</span>tracer</span>
+<span id="cb319-8"><a href="7-3-Newton.html#cb319-8"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb320"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb320-1"><a href="7-3-Newton.html#cb320-1"></a><span class="kw">range</span>(pois_Newton <span class="op">-</span><span class="st"> </span><span class="kw">coefficients</span>(pois_model))</span></code></pre></div>
+<pre><code>## [1] -4.979266e-10  1.298776e-06</code></pre>
+<div class="sourceCode" id="cb322"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb322-1"><a href="7-3-Newton.html#cb322-1"></a><span class="kw">rbind</span>(</span>
+<span id="cb322-2"><a href="7-3-Newton.html#cb322-2"></a>  <span class="dt">pois_Newton =</span> veg_pois<span class="op">$</span><span class="kw">H</span>(pois_Newton),</span>
+<span id="cb322-3"><a href="7-3-Newton.html#cb322-3"></a>  <span class="dt">pois_glm =</span> veg_pois<span class="op">$</span><span class="kw">H</span>(<span class="kw">coefficients</span>(pois_model))</span>
+<span id="cb322-4"><a href="7-3-Newton.html#cb322-4"></a>)</span></code></pre></div>
+<pre><code>##                               [,1]
+## pois_Newton -128.58945047446991339
+## pois_glm    -128.58945047447093657</code></pre>
+<div class="sourceCode" id="cb324"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb324-1"><a href="7-3-Newton.html#cb324-1"></a><span class="kw">summary</span>(Newton_tracer)</span></code></pre></div>
+<pre><code>##         value       h_prime    gamma     .time
+## 1     1.00000            NA       NA 0.0000000
+## 2   -14.83270 -4.140563e+03 0.022518 0.2219832
+## 3   -64.81635 -4.029847e+02 0.262144 0.4208414
+## 4  -111.33647 -7.636275e+01 1.000000 0.6083847
+## 5  -124.24937 -2.104160e+01 1.000000 0.7919283
+## 6  -127.71116 -5.652483e+00 1.000000 0.9836466
+## 7  -128.49729 -1.332600e+00 1.000000 1.1579588
+## 8  -128.58733 -1.647034e-01 1.000000 1.3379428
+## 9  -128.58945 -4.159696e-03 1.000000 1.5120448
+## 10 -128.58945 -3.288913e-06 1.000000 1.6771430</code></pre>
+<p>The R function <code>glm.fit()</code> uses a Newton algorithm (without backtracking)
+and is about a factor five faster on this example.</p>
+<div class="sourceCode" id="cb326"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb326-1"><a href="7-3-Newton.html#cb326-1"></a>env_pois &lt;-<span class="st"> </span><span class="kw">environment</span>(veg_pois<span class="op">$</span>H)</span>
+<span id="cb326-2"><a href="7-3-Newton.html#cb326-2"></a><span class="kw">system.time</span>(<span class="kw">glm.fit</span>(env_pois<span class="op">$</span>X, env_pois<span class="op">$</span>y, <span class="dt">family =</span> <span class="kw">poisson</span>()))</span></code></pre></div>
+<pre><code>##    user  system elapsed 
+##   0.392   0.008   0.400</code></pre>
+<p>One should be careful when comparing run times for different optimization
+algorithms, but in this case they have achieved about the same precision
+with the faster <code>glm.fit()</code> that even obtained the smallest negative
+log-likelihood value of the two.</p>
+</div>
+<div id="quasi-newton-algorithms" class="section level3">
+<h3><span class="header-section-number">7.3.2</span> Quasi-Newton algorithms</h3>
+<p>We turn to other descent direction algorithms that are more efficient
+than gradient descent by choosing the descent direction in a more
+clever way but less computationally demanding than the Newton
+algorithm that requires the computation of the full Hessian in each
+iteration.</p>
+<p>We will only consider the application of the BFGS algorithm via the
+implementation in the R function <code>optim()</code>.</p>
+<div class="sourceCode" id="cb328"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb328-1"><a href="7-3-Newton.html#cb328-1"></a><span class="kw">system.time</span>(</span>
+<span id="cb328-2"><a href="7-3-Newton.html#cb328-2"></a>  pois_BFGS &lt;-<span class="st"> </span><span class="kw">optim</span>(</span>
+<span id="cb328-3"><a href="7-3-Newton.html#cb328-3"></a>    veg_pois<span class="op">$</span>par, </span>
+<span id="cb328-4"><a href="7-3-Newton.html#cb328-4"></a>    veg_pois<span class="op">$</span>H, </span>
+<span id="cb328-5"><a href="7-3-Newton.html#cb328-5"></a>    veg_pois<span class="op">$</span>grad_H, </span>
+<span id="cb328-6"><a href="7-3-Newton.html#cb328-6"></a>    <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, </span>
+<span id="cb328-7"><a href="7-3-Newton.html#cb328-7"></a>    <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)</span>
+<span id="cb328-8"><a href="7-3-Newton.html#cb328-8"></a>  )</span>
+<span id="cb328-9"><a href="7-3-Newton.html#cb328-9"></a>)</span></code></pre></div>
+<pre><code>##    user  system elapsed 
+##   0.322   0.001   0.324</code></pre>
+<div class="sourceCode" id="cb330"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb330-1"><a href="7-3-Newton.html#cb330-1"></a><span class="kw">range</span>(pois_BFGS<span class="op">$</span>par <span class="op">-</span><span class="st"> </span><span class="kw">coefficients</span>(pois_model))</span></code></pre></div>
+<pre><code>## [1] -0.00954968  0.08481093</code></pre>
+<div class="sourceCode" id="cb332"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb332-1"><a href="7-3-Newton.html#cb332-1"></a>pois_BFGS[<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;counts&quot;</span>)]</span></code></pre></div>
+<pre><code>## $value
+## [1] -128.5894
+## 
+## $counts
+## function gradient 
+##      158      148</code></pre>
+</div>
+<div id="sparsity" class="section level3">
+<h3><span class="header-section-number">7.3.3</span> Sparsity</h3>
+<p>One of the benefits of the implementations of <span class="math inline">\(H\)</span> and its derivatives
+as well as of the descent algorithms is that they can exploit sparsity
+of <span class="math inline">\(\mathbf{X}\)</span> almost for free. The implementations have not done that in
+previous computations, because <span class="math inline">\(\mathbf{X}\)</span> has been stored as a dense matrix. In
+reality, <span class="math inline">\(\mathbf{X}\)</span> is a very sparse matrix (the vast majority of the matrix
+entries are zero),
+and if we convert it into a sparse matrix, all the matrix-vector products
+will be more run time efficient. Sparse matrices are implemented in the
+R package Matrix.</p>
+<div class="sourceCode" id="cb334"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb334-1"><a href="7-3-Newton.html#cb334-1"></a><span class="kw">library</span>(Matrix)</span></code></pre></div>
+<div class="sourceCode" id="cb335"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb335-1"><a href="7-3-Newton.html#cb335-1"></a>env_pois<span class="op">$</span>X &lt;-<span class="st"> </span><span class="kw">Matrix</span>(env_pois<span class="op">$</span>X)</span>
+<span id="cb335-2"><a href="7-3-Newton.html#cb335-2"></a><span class="kw">class</span>(env_pois<span class="op">$</span>X)</span></code></pre></div>
+<pre><code>## [1] &quot;dgCMatrix&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;Matrix&quot;</code></pre>
+<p>Without changing any other code, we get an immediate
+run time improvement using e.g. <code>optim()</code> and the BFGS algorithm.</p>
+<div class="sourceCode" id="cb337"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb337-1"><a href="7-3-Newton.html#cb337-1"></a><span class="kw">system.time</span>(</span>
+<span id="cb337-2"><a href="7-3-Newton.html#cb337-2"></a>  pois_BFGS_sparse &lt;-<span class="st"> </span><span class="kw">optim</span>(</span>
+<span id="cb337-3"><a href="7-3-Newton.html#cb337-3"></a>    veg_pois<span class="op">$</span>par, </span>
+<span id="cb337-4"><a href="7-3-Newton.html#cb337-4"></a>    veg_pois<span class="op">$</span>H, </span>
+<span id="cb337-5"><a href="7-3-Newton.html#cb337-5"></a>    veg_pois<span class="op">$</span>grad_H, </span>
+<span id="cb337-6"><a href="7-3-Newton.html#cb337-6"></a>    <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>, </span>
+<span id="cb337-7"><a href="7-3-Newton.html#cb337-7"></a>    <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">maxit =</span> <span class="dv">10000</span>)</span>
+<span id="cb337-8"><a href="7-3-Newton.html#cb337-8"></a>  )</span>
+<span id="cb337-9"><a href="7-3-Newton.html#cb337-9"></a>)</span></code></pre></div>
+<pre><code>##    user  system elapsed 
+##   0.108   0.002   0.110</code></pre>
+<p>We should in real applications avoid constructing a dense intermediate
+model matrix as a step toward constructing a sparse model matrix. This
+is possible by constructing the sparse model matrix directly using
+a function from the R package MatrixModels. Ideally, we should reimplement
+<code>pois_model()</code> to support an option for using sparse matrices, but
+to focus on the run time benefits of sparse matrices, we simply
+change the matrix in the appropriate environment directly.</p>
+<div class="sourceCode" id="cb339"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb339-1"><a href="7-3-Newton.html#cb339-1"></a>env_pois<span class="op">$</span>X &lt;-<span class="st"> </span>MatrixModels<span class="op">::</span><span class="kw">model.Matrix</span>(</span>
+<span id="cb339-2"><a href="7-3-Newton.html#cb339-2"></a>  <span class="op">~</span><span class="st"> </span>store <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(normalSale) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, </span>
+<span id="cb339-3"><a href="7-3-Newton.html#cb339-3"></a>  <span class="dt">data =</span> vegetables, </span>
+<span id="cb339-4"><a href="7-3-Newton.html#cb339-4"></a>  <span class="dt">sparse =</span> <span class="ot">TRUE</span></span>
+<span id="cb339-5"><a href="7-3-Newton.html#cb339-5"></a>)</span>
+<span id="cb339-6"><a href="7-3-Newton.html#cb339-6"></a><span class="kw">class</span>(env_pois<span class="op">$</span>X)</span></code></pre></div>
+<pre><code>## [1] &quot;dsparseModelMatrix&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;MatrixModels&quot;</code></pre>
+<p>The Newton implementation benefits enormously from using sparse matrices
+because the bottleneck is the computation of the Hessian.</p>
+<div class="sourceCode" id="cb341"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb341-1"><a href="7-3-Newton.html#cb341-1"></a>Newton_tracer &lt;-<span class="st"> </span><span class="kw">tracer</span>(<span class="kw">c</span>(<span class="st">&quot;value&quot;</span>, <span class="st">&quot;h_prime&quot;</span>, <span class="st">&quot;gamma&quot;</span>), <span class="dt">N =</span> <span class="dv">0</span>)</span>
+<span id="cb341-2"><a href="7-3-Newton.html#cb341-2"></a>  pois_Newton &lt;-<span class="st"> </span><span class="kw">Newton</span>(</span>
+<span id="cb341-3"><a href="7-3-Newton.html#cb341-3"></a>  veg_pois<span class="op">$</span>par, </span>
+<span id="cb341-4"><a href="7-3-Newton.html#cb341-4"></a>  veg_pois<span class="op">$</span>H, </span>
+<span id="cb341-5"><a href="7-3-Newton.html#cb341-5"></a>  veg_pois<span class="op">$</span>grad_H, </span>
+<span id="cb341-6"><a href="7-3-Newton.html#cb341-6"></a>  veg_pois<span class="op">$</span>Hessian_H, </span>
+<span id="cb341-7"><a href="7-3-Newton.html#cb341-7"></a>  <span class="dt">cb =</span> Newton_tracer<span class="op">$</span>tracer</span>
+<span id="cb341-8"><a href="7-3-Newton.html#cb341-8"></a>)</span>
+<span id="cb341-9"><a href="7-3-Newton.html#cb341-9"></a><span class="kw">summary</span>(Newton_tracer)</span></code></pre></div>
+<pre><code>##         value       h_prime    gamma     .time
+## 1     1.00000            NA       NA 0.0000000
+## 2   -14.83270 -4.140563e+03 0.022518 0.2096308
+## 3   -64.81635 -4.029847e+02 0.262144 0.4291613
+## 4  -111.33647 -7.636275e+01 1.000000 0.6285711
+## 5  -124.24937 -2.104160e+01 1.000000 0.8204904
+## 6  -127.71116 -5.652483e+00 1.000000 1.0318102
+## 7  -128.49729 -1.332600e+00 1.000000 1.2248038
+## 8  -128.58733 -1.647034e-01 1.000000 1.4163189
+## 9  -128.58945 -4.159696e-03 1.000000 1.6071219
+## 10 -128.58945 -3.288913e-06 1.000000 1.8359039</code></pre>
+<p>To summarize the run times we have measured for the Poisson regression example,
+we found that the conjugate gradient algorithms took of the order of 10 seconds
+to converge. The Newton-type algorithms in this section were faster and took
+between 0.3 and 1.7 seconds to converge. The use of sparse matrices reduced the
+run time of the quasi-Newton algorithm BFGS by a factor 3, but it reduced the
+run time of the Newton algorithm by a factor 50 to about 0.03 seconds. One could
+be concerned that the construction of the sparse model matrix takes more time (which
+we did not measure), but if measured it turns out that for this example
+it takes about the same time to construct the dense model matrix as it takes to
+construct the sparse one.</p>
+<p>Run time efficiency is not the only argument for using sparse matrices as they are
+also more memory efficient. It is memory (and time) inefficient to use dense intermediates,
+and for truly large scale problems impossible. Using sparse model matrices
+for regression models allows us to work with larger models that have
+more variables, more factor levels and more observations than if we use dense
+model matrices. For the Poisson regression model the memory used by either representation can be found.</p>
+<div class="sourceCode" id="cb343"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb343-1"><a href="7-3-Newton.html#cb343-1"></a><span class="kw">object.size</span>(env_pois<span class="op">$</span>X)</span>
+<span id="cb343-2"><a href="7-3-Newton.html#cb343-2"></a><span class="kw">object.size</span>(<span class="kw">as.matrix</span>(env_pois<span class="op">$</span>X))</span></code></pre></div>
+<pre><code>## Sparse matrix memory usage:
+## 123440 bytes
+## Dense matrix memory usage:
+## 3103728 bytes</code></pre>
+<p>We see that the dense matrix uses around a factor 30 more memory than the
+sparse representation. In this case it means using around 3 MB for storing the
+dense matrix instead of around 100 kB, which won’t be a problem
+on a contemporary computer. However, going from using 3 GB for
+storing a matrix to using 100 Mb could be the difference between
+not being able to work with the matrix on a standard laptop to
+running the computations with no problems. Using <code>model.Matrix</code> makes
+it possible to construct sparse model matrices directly and avoid
+all dense intermediates.</p>
+<p>The function <code>glm4()</code> from the MatrixModels package for fitting regression models,
+can exploit sparse model matrices direction, and can
+thus be useful in cases where your model matrix becomes very large but sparse.
+There are two main applications where the model matrix becomes sparse.
+When you model the response using one or more factors, and possibly their
+interactions, the model matrix will become particularly sparse if
+the factors have many levels. Another case is when you model the response
+via basis expansions of quantitative predictors and use basis functions
+with local support. The B-splines form an important example of such a basis
+with local support that results in a sparse model matrix.</p>
+</div>
 </div>
             </section>
 
           </div>
         </div>
       </div>
-<a href="8-2-EM-exp.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="8-4-revisiting-gaussian-mixtures.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="7-2-descent-direction-algorithms.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="7-4-misc-.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>

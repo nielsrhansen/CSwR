@@ -54,8 +54,10 @@ function work well and require only the computation of gradients. It is, of cour
 paramount that $H$ and $\nabla H$ are correctly implemented, and 
 efficiency of the algorithms is largely determined by the efficiency of
 the implementation of $H$ and $\nabla H$ but also by the choice of parametrization. 
-Newton-type algorithms are available through `nlm` and `nls` but with different
-interfaces. 
+
+For some optimization problems, Newton-type algorithms are preferable, and standard 
+implementations are available in R through `nlm()` and `nls()` but with different 
+interfaces than `optim()`. 
 
 ## Algorithms and convergence
 
@@ -515,49 +517,30 @@ and $c = 0.1$ or even smaller are sensible choices. For some algorithms,
 like the Newton algorithm to be dealt with below, there is a natural 
 choice of $\gamma_0 = 1$. But for other algorithms a good choice depends 
 crucially on the scale of the parameters, and there is then no general 
-advice on choosing $\gamma_0$ that can be justified theoretically.
+advice on choosing $\gamma_0$.
 
 ### Gradient descent 
 
-We return to the Poisson regression example and implement functions 
-in R for computing the negative log-likelihood and its gradient.
-We exploit the `model.matrix` function to construct the model matrix 
-from the data via a formula. The sufficient statistic is 
-computed upfront, and the implementations use this vector
-and relies on linear algebra and vectorized computations. We 
-choose to normalize by the number of observations $n$ (the number
-of rows in the model matrix). This does have a small computational 
-cost, but the resulting numerical values become less dependent 
-upon $n$, which makes it easier to choose sensible default values 
-of various parameters for the numerical optimization algorithms.
-
-```{r implement, dependson="vegetables-data"}
-X <- model.matrix(sale ~ log(normalSale), data = vegetables)
-y <- vegetables$sale
-# The function drop() drops the dim attribute and turns, for instance,
-# a matrix with one column into a vector
-t_map <- drop(crossprod(X, y))  # More efficient than drop(t(X) %*% y)
-
-H <- function(beta) 
-  drop(sum(exp(X %*% beta)) - beta %*% t_map) / nrow(X)
-
-grad_H <- function(beta) 
-  (drop(crossprod(X, exp(X %*% beta))) - t_map) / nrow(X)
-```
-
-We implement a gradient descent algorithm with backtracking
-that uses the *squared* norm of the gradient as a stopping criterion. 
+We implement gradient descent with backtracking below as the function `GD()`. 
 For gradient descent, the sufficient descent condition amounts to 
 choosing the smallest $k \geq 0$ such that 
 
 $$H(\theta_{n} + d^k \gamma_0 \nabla H(\theta_{n})) \leq H(\theta_n) -  cd^k \gamma_0 \|\nabla H(\theta_{n})\|_2^2.$$
 
-We include a callback argument (the `cb` argument) in the implementation. 
+The `GD()` function takes the starting point, $\theta_0$, the objective function,
+$H$, and its gradient, $\nabla H$, as arguments. The four parameters $d$, $c$, $\gamma_0$ and 
+$\varepsilon$ that control the algorithm can also be specified as additional arguments, 
+but are given some reasonable default values. The implementation uses the *squared* norm of 
+the gradient as a stopping criterion, but it also has a maximal number of 
+iterations as a safeguard. Note that if the maximal number is reached, a 
+warning is printed.
+
+Finally, we include a callback argument (the `cb` argument).
 If a function is passed to this argument, it will be evaluated in each iteration
 of the algorithm. This gives us the possibility of logging or 
 printing values of variables during evaluation, which can be highly useful 
 for understanding the inner workings of the algorithm. Monitoring or logging 
-intermediate values during the evaluation of code is often referred to as 
+intermediate values during the evaluation of code is referred to as 
 *tracing*. 
 
 ```{r GD}
@@ -580,7 +563,7 @@ GD <- function(
     # Convergence criterion based on gradient norm
     if(h_prime <= epsilon) break
     gamma <- gamma0
-    # First proposed descent step
+    # Proposed descent step
     par1 <- par - gamma * grad
     # Backtracking while descent is insufficient
     while(H(par1) > value - c * gamma * h_prime) {
@@ -595,21 +578,68 @@ GD <- function(
 }
 ```
 
+
+We will use the Poisson regression example to illustrate the use of 
+gradient descent and other optimization algorithms, and we need to 
+implement functions in R for computing the negative log-likelihood and 
+its gradient.
+
+The implementation below uses a function factory to produce a 
+list containing a parameter vector, the negative log-likelihood function 
+and its gradient. We anticipate that for the Newton algorithm in Section 
+\@ref(Newton) we also need an implementation of the Hessian, which is 
+thus included here as well. 
+
+We will exploit the `model.matrix()` function to construct the model matrix 
+from the data via a formula, and the sufficient statistic is also
+computed. The implementations use linear algebra and vectorized computations
+relying on access to the model matrix and the sufficient statistics in 
+their enclosing environment.
+
+```{r Implement, dependson="vegetables-data"}
+poisson_model <- function(form, data, response) {
+  X <- model.matrix(form, data)
+  y <- data[[response]]
+  # The function drop() drops the dim attribute and turns, for instance,
+  # a matrix with one column into a vector
+  t_map <- drop(crossprod(X, y))  # More efficient than drop(t(X) %*% y)
+  n <- nrow(X)
+  p <- ncol(X)
+  
+  H <- function(beta) 
+    drop(sum(exp(X %*% beta)) - beta %*% t_map) /n
+  
+  grad_H <- function(beta) 
+    (drop(crossprod(X, exp(X %*% beta))) - t_map) / n
+  
+  Hessian_H <- function(beta)
+    crossprod(X, drop(exp(X %*% beta)) * X) / n
+  
+  list(par = rep(0, p), H = H, grad_H = grad_H, Hessian_H = Hessian_H)
+}
+```
+
+We choose to normalize the log-likelihood by the number of observations $n$ (the number
+of rows in the model matrix). This does have a small computational 
+cost, but the resulting numerical values become less dependent 
+upon $n$, which makes it easier to choose sensible default values 
+of various parameters for the numerical optimization algorithms.
 Gradient descent is very slow for the large Poisson model with individual 
 store effects, so we consider only the simple model with two parameters. 
 
-```{r GD-test, dependson=c("Implement", "GD")}
-pois_GD <- GD(rep(0, ncol(X)), H, grad_H)
+```{r veg-pois, dependson="vegetables-data"}
+veg_pois <- poisson_model(~ log(normalSale), vegetables, response = "sale")
+```
+
+```{r GD-test, dependson=c("veg-pois", "GD")}
+pois_GD <- GD(veg_pois$par, veg_pois$H, veg_pois$grad_H)
 ```
 
 The gradient descent implementation is tested by comparing the minimizer to
 the estimated parameters as computed by `glm()`.
 
-```{r GD-comp, dependson=c("GD-test", "pois-model-null"), echo=2:3, results='hold'}
-old_options = options(digits=10)
-as.numeric(coefficients(pois_model_null))  # as.numeric to strip names
-as.numeric(pois_GD)
-options(digits = old_options$digits)
+```{r GD-comp, dependson=c("GD-test", "pois-model-null"), results='hold'}
+rbind(pois_glm = coefficients(pois_model_null), pois_GD)
 ```
 
 We get the same result up to the first two decimals. The convergence 
@@ -620,21 +650,20 @@ implies that the algorithm stops when the gradient is so small that the changes
 are at most of norm $10^{-4}$. 
 
 Comparing the resulting values of the negative log-likelihood shows agreement
-up to the first five decimals, but we notice that the value for the 
-parameters fitted using `glm` is just slightly smaller. 
+up to the first five decimals, but we notice that the negative log-likelihood 
+for the parameters fitted using `glm()` is just slightly smaller. 
 
-```{r GD-object, dependson=c("Implement", "GD-test"), echo=2:3, results='hold'}
+```{r GD-object, dependson=c("veg-pois", "pois-model-null", "GD-test"), echo=2:3, results='hold'}
 old_options = options(digits = 15)
-H(coefficients(pois_model_null))
-H(pois_GD)
+veg_pois$H(coefficients(pois_model_null))
+veg_pois$H(pois_GD)
 options(digits = old_options$digits)
 ```
 
 To investigate what actually went on inside the gradient descent 
 algorithm we will use the callback argument to trace the internals 
-of a call to `GD()`. The `tracer()` function from the CSwR package 
-can be used to construct 
-a tracer object with a `tracer()` function that we can pass as the callback 
+of a call to `GD()`. The `tracer()` function from the [CSwR package](https://github.com/nielsrhansen/CSwR/tree/master/CSwR_package)
+can be used to construct a tracer object with a `tracer()` function that we can pass as the callback 
 argument.  The tracer object and its `tracer()` function work by storing 
 information in the enclosing environment of `tracer()`. When used as 
 the callback argument to e.g. `GD()` the `tracer()` function will look up 
@@ -652,9 +681,9 @@ only be used together with a callback argument.
 We use the tracer object with our gradient descent implementation
 and print trace information every 50th iteration. 
 
-```{r GD-trace, dependson=c("tracer", "GD", "Implement", "vegetables-data")}
+```{r GD-trace, dependson=c("GD", "veg-pois", "vegetables-data")}
 GD_tracer <- tracer(c("value", "h_prime", "gamma"), N = 50)
-pois_GD <- GD(rep(0, ncol(X)), H, grad_H, cb = GD_tracer$tracer)
+pois_GD <- GD(veg_pois$par, veg_pois$H, veg_pois$grad_H, cb = GD_tracer$tracer)
 ```
 
 We see that the gradient descent algorithm runs for a little more than 350
@@ -667,10 +696,10 @@ takes 3 to 4 iterations to find a step length with sufficient descent.
 The printed trace does not reveal the run time information. The 
 run time is measured for each iteration of the algorithm and the 
 cumulative run time is of greater interest. This information
-is, however, best inspected and computed after the algorithm has converged,
-and it is computed and returned by the summary method for tracer objects.
+can be computed and inspected after the algorithm has converged,
+and it is returned by the summary method for tracer objects.
 
-```{r this-summary, dependson=c("tracer", "GD-trace")}
+```{r this-summary, dependson=c("GD-trace")}
 tail(summary(GD_tracer))
 ```
 
@@ -678,12 +707,12 @@ The trace information is stored in a list. The summary method transforms
 the trace information into a data frame with one row per iteration. We can also access 
 individual entries of the list of trace information via subsetting. 
 
-```{r GD-trace-sub, dependson=c("tracer", "GD-trace")}
+```{r GD-trace-sub, dependson=c("GD-trace")}
 GD_tracer[377] 
 ```
 
 
-```{r GD-trace-plot, echo=FALSE, fig.cap="Gradient norm (left) and value of the negative log-likelihood (right) above the limit value $H(\\theta_{\\infty})$. The straight line is fitted to the data points except the first ten using least squares, and the rate is computed from this estimate and reported per ms.", dependson="GD-trace", out.width="100%", fig.width=8, fig.height=3, message=FALSE}
+```{r GD-trace-plot, echo=FALSE, fig.cap="Gradient norm (left) and value of the negative log-likelihood (right) above the limit value $H(\\theta_{\\infty})$. The straight line is fitted to the data points except the first ten using least squares, and the rate is computed from this estimate and reported per ms.", dependson=c("GD-trace", "veg-pois"), out.width="100%", fig.width=8, fig.height=3, message=FALSE}
 trace_GD <- summary(GD_tracer)
 
 rate1 <- exp(coef(lm(log(h_prime) ~ I(1000 * .time), data = trace_GD, subset = 11:nrow(trace_GD))))[2]
@@ -695,7 +724,7 @@ p1 <- ggplot(data = trace_GD, aes(x = 1000 * .time, y = sqrt(h_prime))) +
   geom_smooth(method = "lm", se = FALSE, method.args = list(subset = 11:nrow(trace_GD))) + 
   geom_text(aes(x = 50, y = 10, label = paste("rate:", round(rate1, 3), "per ms")), data = data.frame())
 
-value_Inf <- H(coefficients(pois_model_null))
+value_Inf <- veg_pois$H(coefficients(pois_model_null))
 rate2 <- exp(coef(lm(log(value - value_Inf) ~ I(1000 * .time), data = trace_GD, subset = 11:nrow(trace_GD))))[2]
 
 p2 <- ggplot(data = trace_GD, aes(x = 1000 * .time, y = value - value_Inf)) +
@@ -797,10 +826,10 @@ CG <- function(
 ```
 
 
-```{r CG-test-null, echo=2:3, dependson=c("Implement", "tracer", "vegetables-data", "CG")}
+```{r CG-test-null, echo=2:3, dependson=c("veg-pois", "vegetables-data", "CG")}
 old_options = options(digits = 5)
 CG_tracer <- tracer(c("value", "gamma", "grad_norm_sq"), N = 10)
-pois_CG <- CG(rep(0, ncol(X)), H, grad_H, cb = CG_tracer$tracer)
+pois_CG <- CG(veg_pois$par, veg_pois$H, veg_pois$grad_H, cb = CG_tracer$tracer)
 options(digits = old_options$digits)
 ```
 
@@ -816,7 +845,6 @@ p3 <- ggplot(data = trace_CG, aes(x = 1000 * .time, y = sqrt(grad_norm_sq))) +
   geom_smooth(method = "lm", se = FALSE, method.args = list(subset = 11:nrow(trace_CG))) + 
   geom_text(aes(x = 45, y = 10, label = paste("rate:", round(rate3, 3), "per ms")), data = data.frame())
 
-value_Inf <- H(coefficients(pois_model_null))
 rate4 <- exp(coef(lm(log(value - value_Inf) ~ I(1000 * .time), data = trace_CG, subset = 11:nrow(trace_CG))))[2]
 
 p4 <- ggplot(data = trace_CG, aes(x = 1000 * .time, y = value - value_Inf)) +
@@ -837,14 +865,13 @@ grid.arrange(p1 + cc1 + ggtitle("Gradient descent") + xlab(""),
 This algorithm is fast enough to fit the large Poisson regression model.
 
 ```{r X-update, dependson=c("Implement", "vegetables-data")}
-X <- model.matrix(sale ~ store + log(normalSale) - 1, data = vegetables)
-t_map <- drop(crossprod(X, y)) 
+veg_pois <- poisson_model(~ store + log(normalSale) - 1, vegetables, response = "sale")
 ```
 
-```{r CG-test, echo=2:3, dependson=c("Implement", "X-update", "tracer", "vegetables-data", "CG")}
+```{r CG-test, echo=2:3, dependson=c("X-update", "vegetables-data", "CG")}
 old_options = options(digits = 5)
 CG_tracer <- tracer(c("value", "gamma", "grad_norm_sq"), N = 100)
-pois_CG <- CG(rep(0, ncol(X)), H, grad_H, cb = CG_tracer$tracer)
+pois_CG <- CG(veg_pois$par, veg_pois$H, veg_pois$grad_H, cb = CG_tracer$tracer)
 options(digits = old_options$digits)
 ```
 
@@ -854,12 +881,12 @@ tail(summary(CG_tracer))
 
 Using `optim()` with the conjugate gradient method.
 
-```{r CG-optim, dependson=c("X-update", "implement")}
+```{r CG-optim, dependson=c("X-update")}
 system.time(
   pois_optim_CG <- optim(
-    rep(0, length = ncol(X)), 
-    H, 
-    grad_H, 
+    veg_pois$par, 
+    veg_pois$H, 
+    veg_pois$grad_H, 
     method = "CG", 
     control = list(maxit = 10000)
   )
@@ -941,25 +968,25 @@ optim(c(0.3, 0.3), loglik, x = c(85, 196, 341),
       method = "CG")
 ```
 
-If we don't implement a gradient, a numerical gradient is 
-used by `optim`. This can very well result in a slower algorithm than if the 
+If we do not implement a gradient, a numerical gradient is 
+used by `optim()`. This can result in a slower algorithm than if the 
 gradient is implemented, but more seriously, in can result in convergence 
 problems. This is because there is a subtle tradeoff between numerical 
 accuracy and accuracy of the finite difference approximation used to
-approximate the gradient. We didn't 
+approximate the gradient. We did not
 experience convergence problems in the example above, but one way to remedy such problems 
 is to set the `parscale` or `fnscale` entries in the `control`
-list argument to `optim`. 
+list argument to `optim()`. 
 
 In the following chapter the peppered moth example is used to illustrate 
-the EM algorithm. It is important to understand that the EM algorithm doesn't 
+the EM algorithm. It is important to understand that the EM algorithm does not 
 rely on the ability to compute the likelihood or the gradient of the 
 likelihood for that matter. In many real applications 
 of the EM algorithm the computation of the likelihood is challenging or even 
 impossible, thus most standard optimization algorithms will not be directly 
 applicable. 
 
-## Newton-type algorithms
+## Newton-type algorithms {#Newton}
 
 The Newton algorithm is very similar to gradient descent
 except that the gradient descent direction is replaced by
@@ -1017,45 +1044,43 @@ Newton <- function(
 
 ### Poisson regression 
 
-It requires the implementation of the Hessian matrix. 
+We use the implementation of the Hessian matrix. 
 
-```{r Hessian}
-Hessian_H <- function(beta)
-  (crossprod(X, drop(exp(X %*% beta)) * X)) / nrow(X)
-```
-
-```{r Newton-test, dependson=c("Implement", "Hessian", "vegetables-data", "X-update", "Newton")}
-Newton_tracer <- tracer(c("value", "h_prime", "gamma"), N = 1)
+```{r Newton-test, dependson=c("vegetables-data", "X-update", "Newton")}
+Newton_tracer <- tracer(c("value", "h_prime", "gamma"), N = 0)
 pois_Newton <- Newton(
-  rep(0, ncol(X)), 
-  H,
-  grad_H,
-  Hessian_H,
+  veg_pois$par, 
+  veg_pois$H, 
+  veg_pois$grad_H, 
+  veg_pois$Hessian_H, 
   cb = Newton_tracer$tracer
 )
 ```
 
 
 ```{r Newton-comp, dependson=c("Newton-test", "pois-model")}
-range(pois_Newton - pois_model$coefficients)
+range(pois_Newton - coefficients(pois_model))
 ```
 
-```{r Newton-object, dependson=c("Implement", "Newton-test", "pois-model"), echo=2:3}
+```{r Newton-object, dependson=c("X-update", "Newton-test", "pois-model"), echo=2}
 old_options = options(digits = 20)
-H(pois_Newton)
-H(coefficients(pois_model))
+rbind(
+  pois_Newton = veg_pois$H(pois_Newton),
+  pois_glm = veg_pois$H(coefficients(pois_model))
+)
 options(digits = old_options$digits)
 ```
 
-```{r Newton-tracer-summary, dependson=c("Newton-test", "tracer")}
+```{r Newton-tracer-summary, dependson=c("Newton-test")}
 summary(Newton_tracer)
 ```
 
 The R function `glm.fit()` uses a Newton algorithm (without backtracking) 
 and is about a factor five faster on this example. 
 
-```{r pois-glm.fit, dependson=c("Implement", "Newton-test")}
-system.time(glm.fit(X, y, family = poisson()))
+```{r pois-glm.fit, dependson=c("X-update", "Newton-test")}
+env_pois <- environment(veg_pois$H)
+system.time(glm.fit(env_pois$X, env_pois$y, family = poisson()))
 ```
 
 One should be careful when comparing run times for different optimization 
@@ -1074,12 +1099,12 @@ iteration.
 We will only consider the application of the BFGS algorithm via the 
 implementation in the R function `optim()`.
 
-```{r BFGS, dependson=c("X-update", "implement")}
+```{r BFGS, dependson=c("X-update")}
 system.time(
   pois_BFGS <- optim(
-    rep(0, length = ncol(X)), 
-    H, 
-    grad_H, 
+    veg_pois$par, 
+    veg_pois$H, 
+    veg_pois$grad_H, 
     method = "BFGS", 
     control = list(maxit = 10000)
   )
@@ -1107,19 +1132,20 @@ R package Matrix.
 library(Matrix)
 ```
 
-```{r sparse, dependson="X-update"}
-X <- Matrix(X)
+```{r sparse, dependson=c("pois-glm.fit", "X-update")}
+env_pois$X <- Matrix(env_pois$X)
+class(env_pois$X)
 ```
 
 Without changing any other code, we get an immediate 
 run time improvement using e.g. `optim()` and the BFGS algorithm.
 
-```{r BFGS-sparse, dependson=c("X-update", "implement", "sparse")}
+```{r BFGS-sparse, dependson=c("X-update", "sparse")}
 system.time(
   pois_BFGS_sparse <- optim(
-    rep(0, length = ncol(X)), 
-    H, 
-    grad_H, 
+    veg_pois$par, 
+    veg_pois$H, 
+    veg_pois$grad_H, 
     method = "BFGS", 
     control = list(maxit = 10000)
   )
@@ -1129,33 +1155,68 @@ system.time(
 We should in real applications avoid constructing a dense intermediate 
 model matrix as a step toward constructing a sparse model matrix. This 
 is possible by constructing the sparse model matrix directly using 
-a function from the R package MatrixModels.
+a function from the R package MatrixModels. Ideally, we should reimplement
+`pois_model()` to support an option for using sparse matrices, but 
+to focus on the run time benefits of sparse matrices, we simply 
+change the matrix in the appropriate environment directly.
 
-```{r sparse-model-matrix, dependson="vegetables-data"}
-library(MatrixModels)
-X <- model.Matrix(
-  sale ~ store + log(normalSale) - 1, 
+```{r sparse-model-matrix, dependson=c("vegetables-data", "pois-glm.fit")}
+env_pois$X <- MatrixModels::model.Matrix(
+  ~ store + log(normalSale) - 1, 
   data = vegetables, 
   sparse = TRUE
 )
-class(X)
+class(env_pois$X)
+```
+
+```{r time-model.matrix, echo=FALSE, eval=FALSE}
+library(MatrixModels)
+bench::mark(
+  sparse = X_sparse <- model.Matrix(
+    ~ store + log(normalSale) - 1, 
+    data = vegetables, 
+    sparse = TRUE
+  ),
+  dense = X <- model.matrix(
+    ~ store + log(normalSale) - 1, 
+    data = vegetables
+  ),
+  check = FALSE
+) %>%  autoplot()
+range(as.matrix(X_sparse) - X)
 ```
 
 The Newton implementation benefits enormously from using sparse matrices
 because the bottleneck is the computation of the Hessian. 
 
-```{r time-sparse-model-matrix, echo=2:4, dependson=c("Implement", "Hessian", "Newton", "tracer", "sparse-model-matrix")}
-pois_Newton <- Newton(rep(0, ncol(X)), H, grad_H, Hessian_H)  ## Ensures more correct timings, perhaps due to lazy-loading?
+```{r time-sparse-model-matrix, echo=2:4, dependson=c("X-update", "Newton", "sparse-model-matrix")}
+pois_Newton <- Newton( # Ensures more correct timings, perhaps due to lazy-loading?
+  veg_pois$par, 
+  veg_pois$H, 
+  veg_pois$grad_H, 
+  veg_pois$Hessian_H
+)  
 Newton_tracer <- tracer(c("value", "h_prime", "gamma"), N = 0)
-pois_Newton <- Newton(
-  rep(0, ncol(X)),
-  H, 
-  grad_H,
-  Hessian_H,
+  pois_Newton <- Newton(
+  veg_pois$par, 
+  veg_pois$H, 
+  veg_pois$grad_H, 
+  veg_pois$Hessian_H, 
   cb = Newton_tracer$tracer
 )
 summary(Newton_tracer)
 ```
+
+To summarize the run times we have measured for the Poisson regression example, 
+we found that the conjugate gradient algorithms took of the order of 10 seconds 
+to converge. The Newton-type algorithms in this section were faster and took 
+between 0.3 and 1.7 seconds to converge. The use of sparse matrices reduced the 
+run time of the quasi-Newton algorithm BFGS by a factor 3, but it reduced the 
+run time of the Newton algorithm by a factor 50 to about 0.03 seconds. One could
+be concerned that the construction of the sparse model matrix takes more time (which
+we did not measure), but if measured it turns out that for this example 
+it takes about the same time to construct the dense model matrix as it takes to 
+construct the sparse one. 
 
 Run time efficiency is not the only argument for using sparse matrices as they are 
 also more memory efficient. It is memory (and time) inefficient to use dense intermediates, 
@@ -1164,11 +1225,11 @@ for regression models allows us to work with larger models that have
 more variables, more factor levels and more observations than if we use dense
 model matrices. For the Poisson regression model the memory used by either representation can be found. 
 
-```{r X-size, dependson="sparse-model-matrix", echo=c(2, 4), results='hold'}
+```{r X-size, dependson=c("pois-glm.fit", "sparse-model-matrix"), echo=c(2, 4), results='hold'}
 cat("Sparse matrix memory usage:\n")
-object.size(X)
+object.size(env_pois$X)
 cat("Dense matrix memory usage:\n")
-object.size(as.matrix(X))
+object.size(as.matrix(env_pois$X))
 ```
 
 We see that the dense matrix uses around a factor 30 more memory than the 
@@ -1179,10 +1240,12 @@ storing a matrix to using 100 Mb could be the difference between
 not being able to work with the matrix on a standard laptop to
 running the computations with no problems. Using `model.Matrix` makes
 it possible to construct sparse model matrices directly and avoid 
-all dense intermediates. This is exploited in the `glm4()` function from 
-the MatrixModels package for fitting regression models, which can 
+all dense intermediates. 
+
+The function `glm4()` from the MatrixModels package for fitting regression models, 
+can exploit sparse model matrices direction, and can 
 thus be useful in cases where your model matrix becomes very large but sparse. 
-There are two main cases where the model matrix becomes sparse. 
+There are two main applications where the model matrix becomes sparse. 
 When you model the response using one or more factors, and possibly their 
 interactions, the model matrix will become particularly sparse if 
 the factors have many levels. Another case is when you model the response 
