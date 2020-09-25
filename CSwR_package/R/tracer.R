@@ -23,8 +23,8 @@
 #'                every \code{N}-th iteration. \code{N = 1} is the default.
 #' @param save    a logical value. Determines if the trace information is saved.
 #' @param time    a logical value. Determines if run time information is traced.
-#' @param expr    an expression that will be evaluated in the calling environment
-#'                of the \code{tracer} function.
+#' @param expr    an expression that will be evaluated in an environment that has
+#'                the calling environment of the \code{tracer} function as parent.
 #' @param ...     other arguments passed to \code{format} for printing.
 #'
 #' @return A tracer object containing the functions \code{tracer} and \code{get}.
@@ -58,12 +58,19 @@ tracer <- function(
 
   tracer <- function() {
     time_diff <- bench::hires_time() - last_time
-    if(is.expression(expr))
-      eval(expr, envir = parent.frame())
+    envir <- parent.frame()
+    if(is.expression(expr)) {
+      # This construction ensures that the evaluation of the expression does
+      # not accidentally overwrite variables in the calling environment but
+      # still has access to it
+      envir <- new.env(parent = envir)
+      eval(expr, envir = envir)
+    }
     if(is.null(objects))
-      objects <- ls(parent.frame())
+      objects <- ls(envir)
 
-    values <- mget(objects, envir = parent.frame(), ifnotfound = list(NA))
+    # inherits = TRUE to also find values in the parent of envir
+    values <- mget(objects, envir = envir, ifnotfound = list(NA), inherits = TRUE)
     if(N && (n == 1 || n %% N == 0))
       cat("n = ", n, ": ",
           paste(names(values), " = ", format(values, ...), "; ", sep = ""),
