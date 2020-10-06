@@ -15,7 +15,7 @@
 
 \item{...}{other arguments passed on to \code{get}.}
 
-\item{drop}{currently ignored.}
+\item{drop}{simplify a list with one element to a vector if TRUE.}
 }
 \value{
 a list

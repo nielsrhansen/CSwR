@@ -7,9 +7,10 @@
 tracer(objects = NULL, N = 1, save = TRUE, time = TRUE, expr = NULL, ...)
 }
 \arguments{
-\item{objects}{a character vector of names of the objects in the calling
-environment of the \code{tracer} function that are to be traced.
-Objects created by the \code{expr} argument can also be traced.}
+\item{objects}{a character vector of names of the objects that are to be traced.
+The objects are searched for in the calling environment of the
+\code{tracer} function. Objects created by the \code{expr} argument
+can also be traced.}
 
 \item{N}{an integer specifying if and how often trace information is printed.
 \code{N = 0} means never, and otherwise trace information is printed
@@ -19,8 +20,8 @@ every \code{N}-th iteration. \code{N = 1} is the default.}
 
 \item{time}{a logical value. Determines if run time information is traced.}
 
-\item{expr}{an expression that will be evaluated in the calling environment
-of the \code{tracer} function.}
+\item{expr}{an expression that will be evaluated in an environment that has
+the calling environment of the \code{tracer} function as parent.}
 
 \item{...}{other arguments passed to \code{format} for printing.}
 }
@@ -29,14 +30,14 @@ A tracer object containing the functions \code{tracer} and \code{get}.
 }
 \description{
 Tracer objects can collect, print and summarize trace information from
-the evaluation environment of other functions during their evaluations.
+the evaluation environment of other functions during their evaluation.
 }
 \details{
 The function \code{tracer} constructs a tracer object containing a
-\code{tracer} and a \code{get} function. A \code{tracer} function call can
-be inserted in other functions and used to collect and print trace information about
-the internals of that function during its evaluation. The \code{get} function
-can access that information afterwards.
+\code{tracer} and a \code{get} function. A call of \code{tracer} can
+be inserted in other functions and used to collect and print trace information
+about the internals of that function during its evaluation. The \code{get}
+function can access that information afterwards.
 The time between \code{tracer} calls can also be measured and stored using
 the \code{hires_time} function from the bench package. There are \code{print}
 and \code{summary} methods available for summarizing the trace information.
@@ -46,16 +47,16 @@ or it can be passed as an argument to any function with a callback argument.
 }
 \examples{
 
-test_tracer <- tracer(c("m", "m_sq"), expr = expression(m_sq <- m^2))
+test_tracer <- tracer(c("m", "m_sq"), expr = quote(m_sq <- m^2))
 
-test <- function(n) {
+test <- function(n, cb = NULL) {
   for(i in 1:n) {
     m <- 2 * i
     Sys.sleep(0.1)
-    test_tracer$tracer()
+    if(!is.null(cb)) cb()
     }
 }
 
-test(10)
+test(10, test_tracer$tracer)
 summary(test_tracer)
 }
