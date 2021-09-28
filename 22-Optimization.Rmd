@@ -324,11 +324,7 @@ for an error tolerance $\varepsilon_0 > 0$. Unfortunately, we cannot
 compute $H(\theta_n) - H(\theta_{\infty})$, and the choice of an 
 appropriate stopping criterion is notoriously difficult. 
 Below we give four of the most commonly used criteria and 
-discuss benefits and deficits for each of them. They can be used 
-individually and in combinations, but unfortunately none of them 
-provides convergence guarantees. It is nevertheless common to abuse 
-the terminology and say that an algorithm has converged when a stopping 
-criterion is reached, but this can be misleading. 
+discuss benefits and deficits for each of them. 
 
 **Maximal number of iterations:** Stop when 
 $$n = N$$ 
@@ -341,8 +337,15 @@ $N$ so that the algorithm has typically converged after $N$ iterations, but
 the most important use of this criterion is in combination with another 
 criterion so that it works as a safeguard against an infinite loop.
 
-The other three stopping criteria all depend on choosing a *tolerance parameter* $\varepsilon > 0$, which will play different roles in the three 
-criteria.
+The other three stopping criteria all depend on choosing a 
+*tolerance parameter* $\varepsilon > 0$, which will play different roles in the three 
+criteria, and which should not be confused with the error tolerance. 
+The three criteria can be used individually and in combinations, 
+but unfortunately neither of them nor their combination provide convergence 
+guarantees. It is nevertheless common to abuse 
+the terminology and say that an algorithm has converged when the stopping 
+criterion is reached, but since none of the criteria are sufficient for 
+convergence such a practice can be misleading. 
 
 **Small relative change:** Stop when 
 $$\|\theta_n - \theta_{n-1}\| \leq \varepsilon(\|\theta_n\| + \varepsilon).$$
@@ -356,7 +359,7 @@ on the right hand size is to make the criterion well behaved even if
 $\|\theta_n\|$ is close to zero. 
 
 The main benefit of this criterion is that it does not require evaluations 
-of the objective function. Some algorithms, such as the EM-algorithm, does not
+of the objective function. Some algorithms, such as the EM-algorithm, do not
 need to evaluate the objective function, and it may even be difficult to do so. 
 In those cases this criterion can be used. The main deficit is that a 
 single iteration with little change in the parameter can happen for many 
@@ -386,10 +389,10 @@ $$\|\nabla H(\theta_n)\| \leq \varepsilon.$$
 This criterion directly measures if $\theta_n$ is close to being a stationary 
 point, but a small value of $\|\nabla H(\theta_n)\|$ is still no guarantee that
 $H(\theta_{n}) - H(\theta_{\infty})$ is small. The criterion also requires
-the computation of the gradient. In addition, that different norms, 
+the computation of the gradient. In addition, different norms, 
 $\|\cdot\|$, can be used, and
 if the coordinates of the gradient generally are of different orders of 
-magnitude a norm that rescales the coordinates can be chosen. 
+magnitude it is sensible to choose a norm that rescales the coordinates. 
 
 Neither of the four criteria above give a theoretical convergence guarantee, but 
 in some special cases it is possible to develop criteria with a stronger 
@@ -552,10 +555,10 @@ GD <- function(
   c = 0.1, 
   gamma0 = 0.01, 
   epsilon = 1e-4, 
-  maxit = 1000,
+  maxiter = 1000,
   cb = NULL
 ) {
-  for(i in 1:maxit) {
+  for(i in 1:maxiter) {
     value <- H(par)
     grad <- gr(par)
     h_prime <- sum(grad^2)
@@ -572,8 +575,8 @@ GD <- function(
     }
     par <- par1
   }
-  if(i == maxit)
-    warning("Maximal number, ", maxit, ", of iterations reached")
+  if(i == maxiter)
+    warning("Maximal number, ", maxiter, ", of iterations reached")
   par
 }
 ```
@@ -787,13 +790,13 @@ CG <- function(
   c = 0.1, 
   gamma0 = 1, 
   epsilon = 1e-6,
-  maxit = 1000,
+  maxiter = 1000,
   cb = NULL
 ) {
   p <- length(par)
   m <- 1
   rho0 <- numeric(p)
-  for(i in 1:maxit) {
+  for(i in 1:maxiter) {
     value <- H(par)
     grad <- gr(par)
     grad_norm_sq <- sum(grad^2)
@@ -819,8 +822,8 @@ CG <- function(
     par <- par1
     m <- m + 1
   }
-  if(i == maxit)
-    warning("Maximal number, ", maxit, ", of iterations reached")
+  if(i == maxiter)
+    warning("Maximal number, ", maxiter, ", of iterations reached")
   par
 }
 ```
@@ -888,7 +891,7 @@ system.time(
     veg_pois$H, 
     veg_pois$grad_H, 
     method = "CG", 
-    control = list(maxit = 10000)
+    control = list(maxiter = 10000)
   )
 )
 ```
@@ -1016,10 +1019,10 @@ Newton <- function(
   c = 0.1, 
   gamma0 = 1, 
   epsilon = 1e-10, 
-  maxit = 50,
+  maxiter = 50,
   cb = NULL
 ) {
-  for(i in 1:maxit) {
+  for(i in 1:maxiter) {
     value <- H(par)
     grad <- gr(par)
     if(!is.null(cb)) cb()
@@ -1035,8 +1038,8 @@ Newton <- function(
     }
     par <- par1 
   }
-  if(i == maxit)
-    warning("Maximal number, ", maxit, ", of iterations reached")
+  if(i == maxiter)
+    warning("Maximal number, ", maxiter, ", of iterations reached")
   par
 }
 ```
@@ -1106,7 +1109,7 @@ system.time(
     veg_pois$H, 
     veg_pois$grad_H, 
     method = "BFGS", 
-    control = list(maxit = 10000)
+    control = list(maxiter = 10000)
   )
 )
 ```
@@ -1147,7 +1150,7 @@ system.time(
     veg_pois$H, 
     veg_pois$grad_H, 
     method = "BFGS", 
-    control = list(maxit = 10000)
+    control = list(maxiter = 10000)
   )
 )
 ```
