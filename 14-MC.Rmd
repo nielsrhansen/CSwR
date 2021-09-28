@@ -407,7 +407,8 @@ We can then plot the cumulative average and compare it to the
 actual value of the integral that we know is 1.
 
 ```{r MC_path, dependson=c("MC_par", "MC_loop")}
-plot(cumsum(evaluations) / 1:n, pch = 20, xlab = "n")
+mu_hat <- cumsum(evaluations) / 1:n
+plot(mu_hat, pch = 20, xlab = "n")
 abline(h = 1, col = "red")
 ```
 
@@ -415,9 +416,8 @@ If we want to control the error with probability 0.95 we can use Chebychev's ine
 and solve for $\varepsilon$ using the estimated variance. 
 
 ```{r MC_cheb, dependson=c("MC_par", "MC_loop")}
-plot(cumsum(evaluations) / 1:n, pch = 20, xlab = "n")
+plot(mu_hat, pch = 20, xlab = "n")
 abline(h = 1, col = "red")
-mu_hat <- cumsum(evaluations) / 1:n
 sigma_hat <- sd(evaluations)
 epsilon <- sigma_hat / sqrt((1:n) * 0.05)
 lines(1:n, mu_hat + epsilon)
@@ -429,7 +429,7 @@ central limit theorem are typically more accurate estimates of the actual uncert
 than the upper bounds provided by Chebychev's inequality.
 
 ```{r MC_CLT, dependson=c("MC_par", "MC_loop")}
-plot(cumsum(evaluations) / 1:n, pch = 20, xlab = "n")
+plot(mu_hat, pch = 20, xlab = "n")
 abline(h = 1, col = "red")
 lines(1:n, mu_hat + 2 * sigma_hat / sqrt(1:n))
 lines(1:n, mu_hat - 2 * sigma_hat / sqrt(1:n))
@@ -439,14 +439,12 @@ To illustrate the limitations of Monte Carlo integration we increase $\alpha$ to
 \(\alpha = 0.4\). 
 
 ```{r MC_loop2, dependson=c("MC_hfun", "MC_par")}
-set.seed(123)
-x <- matrix(rnorm(n * p), n, p)
 evaluations <- apply(x, 1, h, alpha = 0.4)
 ```
 
 ```{r MC_CLT2, dependson=c("MC_par", "MC_loop2"), echo=FALSE}
-plot(cumsum(evaluations) / 1:n, pch = 20, ylim = c(0, 2), xlab = "n")
 mu_hat <- cumsum(evaluations) / 1:n
+plot(mu_hat, pch = 20, ylim = c(0, 2), xlab = "n")
 sigma_hat <- sd(evaluations)
 lines(1:n, mu_hat + 2 * sigma_hat / sqrt(1:n))
 lines(1:n, mu_hat - 2 * sigma_hat / sqrt(1:n))
@@ -461,9 +459,9 @@ par(mfcol = c(2, 2), mex = 0.7, cex = 0.6, font.main = 1)
 replicate(4,
   {x <- matrix(rnorm(n * p), n, p)
   evaluations <- apply(x, 1, h, alpha = 0.4)
-  plot(seq(1, n, 10), (cumsum(evaluations) / 1:n)[seq(1, n, 10)], 
-       pch = 20, ylim = c(0, 2), xlab = "n", ylab = "Cumulative average")
   mu_hat <- cumsum(evaluations) / 1:n
+  plot(seq(1, n, 10), mu_hat[seq(1, n, 10)], 
+       pch = 20, ylim = c(0, 2), xlab = "n", ylab = "Cumulative average")
   sigma_hat <- sd(evaluations)
   abline(h = 1, col = "red")
   lines((1:n)[seq(1, n, 10)], (mu_hat + 2 * sigma_hat / sqrt(1:n))[seq(1, n, 10)])
@@ -974,7 +972,6 @@ of graph classes in R.
 We start by constructing a new graph object from the adjacency matrix.
 
 ```{r network_igraph, message=FALSE, dependson="network_adj"}
-library(igraph)
 net <- graph_from_adjacency_matrix(A, mode = "undirected")
 class(net)
 net # Illustrates the print method for objects of class 'igraph'
