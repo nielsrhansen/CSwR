@@ -7,7 +7,7 @@
 \usage{
 \method{autoplot}{tracer}(object, y, ...)
 
-\method{autoplot}{trace}(object, y, ...)
+\method{autoplot}{trace}(object, y, log = TRUE, ...)
 }
 \arguments{
 \item{object}{a trace or tracer object}
@@ -15,10 +15,12 @@
 \item{y}{the name of the traced object to plot}
 
 \item{...}{additional arguments passed to}
+
+\item{log}{logical. Should the y-axis be on a log-scale. Default is TRUE.}
 }
 \value{
 
 }
 \description{
-Plot results from a trace
+Plots the value of a traced object on a log-scale against run time.
 }

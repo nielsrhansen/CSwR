@@ -4,10 +4,11 @@
 #' the evaluation environment of other functions during their evaluation.
 #'
 #' The function \code{tracer} constructs a tracer object containing a
-#' \code{tracer} and a \code{get} function. A call of \code{tracer} can
+#' \code{tracer}, a \code{get} function and a \code{reset} function. A call of \code{tracer} can
 #' be inserted in other functions and used to collect and print trace information
 #' about the internals of that function during its evaluation. The \code{get}
-#' function can access that information afterwards.
+#' function can access that information afterwards, and \code{clear} deletes
+#' all stored values in the tracer object.
 #' The time between \code{tracer} calls can also be measured and stored using
 #' the \code{hires_time} function from the bench package. There are \code{print}
 #' and \code{summary} methods available for summarizing the trace information.
@@ -22,7 +23,7 @@
 #' @param N       an integer specifying if and how often trace information is printed.
 #'                \code{N = 0} means never, and otherwise trace information is printed
 #'                every \code{N}-th iteration. \code{N = 1} is the default.
-#' @param save    a logical value. Determines if the trace information is saved.
+#' @param save    a logical value. Determines if the trace information is stored.
 #' @param time    a logical value. Determines if run time information is traced.
 #' @param expr    an expression that will be evaluated in an environment that has
 #'                the calling environment of the \code{tracer} function as parent.
@@ -53,6 +54,10 @@ tracer <- function(
   expr = NULL,
   ...
 ) {
+  force(objects)
+  force(N)
+  force(time)
+  force(save)
   n <- 1
   values_save <- list()
   last_time <- bench::hires_time()
@@ -126,7 +131,13 @@ tracer <- function(
     values_save
   }
 
-  structure(list(tracer = tracer, get = get), class = "tracer")
+  clear <- function() {
+    n <<- 1
+    values_save <<- list()
+    last_time <<- bench::hires_time()
+  }
+
+  structure(list(tracer = tracer, get = get, clear = clear), class = "tracer")
 }
 
 
@@ -174,6 +185,7 @@ print.tracer <- function(x, ...) print(x$get(...))
 #'
 #' @param object a trace or tracer object
 #' @param y      the name of the traced object to plot
+#' @param log    logical. Should the y-axis be on a log-scale. Default is TRUE.
 #' @param ...    additional arguments passed to
 #'
 #' @return
@@ -185,9 +197,9 @@ autoplot.tracer <- function(object, y, ...) {
 
 #' @rdname autoplot.tracer
 #' @export
-autoplot.trace <- function(object, y, ...) {
-  ggplot(object, aes(x = .time, {{y}})) +
-    geom_point() +
-    scale_y_log10()
+autoplot.trace <- function(object, y, log = TRUE, ...) {
+  p <- ggplot(object, aes(x = .time, {{y}})) + geom_point() + xlab("time")
+  if(log) p <- p + scale_y_log10()
+  p
 }
 

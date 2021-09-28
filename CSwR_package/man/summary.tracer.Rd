@@ -15,7 +15,8 @@
 \item{...}{other arguments (currently ignored)}
 }
 \value{
-\code{summary} returns a data frame with columns containing the values
+\code{summary} returns a data frame (of class trace) with columns
+containing the values
 of the traced objects, and if time is traced an additional column, \code{.time},
 containing the cumulative run time.
 }
