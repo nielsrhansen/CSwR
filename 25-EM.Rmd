@@ -1,7 +1,7 @@
 # Expectation maximization algorithms {#em}
 
 Somewhat surprisingly, it is possible to develop an algorithm, known as the 
-*expectation-maximization algorithm*, for computing the maximum of a likelihood 
+*expectation-maximization algorithm*, for computing the maximizer of a likelihood 
 function in situations where computing the likelihood itself is quite 
 difficult. This is possible in situations where the model is defined in 
 terms of certain unobserved components, and where likelihood computations and 
@@ -104,14 +104,13 @@ where $\ell(\theta)$ is the log-likelihood.
 
 \vskip 5mm
 
-```{theorem, EM-inequality} 
+::: {.theorem #EM-inequality} 
 If $\log f(Y \mid \theta)$ as well as $\log h(Y \mid x, \theta)$ have 
 finite $\theta'$-conditional expectation given $M(Y) = x$ then 
 $$Q(\theta \mid \theta') > Q(\theta' \mid \theta') \quad \Rightarrow \quad  \ell(\theta) > \ell(\theta').$$
+:::
 
-```
-
-```{proof}
+::: {.proof .boxed}
 Since $\ell(\theta)$ depends on $y$ only through $M(y) = x$,
 
 \begin{align*}
@@ -125,9 +124,10 @@ for the convex function $-\log$, that
 
 \begin{align*}
 H(\theta \mid \theta') & = \int - \log(h(y \mid x, \theta)) h(y \mid x, \theta') \mu_x(\mathrm{d}y) \\
-& = \int - \log\left(\frac{h(y \mid x, \theta)}{ h(y \mid x, \theta')}\right) h(y \mid x, \theta') \mu_x(\mathrm{d}y) + \int - \log(h(y \mid x, \theta')) h(y \mid x, \theta') \mu_x(\mathrm{d}y) \\
+& = \int - \log\left(\frac{h(y \mid x, \theta)}{ h(y \mid x, \theta')}\right) h(y \mid x, \theta') \mu_x(\mathrm{d}y) \\ 
+& \quad + \int - \log(h(y \mid x, \theta')) h(y \mid x, \theta') \mu_x(\mathrm{d}y) \\
 & \geq  -\log \left( \int \frac{h(y \mid x, \theta)}{ h(y \mid x, \theta')} h(y \mid x, \theta') \mu_x(\mathrm{d}y) \right) + H(\theta' \mid \theta') \\
-& = -\log\underbrace{\left( \int h(y \mid x, \theta) \mu_x(\mathrm{d}y)\right) }_{=1} + H(\theta' \mid \theta') \\
+& = -\log\Big(\underbrace{ \int h(y \mid x, \theta) \mu_x(\mathrm{d}y)}_{=1}\Big)  + H(\theta' \mid \theta') \\
 & =  H(\theta' \mid \theta').
 \end{align*}
 
@@ -138,10 +138,10 @@ $$\ell(\theta) \geq  Q(\theta \mid \theta') + H(\theta' \mid \theta')$$
 for all $\theta$ and the right hand side is a so-called minorant for the log-likelihood.
 Observing that
 
-$$\ell(\theta') = Q(\theta' \mid \theta') + H(\theta' \mid \theta').$$
+$$\ell(\theta') = Q(\theta' \mid \theta') + H(\theta' \mid \theta')$$
 
 completes the proof of the theorem.
-```
+:::
 
 Note that the proof above can also be given by referring to [Gibbs' inequality in information theory](https://en.wikipedia.org/wiki/Jensen%27s_inequality#Information_theory)
 stating that the Kullback-Leibler divergence is positive, or equivalently 
@@ -155,18 +155,18 @@ $$Q(\theta_{n+1} \mid \theta_{n}) > Q(\theta_{n} \mid \theta_{n}),$$
 then 
 $$H(\theta_0) > H(\theta_1) > H(\theta_2) > \ldots.$$
 This proves that the EM algorithm is a strict descent algorithm for the negative 
-log-likelihood as long as it is possible in each iteration to strictly 
-increase $\theta \mapsto Q(\theta \mid \theta_{n})$ above $Q(\theta_{n} \mid \theta_{n}).$
+log-likelihood as long as it is possible in each iteration to find 
+a $\theta$ such that $Q(\theta \mid \theta_{n}) > Q(\theta_{n} \mid \theta_{n}).$
 
-The term *EM algorithm* is usually reserved for the specific algorithm that maximizes
- $Q(\cdot \mid \theta_n)$ in the M-step, but as we have seen, there is 
+The term *EM algorithm* is reserved for the specific algorithm that maximizes
+ $Q(\cdot \mid \theta_n)$ in the M-step, but there is 
 no reason to insist on the M-step being a maximization. A choice 
-of descent direction of $Q(\cdot \mid \theta_n)$ and a step-length 
+of ascent direction of $Q(\cdot \mid \theta_n)$ and a step-length 
 guaranteeing sufficient descent of $H$ (sufficient ascent of $Q(\cdot \mid \theta_n)$) 
 will be enough to give a descent 
 algorithm. Any such variation is usually termed a generalized EM algorithm.
 
-One may imagine that the minorant could actually be a useful lower bound on the
+We could imagine that the minorant is a useful lower bound on the
 difficult-to-compute log-likelihood. The additive constant $H(\theta' \mid \theta')$ in the minorant 
 is, however, not going to be computable in general either, and it is not clear that there is 
 any way to use the bound quantitatively. 
@@ -177,7 +177,7 @@ We return in this section to the peppered moths and the implementation of
 the EM algorithm for multinomial cell collapsing. 
 
 The EM algorithm can be implemented by two simple functions that compute
-the conditional expectations above (the E-step) and then maximization 
+the conditional expectations (the E-step) and then maximization 
 of the complete observation log-likelihood.
 
 ```{r multinomial_E0, dependson=c("moth_M", "moth_prob")}
