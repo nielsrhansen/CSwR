@@ -1,40 +1,508 @@
-# R programming {#app:R}
+# R programming {#app-R}
 
-This appendix on R programming is meant to be a quick review of the most important
-programming concepts in R that are used in the book. It should be read together 
-with or after the [Introduction](#intro). For a detailed and much more
+This appendix on R programming is a brief overview of important
+programming constructs and concepts in R that are used in the book. 
+For a detailed and much more
 extensive coverage of R as a programming language the reader is referred to 
-the book [Advanced R](https://adv-r.hadley.nz/).
+the book [Advanced R](https://adv-rapp-R.hadley.nz/).
+
+Depending on your background, the appendix can serve different purposes.
+If you already have experience with programming in R, this appendix can serve 
+as a brush up on some basic aspects of the R language that are used throughout 
+the book. If you have experience with programming in other languages than R, it
+can serve as an introduction to typical R programming techniques,
+where some may differ from what you know from other languages. If you have little 
+prior experience with programming, this appendix can teach you the most important
+things for getting started with the book, but you are encouraged to follow up 
+with additional and more detailed material like [Advanced R](https://adv-r.hadley.nz/).
+
+For everybody, this appendix covers specific topics relevant for reading the book. 
+These topics include
+
+* data types, comparisons and numerical precision
+* vectorized computations
+* functions, environments and function factories
+* performance assessment and improvement
+* S3 objects and methods
+
+Several important topics, such as 
+[S4](https://adv-r.hadley.nz/s4.html) and 
+[R6](https://adv-r.hadley.nz/r6.html) objects, 
+[expressions](https://adv-r.hadley.nz/expressions.html), and 
+[data wrangling](https://r4ds.had.co.nz/wrangle-intro.html), are not covered in 
+any detail. The book is on implementations of correct and efficient 
+numerical algorithms used in statistics, and this is reflected in the 
+topics covered in this appendix.
+
+## Data structures {#app-data-structures}
+
+The fundamental data structure in R is a vector. Even variables that look and 
+behave like single numbers are vectors of length one. Vectors come in two flavors:
+*atomic vectors* and *lists*.
+
+An atomic vector is an indexed collection of data elements that are all 
+of the same type, e.g.
+
+* integers
+* floating point numbers
+* logical values
+* character strings
+
+A list is an indexed collection of elements without any type restrictions on the 
+individual elements. An element in a list can, for instance, be a list itself.
+
+### Atomic vectors
+
+You can construct a vector in R by simply typing in its elements, e.g. 
+
+```{r first_vector}
+first_vector <- c(1, 2, 3)  # Note the 'c'
+first_vector
+```
+
+The constructed vector contains the numbers 1, 2 and 3. We use the classical 
+assignment operator `<-` throughout, while R supports using `=` if you prefer. 
+The `c()` used on the right hand side of the assignment is short for *combine* 
+(or concatenate), and it is also used if you combine two vectors into one.
+
+```{r second_vector, dependson="first_vector"}
+second_vector <- c(4, 5, 6)
+c(first_vector, second_vector)
+```
+
+There are several convenient techniques in R for constructing vectors of various
+regular nature, e.g. sequences. The following example shows how to construct a 
+vector containing the integers from 1 to 10. The type of the vector is `integer`
+indicating that the elements of the vector are stored as integers. 
+
+```{r integer_vector}
+integer_vector <- 1:10
+integer_vector
+typeof(integer_vector)  # `typeof` reveals the internal storage mode
+```
+
+We can access the individual elements as well as subsets of a vector 
+by indices using square brackets.
+
+```{r subscripting}
+integer_vector[3]
+integer_vector[first_vector]  # The first three elements
+```
+
+The function `seq` generalizes the colon operator, `1:10`, as a way to 
+generate regular sequences. The following example shows how to generate 
+a sequence, `double_vector`, from 0.1 to 1.0 with increments of size 0.1. 
+The type of the resulting vector is `double`, which indicates that the elements 
+of `double_vector` are stored as doubles. That is, the numbers are stored as 
+floating point numbers using 64 bits of storage with a precision of 
+just about 16 digits.
+
+```{r double_vector}
+double_vector <- seq(0.1, 1, by = 0.1)
+double_vector
+typeof(double_vector)
+```
+
+Integers are often stored as or coerced into doubles automatically. The supposedly 
+integer vector, `first_vector`, is actually of type `double`. 
+
+```{r num_int_example}
+typeof(first_vector)
+```
+
+In R, numerical data of either type integer or double is collectively referred to 
+as *numerics* and have mode (and class) `numeric`. This is confusing, in particular
+because "numeric" is used also as pseudonym of the *type* double, but it is
+rarely a practical problem. A vector of type integer or double is often just
+said to by a `numeric`, and the function `is.numeric()` reflects this.
+
+It is possible to insist that integers are actually stored as integers by 
+appending `L` to each integer, e.g.
+
+```{r num_int_example_int}
+typeof(c(1L, 2L, 3L))
+```
+
+When sequences are generated using the colon operator with the endpoints being 
+integers, as in `1:10`, the result will be a vector of type integer. This is 
+an exception. Apparent integers are usually -- and silently -- converted into 
+doubles if they are not explicitly marked as integers by `L`.
+
+Vectors of any length can be created by the generic function `vector()`, or 
+by type specific functions such as `numeric()` that creates vectors of type 
+double. 
+
+```{r}
+vector("numeric", length = 10) 
+numeric(10)
+```
+
+Both vectors above are of type double and of length 10 and initialized with all 
+elements being 0. 
+
+A *logical vector* is another example of a useful atomic vector. The default
+type of a vector created by `vector()` is logical, with all elements being `FALSE`.
+
+```{r}
+vector(length = 10)
+```
+
+Logical vectors are encountered when we compare the elements of one vector
+to another vector or to a number.
+
+```{r logical_vector, dependson = "integer_vector"}
+logical_vector <- integer_vector > 4
+logical_vector
+typeof(logical_vector)
+```
+
+While a logical vector has its own type and is stored efficiently as such, 
+it behaves in many ways as a numeric vector with `FALSE` equivalent 
+to 0 and `TRUE` equivalent to 1. If we want to compute the relative 
+frequency of elements in `integer_vector` that are are (strictly) larger than 4, 
+say, we can simply take the mean of `logical_vector`. 
+
+```{r logcial_vector_mean, dependson = "logical_vector"}
+mean(logical_vector)
+```
+
+The mean of a logical vector behaves as if the logical values are coerced into
+zeros and ones before the mean is computed. 
+
+A final example of an atomic vector is a *character vector*. In this example, 
+the vector is combined from 6 individual strings to form a vector of length 
+6. Combining strings into a vector does not paste the strings together -- it
+forms a vector, whose elements are the individual strings.
+
+```{r character_vector}
+character_vector <- c("A", "vector", "of", "length", 6, ".")
+character_vector
+typeof(character_vector)
+```
+
+The type of the vector is character. Elements of a vector of type character 
+are strings. Note how the numeric value `6` in the construction of the vector was 
+automatically coerced into the string `"6"`. 
+
+It is possible to paste together the strings in a character vector. 
+
+```{r string_paste, dependson="character_vector"}
+paste(character_vector, collapse = " ")  # Now a character vector of length 1!
+```
+
+It is likewise possible to split a string according to a pattern. For instance 
+into its individual characters.
+
+```{r string_split, dependson="character_vector"}
+strsplit(character_vector[2], split = "")  # Split "vector" into characters
+```
+
+Various additional string operations are available -- see `?character` for 
+more information. 
+
+In summary, atomic vectors are the primitive data structures used in R, 
+with elements being accessible via indices (random access).
+Typical vectors contain numbers, logical values or strings. There is no 
+declarations of data types -- they are inferred from data 
+or computations. This is a flexible type system with many operations in R 
+silently coercing elements in a vector from one type to another. 
+
+### Comparisons and numerical precision
+
+We can compare vectors using the equality operator `==`, which compares
+two vectors element-by-element. The result of the following comparison might 
+be a surprise at first sight.
+
+```{r double_vector_comparison, dependson = "double_vector"}
+double_vector[2:3]
+double_vector[2:3] == c(0.2, 0.3)
+```
+
+The result of the comparison is a vector of length 2 containing the logical 
+values `TRUE FALSE`, but `double_vector[2:3]` appears
+to be equal to `c(0.2, 0.3)`. The difference shows up if we increase the number
+of printed digits from the default (which is 7) to 20.
+
+```{r double_vector_precision, dependson = "double_vector", echo=2:3}
+options(digits = 20)  
+c(0.2, 0.3)
+double_vector[2:3]
+options(digits = 7)  
+```
+
+The 0.3 produced by `seq` is computed as `0.1 + 0.1 + 0.1`, while 
+the 0.3 in the vector `c(0.2, 0.3)` is converted directly into a double precision
+number. The difference arises because neither 0.1 nor 0.3 are exactly representable
+in the binary numeral system, and the arithmetic operations induce rounding 
+errors. The function `numToBits` can reveal the exact difference in the three 
+least significant bits.
+
+```{r bits}
+numToBits(0.3)[1:3] 
+numToBits(0.1 + 0.1 + 0.1)[1:3] 
+```
+
+Differences in the least significant bits are tolerable when we do numerical 
+computations but can be a nuisance for equality testing. When comparing vectors 
+containing doubles we are therefore often interested in testing for approximate
+equality instead using e.g. 
+
+```{r approx_test, dependson="double_vector"}
+all.equal(double_vector, c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0))
+```
+
+The function `all.equal` has a tolerance argument controlling if numerical 
+differences will be regarded as actual differences. Another way of comparing 
+numerical vectors is by computing the range of their difference 
+
+```{r range, dependson="double_vector"}
+range(double_vector - c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0))
+```
+
+This shows the largest positive and negative difference. Usually, 
+the size of the differences should be assessed relative to the magnitudes of 
+the numbers compared. For 
+numbers approximately of magnitude 1, differences 
+of the order $2^{-52} \simeq 2.22 \times 10^{-16}$ (the "machine epsilon") can 
+safely be regarded as rounding errors. The default (relative) tolerance 
+of `all.equal` is the more permissive number $\sqrt{2^{-53}} \simeq 1.5 \times 10^{-8}$. 
+This number is an *ad hoc* but commonly used tolerance. See `?all.equal` for more details. 
+
+### Lists
+
+### Other data structures
+
+Factors, dates, data frames
 
 ## Functions
 
-Something
+When you write an R script and source it, the different R expressions in the 
+script are evaluated sequentially. Intermediate results may be stored in variables
+and used further down in the script. It may not be obvious, but all the expressions 
+in the script are, in fact, function calls. Your script relies on functions 
+implemented in either core R packages or in other installed packages. 
+
+It is possible to use R as a scripting language without ever writing your own 
+functions, but writing new R functions is how you extend the language, and 
+it is how you modularize and reuse your code in an efficient way. As a first 
+example, we implement the Gaussian kernel with bandwidth $h$ (see Section \@ref(kernel-density))
+$$K_h(x) = \frac{1}{h \sqrt{2 \pi}} e^{- \frac{x^2}{2h^2}}.$$
+We call the function `gauss()` to remind us that this is the Gaussian kernel.
+
+```{r gauss-kernel}
+gauss <- function(x, h = 1) {
+  exp(- x^2 / (2 * h^2)) / (h * sqrt(2 * pi))
+}
+```
+
+The *body* of the function is the R expression `exp(- x^2 / (2 * h^2)) / (h * sqrt(2 * pi))`. 
+When the function is called with specific numeric values of its two *formal arguments* 
+`x` and `h`, the body is evaluated with the formal arguments replaced by their 
+values. The value of the (last) evaluated expression in the body is returned by 
+the function. The bandwidth argument `h` is given a default value 1,
+so if that argument is not specified when the function is called, it gets the 
+value 1. 
+
+The Gaussian kernel with bandwidth $h$ is the Gaussian density with standard 
+deviation $h$. Thus we can compare our implementation with `dnorm()` in R 
+that computes the Gaussian density.
+
+```{r gauss-kernel-test, dependson="gauss-kernel"}
+c(gauss(1), dnorm(1))
+c(gauss(0.1, 0.1), dnorm(0.1, sd = 0.1))  # Bandwidth changed to 0.1
+```
+
+For those two cases the functions compute the same (at least, up to the printed 
+precision). Note how the formal argument `sd` is given the value `0.1` in 
+the second call of `dnorm()`. The argument `sd` is the third argument of `dnorm()`,
+but we don't need to specify the second, as in `dnorm(0.1, 0, 0.1)`, to 
+specify the third. We can do so by its name, in which case the second argument
+in `dnorm()` gets its default value `0`. 
+
+There are several alternative ways to implement the Gaussian kernel that 
+illustrate how functions can be written in R.
+
+```{r gauss-kernel-alt}
+# A one-liner without curly brackets
+gauss_one_liner <- function(x, h = 1) 
+  exp(- x^2 / (2 * h^2)) / (h * sqrt(2 * pi)) 
+
+# A stepwise implementation computing the exponent first 
+gauss_step <- function(x, h = 1) {
+  exponent <- (x / h)^2 / 2
+  exp(- exponent) / (h * sqrt(2 * pi))
+}
+
+# A stepwise implementation with an explicit return statement
+gauss_step_return <- function(x, h = 1) {
+  exponent <- (x / h)^2 / 2
+  value <- exp(- exponent) / (h * sqrt(2 * pi))
+  return(value)
+}
+```
+
+The following small test shows two cases where all implementations compute the 
+same.
+
+```{r gauss-kernel-alt-test, dependson=c("gauss-kernel", "gauss-kernel-alt")}
+c(gauss(1), gauss_one_liner(1), gauss_step(1), gauss_step_return(1))
+c(
+  gauss(0.1, 0.1), 
+  gauss_one_liner(0.1, 0.1), 
+  gauss_step(0.1, 0.1), 
+  gauss_step_return(0.1, 0.1)
+)
+```
+
+A function should always be tested. A test is a comparison of the return value 
+of the function with the expected value for some specific argument(s). The 
+expected value can either be computed by hand or by another implementation -- 
+as in the comparisons of `gauss()` and `dnorm()`. Such tests cannot prove 
+that the implementation is correct, but discrepancies can help you to catch and 
+correct bugs. Remember that when testing numerical computations that use floating 
+point numbers we cannot expect exact equality. Thus tests should reveal 
+if return values are within an acceptable tolerance of the expected results. 
+
+Larger pieces of software -- such as an entire R package -- should include 
+a number of tests of each function it implements. This is known as 
+*unit testing* (each unit, that is, each function, is tested), and there are 
+[packages supporting](https://r-pkgs.org/tests.html) the systematic development 
+of unit tests for R package development. A comprehensive set of unit tests 
+also helps when functions are rewritten to e.g. improve performance or extend 
+functionality. If the rewritten function passes all tests, chances are that we 
+didn't break anything by rewriting the function.
+
+It is good practice to write functions that do one well defined computation
+and to keep the body of a function relatively small. Then it is easier to reason 
+about what the function does and it is easier to comprehensively test it. 
+Complex behavior is achieved by composing small and well tested functions. 
+
+To summarize:
+
+* The body is enclosed by curly brackets `{}`, which may be left out if the 
+body is only one line.
+* The function returns the value of the last expression in the body except when 
+the body contains an explicit return statement.
+* Formal arguments can be given default values when the function is implemented,
+and arguments can be passed to the function by position as well as by name. 
+* Functions should do a single well defined computation and be well tested.
 
 ### Vectorization
 
+In Section \@ref(app-data-structures) it was shown how comparison operators 
+work in a vectorized way. In R, comparing a vector to another vector or a 
+number leads to element-by-element comparisons with a logical vector as the result.
+This is one example of how many operations and function evaluations in R are
+natively vectorized, which means that when the function is evaluated with a 
+vector argument the function body is effectively evaluated for each entry in 
+the vector.
+
+Our `gauss()` function is another example of a function that automatically 
+works as a vectorized function.
+
+```{r gauss-vector}
+gauss(c(1, 0.1), c(1, 0.1))
+```
+
+It works as expected for the vector input because all the functions in the body 
+of `gauss()` are vectorized, that is, the arithmetic operators are vectorized, 
+the square root is vectorized and the exponential function is vectorized. 
+
+It is good practice to write R programs that use vectorized computations whenever
+possible. The alternative for-loop can be much slower. Several examples in the 
+book illustrate the computational benefits of vectorized implementations. It may,
+however, not always be obvious how to correctly implement a vectorized function.
+
+Suppose we want to implement the following function 
+$$\overline{f}_h(x) =  \frac{1}{n} \sum_{i=1}^n K_h(x - x_i)$$
+for a data set $x_1, \ldots, x_n$ and $K_h$ the Gaussian kernel. This is the 
+Gaussian kernel density estimator considered in Section \@ref(likelihood). A 
+straight forward implementation is 
+
+```{r gauss-estimator}
+xs <- rnorm(10)  # A data set with 10 observations
+f_bar <- function(x, h) 
+  mean(gauss(x - xs, h))
+```
+
+This implementation works correctly when `x` and `h` are single numbers
+but when e.g. `x` is a vector, the function returns a number (not a vector)
+unrelated to $\overline{f}_h(0)$ and $\overline{f}_h(1)$. 
+
+```{r gauss-estimator-x-test, dependson="gauss-estimator"}
+c(f_bar(0, 1), f_bar(1, 1))
+f_bar(c(0, 1), 1) # Computation is not vectorized
+```
+
+A quick fix is the following explicit vectorization
+
+```{r}
+f_bar_vec <- Vectorize(f_bar)
+```
+
+The R function `Vectorize()` is a 
+[function operator](https://adv-r.hadley.nz/function-operators.html), which 
+takes a function as argument and returns a function. In this case a vectorized
+version of the input function. That is, `f_bar_vec()` can be applied to a vector,
+which results in applying `f_bar()` to each element of the vector. We test that `f_bar_vec()`
+works correctly -- both when the first and the second argument is given as 
+a vector. 
+
+```{r gauss-estimator-x-test2, dependson="gauss-estimator"}
+f_bar_vec(c(0, 1), 1)
+c(f_bar(0, 1), f_bar(1, 1)) # Same result as the vectorized computation
+```
+
+```{r gauss-estimator-h-test, dependson="gauss-estimator"}
+c(f_bar(1, 1), f_bar(1, 0.1))
+f_bar_vec(1, c(1, 0.1)) # Same result as the vectorized computation
+```
+
+The function `Vectorize()` basically works by looping over 
+the elements in the vector argument(s) and applying the function to each element. 
+For prototyping and quick implementations it can be very convenient,
+but it is not a shortcut to efficient vectorized computations. 
+
+`Vectorize()` is used in Section \@ref(likelihood) to implement $\overline{f}_h$ based on 
+`dnorm()`. The purpose of that implementation is to be able to compute 
+$\overline{f}_h(x)$ for arbitrary $x$ in a vectorized way, so that the function 
+can be used together with `curve()` and in the likelihood computations of 
+that section. The implementations in Section \@ref(dens-implement) differ by 
+computing and returning
+$$\overline{f}_h(\tilde{x}_1), \ldots, \overline{f}_h(\tilde{x}_m).$$ 
+That is, those implementations return the evaluations of $\overline{f}_h$ in 
+an equidistant grid $\tilde{x}_1, \ldots, \tilde{x}_m$ and not $\overline{f}_h$
+itself.
+
+### Environments
+
 Something
 
-## Objects and methods
-
-Something
-
-## Environments
-
-Something
+Use `xs` above as example. 
 
 ### Function factories
 
 Something
 
+The random number streams from Chap. 4. Include implementation in package.
+
 ## Performance
 
 Something
 
-### Parallel computations
+Mention parallel computations
+
+### Tracing
+
+### Rcpp
+
+Use the mean_numeric and mean_complex examples.
+
+## Objects and methods
 
 Something
 
-## Exercises {#app:ex}
+## Exercises {#app-ex}
 
 ### Functions {-}
 
