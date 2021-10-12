@@ -170,7 +170,7 @@ grid_par <- expand.grid(
   gamma0 = 1
 )
 
-grid_par <- mutate(grid_par, rate = gamma0 * K / (K + n^a))
+grid_par <- dplyr::mutate(grid_par, rate = gamma0 * K / (K + n^a))
 
 p1 <- ggplot(grid_par, aes(n, rate, color = factor(K), linetype = factor(a))) + 
   geom_line() +
@@ -190,7 +190,7 @@ grid_par <- expand.grid(
   gamma0 = 1
 )
 
-grid_par <- mutate(grid_par, rate = gamma0 * K / (K + n^a))
+grid_par <- dplyr::mutate(grid_par, rate = gamma0 * K / (K + n^a))
 
 p2 <- ggplot(grid_par, aes(n, rate, color = factor(K), linetype = factor(a))) + 
   geom_line() +
@@ -312,8 +312,8 @@ beta_all <- rbind(
   cbind(as.data.frame(do.call(rbind, beta)),
         data.frame(iteration = 1:N, loss = "log-likelihood")),
   beta_SE) %>% 
-  pivot_longer(cols = c("beta0", "beta1"), names_to = "Parameter") %>% 
-  filter(iteration %% 50 == 0)
+  tidyr::pivot_longer(cols = c("beta0", "beta1"), names_to = "Parameter") %>% 
+  dplyr::filter(iteration %% 50 == 0)
 
 ggplot(beta_all, aes(iteration, value, color = Parameter)) + 
   geom_hline(yintercept = beta_true[1], color = "blue") + 
@@ -380,7 +380,7 @@ With $\hat{\mu}_N = \frac{1}{N}\sum_{i=1}^N \delta_{x_i}$ denoting the
 empirical distribution of the batch data set, we see that 
 $$H_N(\theta) = \int L(x, \theta) \mathrm{\mu}_N(dx),$$
 that is, the empirical risk is simply the expected loss with respect to the 
-empirical distribution. Thus to minimize $H_N$ be can use the online 
+empirical distribution. Thus to minimize $H_N$ we can use the online 
 approach by sampling observations from $\hat{\mu}_N$. This leads to the 
 following basic version of the stochastic gradient algorithm applied to 
 a data batch.
@@ -526,14 +526,14 @@ hline_data <- data.frame(
   N = c("N = 50", "N = 500")
 )
 
-bind_rows(
+dplyr::bind_rows(
   small = summary(pois_SG_tracer)[seq(10, 1000, 10), ], 
   large = summary(pois_SG_tracer_2), 
   .id = "N"
 ) %>% 
-  mutate(N = ifelse(N == "small", "N = 50", "N = 500"), n = rep(50 * seq(10, 1000, 10), 2)) %>% 
-  rename(beta0 = par.1, beta1 = par.2) %>% 
-  pivot_longer(cols = c("beta0", "beta1"), names_to = "Parameter") %>% 
+  dplyr::mutate(N = ifelse(N == "small", "N = 50", "N = 500"), n = rep(50 * seq(10, 1000, 10), 2)) %>% 
+  dplyr::rename(beta0 = par.1, beta1 = par.2) %>% 
+  tidyr::pivot_longer(cols = c("beta0", "beta1"), names_to = "Parameter") %>% 
 ggplot(aes(n, value, color = Parameter)) + 
   geom_hline(data = hline_data, aes(yintercept = beta0), color = "blue") + 
   geom_hline(data = hline_data, aes(yintercept = beta1), color = "red") + 
@@ -678,8 +678,8 @@ lattice::levelplot(cp[ord, ord], xlab = "",
 
 ```{r News-cor-order, eval=FALSE, echo=FALSE}
 cor_long <- as_tibble(cp) %>% 
-  mutate(var1 = row.names(cp)) %>% 
-  pivot_longer(- var1, names_to = "var2") 
+  dplyr::mutate(var1 = row.names(cp)) %>% 
+  tidyr::pivot_longer(- var1, names_to = "var2") 
 View(cor_long)
 svd(X)$d
 ```
@@ -815,14 +815,14 @@ suitable learning rate or decay schedule in practice is just as much
 an empirical art.
 
 ```{r news-trace-plot, echo=FALSE, dependson=c("News-GD", "SG-tracer-2", "SG-tracer-sum"), fig.cap="Convergence of squared error loss on the news article data set for four algorithms: gradient descent (gd) and three basic stochastic gradient algorithms with a low learning rate, a high learning rate and a power law decay schedule.", fig.width=8, fig.height=4, out.width="100%"}
-bind_rows(
+dplyr::bind_rows(
   low = SG_trace_low, 
   high = SG_trace_high, 
   decay = SG_trace_decay,
   gd = GD_trace[seq(1, 800, 20), ], 
   .id = "Algorithm"
 ) %>% 
-  filter(.time < 10) %>% 
+  dplyr::filter(.time < 10) %>% 
 autoplot(y = value - H(par_hat)) + 
   aes(color = Algorithm, shape = Algorithm) + 
   geom_line() +
@@ -848,8 +848,8 @@ demanding as one iteration of gradient descent as both will
 compute the gradient in each data point exactly once and add them up.
 The vectorized batch gradient computation is fairly efficient in R, but the iterative 
 looping over data in the stochastic gradient algorithm is not, and this 
-inefficiency is compounded by the fact that slicing 
-of matrices in R unavoidably copies data as the profiling showed. 
+inefficiency is compounded by the inefficiency of matrix slicing
+that results in data copying as the profiling revealed. 
 One way to circumvent these shortcomings of the implementation
 is to rewrite the inner loop of an epoch using Rcpp. 
 
@@ -881,15 +881,15 @@ optimization problem of learning a neural network. A comprehensive coverage
 of all the different ideas will not be attempted, and only three of the most 
 solidified variations will be treated. The use of mini-batches is ubiquitous, 
 and momentum will be introduced to illustrate a variation with memory. Finally,
-the popular Adam algorithm is introduced as an example with adaptive learning 
-rates. 
+the Adam algorithm uses memory in combination with adaptive learning rates 
+to achieve both speed and robustness.
 
 ### Mini-batches
 
 The three steps of the mini-batch stochastic gradient algorithm
 with mini-batch size $m$ are: given $\theta_{n}$
 
-* sample $m$ indices, $I_n$, from $1, \ldots, N$
+* sample $m$ indices, $I_n = \{i_1, \ldots, i_m\}$, from $1, \ldots, N$
 * compute $\rho_n = \frac{1}{m} \sum_{i\in I_n} \nabla_{\theta} L(x_i, \theta_{n})$
 * update the parameter $\theta_{n+1} = \theta_{n} - \gamma_n \rho_n.$
 
@@ -1006,13 +1006,13 @@ SG_trace_mini <- summary(SG_tracer)
 
 
 ```{r news-trace-plot-2, echo=FALSE, dependson=c("SG-mini-batch-run", "News-GD", "SG-tracer-2"), fig.width=8, fig.height=4, out.width="100%", fig.cap="Convergence of squared error loss on the news article data set for three algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), and mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (mini)."}
-bind_rows(
+dplyr::bind_rows(
   mini = SG_trace_mini[seq(1, 200, 3), ], 
   decay = SG_trace_decay,
   gd = GD_trace[seq(1, 800, 20), ], 
   .id = "Algorithm"
 ) %>% 
-  filter(.time < 10) %>% 
+  dplyr::filter(.time < 10) %>% 
 autoplot(y = value - H(par_hat)) + 
   aes(color = Algorithm) + 
   geom_line() +
@@ -1097,14 +1097,14 @@ SG_trace_moment <- summary(SG_tracer)
 ```
 
 ```{r SG-fig-2, echo=FALSE, dependson=c("SG-mini-batch-run", "News-GD", "SG-7"), fig.height=4, fig.width=8, out.width="100%", fig.cap="Convergence of squared error loss on the news article data set for four algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), and mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate either without momentum (mini) or with momentum (moment)."}
-bind_rows(
+dplyr::bind_rows(
   mini = SG_trace_mini[seq(1, 150, 3), ], 
   decay = SG_trace_decay,
   gd = GD_trace[seq(1, 800, 20), ], 
   moment = SG_trace_moment[seq(1, 150, 3), ],
   .id = "Algorithm"
 ) %>% 
-  filter(.time < 10) %>% 
+  dplyr::filter(.time < 10) %>% 
 autoplot(y = value - H(par_hat)) + 
   aes(color = Algorithm) + 
   geom_line() + 
@@ -1117,7 +1117,11 @@ autoplot(y = value - H(par_hat)) +
 
 Figure \@ref(fig:SG-fig-2) shows that due to the increased learning rate of the momentum
 algorithm it decays a little faster than the mini-batch algorithm without 
-momentum. 
+momentum. With enough memory, momentum dampens rapid fluctuations, 
+which allows for a larger choice of learning rate and a speedier convergence. 
+However, too much memory results in low frequency oscillations and slow convergence.
+The excellent article [Why Momentum Really Works](https://distill.pub/2017/momentum/) 
+contains many more details about momentum algorithms and beautiful illustrations.
 
 ### Adaptive learning rates
 
@@ -1260,8 +1264,8 @@ SG(
 SG_trace_adam_decay <- summary(SG_tracer)
 ```
 
-```{r SG-fig-3, echo=FALSE, dependson=c("SG-mini-batch-run", "News-GD", "SG-7", "SG-8"), fig.height=4, fig.width=8, out.width="100%", fig.cap="Convergence of squared error loss on the news article data set for six algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate either without momentum (mini) or with momentum (moment), and the Adam algorithm either with a fixed learning rate (adam) or a power law decay schedule (adam_decay)."}
-bind_rows(
+```{r SG-fig-3, echo=FALSE, dependson=c("SG-mini-batch-run", "News-GD", "SG-7", "SG-8"), fig.height=4, fig.width=8, out.width="100%", fig.cap="Convergence of squared error loss on the news article data set for six algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate either without momentum (mini) or with momentum (moment), and the Adam algorithm either with a fixed learning rate (adam) or a power law decay schedule (adam\\_decay)."}
+dplyr::bind_rows(
   mini = SG_trace_mini[seq(1, 200, 3), ], 
   decay = SG_trace_decay,
   gd = GD_trace[seq(1, 800, 20), ], 
@@ -1270,7 +1274,7 @@ bind_rows(
   adam_decay = SG_trace_adam_decay[seq(1, 150, 3), ],
   .id = "Algorithm"
 ) %>% 
-  filter(.time < 10) %>% 
+  dplyr::filter(.time < 10) %>% 
 autoplot(y = value - H(par_hat)) + 
   aes(color = Algorithm) + 
   geom_line() +
@@ -1404,8 +1408,8 @@ SG(
 SG_trace_Rcpp_epoch_mini <- summary(SG_tracer)
 ```
 
-```{r SG-fig-4, echo=FALSE, dependson=c("SG-basic", "SG-4", "SG-5", "SG-6", "SG-7", "SG-8"), fig.height=4, fig.width=8, out.width="100%", fig.cap="Convergence of squared error loss on the news article data set for six algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate either without momentum (mini) or with momentum (moment), and the ADAM algorithm either with a fixed learning rate (adam) or a power law decay schedule (adam_decay)."}
-bind_rows(
+```{r SG-fig-4, echo=FALSE, dependson=c("SG-basic", "SG-4", "SG-5", "SG-6", "SG-7", "SG-8"), fig.height=4, fig.width=8, out.width="100%", fig.cap="Convergence of squared error loss on the news article data set for six algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate either without momentum (mini) or with momentum (moment), and the ADAM algorithm either with a fixed learning rate (adam) or a power law decay schedule (adam\\_decay)."}
+dplyr::bind_rows(
   Rcpp_grad = SG_trace_Rcpp_grad,
   Rcpp_epoch = SG_trace_Rcpp_epoch[seq(1, 200, 3), ],
   Rcpp_mini = SG_trace_Rcpp_epoch_mini[seq(1, 200, 3), ],
@@ -1413,7 +1417,7 @@ bind_rows(
   high = SG_trace_high,
   .id = "Algorithm"
 ) %>% 
-  filter(.time < 5) %>% 
+  dplyr::filter(.time < 5) %>% 
 autoplot(y = value - H(par_hat)) + 
   aes(color = Algorithm) + 
   geom_line() +
@@ -1427,6 +1431,7 @@ autoplot(y = value - H(par_hat)) +
 
 ### Full Rcpp implementations
 
+Here
 
 ```{Rcpp SG-Rcpp, eval=FALSE}
 // [[Rcpp::depends(dqrng)]]
