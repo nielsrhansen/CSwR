@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Chapter 7 Numerical optimization | Computational Statistics with R</title>
+<meta name="author" content="Niels Richard Hansen">
+<meta name="description" content="The main application of numerical optimization in statistics is for the computation of parameter estimates. Typically by maximizing the likelihood function or by maximizing or minimizing another...">
+<meta name="generator" content="bookdown 0.24 with bs4_book()">
+<meta property="og:title" content="Chapter 7 Numerical optimization | Computational Statistics with R">
+<meta property="og:type" content="book">
+<meta property="og:description" content="The main application of numerical optimization in statistics is for the computation of parameter estimates. Typically by maximizing the likelihood function or by maximizing or minimizing another...">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Chapter 7 Numerical optimization | Computational Statistics with R">
+<meta name="twitter:description" content="The main application of numerical optimization in statistics is for the computation of parameter estimates. Typically by maximizing the likelihood function or by maximizing or minimizing another...">
+<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/header-attrs-2.10/header-attrs.js"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/_Roboto%20Slab-0.4.0/font.css" rel="stylesheet">
+<script src="libs/bs3compat-0.3.0/transition.js"></script><script src="libs/bs3compat-0.3.0/tabs.js"></script><script src="libs/bs3compat-0.3.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><link rel="stylesheet" href="style.css">
+</head>
+<body data-spy="scroll" data-target="#toc">
+
+<div class="container-fluid">
+<div class="row">
+  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
+
+    <div class="d-flex align-items-start justify-content-between">
+      <h1>
+        <a href="index.html" title="">Computational Statistics with R</a>
+      </h1>
+      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
+    </div>
+
+    <div id="main-nav" class="collapse-lg">
+      <form role="search">
+        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
+</form>
+
+      <nav aria-label="Table of contents"><h2>Table of contents</h2>
+        <ul class="book-toc list-unstyled">
+<li><a class="" href="index.html">Preface</a></li>
+<li><a class="" href="intro.html"><span class="header-section-number">1</span> Introduction</a></li>
+<li class="book-part">Part I: Smoothing</li>
+<li><a class="" href="density.html"><span class="header-section-number">2</span> Density estimation</a></li>
+<li><a class="" href="bivariate.html"><span class="header-section-number">3</span> Bivariate smoothing</a></li>
+<li class="book-part">Part II: Monte Carlo Methods</li>
+<li><a class="" href="univariate-random-variables.html"><span class="header-section-number">4</span> Univariate random variables</a></li>
+<li><a class="" href="mci.html"><span class="header-section-number">5</span> Monte Carlo integration</a></li>
+<li class="book-part">Part III: Optimization</li>
+<li><a class="" href="four-examples.html"><span class="header-section-number">6</span> Four Examples</a></li>
+<li><a class="active" href="numopt.html"><span class="header-section-number">7</span> Numerical optimization</a></li>
+<li><a class="" href="em.html"><span class="header-section-number">8</span> Expectation maximization algorithms</a></li>
+<li><a class="" href="StochOpt.html"><span class="header-section-number">9</span> Stochastic Optimization</a></li>
+<li class="book-part">Appendix</li>
+<li><a class="" href="app-R.html"><span class="header-section-number">A</span> R programming</a></li>
+<li><a class="" href="references.html">References</a></li>
+</ul>
+
+        <div class="book-extra">
+          <p><a id="book-repo" href="https://github.com/nielsrhansen/CSwR">View book source <i class="fab fa-github"></i></a></p>
+        </div>
+      </nav>
+</div>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="numopt" class="section level1" number="7">
+<h1>
+<span class="header-section-number">7</span> Numerical optimization<a class="anchor" aria-label="anchor" href="#numopt"><i class="fas fa-link"></i></a>
+</h1>
+<p>The main application of numerical optimization in statistics is for the
+computation of parameter estimates. Typically by maximizing the likelihood
+function or by maximizing or minimizing another estimation criterion. The focus of this
+chapter is on optimization algorithms for (penalized) maximum likelihood
+estimation. Out of tradition we
+formulate all results and algorithms in terms of minimization and
+not maximization.</p>
+<p>The generic optimization problem considered is the minimization of
+<span class="math inline">\(H : \Theta \to \mathbb{R}\)</span> for <span class="math inline">\(\Theta \subseteq \mathbb{R}^p\)</span> an
+open set and <span class="math inline">\(H\)</span> twice differentiable. In applications, <span class="math inline">\(H = -\ell\)</span>,
+the negative log-likelihood function, or <span class="math inline">\(H = -\ell + J\)</span>, where <span class="math inline">\(J : \Theta \to \mathbb{R}\)</span>
+is a <em>penalty function</em>, likewise twice differentiable, that does not
+depend upon data.</p>
+<p>Statistical optimization problems share some properties
+that we should pay attention to. The term
+<span class="math display">\[-\ell(\theta) = - \sum_{i=1}^n \log(f_{\theta}(x_i))\]</span>
+in the objective function to be minimized is a sum over the
+data, and the more data we have the more computationally demanding
+it is to evaluate <span class="math inline">\(H\)</span> and its derivatives. There are exceptions, though,
+when a sufficient statistic can be computed upfront, but generally
+we must expect run time to grow with data size. Additionally, high precision in
+the computed (local) minimizer is typically not necessary. If the numerical
+error is already orders of magnitudes smaller than the statistical
+uncertainty of the parameter estimate being computed, further
+optimization makes no relevant difference.</p>
+<p>In fact, blindly pursuing the global maximum of the likelihood can
+lead you astray if your model is not well behaved. In situations where <span class="math inline">\(H\)</span> is
+not convex the negative log-likelihood may be unbounded, e.g. for finite mixtures, yet
+a good estimate can be found as a local minimizer. So even if we phrase
+the objective as a global optimization objective, we may be equally interested i local
+minima or even just stationary points; solutions to <span class="math inline">\(\nabla H(\theta) = 0\)</span>. Optimization is a computational
+tool used in statistics for adapting models to data – but the minimizer of <span class="math inline">\(H\)</span>
+for a particular data set is not intrinsically interesting. There may be
+little gained from computing a minimizer of <span class="math inline">\(H\)</span> to high numerical precision,
+and assessment of model fit and quantification of model uncertainty is of
+greater practical importance than a highly accurately determined minimizer.</p>
+<p>For the generic minimization problem considered in this chapter, the practical
+challenge when implementing algorithms in R is typically
+to implement efficient evaluation of <span class="math inline">\(H\)</span> and its derivatives. In particular,
+efficient evaluations of <span class="math inline">\(-\ell\)</span>. Several choices of standard optimization
+algorithms are possible and some are already implemented and available in R.
+For many practical purposes the BFGS-algorithms as implemented via <code><a href="https://rdrr.io/r/stats/optim.html">optim()</a></code>
+work well and require only the computation of gradients. It is, of course,
+paramount that <span class="math inline">\(H\)</span> and <span class="math inline">\(\nabla H\)</span> are correctly implemented, and
+efficiency of the algorithms is largely determined by the efficiency of
+the implementation of <span class="math inline">\(H\)</span> and <span class="math inline">\(\nabla H\)</span> but also by the choice of parametrization.</p>
+<p>For some optimization problems, Newton-type algorithms are preferable, and standard
+implementations are available in R through <code><a href="https://rdrr.io/r/stats/nlm.html">nlm()</a></code> and <code><a href="https://rdrr.io/r/stats/nls.html">nls()</a></code> but with different
+interfaces than <code><a href="https://rdrr.io/r/stats/optim.html">optim()</a></code>.</p>
+<div id="algorithms-and-convergence" class="section level2" number="7.1">
+<h2>
+<span class="header-section-number">7.1</span> Algorithms and convergence<a class="anchor" aria-label="anchor" href="#algorithms-and-convergence"><i class="fas fa-link"></i></a>
+</h2>
+<p>A numerical optimization algorithm computes from an initial value
+<span class="math inline">\(\theta_0 \in \Theta\)</span> a sequence <span class="math inline">\(\theta_1, \theta_2, \ldots \in \Theta\)</span>.
+One could hope for
+<span class="math display">\[\theta_n \rightarrow \text{arg min}_{\theta} H(\theta)\]</span>
+for <span class="math inline">\(n \to \infty\)</span>, but less can typically be guaranteed. First,
+the global minimizer may not exist or it may not be unique, in which
+case the convergence itself is undefined or ambiguous. Second, <span class="math inline">\(\theta_n\)</span>
+can in general only be shown to converge to a <em>local</em> minimizer if anything.
+Third, <span class="math inline">\(\theta_n\)</span> may not converge, even if <span class="math inline">\(H(\theta_n)\)</span>
+converges to a local minimum.</p>
+<p>To discuss properties of optimization algorithms in greater detail we
+need ways to quantify, analyze and monitor their convergence. This can be
+done in a number of different ways. For instance in terms of <span class="math inline">\(\theta_n\)</span> or <span class="math inline">\(H(\theta_n)\)</span> – or
+perhaps in terms of <span class="math inline">\(\nabla H(\theta_n)\)</span>. Focusing on <span class="math inline">\(H(\theta_n)\)</span> we
+say that an algorithm is a <em>descent algorithm</em> if
+<span class="math display">\[H(\theta_0) \geq H(\theta_1) \geq H(\theta_2) \geq \ldots.\]</span>
+If all inequalities are sharp (except if some <span class="math inline">\(\theta_i\)</span> is a local minimizer),
+the algorithm is called a <em>strict</em> descent algorithm. The
+sequence <span class="math inline">\(H(\theta_n)\)</span> is convergent for any descent algorithm if <span class="math inline">\(H\)</span>
+is bounded from below, e.g. if the <em>level set</em>
+<span class="math display">\[\mathrm{lev}(\theta_0) =  \{\theta \in \Theta \mid H(\theta) \leq H(\theta_0)\}\]</span>
+is compact. However, even for a strict descent algorithm,
+<span class="math inline">\(H(\theta_n)\)</span> may descent in smaller and smaller steps toward a limit that is
+not a (local) minimum. A good optimization algorithm needs to
+guarantee more than descent – it needs to guarantee <em>sufficient</em> descent
+in each step.</p>
+<p>Many algorithms can be phrased as
+<span class="math display">\[\theta_n = \Phi(\theta_{n-1})\]</span>
+for a map <span class="math inline">\(\Phi : \Theta \to \Theta\)</span>.
+When <span class="math inline">\(\Phi\)</span> is continuous and <span class="math inline">\(\theta_n \rightarrow \theta_{\infty}\)</span>
+it follows that
+<span class="math display">\[\Phi(\theta_n) \rightarrow \Phi(\theta_{\infty}).\]</span>
+Since <span class="math inline">\(\Phi(\theta_n) = \theta_{n+1} \rightarrow \theta_{\infty}\)</span> we see that
+<span class="math display">\[\Phi(\theta_{\infty}) = \theta_{\infty}.\]</span>
+That is, <span class="math inline">\(\theta_{\infty}\)</span> is a <em>fixed point</em> of <span class="math inline">\(\Phi\)</span>. If <span class="math inline">\(\theta_n\)</span> is
+not convergent, any accumulation point of <span class="math inline">\(\theta_n\)</span> will still be a
+fixed point of <span class="math inline">\(\Phi\)</span>. Thus we can search for potential accumulation
+points by searching for fixed points of the map <span class="math inline">\(\Phi: \Theta \to \Theta\)</span>.</p>
+<p>Mathematics is full of <em>fixed point theorems</em> that: i) give conditions under which a map
+has a fixed point; and ii) in some cases guarantee that the iterates <span class="math inline">\(\Phi^{\circ n}(\theta_0)\)</span>
+converge to a fixed point. The most prominent result is <a href="https://en.wikipedia.org/wiki/Banach_fixed-point_theorem">Banach’s fixed point
+theorem</a>.
+It states that if <span class="math inline">\(\Phi\)</span> is a <em>contraction</em>, that is,
+<span class="math display">\[\| \Phi(\theta) - \Phi(\theta')\| \leq c \|\theta - \theta'\|\]</span>
+for a constant <span class="math inline">\(c \in [0,1)\)</span> (using any norm), then <span class="math inline">\(\Phi\)</span> has a unique
+fixed point and <span class="math inline">\(\theta_n = \Phi^{\circ n}(\theta_0)\)</span> converges to that fixed
+point for any starting point <span class="math inline">\(\theta_0 \in \Theta\)</span>.</p>
+<p>We will show how a simple gradient descent algorithm can be
+analyzed – both as a descent algorithm and through Banach’s
+fixed point theorem. This will demonstrate basic proof techniques as
+well as typical conditions on <span class="math inline">\(H\)</span> that can give convergence results
+for optimization algorithms.
+We will only scratch the surface here with the intention that it can motivate
+the algorithms introduced in subsequent sections and chapters as well
+as empirical techniques for practical assessment of
+convergence.</p>
+<p>Indeed, theory rarely provides us with sharp quantitative results on
+the rate of convergence and we will need computational techniques to monitor and measure convergence of algorithms in practice. Otherwise we cannot compare
+the efficiency of different algorithms.</p>
+<div id="gradient-descent" class="section level3" number="7.1.1">
+<h3>
+<span class="header-section-number">7.1.1</span> Gradient descent<a class="anchor" aria-label="anchor" href="#gradient-descent"><i class="fas fa-link"></i></a>
+</h3>
+<p>We will assume in this section that <span class="math inline">\(\Theta = \mathbb{R}^p\)</span>. This will
+simplify the analysis a bit, but with minor modifications it can
+be generalized to the case where <span class="math inline">\(\Theta\)</span> is open and convex.</p>
+<p>Suppose that <span class="math inline">\(D^2H(\theta)\)</span> has <em>numerical radius</em> uniformly bounded by <span class="math inline">\(L\)</span>, that is,
+<span class="math display">\[|\gamma^T D^2H(\theta) \gamma| \leq L \|\gamma\|_2^2\]</span>
+for all <span class="math inline">\(\theta \in \Theta\)</span> and <span class="math inline">\(\gamma \in \mathbb{R}^p\)</span>. The
+<em>gradient descent</em> algorithm with a fixed step length <span class="math inline">\(1/(L + 1)\)</span> is given by
+<span class="math display" id="eq:grad-descent">\[\begin{align}
+\theta_{n} &amp; = \theta_{n-1} - \frac{1}{L + 1} \nabla H(\theta_{n-1}).  \tag{7.1}
+\end{align}\]</span>
+Fixing <span class="math inline">\(n\)</span> there is by Taylor’s theorem a
+<span class="math inline">\(\tilde{\theta} = \alpha \theta_{n} + (1- \alpha)\theta_{n-1}\)</span> (where <span class="math inline">\(\alpha \in [0,1]\)</span>)
+on the line between <span class="math inline">\(\theta_n\)</span> and <span class="math inline">\(\theta_{n-1}\)</span> such that</p>
+<p><span class="math display">\[\begin{align*}
+H(\theta_n) &amp; = H(\theta_{n-1}) - \frac{1}{L+1} \|\nabla H(\theta_{n-1})\|_2^2 +  
+ \\  &amp; \qquad \frac{1}{(L+1)^2} \nabla H(\theta_{n-1})^T D^2H(\tilde{\theta}) \nabla H(\theta_{n-1}) \\
+&amp; \leq H(\theta_{n-1}) - \frac{1}{L+1} \|\nabla H(\theta_{n-1})\|_2^2 + 
+   \frac{L}{(L+1)^2} \|\nabla H(\theta_{n-1})\|_2^2 \\
+&amp; = H(\theta_{n-1}) - \frac{1}{(L+1)^2} \|\nabla H(\theta_{n-1})\|_2^2.
+\end{align*}\]</span></p>
+<p>This shows that <span class="math inline">\(H(\theta_n) \leq H(\theta_{n-1})\)</span>, and if <span class="math inline">\(\theta_{n-1}\)</span> is not a
+stationary point, <span class="math inline">\(H(\theta_n) &lt; H(\theta_{n-1})\)</span>. That is, the algorithm
+is a descent algorithm, and unless it
+hits a stationary point it is a strict descent algorithm.</p>
+<p>It furthermore follows that</p>
+<p><span class="math display">\[\begin{align}
+H(\theta_n) &amp; = 
+(H(\theta_n) - H(\theta_{n-1})) + (H(\theta_{n-1}) - H(\theta_{n-2})) + ... \\
+&amp; \qquad + (H(\theta_1) - H(\theta_0)) + H(\theta_0) \\
+&amp; \leq H(\theta_0) - \frac{1}{(L + 1)^2} \sum_{k=1}^n \|\nabla H(\theta_{k-1})\|_2^2.
+\end{align}\]</span></p>
+<p>If <span class="math inline">\(H\)</span> is bounded below, <span class="math inline">\(\sum_{k=1}^{\infty} \|\nabla H(\theta_{k-1})\|_2^2 &lt; \infty\)</span>
+and hence
+<span class="math display">\[\|\nabla H(\theta_{n})\|_2 \rightarrow 0\]</span>
+for <span class="math inline">\(n \to \infty\)</span>. For any accumulation point, <span class="math inline">\(\theta_{\infty}\)</span>, of
+the sequence <span class="math inline">\(\theta_n\)</span>, it follows by continuity of <span class="math inline">\(\nabla H\)</span> that
+<span class="math display">\[\nabla H(\theta_{\infty}) = 0,\]</span>
+and <span class="math inline">\(\theta_{\infty}\)</span> is a stationary point. If <span class="math inline">\(H\)</span> has a <em>unique</em>
+stationary point in <span class="math inline">\(\mathrm{lev}(\theta_0)\)</span>, <span class="math inline">\(\theta_{\infty}\)</span> is a (local)
+minimizer, and
+<span class="math display">\[\theta_n \rightarrow \theta_{\infty}\]</span>
+for <span class="math inline">\(n \to \infty\)</span>.</p>
+<p>The gradient descent algorithm <a href="numopt.html#eq:grad-descent">(7.1)</a> is given
+by the map
+<span class="math display">\[\Phi_{\nabla}(\theta) = \theta - \frac{1}{L + 1} \nabla H(\theta).\]</span>
+The gradient descent map, <span class="math inline">\(\Phi_{\nabla}\)</span>, has <span class="math inline">\(\theta\)</span> as fixed point if and only if<br><span class="math display">\[\nabla H(\theta) = 0,\]</span>
+that is, if and only if <span class="math inline">\(\theta\)</span> is a stationary point.</p>
+<p>We will show that <span class="math inline">\(\Phi_{\nabla}\)</span> is a contraction on <span class="math inline">\(\Theta\)</span>
+under the assumption that the eigenvalues of the (symmetric) matrix
+<span class="math inline">\(D^2H(\theta)\)</span> for all <span class="math inline">\(\theta \in \Theta\)</span> are contained in an interval <span class="math inline">\([l, L]\)</span>
+with <span class="math inline">\(0 &lt; l \leq L\)</span>. If <span class="math inline">\(\theta, \theta' \in \Theta\)</span> we find
+by Taylor’s theorem that
+<span class="math display">\[\nabla H(\theta) = \nabla H(\theta') + D^2H(\tilde{\theta})(\theta - \theta')\]</span>
+for some <span class="math inline">\(\tilde{\theta}\)</span> on the line between <span class="math inline">\(\theta\)</span> and <span class="math inline">\(\theta'\)</span>.
+For the gradient descent map this gives that</p>
+<p><span class="math display">\[\begin{align*}
+\|\Phi_{\nabla}(\theta) - \Phi_{\nabla}(\theta')\|_2 &amp; = 
+\left\|\theta - \theta' - \frac{1}{L+1}\left(\nabla H(\theta) - \nabla H(\theta')\right)\right\|_2 \\
+&amp; = 
+\left\|\theta - \theta' - \frac{1}{L+1}\left( D^2H(\tilde{\theta})(\theta - \theta')\right)\right\|_2 \\
+&amp; = 
+\left\|\left(I - \frac{1}{L+1} D^2H(\tilde{\theta}) \right) (\theta - \theta')\right\|_2 \\
+&amp; \leq \left(1 - \frac{l}{L + 1}\right) \|\theta - \theta'\|_2,
+\end{align*}\]</span></p>
+<p>since the eigenvalues of <span class="math inline">\(I - \frac{1}{L+1} D^2H(\tilde{\theta})\)</span> are all between
+<span class="math inline">\(1 - L/(L + 1)\)</span> and <span class="math inline">\(1 - l/(L+1)\)</span>. This shows that <span class="math inline">\(\Phi_{\nabla}\)</span> is a
+contraction for the <span class="math inline">\(2\)</span>-norm with <span class="math inline">\(c = 1 - l/(L + 1) &lt; 1\)</span>. From Banach’s fixed
+point theorem it follows that there is a unique stationary point, <span class="math inline">\(\theta_{\infty}\)</span>,
+and <span class="math inline">\(\theta_n \rightarrow \theta_{\infty}\)</span>. Since <span class="math inline">\(D^2H(\theta_{\infty})\)</span> is
+positive definite, <span class="math inline">\(\theta_{\infty}\)</span> is a (global) minimizer.</p>
+<p>To summarize, if <span class="math inline">\(D^2H(\theta)\)</span> has uniformly bounded numerical radius, and if
+<span class="math inline">\(H\)</span> has a unique stationary point <span class="math inline">\(\theta_{\infty}\)</span> in the compact set <span class="math inline">\(\mathrm{lev}(\theta_0)\)</span>, then the gradient descent algorithm is a strict descent
+algorithm that converges toward that (local) minimum <span class="math inline">\(\theta_{\infty}.\)</span>
+The fixed step length was key to this analysis.
+The upper bound on the numerical radius
+of <span class="math inline">\(D^2H(\theta)\)</span> guarantees descent with a fixed step length, and the
+fixed step length then guarantees sufficient descent.</p>
+<p>When the eigenvalues of <span class="math inline">\(D^2H(\theta)\)</span> are in <span class="math inline">\([l, L]\)</span> for <span class="math inline">\(0 &lt; l \leq L\)</span>,
+<span class="math inline">\(H\)</span> is a <em>strongly convex function</em> with a unique global minimizer
+<span class="math inline">\(\theta_{\infty}\)</span> and all level sets <span class="math inline">\(\mathrm{lev}(\theta_0)\)</span> compact.
+Convergence can then also be established via Banach’s fixed point theorem.
+The constant <span class="math inline">\(c = 1 - l/(L + 1) = 1 - \kappa^{-1}\)</span> with <span class="math inline">\(\kappa = (L + 1) / l\)</span>
+then quantifies the rate of the convergence, as will be discussed in greater
+detail in the next section. The constant <span class="math inline">\(\kappa\)</span> is an upper bound on the
+<a href="https://en.wikipedia.org/wiki/Condition_number#Matrices">conditioning number</a>
+of the matrix <span class="math inline">\(D^2H(\theta)\)</span> uniformly in <span class="math inline">\(\theta\)</span>, and a large value of
+<span class="math inline">\(\kappa\)</span> means that <span class="math inline">\(c\)</span> is close to 1 and the convergence can be slow.
+A large conditioning number for the second derivative indicates that the graph
+of <span class="math inline">\(H\)</span> looks like a narrow ravine, in which case we can expect the
+gradient descent algorithm to be slow.</p>
+</div>
+<div id="convergence-rate" class="section level3" number="7.1.2">
+<h3>
+<span class="header-section-number">7.1.2</span> Convergence rate<a class="anchor" aria-label="anchor" href="#convergence-rate"><i class="fas fa-link"></i></a>
+</h3>
+<p>When <span class="math inline">\(\theta_n = \Phi^{\circ n}(\theta_0)\)</span> for a contraction <span class="math inline">\(\Phi\)</span>,
+Banach’s fixed point theorem tells us that there is a unique fixed point
+<span class="math inline">\(\theta_{\infty}.\)</span> That <span class="math inline">\(\Phi\)</span> is a contraction further implies that<br><span class="math display">\[\|\theta_n - \theta_{\infty}\| = \|\Phi(\theta_{n-1}) - \theta_{\infty}\| \leq c \|\theta_{n-1} - \theta_{\infty}\| \leq c^n \|\theta_0 - \theta_{\infty}\|.\]</span>
+That is, <span class="math inline">\(\|\theta_n - \theta_{\infty}\| \to 0\)</span> with at least geometric rate <span class="math inline">\(c &lt; 1\)</span>.</p>
+<p>In the numerical optimization literature, convergence at a geometric rate is
+known as linear convergence (the number of correct digits increases linearly
+with the number of iterations), and a linearly convergent algorithm is often
+quantified in terms of its asymptotic convergence rate.</p>
+<div class="definition">
+<p><span id="def:order-rate" class="definition"><strong>Definition 7.1  </strong></span>Let <span class="math inline">\((\theta_n)_{n \geq 1}\)</span> be a convergent sequence in <span class="math inline">\(\mathbb{R}^p\)</span> with
+limit <span class="math inline">\(\theta_{\infty}\)</span>. Let <span class="math inline">\(\| \cdot \|\)</span> be a norm on <span class="math inline">\(\mathbb{R}^p\)</span>. We say
+that the convergence is linear if
+<span class="math display">\[\limsup_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|} = r\]</span>
+for some <span class="math inline">\(r \in (0, 1)\)</span>, in which case <span class="math inline">\(r\)</span> is called the asymptotic rate.</p>
+</div>
+<p>Convergence of an algorithm can be faster or slower than linear. If<br><span class="math display">\[\limsup_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|} = 1\]</span>
+we say that the convergence is sublinear, and if
+<span class="math display">\[\limsup_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|} = 0\]</span>
+we say that the convergence is superlinear. There is also a refined
+notion of convergence order for superlinearly convergent algorithms
+that more precisely describes the convergence.</p>
+<p>For a contraction, <span class="math inline">\(\theta_n = \Phi^{\circ n}(\theta_0)\)</span> converges linearly
+or superlinearly. If it converges linearly, the asymptotic rate is bounded by
+<span class="math inline">\(c\)</span>, but this is a global constant and may be pessimistic. The following
+lemma provides a local upper bound on the asymptotic rate in terms of
+the derivative of <span class="math inline">\(\Phi\)</span> in the limit <span class="math inline">\(\theta_{\infty}\)</span>.</p>
+<div class="lemma">
+<p><span id="lem:fixed-point-rate" class="lemma"><strong>Lemma 7.1  </strong></span>Let <span class="math inline">\(\Phi : \mathbb{R}^p \to \mathbb{R}^p\)</span> be twice continuously differentiable. If
+<span class="math inline">\(\theta_n = \Phi^{\circ n}(\theta_0)\)</span> converges linearly toward a fixed point <span class="math inline">\(\theta_{\infty}\)</span>
+of <span class="math inline">\(\Phi\)</span> then
+<span class="math display">\[r_{\max} = \sup_{\gamma: \|\gamma \| = 1} \|D \Phi(\theta_{\infty}) \gamma\|\]</span>
+is an upper bound on the asymptotic rate.</p>
+</div>
+<div class="proof boxed">
+<p><span id="unlabeled-div-1" class="proof"><em>Proof</em>. </span>By Taylor’s theorem,
+<span class="math display">\[\begin{align*}
+\theta_{n} = \theta_{\infty} + D \Phi(\theta_{\infty})(\theta_{n-1} - \theta_{\infty}) +
+o(\|\theta_{n-1} - \theta_{\infty}\|_2).
+\end{align*}\]</span>
+Rearranging yields
+<span class="math display">\[\begin{align*}
+\limsup_{n \to \infty} 
+\frac{\| \theta_{n} - \theta_{\infty}\|}{\| \theta_{n-1} - \theta_{\infty}\|} 
+&amp; = \limsup_{n \to \infty} 
+\frac{\| D \Phi(\theta_{\infty})(\theta_{n-1} - \theta_{\infty})\|}{\| \theta_{n-1} - \theta_{\infty}\|} \\
+&amp; = \limsup_{n \to \infty} 
+\| D \Phi(\theta_{\infty})\left(\frac{\theta_{n-1} - \theta_{\infty}}{\| \theta_{n-1} - \theta_{\infty}\|} \right)\| \\
+&amp; \leq r_{\max}.
+\end{align*}\]</span></p>
+</div>
+<p>Note that it is possible that <span class="math inline">\(r_{\max} \geq 1\)</span> even if the convergence is linear,
+in which case <span class="math inline">\(r_{\max}\)</span> is a useless upper bound. Moreover, the actual rate
+can depend on the starting point <span class="math inline">\(\theta_0\)</span>, and even when <span class="math inline">\(r_{\max} &lt; 1\)</span> it
+only quantifies the worst case convergence rate.</p>
+<p>To estimate the actual convergence rate, note that linear
+convergence with rate <span class="math inline">\(r\)</span> implies that for any <span class="math inline">\(\delta &gt; 0\)</span>
+<span class="math display">\[
+\| \theta_n - \theta_{\infty} \| \leq (r + \delta) \| \theta_{n-1} - \theta_{\infty} \| \leq \ldots 
+\leq (r + \delta)^{n - N_0} \| \theta_{N_0} - \theta_{\infty} \|
+\]</span>
+<span class="math inline">\(n \geq N_0\)</span> with <span class="math inline">\(N_0\)</span> sufficiently large (depending on <span class="math inline">\(\delta\)</span>). That is,
+<span class="math display">\[\log \|\theta_{n} - \theta_{\infty}\| \leq n \log(r + \delta) + d,\]</span>
+for <span class="math inline">\(n \geq N_0\)</span>. In practice, we run the algorithm for <span class="math inline">\(N\)</span>
+iterations, so that <span class="math inline">\(\theta_N = \theta_{\infty}\)</span> up to computer precision,
+and we plot <span class="math inline">\(\log \|\theta_{n} - \theta_{N}\|\)</span> as a function of <span class="math inline">\(n\)</span>.
+The decay should be approximately linear for <span class="math inline">\(n \geq N_0\)</span> for some <span class="math inline">\(N_0\)</span>, in
+which case the slope is about <span class="math inline">\(\log(r) &lt; 0\)</span>, which can then be estimated by least squares.
+A slower-than-linear or faster-than-linear decay indicate that the
+algorithm converges sublinearly or superlinearly, respectively.</p>
+<p>It is, of course, possible to quantify convergence
+in terms of the sequences <span class="math inline">\(H(\theta_n)\)</span> and <span class="math inline">\(\nabla H(\theta_n)\)</span> instead.
+For a descent algorithm with <span class="math inline">\(H(\theta_n) \rightarrow H(\theta_\infty)\)</span> linearly for
+<span class="math inline">\(n \to \infty\)</span>, we can plot
+<span class="math display">\[\log(H(\theta_n) - H(\theta_N))\]</span>
+as a function of <span class="math inline">\(n\)</span>, and use least squares to estimate the asymptotic rate of
+convergence of <span class="math inline">\(H(\theta_n)\)</span>.</p>
+<p>Using <span class="math inline">\(\nabla H(\theta_n)\)</span> to quantify convergence is particularly appealing
+as we know that the limit is <span class="math inline">\(0\)</span>. This also means that we can monitor
+its convergence while the algorithm is running and not only after it has
+converged. If <span class="math inline">\(\nabla H(\theta_n)\)</span> converges linearly in the norm <span class="math inline">\(\|\cdot\|\)</span>, that is,
+<span class="math display">\[\limsup_{n \to \infty} \frac{\|\nabla H(\theta_n)\|}{\|\nabla H(\theta_{n-1})\|} = r,\]</span>
+we have for any <span class="math inline">\(\delta &gt; 0\)</span> that
+<span class="math display">\[\log \|\nabla H(\theta_n)\| \leq n \log(r + \delta) + d\]</span>
+for <span class="math inline">\(n \geq N_0\)</span> and <span class="math inline">\(N_0\)</span> sufficiently large. Again, least squares
+can be used to estimate the asymptotic rate of convergence of
+<span class="math inline">\(\|\nabla H(\theta_n)\|\)</span>.</p>
+<p>The concepts of linear convergence and asymptotic rate are, unfortunately, not
+independent of the norm used, nor does linear convergence of <span class="math inline">\(\theta_n\)</span> in <span class="math inline">\(\|\cdot\|\)</span>
+imply linear convergence of <span class="math inline">\(H(\theta_n)\)</span> or <span class="math inline">\(\|\nabla H(\theta_n)\|\)</span>.
+We can shown, though, that if <span class="math inline">\(\theta_n\)</span> converges linearly in any norm, the other two
+sequences converge linearly along an arithmetic subsequence. Similarly, it can be shown
+that in any other norm than <span class="math inline">\(\| \cdot \|\)</span>, <span class="math inline">\(\theta_n\)</span> is linearly convergent
+along an arithmetic subsequence.</p>
+<div class="theorem">
+<p><span id="thm:linear-convergence" class="theorem"><strong>Theorem 7.1  </strong></span>Suppose that <span class="math inline">\(H\)</span> is three times continuously
+differentiable with <span class="math inline">\(\nabla H (\theta_{\infty}) = 0\)</span> and <span class="math inline">\(D^2 H(\theta_{\infty})\)</span>
+positive definite. If <span class="math inline">\(\theta_n\)</span> converges linearly toward <span class="math inline">\(\theta_{\infty}\)</span>
+in any norm then for some <span class="math inline">\(k \geq 1\)</span>, the subsequences <span class="math inline">\(H(\theta_{nk})\)</span> and
+<span class="math inline">\(\|\nabla H(\theta_{nk})\|\)</span> converge linearly toward <span class="math inline">\(H(\theta_{\infty})\)</span>
+and <span class="math inline">\(0\)</span>, respectively.</p>
+</div>
+<div class="proof boxed">
+<p><span id="unlabeled-div-2" class="proof"><em>Proof</em>. </span>Let <span class="math inline">\(G = D^2 H(\theta_{\infty})\)</span> and <span class="math inline">\(g_n = \theta_n - \theta_{\infty}\)</span>.
+Since <span class="math inline">\(G\)</span> is positive definite it defines a norm, and since all norms
+on <span class="math inline">\(\mathbb{R}^p\)</span> are equivalent there are constants <span class="math inline">\(a, b &gt; 0\)</span> such that
+<span class="math display">\[a \| x \|^2 \leq x^T G x \leq b \| x \|^2.\]</span></p>
+<p>By Taylor’s theorem,
+<span class="math display">\[H(\theta_{(n + 1)k}) - H(\theta_{\infty}) = g_{(n + 1)k}^T G  g_{(n + 1)k} + o(\|g_{(n + 1)k}\|^2).\]</span>
+From this,
+<span class="math display">\[\begin{align*}
+\limsup_{n \to \infty} \frac{H(\theta_{(n + 1)k}) - H(\theta_{\infty})}{H(\theta_{nk}) - H(\theta_{\infty})}
+&amp; = \limsup_{n \to \infty} \frac{g_{(n + 1)k}^T G  g_{(n + 1)k}}{g_{nk}^T G  g_{nk}} \\
+&amp; \leq \limsup_{n \to \infty} \frac{b \| g_{(n + 1)k}\|^2}{a \| g_{nk}\|^2} 
+= \frac{b}{a} r^{2k}
+\end{align*}\]</span>
+where <span class="math inline">\(r \in (0, 1)\)</span> is the asymptotic rate of <span class="math inline">\(\theta_n \to \theta_{\infty}\)</span>.
+By choosing <span class="math inline">\(k\)</span> sufficiently large, the right hand side above is strictly
+smaller than 1, which gives an upper bound on the rate along the
+subsequence <span class="math inline">\(H(\theta_{nk})\)</span>. A similar argument gives a lower bound strictly larger
+than 0, which shows that the convergence is not superlinear.</p>
+<p>Using Taylor’s theorem on <span class="math inline">\(\nabla H(\theta_{nk})\)</span> yields a similar
+proof for the subsequence <span class="math inline">\(\|\nabla H(\theta_{nk})\|\)</span> – with <span class="math inline">\(G\)</span> replaced
+by <span class="math inline">\(G^2\)</span> in the bounds.</p>
+</div>
+<p>The bounds in the proof are often pessimistic since <span class="math inline">\(g_n\)</span> and <span class="math inline">\(g_{n+1}\)</span>
+can point in completely different directions.
+Exercise ?? shows, however, that if <span class="math inline">\(\theta_n\)</span> approaches <span class="math inline">\(\theta_{\infty}\)</span> nicely
+along a fixed direction (making <span class="math inline">\(g_n\)</span> and <span class="math inline">\(g_{n+1}\)</span> almost collinear),
+<span class="math inline">\(H(\theta_n)\)</span> as well as <span class="math inline">\(\|\nabla H(\theta_n)\|\)</span>
+inherit linear convergence from <span class="math inline">\(\theta_n\)</span> and even with the same rate.</p>
+<p>All rates discussed hithereto are <em>per iteration</em>,
+which is natural when investigating a single algorithm. However, different
+algorithms may spend different amounts of time per iteration, and it does not
+make sense to make a comparison of per iteration rates across different
+algorithms. We therefore need to be able to convert between per iteration
+and per time unit rates. If one iteration takes <span class="math inline">\(\delta\)</span> time units (seconds, say)
+the <em>per time unit</em> rate is
+<span class="math display">\[r^{1/\delta}.\]</span>
+If <span class="math inline">\(t_n\)</span> denotes the run time of <span class="math inline">\(n\)</span> iterations, we could
+estimate <span class="math inline">\(\delta\)</span> as <span class="math inline">\(t_N / N\)</span> for <span class="math inline">\(N\)</span> sufficiently large.</p>
+<p>We will throughout systematically investigate convergence
+as a function of time <span class="math inline">\(t_n\)</span> instead of iterations <span class="math inline">\(n\)</span>, and we will estimate
+rates per time unit directly by least squares regression on <span class="math inline">\(t_n\)</span>
+instead of <span class="math inline">\(n\)</span>.</p>
+</div>
+<div id="stopping-criteria" class="section level3" number="7.1.3">
+<h3>
+<span class="header-section-number">7.1.3</span> Stopping criteria<a class="anchor" aria-label="anchor" href="#stopping-criteria"><i class="fas fa-link"></i></a>
+</h3>
+<p>One important practical question remains unanswered even
+if we understand the theoretical convergence properties of an
+algorithm well and have good methods for measuring it convergence rates.
+No algorithm can run for an infinite number
+of iterations, thus all algorithms need a criterion for when
+to stop, but the choice of an appropriate stopping criterion is
+notoriously difficult. We present four of the most commonly used criteria and
+discuss benefits and deficits for each of them.</p>
+<p><strong>Maximal number of iterations:</strong> Stop when
+<span class="math display">\[n = N\]</span>
+for a fixed maximal number of iterations <span class="math inline">\(N\)</span>.
+This is arguably the simplest criterion, but, obviously,
+reaching a maximal number of iterations provides no evidence in
+itself that <span class="math inline">\(H(\theta_N)\)</span> is sufficiently close to a (local) minimum. For
+a specific problem we could from experience know of a sufficiently large
+<span class="math inline">\(N\)</span> so that the algorithm has typically converged after <span class="math inline">\(N\)</span> iterations, but
+the most important use of this criterion is in combination with another
+criterion so that it works as a safeguard against an infinite loop.</p>
+<p>The other three stopping criteria all depend on choosing a
+<em>tolerance parameter</em> <span class="math inline">\(\varepsilon &gt; 0\)</span>, which will play different roles in the three
+criteria. The three criteria can be used individually and in combinations,
+but unfortunately neither of them nor their combination provide convergence
+guarantees. It is nevertheless common say that an algorithm “has converged”
+when the stopping criterion is satisfied, but since none of the criteria
+are sufficient for convergence this can be a bit misleading.</p>
+<p><strong>Small relative change:</strong> Stop when
+<span class="math display">\[\|\theta_n - \theta_{n-1}\| \leq \varepsilon(\|\theta_n\| + \varepsilon).\]</span>
+The idea is that when <span class="math inline">\(\theta_n \simeq \theta_{n-1}\)</span> the sequence has approximately
+reached the limit <span class="math inline">\(\theta_{\infty}\)</span> and we can stop. It is possible to use an
+absolute criterion such as <span class="math inline">\(\|\theta_n - \theta_{n-1}\| &lt; \varepsilon\)</span>, but then
+the criterion would be sensitive to a rescaling of the parameters. Thus fixing a
+reasonable tolerance parameter across many problems makes more sense for the
+relative then the absolute criterion. The main reason for adding <span class="math inline">\(\varepsilon\)</span>
+on the right hand size is to make the criterion well behaved even if
+<span class="math inline">\(\|\theta_n\|\)</span> is close to zero.</p>
+<p>The main benefit of this criterion is that it does not require evaluations
+of the objective function. Some algorithms, such as the EM-algorithm, do not
+need to evaluate the objective function, and it may even be difficult to do so.
+In those cases this criterion can be used. The main deficit is that a
+single iteration with little change in the parameter can happen for many
+reasons besides convergence, and it does not imply that neither
+<span class="math inline">\(\|\theta_n - \theta_{\infty}\|\)</span> nor <span class="math inline">\(H(\theta_{n}) - H(\theta_{\infty})\)</span>
+are small.</p>
+<p><strong>Small relative descent:</strong> Stop when
+<span class="math display">\[H(\theta_{n-1}) - H(\theta_n) \leq \varepsilon (|H(\theta_n)| + \varepsilon).\]</span>
+This criterion only makes sense if the algorithm is a descent algorithm.
+As discussed above, an absolute criterion would be sensitive to rescaling of
+the objective function, and the added <span class="math inline">\(\varepsilon\)</span>
+on the right hand side is to ensure a reasonable behavior if <span class="math inline">\(H(\theta_n)\)</span>
+is close to zero.</p>
+<p>This criterion is natural for descent algorithms; we stop when the algorithm
+does not decrease the value of the objective function sufficiently.
+The use of a relative criterion makes is possible to choose a tolerance
+parameter that works reasonably well for many problems. A conventional choice
+is <span class="math inline">\(\varepsilon \simeq 10^{-8}\)</span> (and often chosen as the square root of the
+<a href="https://en.wikipedia.org/wiki/Machine_epsilon">machine epsilon</a>), though
+the theoretical support for this choice is weak. The deficit of the
+algorithm is as for the criterion above: a small descent does not imply that <span class="math inline">\(H(\theta_{n}) - H(\theta_{\infty})\)</span> is small, and it could happen if the
+algorithm enters a part of <span class="math inline">\(\Theta\)</span> where <span class="math inline">\(H\)</span> is very flat, say.</p>
+<p><strong>Small gradient:</strong> Stop when
+<span class="math display">\[\|\nabla H(\theta_n)\| \leq \varepsilon.\]</span>
+This criterion directly measures if <span class="math inline">\(\theta_n\)</span> is close to being a stationary
+point (and not if <span class="math inline">\(\theta_n\)</span> is close to a stationary point).
+A small value of <span class="math inline">\(\|\nabla H(\theta_n)\|\)</span> is still no guarantee that
+<span class="math inline">\(\|\theta_n - \theta_{\infty}\|\)</span> or <span class="math inline">\(H(\theta_{n}) - H(\theta_{\infty})\)</span> are
+small. The criterion also requires the computation of the gradient. In addition,
+different norms, <span class="math inline">\(\|\cdot\|\)</span>, can be used, and
+if different coordinates of the gradient are of different orders of
+magnitude this should be reflected by the norm. Alternatively, the parameters
+should be rescaled.</p>
+<p>Neither of the four criteria above gives a theoretical convergence guarantee
+in terms of how close <span class="math inline">\(H(\theta_{n})\)</span> is to <span class="math inline">\(H(\theta_{\infty})\)</span>. In some
+special cases it is possible to develop criteria with a stronger
+theoretical support. If there is a continuous function <span class="math inline">\(\tilde{H}\)</span> satisfying
+<span class="math inline">\(H(\theta_{\infty}) = \tilde{H}(\theta_{\infty})\)</span> and
+<span class="math display">\[H(\theta_{\infty}) \geq \tilde{H}(\theta)\]</span>
+for all <span class="math inline">\(\theta \in \Theta\)</span> (or just in <span class="math inline">\(\mathrm{lev}(\theta_0)\)</span> for a descent
+algorithm) then
+<span class="math display">\[0 \leq H(\theta_{n}) - H(\theta_{\infty}) \leq 
+H(\theta_{n}) - \tilde{H}(\theta_{n}),\]</span>
+and the right hand side directly quantifies convergence. Convex duality
+theory gives for many convex optimization problems such a function, <span class="math inline">\(\tilde{H}\)</span>,
+and in those cases a convergence criterion based on
+<span class="math inline">\(H(\theta_{n}) - \tilde{H}(\theta_{n})\)</span> actually comes with a theoretical guarantee on
+how close we are to the minimum. We will not pursue
+the necessary convex duality theory here, but it is useful to know
+that in some cases we can do better than the ad hoc criteria above.</p>
+</div>
+</div>
+<div id="descent-direction-algorithms" class="section level2" number="7.2">
+<h2>
+<span class="header-section-number">7.2</span> Descent direction algorithms<a class="anchor" aria-label="anchor" href="#descent-direction-algorithms"><i class="fas fa-link"></i></a>
+</h2>
+<p>The negative gradient of <span class="math inline">\(H\)</span> in <span class="math inline">\(\theta\)</span> is the direction of steepest descent.
+Since the goal is to minimize <span class="math inline">\(H\)</span>, it is natural to move
+away from <span class="math inline">\(\theta\)</span> in the direction of <span class="math inline">\(-\nabla H(\theta)\)</span>.
+However, other directions than the negative gradient can also be suitable
+descent directions.</p>
+<p>::: {.definition} A <em>descent direction</em> in <span class="math inline">\(\theta\)</span>
+is a vector <span class="math inline">\(\rho \in \mathbb{R}^p\)</span> such that
+<span class="math display">\[\nabla H(\theta)^T \rho &lt; 0.\]</span>
+:::</p>
+<p>When <span class="math inline">\(\theta\)</span> is not a stationary point,<br><span class="math display">\[\nabla H(\theta)^T -\nabla H(\theta)$ = - \| \nabla H(\theta)^T \|_2 &lt; 0\]</span>
+and <span class="math inline">\(-\nabla H(\theta)^T\)</span> is a descent direction in <span class="math inline">\(\theta\)</span> according to
+the definition.</p>
+<p>Given <span class="math inline">\(\theta_n\)</span> and a descent direction <span class="math inline">\(\rho_n\)</span> in <span class="math inline">\(\theta_n\)</span> we can define
+<span class="math display">\[\theta_{n+1} = \theta_n + \gamma \rho_n\]</span>
+for a suitably chosen <span class="math inline">\(\gamma &gt; 0\)</span>. By Taylor’s theorem
+<span class="math display">\[H(\theta_{n+1}) = H(\theta_n) + \gamma \nabla H(\theta_n) \rho_n + o(\gamma),\]</span>
+which means that
+<span class="math display">\[H(\theta_{n+1}) &lt; H(\theta_n)\]</span>
+if <span class="math inline">\(\gamma\)</span> is small enough.</p>
+<p>One strategy for choosing <span class="math inline">\(\gamma\)</span> is to minimize the univariate
+function
+<span class="math display">\[\gamma \mapsto H(\theta_n + \gamma \rho_n),\]</span>
+which is an example of a <em>line search</em> method. Such a minimization
+would give the maximal possible descent in the direction <span class="math inline">\(\rho_n\)</span>,
+and as we have argued, if <span class="math inline">\(\rho_n\)</span> is a descent direction, a minimizer <span class="math inline">\(\gamma &gt; 0\)</span>
+guarantees descent of <span class="math inline">\(H\)</span>. However, unless the minimization can be
+done analytically it is often computationally too expensive.
+Less will also do, and as shown in Example <a href="#exm:grad-descent"><strong>??</strong></a>,
+if the Hessian has uniformly bounded numerical radius it is possible to
+fix one (sufficiently small) step length that will guarantee descent.</p>
+<div id="line-search" class="section level3" number="7.2.1">
+<h3>
+<span class="header-section-number">7.2.1</span> Line search<a class="anchor" aria-label="anchor" href="#line-search"><i class="fas fa-link"></i></a>
+</h3>
+<p>We consider algorithms of the form
+<span class="math display">\[\theta_{n+1} = \theta_n + \gamma_{n} \rho_n\]</span>
+starting in <span class="math inline">\(\theta_n\)</span> and with <span class="math inline">\(\rho_n\)</span> a descent direction in <span class="math inline">\(\theta_n\)</span>.
+The step lengths, <span class="math inline">\(\gamma_n\)</span>, should be chosen so as to give
+sufficient descent in each iteration.</p>
+<p>The function <span class="math inline">\(h(\gamma) = H(\theta_{n} + \gamma \rho_{n})\)</span>
+is a univariate and differentiable function,
+<span class="math display">\[h : [0,\infty) \to \mathbb{R},\]</span>
+that gives the value of <span class="math inline">\(H\)</span> in the descent direction
+<span class="math inline">\(\rho_n\)</span>. We find that
+<span class="math display">\[h'(\gamma) = \nabla H(\theta_{n} + \gamma \rho_{n})^T \rho_{n},\]</span>
+and maximal descent in direction <span class="math inline">\(\rho_n\)</span> can be found by solving
+<span class="math inline">\(h'(\gamma) = 0\)</span> for <span class="math inline">\(\gamma\)</span>. As mentioned above, less will do. First note
+that
+<span class="math display">\[h'(0) = \nabla H(\theta_{n})^T \rho_{n} &lt; 0,\]</span>
+so <span class="math inline">\(h\)</span> has a negative slope in <span class="math inline">\(0\)</span>. It descents in a sufficiently
+small interval <span class="math inline">\([0, \varepsilon)\)</span>, and it is even true that for any <span class="math inline">\(c \in (0, 1)\)</span>
+there is an <span class="math inline">\(\varepsilon &gt; 0\)</span> such that
+<span class="math display">\[h(\gamma) \leq h(0) + c \gamma h'(0)\]</span>
+for <span class="math inline">\(\gamma \in [0, \varepsilon)\)</span>. We note that this inequality can
+be checked easily for any given <span class="math inline">\(\gamma &gt; 0\)</span>, and is known as the
+<em>sufficient descent</em> condition. Sufficient descent is not enough
+in itself as the step length could be arbitrarily small, and the algorithm
+could effectively get stuck.</p>
+<p>To prevent too small steps we can enforce another condition. Very close
+to <span class="math inline">\(0\)</span>, <span class="math inline">\(h\)</span> will have almost the same slope, <span class="math inline">\(h'(0)\)</span>, as it has in <span class="math inline">\(0\)</span>. If we
+therefore require that the slope in <span class="math inline">\(\gamma\)</span> should be larger than <span class="math inline">\(\tilde{c} h'(0)\)</span>
+for some <span class="math inline">\(\tilde{c} \in (0, 1)\)</span>, <span class="math inline">\(\gamma\)</span> is forced away from <span class="math inline">\(0\)</span>. This is
+known as the <em>curvature condition</em>.</p>
+<p>The combined conditions on <span class="math inline">\(\gamma\)</span>,
+<span class="math display">\[h(\gamma) \leq h(0) + c \gamma h'(0)\]</span>
+for a <span class="math inline">\(c \in (0, 1)\)</span> and
+<span class="math display">\[h'(\gamma) \geq \tilde{c} h'(0)\]</span>
+for a <span class="math inline">\(\tilde{c} \in (c, 1)\)</span> are known collectively as
+the <em>Wolfe conditions</em>. It can be shown that if <span class="math inline">\(h\)</span> is bounded below there
+exists a step length satisfying the Wolfe conditions (Lemma 3.1 in <span class="citation"><a href="references.html#ref-Nocedal:2006" role="doc-biblioref">Nocedal and Wright</a> (<a href="references.html#ref-Nocedal:2006" role="doc-biblioref">2006</a>)</span>).</p>
+<p>Even when choosing <span class="math inline">\(\gamma_{n}\)</span> to fulfill
+the Wolfe conditions there is no guarantee that <span class="math inline">\(\theta_n\)</span>
+will converge let alone converge toward a global minimizer. The best we
+can hope for in general is that
+<span class="math display">\[\|\nabla H(\theta_n)\|_2 \rightarrow 0\]</span>
+for <span class="math inline">\(n \to \infty\)</span>, and this will happen under some relatively weak
+conditions on <span class="math inline">\(H\)</span> (Theorem 3.2 <span class="citation"><a href="references.html#ref-Nocedal:2006" role="doc-biblioref">Nocedal and Wright</a> (<a href="references.html#ref-Nocedal:2006" role="doc-biblioref">2006</a>)</span>) under the assumption
+that
+<span class="math display">\[\frac{\nabla H(\theta_n)^T \rho_n}{\|\nabla H(\theta_n)\|_2 \| \rho_n\|_2} \leq - \delta &lt; 0.\]</span>
+That is, the angle between the descent direction and the gradient should be
+uniformly bounded away from <span class="math inline">\(90^{\circ}\)</span>.</p>
+<p>A practical way of searching for a step length is via <em>backtracking</em>.
+Choosing a <span class="math inline">\(\gamma_0\)</span> and a constant <span class="math inline">\(d \in (0, 1)\)</span> we
+can search through the sequence of step lengths
+<span class="math display">\[\gamma_0, d \gamma_0, d^2 \gamma_0, d^3 \gamma_0, \ldots\]</span>
+and stop the first time we find a step length satisfying the Wolfe
+conditions.</p>
+<p>Using backtracking, we can actually dispense of the curvature condition
+and simply check the sufficient descent condition</p>
+<p><span class="math display">\[H(\theta_{n} + d^k \gamma_0 \rho_{n}) \leq H(\theta_n) + cd^k \gamma_0 \nabla H(\theta_{n})^T \rho_{n}\]</span></p>
+<p>for <span class="math inline">\(c \in (0, 1)\)</span>. The implementation of backtracking requires the choice
+of the three parameters: <span class="math inline">\(\gamma_0 &gt; 0\)</span>, <span class="math inline">\(d \in (0, 1)\)</span> and <span class="math inline">\(c \in (0, 1)\)</span>.
+A good choice depends quite a lot on the algorithm used for choosing
+the descent direction, but choosing <span class="math inline">\(c\)</span> too close to 1 can make the algorithm
+take too small steps, and taking <span class="math inline">\(d\)</span> too small can likewise
+generate small step lengths. Thus <span class="math inline">\(d = 0.8\)</span> or <span class="math inline">\(d = 0.9\)</span>
+and <span class="math inline">\(c = 0.1\)</span> or even smaller are sensible choices. For some algorithms,
+like the Newton algorithm to be dealt with below, there is a natural
+choice of <span class="math inline">\(\gamma_0 = 1\)</span>. But for other algorithms a good choice depends
+crucially on the scale of the parameters, and there is then no general
+advice on choosing <span class="math inline">\(\gamma_0\)</span>.</p>
+</div>
+<div id="gradient-descent-1" class="section level3" number="7.2.2">
+<h3>
+<span class="header-section-number">7.2.2</span> Gradient descent<a class="anchor" aria-label="anchor" href="#gradient-descent-1"><i class="fas fa-link"></i></a>
+</h3>
+<p>We implement gradient descent with backtracking below as the function <code>GD()</code>.
+For gradient descent, the sufficient descent condition amounts to
+choosing the smallest <span class="math inline">\(k \geq 0\)</span> such that</p>
+<p><span class="math display">\[H(\theta_{n} - d^k \gamma_0 \nabla H(\theta_{n})) \leq H(\theta_n) -  cd^k \gamma_0 \|\nabla H(\theta_{n})\|_2^2.\]</span></p>
+<p>The <code>GD()</code> function takes the starting point, <span class="math inline">\(\theta_0\)</span>, the objective function,
+<span class="math inline">\(H\)</span>, and its gradient, <span class="math inline">\(\nabla H\)</span>, as arguments. The four parameters <span class="math inline">\(d\)</span>, <span class="math inline">\(c\)</span>, <span class="math inline">\(\gamma_0\)</span> and
+<span class="math inline">\(\varepsilon\)</span> that control the algorithm can also be specified as additional arguments,
+but are given some reasonable default values. The implementation uses the <em>squared</em> norm of
+the gradient as a stopping criterion, but it also has a maximal number of
+iterations as a safeguard. Note that if the maximal number is reached, a
+warning is printed.</p>
+<p>Finally, we include a callback argument (the <code>cb</code> argument).
+If a function is passed to this argument, it will be evaluated in each iteration
+of the algorithm. This gives us the possibility of logging or
+printing values of variables during evaluation, which can be highly useful
+for understanding the inner workings of the algorithm. Monitoring or logging
+intermediate values during the evaluation of code is referred to as
+<em>tracing</em>.</p>
+<div class="sourceCode" id="cb287"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">GD</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span>
+  <span class="va">par</span>, 
+  <span class="va">H</span>,
+  <span class="va">gr</span>,
+  <span class="va">d</span> <span class="op">=</span> <span class="fl">0.8</span>, 
+  <span class="va">c</span> <span class="op">=</span> <span class="fl">0.1</span>, 
+  <span class="va">gamma0</span> <span class="op">=</span> <span class="fl">0.01</span>, 
+  <span class="va">epsilon</span> <span class="op">=</span> <span class="fl">1e-4</span>, 
+  <span class="va">maxiter</span> <span class="op">=</span> <span class="fl">1000</span>,
+  <span class="va">cb</span> <span class="op">=</span> <span class="cn">NULL</span>
+<span class="op">)</span> <span class="op">{</span>
+  <span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">maxiter</span><span class="op">)</span> <span class="op">{</span>
+    <span class="va">value</span> <span class="op">&lt;-</span> <span class="fu">H</span><span class="op">(</span><span class="va">par</span><span class="op">)</span>
+    <span class="va">grad</span> <span class="op">&lt;-</span> <span class="fu">gr</span><span class="op">(</span><span class="va">par</span><span class="op">)</span>
+    <span class="va">h_prime</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">grad</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>
+    <span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">cb</span><span class="op">)</span><span class="op">)</span> <span class="fu">cb</span><span class="op">(</span><span class="op">)</span>
+    <span class="co"># Convergence criterion based on gradient norm</span>
+    <span class="kw">if</span><span class="op">(</span><span class="va">h_prime</span> <span class="op">&lt;=</span> <span class="va">epsilon</span><span class="op">)</span> <span class="kw">break</span>
+    <span class="va">gamma</span> <span class="op">&lt;-</span> <span class="va">gamma0</span>
+    <span class="co"># Proposed descent step</span>
+    <span class="va">par1</span> <span class="op">&lt;-</span> <span class="va">par</span> <span class="op">-</span> <span class="va">gamma</span> <span class="op">*</span> <span class="va">grad</span>
+    <span class="co"># Backtracking while descent is insufficient</span>
+    <span class="kw">while</span><span class="op">(</span><span class="fu">H</span><span class="op">(</span><span class="va">par1</span><span class="op">)</span> <span class="op">&gt;</span> <span class="va">value</span> <span class="op">-</span> <span class="va">c</span> <span class="op">*</span> <span class="va">gamma</span> <span class="op">*</span> <span class="va">h_prime</span><span class="op">)</span> <span class="op">{</span>
+      <span class="va">gamma</span> <span class="op">&lt;-</span> <span class="va">d</span> <span class="op">*</span> <span class="va">gamma</span>
+      <span class="va">par1</span> <span class="op">&lt;-</span> <span class="va">par</span> <span class="op">-</span> <span class="va">gamma</span> <span class="op">*</span> <span class="va">grad</span>
+    <span class="op">}</span>
+    <span class="va">par</span> <span class="op">&lt;-</span> <span class="va">par1</span>
+  <span class="op">}</span>
+  <span class="kw">if</span><span class="op">(</span><span class="va">i</span> <span class="op">==</span> <span class="va">maxiter</span><span class="op">)</span>
+    <span class="kw"><a href="https://rdrr.io/r/base/warning.html">warning</a></span><span class="op">(</span><span class="st">"Maximal number, "</span>, <span class="va">maxiter</span>, <span class="st">", of iterations reached"</span><span class="op">)</span>
+  <span class="va">par</span>
+<span class="op">}</span></code></pre></div>
+<p>We will use the Poisson regression example to illustrate the use of
+gradient descent and other optimization algorithms, and we need to
+implement functions in R for computing the negative log-likelihood and
+its gradient.</p>
+<p>The implementation below uses a function factory to produce a
+list containing a parameter vector, the negative log-likelihood function
+and its gradient. We anticipate that for the Newton algorithm in Section
+<a href="numopt.html#Newton">7.3</a> we also need an implementation of the Hessian, which is
+thus included here as well.</p>
+<p>We will exploit the <code><a href="https://rdrr.io/r/stats/model.matrix.html">model.matrix()</a></code> function to construct the model matrix
+from the data via a formula, and the sufficient statistic is also
+computed. The implementations use linear algebra and vectorized computations
+relying on access to the model matrix and the sufficient statistics in
+their enclosing environment.</p>
+<div class="sourceCode" id="cb288"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">poisson_model</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">form</span>, <span class="va">data</span>, <span class="va">response</span><span class="op">)</span> <span class="op">{</span>
+  <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/model.matrix.html">model.matrix</a></span><span class="op">(</span><span class="va">form</span>, <span class="va">data</span><span class="op">)</span>
+  <span class="va">y</span> <span class="op">&lt;-</span> <span class="va">data</span><span class="op">[[</span><span class="va">response</span><span class="op">]</span><span class="op">]</span>
+  <span class="co"># The function drop() drops the dim attribute and turns, for instance,</span>
+  <span class="co"># a matrix with one column into a vector</span>
+  <span class="va">t_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span>  <span class="co"># More efficient than drop(t(X) %*% y)</span>
+  <span class="va">n</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>
+  <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>
+  
+  <span class="va">H</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">beta</span><span class="op">)</span> 
+    <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">X</span> <span class="op">%*%</span> <span class="va">beta</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="va">beta</span> <span class="op">%*%</span> <span class="va">t_map</span><span class="op">)</span> <span class="op">/</span><span class="va">n</span>
+  
+  <span class="va">grad_H</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">beta</span><span class="op">)</span> 
+    <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">X</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">X</span> <span class="op">%*%</span> <span class="va">beta</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="va">t_map</span><span class="op">)</span> <span class="op">/</span> <span class="va">n</span>
+  
+  <span class="va">Hessian_H</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">beta</span><span class="op">)</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">X</span>, <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">X</span> <span class="op">%*%</span> <span class="va">beta</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="va">X</span><span class="op">)</span> <span class="op">/</span> <span class="va">n</span>
+  
+  <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">p</span><span class="op">)</span>, H <span class="op">=</span> <span class="va">H</span>, grad_H <span class="op">=</span> <span class="va">grad_H</span>, Hessian_H <span class="op">=</span> <span class="va">Hessian_H</span><span class="op">)</span>
+<span class="op">}</span></code></pre></div>
+<p>We choose to normalize the log-likelihood by the number of observations <span class="math inline">\(n\)</span> (the number
+of rows in the model matrix). This does have a small computational
+cost, but the resulting numerical values become less dependent
+upon <span class="math inline">\(n\)</span>, which makes it easier to choose sensible default values
+of various parameters for the numerical optimization algorithms.
+Gradient descent is very slow for the large Poisson model with individual
+store effects, so we consider only the simple model with two parameters.</p>
+<div class="sourceCode" id="cb289"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">veg_pois</span> <span class="op">&lt;-</span> <span class="fu">poisson_model</span><span class="op">(</span><span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">normalSale</span><span class="op">)</span>, <span class="va">vegetables</span>, response <span class="op">=</span> <span class="st">"sale"</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb290"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">pois_GD</span> <span class="op">&lt;-</span> <span class="fu">GD</span><span class="op">(</span><span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">grad_H</span><span class="op">)</span></code></pre></div>
+<p>The gradient descent implementation is tested by comparing the minimizer to
+the estimated parameters as computed by <code><a href="https://rdrr.io/r/stats/glm.html">glm()</a></code>.</p>
+<div class="sourceCode" id="cb291"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/cbind.html">rbind</a></span><span class="op">(</span>pois_glm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="va">pois_model_null</span><span class="op">)</span>, <span class="va">pois_GD</span><span class="op">)</span></code></pre></div>
+<pre><code>##          (Intercept) log(normalSale)
+## pois_glm    1.461440       0.9215699
+## pois_GD     1.460352       0.9219358</code></pre>
+<p>We get the same result up to the first two decimals. The convergence
+criterion on our gradient descent algorithm was quite loose (<span class="math inline">\(\varepsilon = 10^{-4}\)</span>,
+which means that the norm of the gradient is smaller than <span class="math inline">\(10^{-2}\)</span> when
+the algorithm stops). This choice of <span class="math inline">\(\varepsilon\)</span> in combination with <span class="math inline">\(\gamma_0 = 0.01\)</span>
+implies that the algorithm stops when the gradient is so small that the changes
+are at most of norm <span class="math inline">\(10^{-4}\)</span>.</p>
+<p>Comparing the resulting values of the negative log-likelihood shows agreement
+up to the first five decimals, but we notice that the negative log-likelihood
+for the parameters fitted using <code><a href="https://rdrr.io/r/stats/glm.html">glm()</a></code> is just slightly smaller.</p>
+<div class="sourceCode" id="cb293"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">veg_pois</span><span class="op">$</span><span class="fu">H</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="va">pois_model_null</span><span class="op">)</span><span class="op">)</span>
+<span class="va">veg_pois</span><span class="op">$</span><span class="fu">H</span><span class="op">(</span><span class="va">pois_GD</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] -124.406827879897
+## [1] -124.406825325047</code></pre>
+<p>To investigate what actually went on inside the gradient descent
+algorithm we will use the callback argument to trace the internals
+of a call to <code>GD()</code>. The <code>tracer()</code> function from the <a href="https://github.com/nielsrhansen/CSwR/tree/master/CSwR_package">CSwR package</a>
+can be used to construct a tracer object with a <code>tracer()</code> function that we can pass as the callback
+argument. The tracer object and its <code>tracer()</code> function work by storing
+information in the enclosing environment of <code>tracer()</code>. When used as
+the callback argument to e.g. <code>GD()</code> the <code>tracer()</code> function will look up
+variables in the evaluation environment of <code>GD()</code>, store them and
+print them if requested, and store run time information as well.</p>
+<p>When <code>GD()</code> has returned, the trace information can be accessed
+via the <code><a href="https://rdrr.io/r/base/summary.html">summary()</a></code> method for the tracer object. The tracer objects
+and their <code>tracer()</code> function should not be confused with the <code><a href="https://rdrr.io/r/base/trace.html">trace()</a></code>
+function from the R base package, but the tracer object’s <code>tracer()</code> function
+can be passed as the <code>tracer</code> argument to <code><a href="https://rdrr.io/r/base/trace.html">trace()</a></code> to interactively
+inject tracing code into any R function. Here, the tracer objects will
+only be used together with a callback argument.</p>
+<p>We use the tracer object with our gradient descent implementation
+and print trace information every 50th iteration.</p>
+<div class="sourceCode" id="cb295"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">GD_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"h_prime"</span>, <span class="st">"gamma"</span><span class="op">)</span>, N <span class="op">=</span> <span class="fl">50</span><span class="op">)</span>
+<span class="va">pois_GD</span> <span class="op">&lt;-</span> <span class="fu">GD</span><span class="op">(</span><span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">grad_H</span>, cb <span class="op">=</span> <span class="va">GD_tracer</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span></code></pre></div>
+<pre><code>## n = 1: value = 1; h_prime = 14268.59; gamma = NA; 
+## n = 50: value = -123.9395; h_prime = 15.45722; gamma = 0.004096; 
+## n = 100: value = -124.3243; h_prime = 3.133931; gamma = 0.00512; 
+## n = 150: value = -124.3935; h_prime = 0.601431; gamma = 0.00512; 
+## n = 200: value = -124.4048; h_prime = 0.09805907; gamma = 0.00512; 
+## n = 250: value = -124.4065; h_prime = 0.0109742; gamma = 0.00512; 
+## n = 300: value = -124.4068; h_prime = 0.002375827; gamma = 0.00512; 
+## n = 350: value = -124.4068; h_prime = 0.000216502; gamma = 0.004096;</code></pre>
+<p>We see that the gradient descent algorithm runs for a little more than 350
+iterations, and we can observe how the value of the negative log-likelihood is
+descending. We can also see that the step length <span class="math inline">\(\gamma\)</span> bounces between
+<span class="math inline">\(0.004096 = 0.8^4 \times 0.01\)</span> and
+<span class="math inline">\(0.00512 = 0.8^3 \times 0.01\)</span>, thus the backtracking
+takes 3 to 4 iterations to find a step length with sufficient descent.</p>
+<p>The printed trace does not reveal the run time information. The
+run time is measured for each iteration of the algorithm and the
+cumulative run time is of greater interest. This information
+can be computed and inspected after the algorithm has converged,
+and it is returned by the summary method for tracer objects.</p>
+<div class="sourceCode" id="cb297"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">tail</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">GD_tracer</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>##         value      h_prime    gamma      .time
+## 372 -124.4068 1.125779e-04 0.005120 0.06706513
+## 373 -124.4068 1.218925e-04 0.005120 0.06720427
+## 374 -124.4068 1.323878e-04 0.005120 0.06734928
+## 375 -124.4068 1.441965e-04 0.005120 0.06749018
+## 376 -124.4068 1.574572e-04 0.005120 0.06764097
+## 377 -124.4068 7.600796e-05 0.004096 0.06785127</code></pre>
+<p>The trace information is stored in a list. The summary method transforms
+the trace information into a data frame with one row per iteration. We can also access
+individual entries of the list of trace information via subsetting.</p>
+<div class="sourceCode" id="cb299"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">GD_tracer</span><span class="op">[</span><span class="fl">377</span><span class="op">]</span> </code></pre></div>
+<pre><code>## $value
+## [1] -124.4068
+## 
+## $h_prime
+## [1] 7.600796e-05
+## 
+## $gamma
+## [1] 0.004096
+## 
+## $.time
+## [1] 0.0002102931</code></pre>
+<div class="figure" style="text-align: center">
+<span style="display:block;" id="fig:GD-trace-plot"></span>
+<img src="CSwR_files/figure-html/GD-trace-plot-1.png" alt="Gradient norm (left) and value of the negative log-likelihood (right) above the limit value $H(\theta_{\infty})$. The straight line is fitted to the data points except the first ten using least squares, and the rate is computed from this estimate and reported per ms." width="100%"><p class="caption">
+Figure 7.1: Gradient norm (left) and value of the negative log-likelihood (right) above the limit value <span class="math inline">\(H(\theta_{\infty})\)</span>. The straight line is fitted to the data points except the first ten using least squares, and the rate is computed from this estimate and reported per ms.
+</p>
+</div>
+</div>
+<div id="conjugate-gradients" class="section level3" number="7.2.3">
+<h3>
+<span class="header-section-number">7.2.3</span> Conjugate gradients<a class="anchor" aria-label="anchor" href="#conjugate-gradients"><i class="fas fa-link"></i></a>
+</h3>
+<p>The gradient direction is not the best descent direction. It is too
+local, and convergence can be quite slow. One of the better algorithms that
+is still a <em>first order algorithm</em> (using only gradient information) is the <a href="https://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method">nonlinear conjugate
+gradient</a> algorithm.
+In the Fletcher–Reeves version of the algorithm
+the descent direction is initialized as the negative gradient
+<span class="math inline">\(\rho_0 = - \nabla H(\theta_{0})\)</span> and then updated as
+<span class="math display">\[\rho_{n} = - \nabla H(\theta_{n}) + \frac{\|\nabla H(\theta_n)\|_2^2}{\|\nabla H(\theta_{n-1})\|_2^2} \rho_{n-1}.\]</span>
+That is, the descent direction, <span class="math inline">\(\rho_{n}\)</span>, is the negative gradient but modified according to
+the previous descent direction. There is plenty of opportunity to vary the prefactor
+of <span class="math inline">\(\rho_{n-1}\)</span>, and the one presented here is what makes it the Fletcher–Reeves
+version. Other versions go by the names of their inventors such as Polak–Ribière
+or Hestenes–Stiefel.</p>
+<p>In fact, <span class="math inline">\(\rho_{n}\)</span> need not be a descent direction unless we put some
+restrictions on the step lengths. One possibility is to require that
+the step length <span class="math inline">\(\gamma_{n}\)</span> satisfies the <em>strong</em> curvature condition
+<span class="math display">\[|h'(\gamma)| = |\nabla H(\theta_n + \gamma \rho_n)^T \rho_n | \leq \tilde{c} |\nabla H(\theta_n)^T \rho_n| = \tilde{c} |h'(0)|\]</span>
+for a <span class="math inline">\(\tilde{c} &lt; \frac{1}{2}\)</span>. Then <span class="math inline">\(\rho_{n + 1}\)</span> can be shown to be a descent
+direction if <span class="math inline">\(\rho_{n}\)</span> is.</p>
+<p>We implement the conjugate gradient method in a slightly different way. Instead
+of introducing the more advanced curvature condition, we simply reset the
+algorithm to use the gradient direction in any case where a non-descent direction
+has been chosen. Resets of descent direction every <span class="math inline">\(p\)</span>-th iteration is recommended
+anyway for the nonlinear conjugate gradient algorithm.</p>
+<div class="sourceCode" id="cb301"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">CG</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span>
+  <span class="va">par</span>, 
+  <span class="va">H</span>,
+  <span class="va">gr</span>,
+  <span class="va">d</span> <span class="op">=</span> <span class="fl">0.8</span>, 
+  <span class="va">c</span> <span class="op">=</span> <span class="fl">0.1</span>, 
+  <span class="va">gamma0</span> <span class="op">=</span> <span class="fl">1</span>, 
+  <span class="va">epsilon</span> <span class="op">=</span> <span class="fl">1e-6</span>,
+  <span class="va">maxiter</span> <span class="op">=</span> <span class="fl">1000</span>,
+  <span class="va">cb</span> <span class="op">=</span> <span class="cn">NULL</span>
+<span class="op">)</span> <span class="op">{</span>
+  <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">par</span><span class="op">)</span>
+  <span class="va">m</span> <span class="op">&lt;-</span> <span class="fl">1</span>
+  <span class="va">rho0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">numeric</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span>
+  <span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">maxiter</span><span class="op">)</span> <span class="op">{</span>
+    <span class="va">value</span> <span class="op">&lt;-</span> <span class="fu">H</span><span class="op">(</span><span class="va">par</span><span class="op">)</span>
+    <span class="va">grad</span> <span class="op">&lt;-</span> <span class="fu">gr</span><span class="op">(</span><span class="va">par</span><span class="op">)</span>
+    <span class="va">grad_norm_sq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">grad</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>
+    <span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">cb</span><span class="op">)</span><span class="op">)</span> <span class="fu">cb</span><span class="op">(</span><span class="op">)</span>
+    <span class="kw">if</span><span class="op">(</span><span class="va">grad_norm_sq</span> <span class="op">&lt;=</span> <span class="va">epsilon</span><span class="op">)</span> <span class="kw">break</span>
+    <span class="va">gamma</span> <span class="op">&lt;-</span> <span class="va">gamma0</span>
+    <span class="co"># Descent direction</span>
+    <span class="va">rho</span> <span class="op">&lt;-</span> <span class="op">-</span> <span class="va">grad</span> <span class="op">+</span> <span class="va">grad_norm_sq</span> <span class="op">*</span> <span class="va">rho0</span>
+    <span class="va">h_prime</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">grad</span><span class="op">)</span> <span class="op">%*%</span> <span class="va">rho</span><span class="op">)</span>
+    <span class="co"># Reset to gradient descent if m &gt; p or rho is not a descent direction</span>
+    <span class="kw">if</span><span class="op">(</span><span class="va">m</span> <span class="op">&gt;</span> <span class="va">p</span> <span class="op">||</span> <span class="va">h_prime</span> <span class="op">&gt;=</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span>
+      <span class="va">rho</span> <span class="op">&lt;-</span> <span class="op">-</span> <span class="va">grad</span>
+      <span class="va">h_prime</span> <span class="op">&lt;-</span> <span class="op">-</span> <span class="va">grad_norm_sq</span> 
+      <span class="va">m</span> <span class="op">&lt;-</span> <span class="fl">1</span>
+    <span class="op">}</span>
+    <span class="va">par1</span> <span class="op">&lt;-</span> <span class="va">par</span> <span class="op">+</span> <span class="va">gamma</span> <span class="op">*</span> <span class="va">rho</span>
+    <span class="co"># Backtracking</span>
+    <span class="kw">while</span><span class="op">(</span><span class="fu">H</span><span class="op">(</span><span class="va">par1</span><span class="op">)</span> <span class="op">&gt;</span> <span class="va">value</span> <span class="op">+</span> <span class="va">c</span> <span class="op">*</span> <span class="va">gamma</span> <span class="op">*</span> <span class="va">h_prime</span><span class="op">)</span> <span class="op">{</span>
+      <span class="va">gamma</span> <span class="op">&lt;-</span> <span class="va">d</span> <span class="op">*</span> <span class="va">gamma</span>
+      <span class="va">par1</span> <span class="op">&lt;-</span> <span class="va">par</span> <span class="op">+</span> <span class="va">gamma</span> <span class="op">*</span> <span class="va">rho</span>
+    <span class="op">}</span>
+    <span class="va">rho0</span> <span class="op">&lt;-</span> <span class="va">rho</span> <span class="op">/</span> <span class="va">grad_norm_sq</span>
+    <span class="va">par</span> <span class="op">&lt;-</span> <span class="va">par1</span>
+    <span class="va">m</span> <span class="op">&lt;-</span> <span class="va">m</span> <span class="op">+</span> <span class="fl">1</span>
+  <span class="op">}</span>
+  <span class="kw">if</span><span class="op">(</span><span class="va">i</span> <span class="op">==</span> <span class="va">maxiter</span><span class="op">)</span>
+    <span class="kw"><a href="https://rdrr.io/r/base/warning.html">warning</a></span><span class="op">(</span><span class="st">"Maximal number, "</span>, <span class="va">maxiter</span>, <span class="st">", of iterations reached"</span><span class="op">)</span>
+  <span class="va">par</span>
+<span class="op">}</span></code></pre></div>
+<div class="sourceCode" id="cb302"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">CG_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"gamma"</span>, <span class="st">"grad_norm_sq"</span><span class="op">)</span>, N <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>
+<span class="va">pois_CG</span> <span class="op">&lt;-</span> <span class="fu">CG</span><span class="op">(</span><span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">grad_H</span>, cb <span class="op">=</span> <span class="va">CG_tracer</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span></code></pre></div>
+<pre><code>## n = 1: value = 1; gamma = NA; grad_norm_sq = 14269; 
+## n = 10: value = -123.15; gamma = 0.018014; grad_norm_sq = 129.78; 
+## n = 20: value = -123.92; gamma = 0.022518; grad_norm_sq = 77.339; 
+## n = 30: value = -124.23; gamma = 0.018014; grad_norm_sq = 22.227; 
+## n = 40: value = -124.41; gamma = 0.0092234; grad_norm_sq = 0.179; 
+## n = 50: value = -124.41; gamma = 0.10737; grad_norm_sq = 0.028232; 
+## n = 60: value = -124.41; gamma = 0.0092234; grad_norm_sq = 0.00021747; 
+## n = 70: value = -124.41; gamma = 0.0092234; grad_norm_sq = 1.7488e-06;</code></pre>
+<div class="figure" style="text-align: center">
+<span style="display:block;" id="fig:GD-CG-trace-plot"></span>
+<img src="CSwR_files/figure-html/GD-CG-trace-plot-1.png" alt="Gradient norms (top) and negative log-likelihoods (bottom) for gradient descent (left) and conjugate gradient (right)." width="100%"><p class="caption">
+Figure 7.2: Gradient norms (top) and negative log-likelihoods (bottom) for gradient descent (left) and conjugate gradient (right).
+</p>
+</div>
+<p>This algorithm is fast enough to fit the large Poisson regression model.</p>
+<div class="sourceCode" id="cb304"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">veg_pois</span> <span class="op">&lt;-</span> <span class="fu">poisson_model</span><span class="op">(</span><span class="op">~</span> <span class="va">store</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">normalSale</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>, <span class="va">vegetables</span>, response <span class="op">=</span> <span class="st">"sale"</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb305"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">CG_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"gamma"</span>, <span class="st">"grad_norm_sq"</span><span class="op">)</span>, N <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>
+<span class="va">pois_CG</span> <span class="op">&lt;-</span> <span class="fu">CG</span><span class="op">(</span><span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">grad_H</span>, cb <span class="op">=</span> <span class="va">CG_tracer</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span></code></pre></div>
+<pre><code>## n = 1: value = 1; gamma = NA; grad_norm_sq = 12737; 
+## n = 100: value = -127.9; gamma = 0.018014; grad_norm_sq = 1.676; 
+## n = 200: value = -128.28; gamma = 0.011529; grad_norm_sq = 2.5128; 
+## n = 300: value = -128.55; gamma = 0.0037779; grad_norm_sq = 0.068176; 
+## n = 400: value = -128.59; gamma = 0.022518; grad_norm_sq = 0.0028747; 
+## n = 500: value = -128.59; gamma = 0.0092234; grad_norm_sq = 0.0652; 
+## n = 600: value = -128.59; gamma = 0.018014; grad_norm_sq = 0.00020555; 
+## n = 700: value = -128.59; gamma = 0.0019343; grad_norm_sq = 5.3952e-06; 
+## n = 800: value = -128.59; gamma = 0.005903; grad_norm_sq = 3.7118e-06; 
+## n = 900: value = -128.59; gamma = 0.0037779; grad_norm_sq = 1.0621e-06;</code></pre>
+<div class="sourceCode" id="cb307"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">tail</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">CG_tracer</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>##         value       gamma grad_norm_sq    .time
+## 899 -128.5894 0.005902958 5.214667e-06 12.26816
+## 900 -128.5894 0.003777893 1.062092e-06 12.28321
+## 901 -128.5894 0.068719477 2.119915e-05 12.29143
+## 902 -128.5894 0.107374182 2.047029e-04 12.30012
+## 903 -128.5894 0.004722366 7.056181e-06 12.31577
+## 904 -128.5894 0.003777893 8.881615e-07 12.33146</code></pre>
+<p>Using <code><a href="https://rdrr.io/r/stats/optim.html">optim()</a></code> with the conjugate gradient method.</p>
+<div class="sourceCode" id="cb309"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/system.time.html">system.time</a></span><span class="op">(</span>
+  <span class="va">pois_optim_CG</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span>
+    <span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, 
+    <span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span>, 
+    <span class="va">veg_pois</span><span class="op">$</span><span class="va">grad_H</span>, 
+    method <span class="op">=</span> <span class="st">"CG"</span>, 
+    control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>maxiter <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span>
+  <span class="op">)</span>
+<span class="op">)</span></code></pre></div>
+<pre><code>## Warning in optim(veg_pois$par, veg_pois$H, veg_pois$grad_H, method = "CG", : unknown names in
+## control: maxiter</code></pre>
+<pre><code>##    user  system elapsed 
+##   0.500   0.375   0.845</code></pre>
+<div class="sourceCode" id="cb312"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">pois_optim_CG</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"counts"</span><span class="op">)</span><span class="op">]</span></code></pre></div>
+<pre><code>## $value
+## [1] -127.3596
+## 
+## $counts
+## function gradient 
+##      237      101</code></pre>
+</div>
+<div id="pep-moth-descent" class="section level3" number="7.2.4">
+<h3>
+<span class="header-section-number">7.2.4</span> Peppered Moths<a class="anchor" aria-label="anchor" href="#pep-moth-descent"><i class="fas fa-link"></i></a>
+</h3>
+<p>Returning to the peppered moth from Section <a href="four-examples.html#pep-moth">6.2.1</a> we implemented
+in that section the log-likelihood for general multinomial cell collapsing
+and applied the implementation to compute the maximum-likelihood estimate.
+In this section we implement the gradient as well. From the
+expression for the log-likelihood in <a href="four-examples.html#eq:mult-col-loglik">(6.2)</a> it follows
+that the gradient equals</p>
+<p><span class="math display">\[\nabla \ell(\theta) = \sum_{j = 1}^{K_0}  \frac{ x_j }{ M(p(\theta))_j}\nabla M(p(\theta))_j = \sum_{j = 1}^{K_0} \sum_{k \in A_j}  \frac{ x_j}{ M(p(\theta))_j} \nabla p_k(\theta).\]</span></p>
+<p>Letting <span class="math inline">\(j(k)\)</span> be defined by <span class="math inline">\(k \in A_{j(k)}\)</span> we see that the gradient
+can also be written as
+<span class="math display">\[\nabla \ell(\theta) = \sum_{k=1}^K    \frac{x_{j(k)}}{ M(p(\theta))_{j(k)}} \nabla p_k(\theta) = \mathbf{\tilde{x}}(\theta) \mathrm{D}p(\theta),\]</span>
+where <span class="math inline">\(\mathrm{D}p(\theta)\)</span> is the Jacobian of the parametrization <span class="math inline">\(\theta \mapsto p(\theta)\)</span>,
+and <span class="math inline">\(\mathbf{\tilde{x}}(\theta)\)</span> is the vector with
+<span class="math display">\[\mathbf{\tilde{x}}(\theta)_k = \frac{ x_{j(k)}}{M(p(\theta))_{j(k)}}.\]</span></p>
+<div class="sourceCode" id="cb314"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">grad_loglik</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">par</span>, <span class="va">x</span>, <span class="va">prob</span>, <span class="va">Dprob</span>, <span class="va">group</span><span class="op">)</span> <span class="op">{</span>
+  <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">prob</span><span class="op">(</span><span class="va">par</span><span class="op">)</span>
+  <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span> <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">par</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+  <span class="op">-</span> <span class="op">(</span><span class="va">x</span><span class="op">[</span><span class="va">group</span><span class="op">]</span> <span class="op">/</span> <span class="fu">M</span><span class="op">(</span><span class="va">p</span>, <span class="va">group</span><span class="op">)</span><span class="op">[</span><span class="va">group</span><span class="op">]</span><span class="op">)</span> <span class="op">%*%</span> <span class="fu">Dprob</span><span class="op">(</span><span class="va">par</span><span class="op">)</span>
+<span class="op">}</span></code></pre></div>
+<p>The Jacobian needs to be implemented for the specific example
+of peppered moths.</p>
+<div class="sourceCode" id="cb315"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">Dprob</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">p</span><span class="op">)</span> <span class="op">{</span>
+  <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>
+  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span>
+    <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,             <span class="fl">0</span>, 
+      <span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>,             <span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, 
+      <span class="fl">2</span><span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">-</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,  <span class="op">-</span><span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,
+      <span class="fl">0</span>,                    <span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>,         
+      <span class="op">-</span><span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>,            <span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">-</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, 
+      <span class="op">-</span><span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span>,           <span class="op">-</span><span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span>,
+    ncol <span class="op">=</span> <span class="fl">2</span>, nrow <span class="op">=</span> <span class="fl">6</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="op">}</span></code></pre></div>
+<p>We can then use the conjugate gradient algorithm to compute the
+maximum-likelihood estimate.</p>
+<div class="sourceCode" id="cb316"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.3</span><span class="op">)</span>, <span class="va">loglik</span>, <span class="va">grad_loglik</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span>, 
+      prob <span class="op">=</span> <span class="va">prob</span>, Dprob <span class="op">=</span> <span class="va">Dprob</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>, 
+      method <span class="op">=</span> <span class="st">"CG"</span><span class="op">)</span></code></pre></div>
+<pre><code>## $par
+## [1] 0.07083691 0.18873652
+## 
+## $value
+## [1] 600.481
+## 
+## $counts
+## function gradient 
+##       92       19 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL</code></pre>
+<p>The peppered Moth example is very simple.
+The log-likelihood can easily be computed, and we used this
+problem to illustrate ways of implementing a
+likelihood in R and how to use <code>optim</code> to maximize it.</p>
+<p>One of the likelihood implementations was very problem specific
+while the other more abstract and general, and we used the same general and abstract
+approach to implement the gradient above. The gradient could then
+be used for other optimization algorithms, still using <code>optim</code>, such as
+conjugate gradient. In fact, you can use conjugate gradient without
+computing and implementing the gradient.</p>
+<div class="sourceCode" id="cb318"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.3</span><span class="op">)</span>, <span class="va">loglik</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span>, 
+      prob <span class="op">=</span> <span class="va">prob</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>, 
+      method <span class="op">=</span> <span class="st">"CG"</span><span class="op">)</span></code></pre></div>
+<pre><code>## $par
+## [1] 0.07084109 0.18873718
+## 
+## $value
+## [1] 600.481
+## 
+## $counts
+## function gradient 
+##      107       15 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL</code></pre>
+<p>If we do not implement a gradient, a numerical gradient is
+used by <code><a href="https://rdrr.io/r/stats/optim.html">optim()</a></code>. This can result in a slower algorithm than if the
+gradient is implemented, but more seriously, in can result in convergence
+problems. This is because there is a subtle tradeoff between numerical
+accuracy and accuracy of the finite difference approximation used to
+approximate the gradient. We did not
+experience convergence problems in the example above, but one way to remedy such problems
+is to set the <code>parscale</code> or <code>fnscale</code> entries in the <code>control</code>
+list argument to <code><a href="https://rdrr.io/r/stats/optim.html">optim()</a></code>.</p>
+<p>In the following chapter the peppered moth example is used to illustrate
+the EM algorithm. It is important to understand that the EM algorithm does not
+rely on the ability to compute the likelihood or the gradient of the
+likelihood for that matter. In many real applications
+of the EM algorithm the computation of the likelihood is challenging or even
+impossible, thus most standard optimization algorithms will not be directly
+applicable.</p>
+</div>
+</div>
+<div id="Newton" class="section level2" number="7.3">
+<h2>
+<span class="header-section-number">7.3</span> Newton-type algorithms<a class="anchor" aria-label="anchor" href="#Newton"><i class="fas fa-link"></i></a>
+</h2>
+<p>The Newton algorithm is very similar to gradient descent
+except that the gradient descent direction is replaced by
+<span class="math display">\[\rho_n = - D^2 H(\theta_n)^{-1} \nabla H(\theta_n).\]</span></p>
+<p>The Newton algorithm is typically much more efficient than gradient
+descent and will converge in few iterations. However, the storage of the
+<span class="math inline">\(p \times p\)</span> Hessian, its computation, and the solution of the equation
+to compute <span class="math inline">\(\rho_n\)</span> all scale like <span class="math inline">\(p^2\)</span> and this can make the algorithm useless
+for very large <span class="math inline">\(p\)</span>.</p>
+<p>A variety of alternatives to the Newton algorithm exist that replace
+the Hessian by another matrix that can be easier to compute and update.
+It should be noted that if we choose a matrix <span class="math inline">\(B_n\)</span> in the <span class="math inline">\(n\)</span>-th
+iteration, then <span class="math inline">\(- B_n \nabla H(\theta_n)\)</span>
+is a descent direction whenever <span class="math inline">\(B_n\)</span> is a positive definite matrix.</p>
+<p>Newton implementation (with trace).</p>
+<div class="sourceCode" id="cb320"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">Newton</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span>
+  <span class="va">par</span>, 
+  <span class="va">H</span>,
+  <span class="va">gr</span>,
+  <span class="va">hess</span>,
+  <span class="va">d</span> <span class="op">=</span> <span class="fl">0.8</span>, 
+  <span class="va">c</span> <span class="op">=</span> <span class="fl">0.1</span>, 
+  <span class="va">gamma0</span> <span class="op">=</span> <span class="fl">1</span>, 
+  <span class="va">epsilon</span> <span class="op">=</span> <span class="fl">1e-10</span>, 
+  <span class="va">maxiter</span> <span class="op">=</span> <span class="fl">50</span>,
+  <span class="va">cb</span> <span class="op">=</span> <span class="cn">NULL</span>
+<span class="op">)</span> <span class="op">{</span>
+  <span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">maxiter</span><span class="op">)</span> <span class="op">{</span>
+    <span class="va">value</span> <span class="op">&lt;-</span> <span class="fu">H</span><span class="op">(</span><span class="va">par</span><span class="op">)</span>
+    <span class="va">grad</span> <span class="op">&lt;-</span> <span class="fu">gr</span><span class="op">(</span><span class="va">par</span><span class="op">)</span>
+    <span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">cb</span><span class="op">)</span><span class="op">)</span> <span class="fu">cb</span><span class="op">(</span><span class="op">)</span>
+    <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">grad</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span> <span class="op">&lt;=</span> <span class="va">epsilon</span><span class="op">)</span> <span class="kw">break</span>
+    <span class="va">Hessian</span> <span class="op">&lt;-</span> <span class="fu">hess</span><span class="op">(</span><span class="va">par</span><span class="op">)</span> 
+    <span class="va">rho</span> <span class="op">&lt;-</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/solve-methods.html">solve</a></span><span class="op">(</span><span class="va">Hessian</span>, <span class="va">grad</span><span class="op">)</span><span class="op">)</span> 
+    <span class="va">gamma</span> <span class="op">&lt;-</span> <span class="va">gamma0</span>
+    <span class="va">par1</span> <span class="op">&lt;-</span> <span class="va">par</span> <span class="op">+</span> <span class="va">gamma</span> <span class="op">*</span> <span class="va">rho</span>
+    <span class="va">h_prime</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">grad</span><span class="op">)</span> <span class="op">%*%</span> <span class="va">rho</span> 
+    <span class="kw">while</span><span class="op">(</span><span class="fu">H</span><span class="op">(</span><span class="va">par1</span><span class="op">)</span> <span class="op">&gt;</span> <span class="va">value</span> <span class="op">+</span>  <span class="va">c</span> <span class="op">*</span> <span class="va">gamma</span> <span class="op">*</span> <span class="va">h_prime</span><span class="op">)</span> <span class="op">{</span> 
+      <span class="va">gamma</span> <span class="op">&lt;-</span> <span class="va">d</span> <span class="op">*</span> <span class="va">gamma</span> 
+      <span class="va">par1</span> <span class="op">&lt;-</span> <span class="va">par</span> <span class="op">+</span> <span class="va">gamma</span> <span class="op">*</span> <span class="va">rho</span>
+    <span class="op">}</span>
+    <span class="va">par</span> <span class="op">&lt;-</span> <span class="va">par1</span> 
+  <span class="op">}</span>
+  <span class="kw">if</span><span class="op">(</span><span class="va">i</span> <span class="op">==</span> <span class="va">maxiter</span><span class="op">)</span>
+    <span class="kw"><a href="https://rdrr.io/r/base/warning.html">warning</a></span><span class="op">(</span><span class="st">"Maximal number, "</span>, <span class="va">maxiter</span>, <span class="st">", of iterations reached"</span><span class="op">)</span>
+  <span class="va">par</span>
+<span class="op">}</span></code></pre></div>
+<div id="poisson-regression" class="section level3" number="7.3.1">
+<h3>
+<span class="header-section-number">7.3.1</span> Poisson regression<a class="anchor" aria-label="anchor" href="#poisson-regression"><i class="fas fa-link"></i></a>
+</h3>
+<p>We use the implementation of the Hessian matrix.</p>
+<div class="sourceCode" id="cb321"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">Newton_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"h_prime"</span>, <span class="st">"gamma"</span><span class="op">)</span>, N <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>
+<span class="va">pois_Newton</span> <span class="op">&lt;-</span> <span class="fu">Newton</span><span class="op">(</span>
+  <span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, 
+  <span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span>, 
+  <span class="va">veg_pois</span><span class="op">$</span><span class="va">grad_H</span>, 
+  <span class="va">veg_pois</span><span class="op">$</span><span class="va">Hessian_H</span>, 
+  cb <span class="op">=</span> <span class="va">Newton_tracer</span><span class="op">$</span><span class="va">tracer</span>
+<span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb322"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="va">pois_Newton</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="va">pois_model</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] -4.979266e-10  1.298776e-06</code></pre>
+<div class="sourceCode" id="cb324"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/cbind.html">rbind</a></span><span class="op">(</span>
+  pois_Newton <span class="op">=</span> <span class="va">veg_pois</span><span class="op">$</span><span class="fu">H</span><span class="op">(</span><span class="va">pois_Newton</span><span class="op">)</span>,
+  pois_glm <span class="op">=</span> <span class="va">veg_pois</span><span class="op">$</span><span class="fu">H</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="va">pois_model</span><span class="op">)</span><span class="op">)</span>
+<span class="op">)</span></code></pre></div>
+<pre><code>##                               [,1]
+## pois_Newton -128.58945047446991339
+## pois_glm    -128.58945047447093657</code></pre>
+<div class="sourceCode" id="cb326"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">Newton_tracer</span><span class="op">)</span></code></pre></div>
+<pre><code>##         value       h_prime    gamma     .time
+## 1     1.00000            NA       NA 0.0000000
+## 2   -14.83270 -4.140563e+03 0.022518 0.1883374
+## 3   -64.81635 -4.029847e+02 0.262144 0.3562165
+## 4  -111.33647 -7.636275e+01 1.000000 0.5206488
+## 5  -124.24937 -2.104160e+01 1.000000 0.6841749
+## 6  -127.71116 -5.652483e+00 1.000000 0.8590845
+## 7  -128.49729 -1.332600e+00 1.000000 1.0345645
+## 8  -128.58733 -1.647034e-01 1.000000 1.2165784
+## 9  -128.58945 -4.159696e-03 1.000000 1.3956716
+## 10 -128.58945 -3.288913e-06 1.000000 1.5609791</code></pre>
+<p>The R function <code><a href="https://rdrr.io/r/stats/glm.html">glm.fit()</a></code> uses a Newton algorithm (without backtracking)
+and is about a factor five faster on this example.</p>
+<div class="sourceCode" id="cb328"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">env_pois</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">environment</a></span><span class="op">(</span><span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/system.time.html">system.time</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/glm.html">glm.fit</a></span><span class="op">(</span><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span>, <span class="va">env_pois</span><span class="op">$</span><span class="va">y</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">poisson</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>##    user  system elapsed 
+##   0.512   0.036   0.406</code></pre>
+<p>One should be careful when comparing run times for different optimization
+algorithms, but in this case they have achieved about the same precision
+with the faster <code><a href="https://rdrr.io/r/stats/glm.html">glm.fit()</a></code> that even obtained the smallest negative
+log-likelihood value of the two.</p>
+</div>
+<div id="quasi-newton-algorithms" class="section level3" number="7.3.2">
+<h3>
+<span class="header-section-number">7.3.2</span> Quasi-Newton algorithms<a class="anchor" aria-label="anchor" href="#quasi-newton-algorithms"><i class="fas fa-link"></i></a>
+</h3>
+<p>We turn to other descent direction algorithms that are more efficient
+than gradient descent by choosing the descent direction in a more
+clever way but less computationally demanding than the Newton
+algorithm that requires the computation of the full Hessian in each
+iteration.</p>
+<p>We will only consider the application of the BFGS algorithm via the
+implementation in the R function <code><a href="https://rdrr.io/r/stats/optim.html">optim()</a></code>.</p>
+<div class="sourceCode" id="cb330"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/system.time.html">system.time</a></span><span class="op">(</span>
+  <span class="va">pois_BFGS</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span>
+    <span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, 
+    <span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span>, 
+    <span class="va">veg_pois</span><span class="op">$</span><span class="va">grad_H</span>, 
+    method <span class="op">=</span> <span class="st">"BFGS"</span>, 
+    control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>maxiter <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span>
+  <span class="op">)</span>
+<span class="op">)</span></code></pre></div>
+<pre><code>## Warning in optim(veg_pois$par, veg_pois$H, veg_pois$grad_H, method = "BFGS", : unknown names in
+## control: maxiter</code></pre>
+<pre><code>##    user  system elapsed 
+##   0.324   0.180   0.475</code></pre>
+<div class="sourceCode" id="cb333"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="va">pois_BFGS</span><span class="op">$</span><span class="va">par</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="va">pois_model</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] -0.2638641  0.6364195</code></pre>
+<div class="sourceCode" id="cb335"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">pois_BFGS</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"counts"</span><span class="op">)</span><span class="op">]</span></code></pre></div>
+<pre><code>## $value
+## [1] -128.5888
+## 
+## $counts
+## function gradient 
+##      104      100</code></pre>
+</div>
+<div id="sparsity" class="section level3" number="7.3.3">
+<h3>
+<span class="header-section-number">7.3.3</span> Sparsity<a class="anchor" aria-label="anchor" href="#sparsity"><i class="fas fa-link"></i></a>
+</h3>
+<p>One of the benefits of the implementations of <span class="math inline">\(H\)</span> and its derivatives
+as well as of the descent algorithms is that they can exploit sparsity
+of <span class="math inline">\(\mathbf{X}\)</span> almost for free. The implementations have not done that in
+previous computations, because <span class="math inline">\(\mathbf{X}\)</span> has been stored as a dense matrix. In
+reality, <span class="math inline">\(\mathbf{X}\)</span> is a very sparse matrix (the vast majority of the matrix
+entries are zero),
+and if we convert it into a sparse matrix, all the matrix-vector products
+will be more run time efficient. Sparse matrices are implemented in the
+R package Matrix.</p>
+<div class="sourceCode" id="cb337"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://Matrix.R-forge.R-project.org/">Matrix</a></span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb338"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/Matrix.html">Matrix</a></span><span class="op">(</span><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/class.html">class</a></span><span class="op">(</span><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] "dgCMatrix"
+## attr(,"package")
+## [1] "Matrix"</code></pre>
+<p>Without changing any other code, we get an immediate
+run time improvement using e.g. <code><a href="https://rdrr.io/r/stats/optim.html">optim()</a></code> and the BFGS algorithm.</p>
+<div class="sourceCode" id="cb340"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/system.time.html">system.time</a></span><span class="op">(</span>
+  <span class="va">pois_BFGS_sparse</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span>
+    <span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, 
+    <span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span>, 
+    <span class="va">veg_pois</span><span class="op">$</span><span class="va">grad_H</span>, 
+    method <span class="op">=</span> <span class="st">"BFGS"</span>, 
+    control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>maxiter <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span>
+  <span class="op">)</span>
+<span class="op">)</span></code></pre></div>
+<pre><code>## Warning in optim(veg_pois$par, veg_pois$H, veg_pois$grad_H, method = "BFGS", : unknown names in
+## control: maxiter</code></pre>
+<pre><code>##    user  system elapsed 
+##   0.135   0.014   0.080</code></pre>
+<p>We should in real applications avoid constructing a dense intermediate
+model matrix as a step toward constructing a sparse model matrix. This
+is possible by constructing the sparse model matrix directly using
+a function from the R package MatrixModels. Ideally, we should reimplement
+<code>pois_model()</code> to support an option for using sparse matrices, but
+to focus on the run time benefits of sparse matrices, we simply
+change the matrix in the appropriate environment directly.</p>
+<div class="sourceCode" id="cb343"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu">MatrixModels</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/MatrixModels/man/model.Matrix.html">model.Matrix</a></span><span class="op">(</span>
+  <span class="op">~</span> <span class="va">store</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">normalSale</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>, 
+  data <span class="op">=</span> <span class="va">vegetables</span>, 
+  sparse <span class="op">=</span> <span class="cn">TRUE</span>
+<span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/class.html">class</a></span><span class="op">(</span><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] "dsparseModelMatrix"
+## attr(,"package")
+## [1] "MatrixModels"</code></pre>
+<p>The Newton implementation benefits enormously from using sparse matrices
+because the bottleneck is the computation of the Hessian.</p>
+<div class="sourceCode" id="cb345"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">Newton_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"h_prime"</span>, <span class="st">"gamma"</span><span class="op">)</span>, N <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>
+  <span class="va">pois_Newton</span> <span class="op">&lt;-</span> <span class="fu">Newton</span><span class="op">(</span>
+  <span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, 
+  <span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span>, 
+  <span class="va">veg_pois</span><span class="op">$</span><span class="va">grad_H</span>, 
+  <span class="va">veg_pois</span><span class="op">$</span><span class="va">Hessian_H</span>, 
+  cb <span class="op">=</span> <span class="va">Newton_tracer</span><span class="op">$</span><span class="va">tracer</span>
+<span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">Newton_tracer</span><span class="op">)</span></code></pre></div>
+<pre><code>##         value       h_prime    gamma       .time
+## 1     1.00000            NA       NA 0.000000000
+## 2   -14.83270 -4.140563e+03 0.022518 0.009095301
+## 3   -64.81635 -4.029847e+02 0.262144 0.014059242
+## 4  -111.33647 -7.636275e+01 1.000000 0.017209904
+## 5  -124.24937 -2.104160e+01 1.000000 0.020465703
+## 6  -127.71116 -5.652483e+00 1.000000 0.023446856
+## 7  -128.49729 -1.332600e+00 1.000000 0.026573878
+## 8  -128.58733 -1.647034e-01 1.000000 0.030414141
+## 9  -128.58945 -4.159696e-03 1.000000 0.033323748
+## 10 -128.58945 -3.288913e-06 1.000000 0.036309897</code></pre>
+<p>To summarize the run times we have measured for the Poisson regression example,
+we found that the conjugate gradient algorithms took of the order of 10 seconds
+to converge. The Newton-type algorithms in this section were faster and took
+between 0.3 and 1.7 seconds to converge. The use of sparse matrices reduced the
+run time of the quasi-Newton algorithm BFGS by a factor 3, but it reduced the
+run time of the Newton algorithm by a factor 50 to about 0.03 seconds. One could
+be concerned that the construction of the sparse model matrix takes more time (which
+we did not measure), but if measured it turns out that for this example
+it takes about the same time to construct the dense model matrix as it takes to
+construct the sparse one.</p>
+<p>Run time efficiency is not the only argument for using sparse matrices as they are
+also more memory efficient. It is memory (and time) inefficient to use dense intermediates,
+and for truly large scale problems impossible. Using sparse model matrices
+for regression models allows us to work with larger models that have
+more variables, more factor levels and more observations than if we use dense
+model matrices. For the Poisson regression model the memory used by either representation can be found.</p>
+<div class="sourceCode" id="cb347"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/object.size.html">object.size</a></span><span class="op">(</span><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/object.size.html">object.size</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html">as.matrix</a></span><span class="op">(</span><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>## Sparse matrix memory usage:
+## 123440 bytes
+## Dense matrix memory usage:
+## 3103728 bytes</code></pre>
+<p>We see that the dense matrix uses around a factor 30 more memory than the
+sparse representation. In this case it means using around 3 MB for storing the
+dense matrix instead of around 100 kB, which won’t be a problem
+on a contemporary computer. However, going from using 3 GB for
+storing a matrix to using 100 Mb could be the difference between
+not being able to work with the matrix on a standard laptop to
+running the computations with no problems. Using <code>model.Matrix</code> makes
+it possible to construct sparse model matrices directly and avoid
+all dense intermediates.</p>
+<p>The function <code>glm4()</code> from the MatrixModels package for fitting regression models,
+can exploit sparse model matrices direction, and can
+thus be useful in cases where your model matrix becomes very large but sparse.
+There are two main applications where the model matrix becomes sparse.
+When you model the response using one or more factors, and possibly their
+interactions, the model matrix will become particularly sparse if
+the factors have many levels. Another case is when you model the response
+via basis expansions of quantitative predictors and use basis functions
+with local support. The B-splines form an important example of such a basis
+with local support that results in a sparse model matrix.</p>
+</div>
+</div>
+<div id="misc." class="section level2" number="7.4">
+<h2>
+<span class="header-section-number">7.4</span> Misc.<a class="anchor" aria-label="anchor" href="#misc."><i class="fas fa-link"></i></a>
+</h2>
+<p>If <span class="math inline">\(\Phi\)</span> is just <em>nonexpansive</em> (the
+constant <span class="math inline">\(c\)</span> above is one), this is no longer true, but replacing <span class="math inline">\(\Phi\)</span>
+by <span class="math inline">\(\alpha \Phi + (1 - \alpha) I\)</span> for <span class="math inline">\(\alpha \in (0,1)\)</span> we get
+Krasnoselskii-Mann iterates of the form
+<span class="math display">\[\theta_n = \alpha \Phi(\theta_{n-1}) + (1 - \alpha) \theta_{n-1}\]</span>
+that will converge to a fixed point of <span class="math inline">\(\Phi\)</span> provided it has one.</p>
+<p>Banach’s fixed point theorem implies a convergence that is at least as fast as
+linear convergence with asymptotic rate <span class="math inline">\(c\)</span>.
+Moreover, if <span class="math inline">\(\Phi\)</span> is just a contraction for <span class="math inline">\(n \geq N_0\)</span> for some <span class="math inline">\(N_0\)</span>,
+then for <span class="math inline">\(n \geq N_0\)</span>
+<span class="math display">\[\|\theta_{n + 1} - \theta_{n}\| \leq c \| \theta_{n} - \theta_{n-1}\|.\]</span>
+The convergence may be superlinear, but if it is linear, the rate is bounded by <span class="math inline">\(c\)</span>.
+To indicate if <span class="math inline">\(\Phi\)</span> is asymptotically a contraction, we can introduce
+<span class="math display">\[R_n = \frac{\|\theta_{n + 1} - \theta_{n}\|}{\|\theta_{n} - \theta_{n- 1}\|}\]</span>
+and monitor its behavior as <span class="math inline">\(n \to \infty\)</span>. The constant
+<span class="math display">\[r = \limsup_{n \to \infty} R_n\]</span>
+is then asymptotically the smallest possible contraction constant.
+If convergence is sublinear and <span class="math inline">\(R_n \to 1\)</span> the sequence is
+called logarithmically convergent (by definition), while <span class="math inline">\(r \in (0,1)\)</span> is an
+indication of linear convergence with rate <span class="math inline">\(r\)</span>, and <span class="math inline">\(r = 0\)</span> is an indication of
+superlinear convergence.</p>
+<p>In practice, we can plot the ratio <span class="math inline">\(R_n\)</span> as the algorithm is running, and
+use <span class="math inline">\(R_n\)</span> as an estimate of the rate <span class="math inline">\(r\)</span> for large <span class="math inline">\(n\)</span>. However,
+this can be a quite unstable method for estimating the rate.</p>
+<p>Finally, it is also possible to
+estimate the order <span class="math inline">\(q\)</span> as well as the rate <span class="math inline">\(r\)</span> by using that
+<span class="math display">\[\log \|\theta_{n} - \theta_{N}\| \simeq q \log \|\theta_{n-1} - \theta_{N}\| + \log(r)\]</span>
+for <span class="math inline">\(n \geq N_0\)</span>. We can estimate <span class="math inline">\(q\)</span> and <span class="math inline">\(\log(r)\)</span>
+by fitting a linear function by least squares to these log-log transformed norms
+of errors.</p>
+<p>Iteration, fixed points, convergence criteria. Ref to <a href="http://onlinelibrary.wiley.com/book/10.1002/9781118884003">Nonlinear Parameter Optimization Using R Tools</a>.</p>
+
+</div>
+</div>
+  <div class="chapter-nav">
+<div class="prev"><a href="four-examples.html"><span class="header-section-number">6</span> Four Examples</a></div>
+<div class="next"><a href="em.html"><span class="header-section-number">8</span> Expectation maximization algorithms</a></div>
+</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
+    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
+      <ul class="nav navbar-nav">
+<li><a class="nav-link" href="#numopt"><span class="header-section-number">7</span> Numerical optimization</a></li>
+<li>
+<a class="nav-link" href="#algorithms-and-convergence"><span class="header-section-number">7.1</span> Algorithms and convergence</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#gradient-descent"><span class="header-section-number">7.1.1</span> Gradient descent</a></li>
+<li><a class="nav-link" href="#convergence-rate"><span class="header-section-number">7.1.2</span> Convergence rate</a></li>
+<li><a class="nav-link" href="#stopping-criteria"><span class="header-section-number">7.1.3</span> Stopping criteria</a></li>
+</ul>
+</li>
+<li>
+<a class="nav-link" href="#descent-direction-algorithms"><span class="header-section-number">7.2</span> Descent direction algorithms</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#line-search"><span class="header-section-number">7.2.1</span> Line search</a></li>
+<li><a class="nav-link" href="#gradient-descent-1"><span class="header-section-number">7.2.2</span> Gradient descent</a></li>
+<li><a class="nav-link" href="#conjugate-gradients"><span class="header-section-number">7.2.3</span> Conjugate gradients</a></li>
+<li><a class="nav-link" href="#pep-moth-descent"><span class="header-section-number">7.2.4</span> Peppered Moths</a></li>
+</ul>
+</li>
+<li>
+<a class="nav-link" href="#Newton"><span class="header-section-number">7.3</span> Newton-type algorithms</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#poisson-regression"><span class="header-section-number">7.3.1</span> Poisson regression</a></li>
+<li><a class="nav-link" href="#quasi-newton-algorithms"><span class="header-section-number">7.3.2</span> Quasi-Newton algorithms</a></li>
+<li><a class="nav-link" href="#sparsity"><span class="header-section-number">7.3.3</span> Sparsity</a></li>
+</ul>
+</li>
+<li><a class="nav-link" href="#misc."><span class="header-section-number">7.4</span> Misc.</a></li>
+</ul>
+
+      <div class="book-extra">
+        <ul class="list-unstyled">
+<li><a id="book-source" href="https://github.com/nielsrhansen/CSwR/blob/master/22-Optimization.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/nielsrhansen/CSwR/edit/master/22-Optimization.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+        </ul>
+</div>
+    </nav>
+</div>
+
+</div>
+</div> <!-- .container -->
+
+<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2021-10-12, Git version: 6b05821.</p>
+  </div>
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  </div>
+
+</div></div>
+</footer><!-- dynamically load mathjax for compatibility with self-contained --><script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script><script type="text/x-mathjax-config">const popovers = document.querySelectorAll('a.footnote-ref[data-toggle="popover"]');
+for (let popover of popovers) {
+  const div = document.createElement('div');
+  div.setAttribute('style', 'position: absolute; top: 0, left:0; width:0, height:0, overflow: hidden; visibility: hidden;');
+  div.innerHTML = popover.getAttribute('data-content');
+
+  var has_math = div.querySelector("span.math");
+  if (has_math) {
+    document.body.appendChild(div);
+    MathJax.Hub.Queue(["Typeset", MathJax.Hub, div]);
+    MathJax.Hub.Queue(function() {
+      popover.setAttribute('data-content', div.innerHTML);
+      document.body.removeChild(div);
+    })
+  }
+}
+</script>
+</body>
+</html>

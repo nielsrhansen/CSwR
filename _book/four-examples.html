@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Chapter 6 Four Examples | Computational Statistics with R</title>
+<meta name="author" content="Niels Richard Hansen">
+<meta name="description" content="This chapter treats four examples of non-trivial statistical models in some detail. These are all parametric models, and a central computational challenge is to fit the models to data via...">
+<meta name="generator" content="bookdown 0.24 with bs4_book()">
+<meta property="og:title" content="Chapter 6 Four Examples | Computational Statistics with R">
+<meta property="og:type" content="book">
+<meta property="og:description" content="This chapter treats four examples of non-trivial statistical models in some detail. These are all parametric models, and a central computational challenge is to fit the models to data via...">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Chapter 6 Four Examples | Computational Statistics with R">
+<meta name="twitter:description" content="This chapter treats four examples of non-trivial statistical models in some detail. These are all parametric models, and a central computational challenge is to fit the models to data via...">
+<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/header-attrs-2.10/header-attrs.js"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/_Roboto%20Slab-0.4.0/font.css" rel="stylesheet">
+<script src="libs/bs3compat-0.3.0/transition.js"></script><script src="libs/bs3compat-0.3.0/tabs.js"></script><script src="libs/bs3compat-0.3.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><link rel="stylesheet" href="style.css">
+</head>
+<body data-spy="scroll" data-target="#toc">
+
+<div class="container-fluid">
+<div class="row">
+  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
+
+    <div class="d-flex align-items-start justify-content-between">
+      <h1>
+        <a href="index.html" title="">Computational Statistics with R</a>
+      </h1>
+      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
+    </div>
+
+    <div id="main-nav" class="collapse-lg">
+      <form role="search">
+        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
+</form>
+
+      <nav aria-label="Table of contents"><h2>Table of contents</h2>
+        <ul class="book-toc list-unstyled">
+<li><a class="" href="index.html">Preface</a></li>
+<li><a class="" href="intro.html"><span class="header-section-number">1</span> Introduction</a></li>
+<li class="book-part">Part I: Smoothing</li>
+<li><a class="" href="density.html"><span class="header-section-number">2</span> Density estimation</a></li>
+<li><a class="" href="bivariate.html"><span class="header-section-number">3</span> Bivariate smoothing</a></li>
+<li class="book-part">Part II: Monte Carlo Methods</li>
+<li><a class="" href="univariate-random-variables.html"><span class="header-section-number">4</span> Univariate random variables</a></li>
+<li><a class="" href="mci.html"><span class="header-section-number">5</span> Monte Carlo integration</a></li>
+<li class="book-part">Part III: Optimization</li>
+<li><a class="active" href="four-examples.html"><span class="header-section-number">6</span> Four Examples</a></li>
+<li><a class="" href="numopt.html"><span class="header-section-number">7</span> Numerical optimization</a></li>
+<li><a class="" href="em.html"><span class="header-section-number">8</span> Expectation maximization algorithms</a></li>
+<li><a class="" href="StochOpt.html"><span class="header-section-number">9</span> Stochastic Optimization</a></li>
+<li class="book-part">Appendix</li>
+<li><a class="" href="app-R.html"><span class="header-section-number">A</span> R programming</a></li>
+<li><a class="" href="references.html">References</a></li>
+</ul>
+
+        <div class="book-extra">
+          <p><a id="book-repo" href="https://github.com/nielsrhansen/CSwR">View book source <i class="fab fa-github"></i></a></p>
+        </div>
+      </nav>
+</div>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="four-examples" class="section level1" number="6">
+<h1>
+<span class="header-section-number">6</span> Four Examples<a class="anchor" aria-label="anchor" href="#four-examples"><i class="fas fa-link"></i></a>
+</h1>
+<p>This chapter treats four examples of non-trivial statistical models in some
+detail. These are all parametric models, and a central computational
+challenge is to fit the models to data via (penalized) likelihood
+maximization. The actual optimization algorithms and implementations
+are the topics of Chapters <a href="numopt.html#numopt">7</a> and <a href="em.html#em">8</a>.
+The focus of this chapter is on the structure of the statistical models
+themselves to provide the necessary background for the later chapters.</p>
+<p>Statistical models come in all forms and shapes, and it is possible to
+take a very general and abstract mathematical approach; statistical
+models are parametrized families of probability distributions. To
+say anything of interest, we need more structure such as structure
+on the parameter set, properties of the parametrized distributions,
+and properties of the mapping from the parameter set to the
+distributions. For any specific model we have ample of structure
+but often also an overwhelming amount of irrelevant details
+that will be more distracting than clarifying. The intention is that
+the four examples treated will illustrate the breath of
+statistical models that share important
+structures without getting lost in a wasteland of abstractions.</p>
+<p>If one should emphasize a single abstract idea that is of
+theoretical value as well as of practical importance, it is
+the idea of <em>exponential families</em>. Statistical models that
+are exponential families have so much structure that the
+general theory provides a number of results and details
+of practical value for individual models. Exponential
+families are exemplary statistical models, that are widely
+used as models of data, or as central building
+blocks of more complicated models of data. For this reason,
+the treatment of the examples is preceded by a treatment of
+exponential families.</p>
+<div id="exp-fam" class="section level2" number="6.1">
+<h2>
+<span class="header-section-number">6.1</span> Exponential families<a class="anchor" aria-label="anchor" href="#exp-fam"><i class="fas fa-link"></i></a>
+</h2>
+<p>This section introduces exponential families in a concise way. The
+crucial observation is that the log-likelihood is concave, and that
+we can derive general formulas for derivatives. This
+will be important for the optimization algorithms developed
+later for computing maximum-likelihood estimates and
+for answering standard asymptotic inference questions.</p>
+<p>The exponential families are extremely well behaved from
+a mathematical as well as a computational viewpoint, but they may
+be inadequate for modeling data in some cases. A
+typical practical problem is that there is heterogeneous variation in data
+beyond what can be captured by any single exponential family.
+A fairly common technique is then to build an exponential family
+model of the observed variables <em>as well as some latent variables</em>.
+The latent variables then serve the purpose of modeling the
+heterogeneity. The resulting model of the observed variables is
+consequently the marginalization of an exponential family, which is
+generally not an exponential family and in many ways
+less well behaved. It is nevertheless possible to exploit the exponential
+family structure underlying the marginalized model for many
+computations of statistical importance. The EM-algorithm as
+treated in Chapter <a href="em.html#em">8</a> is one particularly good example, but
+Bayesian computations can in similar ways exploit the structure.</p>
+<div id="full-exponential-families" class="section level3" number="6.1.1">
+<h3>
+<span class="header-section-number">6.1.1</span> Full exponential families<a class="anchor" aria-label="anchor" href="#full-exponential-families"><i class="fas fa-link"></i></a>
+</h3>
+<p>In this section we consider statistical models on an abstract
+product sample space
+<span class="math display">\[\mathcal{Y} = \mathcal{Y}_1 \times \ldots \times \mathcal{Y}_m.\]</span>
+We will be interested in models of
+observations <span class="math inline">\(y_1 \in \mathcal{Y}_1, \ldots, y_m \in \mathcal{Y}_m\)</span>
+that are independent but not necessarily identically distributed.</p>
+<p>An exponential family is defined in terms of two ingredients:</p>
+<ul>
+<li>maps <span class="math inline">\(t_j : \mathcal{Y}_j \to \mathbb{R}^p\)</span> for <span class="math inline">\(j = 1, \ldots, m\)</span>,</li>
+<li>and non-trivial <span class="math inline">\(\sigma\)</span>-finite measures <span class="math inline">\(\nu_j\)</span> on <span class="math inline">\(\mathcal{Y}_j\)</span> for <span class="math inline">\(j = 1, \ldots, m\)</span>.</li>
+</ul>
+<p>The maps <span class="math inline">\(t_j\)</span> are called <em>sufficient statistics</em>, and in terms
+of these and the <em>base measures</em> <span class="math inline">\(\nu_j\)</span> we define
+<span class="math display">\[\varphi_j(\theta) = \int e^{\theta^T t_j(u)} \nu_j(\mathrm{d}u).\]</span>
+These functions are well defined as functions
+<span class="math display">\[\varphi_j : \mathbb{R}^p \to (0,\infty].\]</span>
+We define
+<span class="math display">\[\Theta_j = \mathrm{int}(\{ \theta \in \mathbb{R}^p \mid \varphi_j(\theta) &lt; \infty \}),\]</span>
+which by definition is an open set as. It can be shown
+that <span class="math inline">\(\Theta_j\)</span> is convex and that <span class="math inline">\(\varphi_j\)</span> is a log-convex function.
+Defining
+<span class="math display">\[\Theta = \bigcap_{j=1}^m \Theta_j,\]</span>
+then <span class="math inline">\(\Theta\)</span> is likewise open and convex, and we define the <em>exponential family</em>
+as the distributions parametrized by <span class="math inline">\(\theta \in \Theta\)</span> that have densities</p>
+<p><span class="math display" id="eq:exp-dens">\[\begin{equation}
+f(\mathbf{y} \mid \theta) = \prod_{j=1}^m \frac{1}{\varphi_j(\theta)} e^{\theta^T t_j(y_j)} = e^{\theta^T \sum_{j=1}^m t_j(y_j) - \sum_{j=1}^m \log \varphi_j(\theta)}, \quad \mathbf{y} \in \mathcal{Y},
+\tag{6.1}
+\end{equation}\]</span></p>
+<p>w.r.t. <span class="math inline">\(\otimes_{j=1}^m \nu_j\)</span>. The
+case where <span class="math inline">\(\Theta = \emptyset\)</span> is of no interest, and we will thus assume
+that the parameter set <span class="math inline">\(\Theta\)</span> is non-empty. The parameter <span class="math inline">\(\theta\)</span> is called
+the <em>canonical parameter</em> and <span class="math inline">\(\Theta\)</span> is the canonical parameter space.
+We may also say that the exponential family is canonically parametrized by
+<span class="math inline">\(\theta\)</span>. It is important to realize that an exponential family may come
+with a non-canonical parametrization that doesn’t reveal right away that
+it is an exponential family. Thus a bit of work is then needed to show
+that the parametrized family of distributions can, indeed, be reparametrized
+as an exponential family. In the non-canonical parametrization, the
+family is then an example of a <em>curved exponential family</em> as defined below.</p>
+
+<div class="example">
+<p><span id="exm:von-Mises-exponential" class="example"><strong>Example 6.1  </strong></span>The von Mises distributions on <span class="math inline">\(\mathcal{Y} = (-\pi, \pi]\)</span> form an exponential family
+with <span class="math inline">\(m = 1\)</span>. The sufficient statistic <span class="math inline">\(t_1 : (-\pi, \pi] \mapsto \mathbb{R}^2\)</span>
+is
+<span class="math display">\[t_1(y) = \left(\begin{array}{c} \cos(y) \\ \sin(y) \end{array}\right),\]</span>
+and
+<span class="math display">\[\varphi(\theta) = \int_{-\pi}^{\pi} e^{\theta_1 \cos(u) + \theta_2 \sin(u)} \mathrm{d}u &lt; \infty\]</span>
+for all <span class="math inline">\(\theta = (\theta_1, \theta_2)^T \in \mathbb{R}^2\)</span>. Thus
+the canonical parameter space is <span class="math inline">\(\Theta = \mathbb{R}^2\)</span>.</p>
+<p>As mentioned in Section <a href="intro.html#vM">1.2.1</a>, the function <span class="math inline">\(\varphi(\theta)\)</span> can be
+expressed in terms of a modified Bessel function, but it doesn’t have
+an expression in terms of elementary functions. Likewise in Section <a href="intro.html#vM">1.2.1</a>,
+an alternative parametrization (polar coordinates) was given;
+<span class="math display">\[(\kappa, \mu) \mapsto \theta = \kappa \left(\begin{array}{c} \cos(\mu) \\ \sin(\mu) \end{array}\right)\]</span>
+that maps <span class="math inline">\([0,\infty) \times (-\pi, \pi]\)</span> onto <span class="math inline">\(\Theta\)</span>. The von Mises
+distributions form a curved exponential family in the
+<span class="math inline">\((\kappa, \mu)\)</span>-parametrization, but this parametrization has several problems.
+First, the <span class="math inline">\(\mu\)</span> parameter is not identifiable if <span class="math inline">\(\kappa = 0\)</span>, which is
+reflected by the fact that the reparametrization is not a one-to-one map.
+Second, the parameter space is not open, which can be quite a nuisance
+for e.g. maxmimum-likelihood estimation. We could circumvent these problems by restricting
+attention to <span class="math inline">\((\kappa, \mu) \in (0,\infty) \times (-\pi, \pi)\)</span>, but
+we would then miss some of the distributions in the exponential family –
+notably the uniform distribution corresponding to <span class="math inline">\(\theta = 0\)</span>. In conclusion,
+the canonical parametrization of the family of distributions as an
+exponential family is preferable for mathematical and computational reasons.</p>
+</div>
+
+<div class="example">
+<p><span id="exm:gaussian-exponential" class="example"><strong>Example 6.2  </strong></span>The family of Gaussian distributions on <span class="math inline">\(\mathbb{R}\)</span> is an example of an exponential
+family as defined above with <span class="math inline">\(m = 1\)</span> and <span class="math inline">\(\mathcal{Y} = \mathbb{R}\)</span>.
+The density of the <span class="math inline">\(\mathcal{N}(\mu, \sigma^2)\)</span> distribution is
+<span class="math display">\[\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(y - \mu)^2}{2\sigma^2}\right) = 
+  \frac{1}{\sqrt{\pi}} \exp\left(\frac{\mu}{\sigma^2} y - \frac{1}{2\sigma^2} y^2 - \frac{\mu^2}{2\sigma^2} - 
+                                     \frac{1}{2}\log (2\sigma^2) \right).\]</span>
+Letting the base measure <span class="math inline">\(\nu_1\)</span> be Lebesgue measure scaled by <span class="math inline">\(1/\sqrt{\pi}\)</span>,
+and <span class="math inline">\(t_1 : \mathbb{R} \mapsto \mathbb{R}^2\)</span> be
+<span class="math display">\[t_1(y) = \left(\begin{array}{c} y \\ - y^2 \end{array}\right)\]</span>
+we identify this family of distributions as an exponential family with canonical
+parameter
+<span class="math display">\[\theta = \left(\begin{array}{c} \frac{\mu}{\sigma^2} \\ \frac{1}{2 \sigma^2} \end{array}\right).\]</span></p>
+<p>We can express the mean and variance in terms of <span class="math inline">\(\theta\)</span> as
+<span class="math display">\[\sigma^2 = \frac{1}{2\theta_2} \quad \text{and} \quad \mu = \frac{\theta_1}{2\theta_2},\]</span>
+and we find that
+<span class="math display">\[\log \varphi_1(\theta) = \frac{\mu^2}{2\sigma^2} + \frac{1}{2} \log(2 \sigma^2) = 
+  \frac{\theta_1^2}{4\theta_2} - \frac{1}{2} \log \theta_2.\]</span></p>
+<p>We note that the reparametrization <span class="math inline">\((\mu, \sigma^2) \mapsto \theta\)</span> maps
+<span class="math inline">\(\mathbb{R} \times (0,\infty)\)</span> bijectively onto the open set <span class="math inline">\(\mathbb{R} \times (0,\infty)\)</span>,
+and that the formula above for <span class="math inline">\(\log \varphi_1(\theta)\)</span> only holds on this set.
+It is natural to ask if the canonical parameter space is actually larger for this
+exponential family. That is, is <span class="math inline">\(\varphi_1(\theta) &lt; \infty\)</span> for <span class="math inline">\(\theta_2 \leq 0\)</span>?
+To this end observe that if <span class="math inline">\(\theta_2 \leq 0\)</span>
+<span class="math display">\[\varphi_1(\theta) = \frac{1}{\sqrt{2\pi}} \int e^{\theta_1 u - \theta_2 \frac{u^2}{2}} \mathrm{d}u
+\geq \frac{1}{\sqrt{2\pi}} \int e^{\theta_1 u} \mathrm{d} u = \infty,\]</span>
+and we conclude that
+<span class="math display">\[\Theta = \mathbb{R} \times (0,\infty).\]</span></p>
+<p>The family of Gaussian distributions is an example of a family of distributions
+whose commonly used parametrization in terms of mean and variance differs from
+the canonical parametrization as an exponential family. The mean and
+variance are easy to interpret, but in terms of mean
+and variance, the Gaussian distributions form a curved exponential family. For
+mathematical and computational purposes the canonical parametrization is preferable.</p>
+</div>
+<p>For general exponential families it may seem restrictive that all
+the sufficient statistics, <span class="math inline">\(t_j\)</span>, take values in the
+same <span class="math inline">\(p\)</span>-dimensional space, and that all marginal distributions share a common
+parameter vector <span class="math inline">\(\theta\)</span>. This is, however, not a restriction. Say we have
+two distributions with sufficient statistics <span class="math inline">\(\tilde{t}_1 : \mathcal{Y}_1 \to \mathbb{R}^{p_1}\)</span>
+and <span class="math inline">\(\tilde{t}_2 : \mathcal{Y}_2 \to \mathbb{R}^{p_2}\)</span> and corresponding
+parameters <span class="math inline">\(\theta_1\)</span> and <span class="math inline">\(\theta_2\)</span>, then we construct
+<span class="math display">\[t_1(y_1) = \left(\begin{array}{c} \tilde{t}_1(y_1) \\ 0 \end{array}\right) \quad 
+\text{and} \quad t_2(y_2) = \left(\begin{array}{c} 0 \\ \tilde{t}_2(y_2) \end{array}\right).\]</span>
+Now <span class="math inline">\(t_1\)</span> and <span class="math inline">\(t_2\)</span> both map into <span class="math inline">\(\mathbb{R}^{p}\)</span> with <span class="math inline">\(p = p_1 + p_2\)</span>, and
+we can bundle the parameters together into the vector
+<span class="math display">\[\theta = \left(\begin{array}{c} \theta_1 \\ \theta_2 \end{array}\right) \in \mathbb{R}^p.\]</span>
+Clearly, this construction can be generalized to any number of distributions
+and allows us to always assume a common parameter space. The sufficient
+statistics then take care of selecting
+which of the coordinates in the parameter vector that is used for any
+particular marginal distribution.</p>
+</div>
+<div id="bayes-net" class="section level3" number="6.1.2">
+<h3>
+<span class="header-section-number">6.1.2</span> Exponential family Bayesian networks<a class="anchor" aria-label="anchor" href="#bayes-net"><i class="fas fa-link"></i></a>
+</h3>
+<p>An exponential family is defined above as a parametrized family of distributions
+on <span class="math inline">\(\mathcal{Y}\)</span> of <em>independent</em> variables. That is, the joint density
+in <a href="four-examples.html#eq:exp-dens">(6.1)</a> factorizes w.r.t. a product measure. Without really
+changing the notation this assumption can be relaxed considerably.</p>
+<p>If the sufficient statistic <span class="math inline">\(t_j\)</span>, instead of being a fixed map, is
+allowed to depend on <span class="math inline">\(y_1, \ldots, y_{j-1}\)</span>, <span class="math inline">\(f(\mathbf{y} \mid \theta)\)</span> as
+defined in <a href="four-examples.html#eq:exp-dens">(6.1)</a>
+is still a joint density. The only difference is that the factor
+<span class="math display">\[f_j(y_j \mid y_1, \ldots, y_{j-1}, \theta) = e^{\theta^T t_j(y_j) - \log \varphi_j(\theta)}\]</span>
+is now the <em>conditional</em> density of <span class="math inline">\(y_j\)</span> given <span class="math inline">\(y_1, \ldots, y_{j-1}\)</span>.
+In the notation we let the dependence of <span class="math inline">\(t_j\)</span> on <span class="math inline">\(y_1, \ldots, y_{j-1}\)</span>
+be implicit as this will not affect the abstract theory. In any concrete
+example though, it will be clear how <span class="math inline">\(t_j\)</span> actually depends upon all, some
+or none of these variables. Note that <span class="math inline">\(\varphi_j\)</span> may now also depend
+upon the data through <span class="math inline">\(y_1, \ldots, y_{j-1}\)</span>.</p>
+<p>The observation above is powerful. It allows us to develop a unified
+approach based on exponential families for a majority of all statistical
+models that are applied in practice. The models we consider make two essential
+assumptions</p>
+<ol style="list-style-type: decimal">
+<li>the variables that we model can be ordered such that <span class="math inline">\(y_j\)</span> only
+depends on <span class="math inline">\(y_1, \ldots, y_{j-1}\)</span> for <span class="math inline">\(j = 1, \ldots, m\)</span>,</li>
+<li>all the conditional distributions form exponential families themselves,
+with the conditioning variables entering through the <span class="math inline">\(t_j\)</span>-maps.</li>
+</ol>
+<p>The first of these assumptions is equivalent to the joint distribution
+being a Bayesian network, that is, a distribution whose density factorizes
+according to a directed acyclic graph. This includes time series models
+and hierarchical models. The second assumption is more restrictive, but
+is a common practice in applied work. Moreover, as many standard statistical
+models of univariate discrete and
+continuous variables are, in fact, exponential families, building
+up a joint distribution as a Bayesian network via conditional
+binomial, Poisson, beta, Gamma and Gaussian distributions among others
+is a rather flexible framework, and yet it will
+result in a model with a density that factorizes as in <a href="four-examples.html#eq:exp-dens">(6.1)</a>.</p>
+<p>Bayesian networks is a large and interesting subject in itself, and it is unfair
+to gloss over all the details. One of the main points is that for many
+computations it is possible to develop efficient algorithms by exploiting the
+graph structure. The seminal paper by <span class="citation"><a href="references.html#ref-Lauritzen:1988" role="doc-biblioref">Lauritzen and Spiegelhalter</a> (<a href="references.html#ref-Lauritzen:1988" role="doc-biblioref">1988</a>)</span> demonstrated this
+for the computation of conditional distributions. The mere fact that
+the variables can be ordered in a way that aligns with how
+the variables depend on each other is useful, but there can be
+many ways to do this, and just specifying an ordering ignores
+important details of the graph. It is, however, beyond the scope of
+this book to get into the graph algorithms required for a thorough
+general treatment of Bayesian networks.</p>
+</div>
+<div id="exp-fam-deriv" class="section level3" number="6.1.3">
+<h3>
+<span class="header-section-number">6.1.3</span> Likelihood computations<a class="anchor" aria-label="anchor" href="#exp-fam-deriv"><i class="fas fa-link"></i></a>
+</h3>
+<p>To simplify the notation we introduce
+<span class="math display">\[t(\mathbf{y}) = \sum_{j=1}^m t_j(y_j),\]</span>
+which we refer to as the sufficient statistic, and
+<span class="math display">\[\kappa(\theta) = \sum_{j=1}^m \log \varphi_j(\theta),\]</span>
+which is a convex <span class="math inline">\(C^{\infty}\)</span>-function on <span class="math inline">\(\Theta\)</span>.</p>
+<p>Having observed <span class="math inline">\(\mathbf{y} \in \mathcal{Y}\)</span> it is evident that the log-likelihood
+for the exponential family specified by <a href="four-examples.html#eq:exp-dens">(6.1)</a> is
+<span class="math display">\[\ell(\theta) = \log f(\mathbf{y} \mid \theta) = \theta^T t(\mathbf{y}) - \kappa(\theta).\]</span>
+From this it follows that the gradient of the log-likelihood is
+<span class="math display">\[\nabla \ell(\theta) = t(\mathbf{y}) - \nabla \kappa(\theta)\]</span>
+and the Hessian is
+<span class="math display">\[D^2 \ell(\theta) = - D^2 \kappa(\theta),\]</span>
+which is always negative semidefinite. The maximum-likelihood estimator exists
+if and only if there is a solution to the <em>score equation</em>
+<span class="math display">\[t(\mathbf{y}) = \nabla \kappa(\theta),\]</span>
+and it is unique if there is such a solution, <span class="math inline">\(\hat{\theta}\)</span>, for which
+<span class="math inline">\(I(\hat{\theta}) = D^2 \kappa(\hat{\theta})\)</span> is positive definite. We
+call <span class="math inline">\(I(\hat{\theta})\)</span> the <em>observed Fisher information</em>.</p>
+<p>Note that under the independence assumption,
+<span class="math display">\[\nabla \log \varphi_j(\theta) = \frac{1}{\varphi_j(\theta)} \int t_j(u) e^{\theta^T t_j(u)} \nu_i(\mathrm{d} u) = E_{\theta}(t_j(Y)), \]</span>
+which means that the score equation can be expressed as
+<span class="math display">\[t(\mathbf{y}) = \sum_{j=1}^m E_{\theta}(t_j(Y)).\]</span>
+In the Bayesian network setup <span class="math inline">\(\nabla \log \varphi_j(\theta) = E_{\theta}(t_j(Y) \mid Y_1, \ldots, Y_{j-1}),\)</span>
+and the score equation is
+<span class="math display">\[t(\mathbf{y}) = \sum_{j=1}^m E_{\theta}(t_j(Y) \mid y_1, \ldots, y_{j-1}),\]</span>
+which is a bit more complicated as the right-hand-side depends on the
+observations.</p>
+<p>The definition of an exponential family in Section <a href="four-examples.html#exp-fam">6.1</a> encompasses
+the situation where <span class="math inline">\(y_1, \ldots, y_m\)</span> are i.i.d. by taking <span class="math inline">\(t_j\)</span> to be
+independent of <span class="math inline">\(j\)</span>. In that case, <span class="math inline">\(\kappa(\theta) = m \kappa_1(\theta)\)</span>,
+the score equation can be rewritten as
+<span class="math display">\[\frac{1}{m} \sum_{j=1}^m t_1(y_j) = \kappa_1(\theta),\]</span>
+and the Fisher information becomes
+<span class="math display">\[I(\hat{\theta}) = m D^2 \kappa_1(\hat{\theta}).\]</span></p>
+<p>However, the point of the general formulation is
+that it includes regression models, and, via the Bayesian networks extension
+above, models with dependence structures. We could, of course, then
+have i.i.d. replications <span class="math inline">\(\mathbf{y}_1, \ldots, \mathbf{y}_n\)</span> of
+the entire <span class="math inline">\(m\)</span>-dimensional vector <span class="math inline">\(\mathbf{y}\)</span>, and we would get
+the score equation
+<span class="math display">\[\frac{1}{n} \sum_{i=1}^n t(\mathbf{y}_i) = \kappa(\theta),\]</span>
+and corresponding Fisher information
+<span class="math display">\[I(\hat{\theta}) = n D^2 \kappa(\hat{\theta}).\]</span></p>
+</div>
+<div id="curved-exponential-families" class="section level3" number="6.1.4">
+<h3>
+<span class="header-section-number">6.1.4</span> Curved exponential families<a class="anchor" aria-label="anchor" href="#curved-exponential-families"><i class="fas fa-link"></i></a>
+</h3>
+<p>A <em>curved exponential family</em> consists of an exponential family together with a
+<span class="math inline">\(C^2\)</span>-map <span class="math inline">\(\theta : \Psi \to \Theta\)</span> from a set <span class="math inline">\(\Psi \subseteq \mathbb{R}^q\)</span>.
+The set <span class="math inline">\(\Psi\)</span> provides a parametrization
+of the subset <span class="math inline">\(\theta(\Psi) \subseteq \Theta\)</span> of the full exponential family,
+and the log-likelihood in the <span class="math inline">\(\psi\)</span>-parameter is
+<span class="math display">\[\ell(\psi) = \theta(\psi)^T t(\mathbf{y}) - \kappa(\theta(\psi)).\]</span>
+It has gradient
+<span class="math display">\[\nabla \ell(\psi) = D \theta(\psi)^T t(\mathbf{y}) - \nabla \kappa(\theta(\psi)) D \theta(\psi)\]</span>
+and Hessian
+<span class="math display">\[D^2 \ell(\psi) =  \sum_{k=1}^p D^2\theta_k(\psi) (t(\mathbf{y})_k - \partial_k \kappa(\theta(\psi))) -   
+D \theta(\psi)^T D^2 \kappa(\theta(\psi)) D \theta(\psi).\]</span></p>
+</div>
+</div>
+<div id="multinomial-models" class="section level2" number="6.2">
+<h2>
+<span class="header-section-number">6.2</span> Multinomial models<a class="anchor" aria-label="anchor" href="#multinomial-models"><i class="fas fa-link"></i></a>
+</h2>
+<p>The multinomial model is the model of all probability distributions on
+a finite set <span class="math inline">\(\mathcal{Y} = \{1, \ldots, K\}\)</span>. The model is parametrized
+by the simplex
+<span class="math display">\[\Delta_K = \left\{(p_1, \ldots, p_K)^T \in \mathbb{R}^K \mid p_k \geq 0, \sum_{k=1}^K p_k = 1\right\}.\]</span>
+The distributions parametrized by the relative interior of <span class="math inline">\(\Delta_K\)</span> form
+an exponential family by the parametrization
+<span class="math display">\[p_k = \frac{e^{\theta_k}}{\sum_{l=1}^K e^{\theta_l}} \in (0,1)\]</span>
+for <span class="math inline">\((\theta_1, \ldots, \theta_K)^T \in \mathbb{R}^K.\)</span> That is,
+the sufficient statistic is <span class="math inline">\(k \mapsto (\delta_{1k}, \ldots, \delta_{Kk})^T \in \mathbb{R}^{K-1}\)</span>
+(where <span class="math inline">\(\delta_{lk} \in \{0, 1\}\)</span> is the Kronecker delta being 1 if and only
+if <span class="math inline">\(l = k\)</span>), and
+<span class="math display">\[\varphi(\theta_1, \ldots, \theta_K) = \sum_{l=1}^K e^{\theta_l}.\]</span>
+We call this exponential family parametrization the <em>symmetric</em> parametrization.
+The canonical parameter in the symmetric parametrization is not identifiable,
+and to resolve the lack of identifiability
+there is a tradition of fixing the last parameter as <span class="math inline">\(\theta_K = 0\)</span>. This
+results in a canonical parameter <span class="math inline">\(\theta = (\theta_1, \ldots, \theta_{K-1})^T \in \mathbb{R}^{K-1},\)</span>
+a sufficient statistic <span class="math inline">\(t_1(k) = (\delta_{1k}, \ldots, \delta_{(K-1)k})^T \in \mathbb{R}^p\)</span>,</p>
+<p><span class="math display">\[\varphi(\theta) = 1 + \sum_{l=1}^{K-1} e^{\theta_l}\]</span></p>
+<p>and probabilities</p>
+<p><span class="math display">\[p_k = \left\{\begin{array}{ll} \frac{e^{\theta_k}}{1 + \sum_{l=1}^{K-1} e^{\theta_l}}  &amp; \quad \text{if } k = 1, \ldots, K-1 \\  \frac{1}{1 + \sum_{l=1}^{K-1} e^{\theta_l}} &amp; \quad \text{if } k = K. \end{array}\right.\]</span></p>
+<p>We see that in this parametrization <span class="math inline">\(p_k = e^{\theta_k}p_K\)</span> for <span class="math inline">\(k = 1, \ldots, K-1\)</span>,
+where the probability of the last element <span class="math inline">\(K\)</span> acts as a baseline or reference probability,
+and the factors <span class="math inline">\(e^{\theta_k}\)</span> act as multiplicative modifications of this
+baseline. Moreover,
+<span class="math display">\[\frac{p_k}{p_l} = e^{\theta_k - \theta_l},\]</span>
+which is independent of the chosen baseline.</p>
+<p>In the special case of <span class="math inline">\(K = 2\)</span> the two elements <span class="math inline">\(\mathcal{Y}\)</span> are often given
+other labels than <span class="math inline">\(1\)</span> and <span class="math inline">\(2\)</span>. The most common labels are <span class="math inline">\(\{0, 1\}\)</span> and <span class="math inline">\(\{-1, 1\}\)</span>.
+If we use the <span class="math inline">\(0\)</span>-<span class="math inline">\(1\)</span>-labels the convention is to use <span class="math inline">\(p_0\)</span> as the baseline and
+thus
+<span class="math display">\[p_1 = \frac{e^{\theta}}{1 + e^{\theta}} = e^{\theta} p_0 = e^{\theta} (1 - p_1).\]</span>
+parametrized by <span class="math inline">\(\theta \in \mathbb{R}\)</span>. As this function of <span class="math inline">\(\theta\)</span> is
+known as the <em>logistic function</em>, this parametrization of the probability
+distributions on <span class="math inline">\(\{0,1\}\)</span> is often referred to as the logistic model. From the
+above we see directly that
+<span class="math display">\[\theta = \log \frac{p_1}{1 - p_1}\]</span>
+is the log-odds.</p>
+<p>If we use the <span class="math inline">\(\pm 1\)</span>-labels, an alternative exponential family parametrization is
+<span class="math display">\[p_k = \frac{e^{k\theta}}{e^\theta + e^{-\theta}}\]</span>
+for <span class="math inline">\(\theta \in \mathbb{R}\)</span> and <span class="math inline">\(k \in \{-1, 1\}\)</span>. This gives a symmetric treatment of the two
+labels while retaining the identifiability.</p>
+<p>With i.i.d. observations from a multinomial distribution we find
+that the log-likelihood is</p>
+<p><span class="math display">\[\begin{align*}
+\ell(\theta) &amp; = \sum_{i=1}^n \sum_{k=1}^K \delta_{k y_i} \log(p_k(\theta)) \\
+&amp; = \sum_{k=1}^K \underbrace{\sum_{i=1}^n \delta_{k y_i}}_{= n_k} \log(p_k(\theta)) \\ 
+&amp; = \theta^T  \mathbf{n} - n \log \left(1 + \sum_{l=1}^{K-1} e^{\theta_l} \right).
+\end{align*}\]</span></p>
+<p>where <span class="math inline">\(\mathbf{n} = (n_1, \ldots, n_K)^T = \sum_{i=1}^n t(y_i)\)</span> is the sufficient
+statistic, which is simply a tabulation of the times the different elements in
+<span class="math inline">\(\{1, \ldots, K\}\)</span> were observed.</p>
+<div id="pep-moth" class="section level3" number="6.2.1">
+<h3>
+<span class="header-section-number">6.2.1</span> Peppered Moths<a class="anchor" aria-label="anchor" href="#pep-moth"><i class="fas fa-link"></i></a>
+</h3>
+<p>This example is on the color of the peppered Moth (<em>Birkemåler</em> in Danish).
+The color of the moth is
+primarily determined by one gene that occur in three different alleles denoted C,
+I and T. The alleles are ordered in terms of dominance as C &gt; I &gt; T. Moths with genotype
+including C are dark. Moths
+with genotype TT are light colored. Moths with genotypes II and IT are mottled.
+Thus there a total of six different genotypes (CC, CI, CT, II, IT and TT) and
+three different phenotypes (black, mottled, light colored).</p>
+<div class="inline-figure"><img src="figures/peppered-moth.jpg" width="70%" style="display: block; margin: auto;"></div>
+<p>The peppered moth provided an <a href="https://en.wikipedia.org/wiki/Peppered_moth_evolution">early demonstration of evolution</a>
+in the 19th century England, where the light colored moth was outnumbered by the dark
+colored variety. The dark color became dominant due to the increased
+pollution, where trees were darkened by soot, and had for that reason a selective
+advantage. There is a nice collection
+of moth in different colors at the Danish Zoological Museum, and further
+explanation of the role it played in understanding evolution.</p>
+<p>We denote the allele frequencies <span class="math inline">\(p_C\)</span>, <span class="math inline">\(p_I\)</span>, <span class="math inline">\(p_T\)</span> with <span class="math inline">\(p_C + p_I + p_T = 1.\)</span>
+According to the <a href="https://en.wikipedia.org/wiki/Hardy%E2%80%93Weinberg_principle">Hardy-Weinberg principle</a>,
+the genotype frequencies are then</p>
+<p><span class="math display">\[p_C^2, 2p_Cp_I, 2p_Cp_T, p_I^2,  2p_Ip_T, p_T^2.\]</span></p>
+<p>If we could observe the genotypes, the complete multinomial log-likelihood would be</p>
+<p><span class="math display">\[\begin{align*}
+ &amp; 2n_{CC} \log(p_C) + n_{CI} \log (2 p_C p_I) + n_{CT} \log(2 p_C p_I) \\
+&amp; \ \ + 2 n_{II} \log(p_I) + n_{IT} \log(2p_I p_T) + 2 n_{TT} \log(p_T) \\
+&amp; = 2n_{CC} \log(p_C) + n_{CI} \log (2 p_C p_I) + n_{CT} \log(2 p_C p_I) \\
+&amp; \ \ + 2 n_{II} \log(p_I) + n_{IT} \log(2p_I (1 - p_C - p_I)) + 2 n_{TT} \log(1 - p_C - p_I). 
+\end{align*}\]</span></p>
+<p>The log-likelihood is given in terms of the genotype counts and the two probability parameters
+<span class="math inline">\(p_C, p_I \geq 0\)</span> with <span class="math inline">\(p_C + p_I \leq 1\)</span>, and on the interior of this
+parameter set the model is a curved exponential family.</p>
+<p>Collecting moths and determining their color will, however, only identify their phenotype,
+not their genotype. Thus we observe <span class="math inline">\((n_C, n_T, n_I)\)</span>, where
+<span class="math display">\[n = \underbrace{n_{CC} + n_{CI} + n_{CT}}_{= n_C} + 
+\underbrace{n_{IT} + n_{II}}_{=n_I} + \underbrace{n_{TT}}_{=n_T}.\]</span></p>
+<p>For maximum-likelihood estimation of the parameters in this model from
+the observation <span class="math inline">\((n_C, n_T, n_I)\)</span>, we need the likelihood,
+that is, the likelihood in the marginal distribution of the observed
+variables.</p>
+<p>The peppered Moth example is an example of <em>cell collapsing</em> in a multinomial model.
+In general, let <span class="math inline">\(A_1 \cup \ldots \cup A_{K_0} = \{1, \ldots, K\}\)</span> be a partition and let
+<span class="math display">\[M : \mathbb{N}_0^K \to \mathbb{N}_0^{K_0}\]</span>
+be the map given by
+<span class="math display">\[M((n_1, \ldots, n_K))_j = \sum_{k \in A_j} n_k.\]</span></p>
+<p>If <span class="math inline">\(Y \sim \textrm{Mult}(p, n)\)</span> with <span class="math inline">\(p = (p_1, \ldots, p_K)\)</span> then
+<span class="math display">\[X = M(Y) \sim \textrm{Mult}(M(p), n).\]</span>
+If <span class="math inline">\(\theta \mapsto p(\theta)\)</span> is a parametrization of the cell probabilities
+the log-likelihood under the collapsed multinomial model is generally</p>
+<p><span class="math display" id="eq:mult-col-loglik">\[\begin{equation}
+\ell(\theta) = \sum_{j = 1}^{K_0} x_j \log (M(p(\theta))_j) = \sum_{j = 1}^{K_0} x_j \log \left(\sum_{k \in A_j} p_k(\theta)\right).
+\tag{6.2} 
+\end{equation}\]</span></p>
+<p>For the peppered Moths, <span class="math inline">\(K = 6\)</span> corresponding to the six genotypes, <span class="math inline">\(K_0 = 3\)</span> and
+the partition corresponding to the phenotypes is
+<span class="math display">\[\{1, 2, 3\} \cup \{4, 5\} \cup \{6\} = \{1, \ldots, 6\},\]</span>
+and
+<span class="math display">\[M(n_1, \ldots, n_6) = (n_1 + n_2 + n_3, n_4 + n_5, n_6).\]</span></p>
+<p>In terms of the <span class="math inline">\((p_C, p_I)\)</span> parametrization, <span class="math inline">\(p_T = 1 - p_C - p_I\)</span> and
+<span class="math display">\[p = (p_C^2, 2p_Cp_I, 2p_Cp_T, p_I^2,  2p_Ip_T, p_T^2).\]</span></p>
+<p>Hence
+<span class="math display">\[M(p) = (p_C^2 + 2p_Cp_I + 2p_Cp_T, p_I^2 +2p_Ip_T, p_T^2).\]</span></p>
+<p>The log-likelihood is</p>
+<p><span class="math display">\[\begin{align}
+\ell(p_C, p_I) &amp; = n_C \log(p_C^2 + 2p_Cp_I + 2p_Cp_T) + n_I \log(p_I^2 +2p_Ip_T) + n_T \log (p_T^2).
+\end{align}\]</span></p>
+<p>We can implement the log-likelihood in a very problem specific way.
+Note how the parameter constraints are encoded via the return value <span class="math inline">\(\infty\)</span>.</p>
+<div class="sourceCode" id="cb263"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co">## par = c(pC, pI), pT = 1 - pC - pI</span>
+<span class="co">## x is the data vector of length 3 of counts </span>
+<span class="va">loglik</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">par</span>, <span class="va">x</span><span class="op">)</span> <span class="op">{</span>
+  <span class="va">pT</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="va">par</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="va">par</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>
+  
+  <span class="kw">if</span> <span class="op">(</span><span class="va">par</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">1</span> <span class="op">||</span> <span class="va">par</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">0</span> <span class="op">||</span> <span class="va">par</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">1</span> 
+      <span class="op">||</span> <span class="va">par</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">0</span> <span class="op">||</span> <span class="va">pT</span> <span class="op">&lt;</span> <span class="fl">0</span><span class="op">)</span>
+    <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="cn">Inf</span><span class="op">)</span>
+  
+  <span class="va">PC</span> <span class="op">&lt;-</span> <span class="va">par</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">par</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">*</span> <span class="va">par</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">par</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">*</span> <span class="va">pT</span>
+  <span class="va">PI</span> <span class="op">&lt;-</span> <span class="va">par</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">par</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">*</span> <span class="va">pT</span>
+  <span class="va">PT</span> <span class="op">&lt;-</span> <span class="va">pT</span><span class="op">^</span><span class="fl">2</span>
+  <span class="co">## The function returns the negative log-likelihood </span>
+  <span class="op">-</span> <span class="op">(</span><span class="va">x</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">PC</span><span class="op">)</span> <span class="op">+</span> <span class="va">x</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">PI</span><span class="op">)</span> <span class="op">+</span> <span class="va">x</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span><span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">PT</span><span class="op">)</span><span class="op">)</span>
+<span class="op">}</span></code></pre></div>
+<p>It is possible to use <code>optim</code> in R with just this implementation to
+compute the maximum-likelihood estimate of the allele parameters.</p>
+<div class="sourceCode" id="cb264"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.3</span><span class="op">)</span>, <span class="va">loglik</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>## $par
+## [1] 0.07084643 0.18871900
+## 
+## $value
+## [1] 600.481
+## 
+## $counts
+## function gradient 
+##       71       NA 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL</code></pre>
+<p>The <code>optim</code> function uses an algorithm called <a href="https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method">Nelder-Mead</a>
+as the default algorithm that relies on log-likelihood evaluations only. It
+is slow but fairly robust, though a bit of thought has to go into the initial
+parameter choice.</p>
+<div class="sourceCode" id="cb266"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, <span class="va">loglik</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>## Error in optim(c(0, 0), loglik, x = c(85, 196, 341)): function cannot be evaluated
+at initial parameters```
+
+Starting the algorithm in a boundary value where the negative log-likelihood attains
+the value $\infty$ does not work. 
+
+The computations can beneficially be implemented in greater 
+generality. The function `M` sums the cells that are collapsed, 
+which has to be specified by the `group` argument.
+
+
+```r
+M &lt;- function(x, group)
+  as.vector(tapply(x, group, sum))</code></pre>
+<p>The log-likelihood is then implemented for multinomial cell
+collapsing via <code>M</code> and two problem specific arguments to
+the <code>loglik</code> function. One of these is a vector specifying
+the grouping structure of the collapsing. The other is a function
+that determines the
+parametrization that maps the parameter that we are optimizing over to the
+cell probabilities. In the implementation it is assumed
+that this <code>prob</code> function in addition encodes parameter constraints
+by returning <code>NULL</code> if parameter constraints are violated.</p>
+<div class="sourceCode" id="cb268"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">loglik</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">par</span>, <span class="va">x</span>, <span class="va">prob</span>, <span class="va">group</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span>
+  <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">prob</span><span class="op">(</span><span class="va">par</span><span class="op">)</span>
+  <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span> <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="cn">Inf</span><span class="op">)</span>
+  <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">x</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="fu">M</span><span class="op">(</span><span class="fu">prob</span><span class="op">(</span><span class="va">par</span><span class="op">)</span>, <span class="va">group</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+<span class="op">}</span></code></pre></div>
+<p>The function <code>prob</code> is implemented specifically for the peppered moths
+as follows.</p>
+<div class="sourceCode" id="cb269"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">prob</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">p</span><span class="op">)</span> <span class="op">{</span>
+  <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>
+  <span class="kw">if</span> <span class="op">(</span><span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">1</span> <span class="op">||</span> <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">0</span> <span class="op">||</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">1</span> <span class="op">||</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">0</span> <span class="op">||</span> <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">0</span><span class="op">)</span>
+    <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="cn">NULL</span><span class="op">)</span>
+  <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span>, <span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, <span class="fl">2</span><span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span>, 
+    <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span>, <span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">*</span> <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span>, <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>
+<span class="op">}</span></code></pre></div>
+<p>We test that the new implementation gives the same result when
+optimized as using the more problem specific implementation.</p>
+<div class="sourceCode" id="cb270"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.3</span><span class="op">)</span>, <span class="va">loglik</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span>, 
+      prob <span class="op">=</span> <span class="va">prob</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>## $par
+## [1] 0.07084643 0.18871900
+## 
+## $value
+## [1] 600.481
+## 
+## $counts
+## function gradient 
+##       71       NA 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL</code></pre>
+<p>Once we have found an estimate of the parameters, we can compute a prediction
+of the unobserved genotype counts from the phenotype counts using
+the conditional distribution of the genotypes given the phenotypes.
+This is straightforward as the conditional distribution of <span class="math inline">\(Y_{A_j} = (Y_k)_{k \in A_j}\)</span>,
+conditionally on <span class="math inline">\(X\)</span> is also a multinomial distribution;
+<span class="math display">\[Y_{A_j} \mid X = x \sim \textrm{Mult}\left( \frac{p_{A_j}}{M(p)_j}, x_j \right).\]</span>
+The probability parameters are simply <span class="math inline">\(p\)</span> restricted to <span class="math inline">\(A_j\)</span> and renormalized
+to a probability vector. Observe that this gives
+<span class="math display">\[E (Y_k \mid X = x) = \frac{x_j p_k}{M(p)_j}\]</span>
+for <span class="math inline">\(k \in A_j\)</span>. Using the estimated parameters and the <code>M</code> function implemented
+above, we can compute a prediction of the genotype counts as follows.</p>
+<div class="sourceCode" id="cb272"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span>
+<span class="va">group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>
+<span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">prob</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.07084643</span>, <span class="fl">0.18871900</span><span class="op">)</span><span class="op">)</span>
+<span class="va">x</span><span class="op">[</span><span class="va">group</span><span class="op">]</span> <span class="op">*</span> <span class="va">p</span> <span class="op">/</span> <span class="fu">M</span><span class="op">(</span><span class="va">p</span>, <span class="va">group</span><span class="op">)</span><span class="op">[</span><span class="va">group</span><span class="op">]</span></code></pre></div>
+<pre><code>## [1]   3.121549  16.630211  65.248241  22.154520 173.845480 341.000000</code></pre>
+<p>This is of interest in itself, but computing these conditional expectations
+will also be central for the EM algorithm in Chapter <a href="em.html#em">8</a>.</p>
+</div>
+</div>
+<div id="regression" class="section level2" number="6.3">
+<h2>
+<span class="header-section-number">6.3</span> Regression models<a class="anchor" aria-label="anchor" href="#regression"><i class="fas fa-link"></i></a>
+</h2>
+<p>Regression models are models of one variable, called the response,
+conditionally on one or more other variables, called the predictors.
+Typically we use models that assume conditional independence of the responses
+given the predictors, and a particularly convenient class of regression
+models is based on exponential families.</p>
+<p>If we let <span class="math inline">\(y_i \in \mathbb{R}\)</span> denote the <span class="math inline">\(i\)</span>th response and <span class="math inline">\(x_i \in \mathbb{R}^p\)</span>
+the <span class="math inline">\(i\)</span>th predictor we can consider the exponential family of models with joint density
+<span class="math display">\[f(\mathbf{y} \mid \mathbf{X}, \beta) = \prod_{i=1}^n e^{\theta^T t_i(y_i \mid x_i) - \log \varphi_i(\theta)}\]</span>
+for suitably chosen base measures. Here
+<span class="math display">\[\mathbf{X} = \left( \begin{array}{c} x_1^T \\ x_2^T \\ \vdots \\ x_{n-1}^T \\ x_n^T \end{array} \right)\]</span>
+is called the <em>model matrix</em> and is an <span class="math inline">\(n \times p\)</span> matrix.</p>
+
+<div class="example">
+<p><span id="exm:poisson-regression" class="example"><strong>Example 6.3  </strong></span>If <span class="math inline">\(y_i \in \mathbb{N}_0\)</span> are counts we often use a Poisson regression model
+with point probabilities (density w.r.t. counting measure)
+<span class="math display">\[p_i(y_i \mid x_i) = e^{-\mu(x_i)} \frac{\mu(x_i)^{y_i}}{y_i!}.\]</span>
+If the mean depends on the predictors in a log-linear way, <span class="math inline">\(\log(\mu(x_i)) = x_i^T \beta\)</span>,
+then
+<span class="math display">\[p_i(y_i \mid x_i) = e^{\beta^T x_i y_i - \exp( x_i^T \beta)} \frac{1}{y_i!}.\]</span>
+The factor <span class="math inline">\(1/y_i!\)</span> can be absorbed into the base measure, and we recognize
+this Poisson regression model as an exponential family with sufficient statistics
+<span class="math display">\[t_i(y_i) = x_i y_i\]</span>
+and
+<span class="math display">\[\log \varphi_i(\beta) =  \exp( x_i^T \beta).\]</span></p>
+<p>To implement numerical optimization algorithms for computing the
+maximum-likelihood estimate we note that
+<span class="math display">\[t(\mathbf{y}) = \sum_{i=1}^n x_i y_i = \mathbf{X}^T \mathbf{y} \quad \text{and} \quad
+\kappa(\beta) = \sum_{i=1}^n e^{x_i^T \beta},\]</span>
+that
+<span class="math display">\[\nabla \kappa(\beta) = \sum_{i=1}^n x_i e^{x_i^T \beta},\]</span>
+and that
+<span class="math display">\[D^2 \kappa(\beta) = \sum_{i=1}^n x_i x_i^T e^{x_i^T \beta} = \mathbf{X}^T \mathbf{W}(\beta) \mathbf{X}\]</span>
+where <span class="math inline">\(\mathbf{W}(\beta)\)</span> is a diagonal matrix with <span class="math inline">\(\mathbf{W}(\beta)_{ii} = \exp(x_i^T \beta).\)</span>
+All these formulas follow directly from the general formulas for exponential
+families.</p>
+</div>
+<p>To illustrate the use of a Poisson regression model we consider
+the following data set from a major Swedish supermarket chain. It contains
+the number of bags of frozen vegetables sold in a given week in a given store
+under a marketing campaign. A predicted number of items sold in a normal week
+(without a campaign) based on historic sales is included. It is of interest to
+recalibrate this number to give a good prediction of the number of items
+actually sold.</p>
+<div class="sourceCode" id="cb274"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">vegetables</span> <span class="op">&lt;-</span> <span class="fu">read_csv</span><span class="op">(</span><span class="st">"data/vegetables.csv"</span>, col_types <span class="op">=</span> <span class="fu">cols</span><span class="op">(</span>store <span class="op">=</span> <span class="st">"c"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb275"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">vegetables</span><span class="op">)</span></code></pre></div>
+<pre><code>##       sale          normalSale        store          
+##  Min.   :  1.00   Min.   :  0.20   Length:1066       
+##  1st Qu.: 12.00   1st Qu.:  4.20   Class :character  
+##  Median : 21.00   Median :  7.25   Mode  :character  
+##  Mean   : 40.29   Mean   : 11.72                     
+##  3rd Qu.: 40.00   3rd Qu.: 12.25                     
+##  Max.   :571.00   Max.   :102.00</code></pre>
+<p>It is natural to model the number of sold items using a Poisson regression
+model, and we will consider the following simple log-linear model:</p>
+<p><span class="math display">\[\log(E(\text{sale} \mid \text{normalSale})) = \beta_0 + \beta_1 \log(\text{normalSale}).\]</span></p>
+<p>This is an example of an exponential family regression model as above with
+a Poisson response distribution. It is a standard regression model that can
+be fitted to data using the <code>glm</code> function and using the formula interface
+to specify how the response should depend on the normal sale. The model is
+fitted by computing the maximum-likelihood estimate of the two parameters
+<span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span>.</p>
+<div class="sourceCode" id="cb277"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># A Poisson regression model</span>
+<span class="va">pois_model_null</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html">glm</a></span><span class="op">(</span>
+  <span class="va">sale</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">normalSale</span><span class="op">)</span>, 
+  data <span class="op">=</span> <span class="va">vegetables</span>, 
+  family <span class="op">=</span> <span class="va">poisson</span>
+<span class="op">)</span>  </code></pre></div>
+<div class="sourceCode" id="cb278"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">pois_model_null</span><span class="op">)</span></code></pre></div>
+<pre><code>## 
+## Call:
+## glm(formula = sale ~ log(normalSale), family = poisson, data = vegetables)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -16.218   -2.677   -0.864    1.324   21.730  
+## 
+## Coefficients:
+##                 Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)        1.461      0.015    97.2   &lt;2e-16 ***
+## log(normalSale)    0.922      0.005   184.4   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for poisson family taken to be 1)
+## 
+##     Null deviance: 51177  on 1065  degrees of freedom
+## Residual deviance: 17502  on 1064  degrees of freedom
+## AIC: 22823
+## 
+## Number of Fisher Scoring iterations: 5</code></pre>
+<p>The fitted model of the expected sale as a function of the normal sale, <span class="math inline">\(x\)</span>, is<br><span class="math display">\[x \mapsto e^{1.46 + 0.92 \times \log(x)} = (4.31 \times x^{-0.08}) \times x.\]</span>
+This model roughly predicts a four-fold increase of the sale during a
+campaign, though the effect decays with increasing <span class="math inline">\(x\)</span>. If the normal
+sale is 10 items the factor is <span class="math inline">\(4.31 \times 10^{-0.08} = 3.58\)</span>, and if
+the normal sale is 100 items the factor reduces to <span class="math inline">\(4.31 \times 100^{-0.08} = 2.98\)</span>.</p>
+<p>We are not entirely satisfied with this model. It is fitted across all
+stores in the data set, and it is not obvious that the same effect should
+apply across all stores. Thus we would like to fit a model of the form</p>
+<p><span class="math display">\[\log(E(\text{sale})) = \beta_{\text{store}} + \beta_1 \log(\text{normalSale})\]</span></p>
+<p>instead. Fortunately, this is also straightforward using <code>glm</code>.</p>
+<div class="sourceCode" id="cb280"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co">## Note, variable store is a factor! The 'intercept' is removed </span>
+<span class="co">## in the formula to obtain a parametrization as above. </span>
+<span class="va">pois_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html">glm</a></span><span class="op">(</span>
+  <span class="va">sale</span> <span class="op">~</span> <span class="va">store</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">normalSale</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>, 
+  data <span class="op">=</span> <span class="va">vegetables</span>, 
+  family <span class="op">=</span> <span class="va">poisson</span>
+<span class="op">)</span></code></pre></div>
+<p>We will not print all the individual store effects as there are 352
+individual stores.</p>
+<div class="sourceCode" id="cb281"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">pois_model</span><span class="op">)</span><span class="op">$</span><span class="va">coefficients</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">353</span><span class="op">)</span>, <span class="op">]</span></code></pre></div>
+<pre><code>##                 Estimate Std. Error z value   Pr(&gt;|z|)
+## store1            2.7182    0.12756  21.309 9.416e-101
+## store10           4.2954    0.12043  35.668 1.254e-278
+## store100          3.4866    0.12426  28.060 3.055e-173
+## store101          3.3007    0.11791  27.993 1.989e-172
+## log(normalSale)   0.2025    0.03127   6.474  9.536e-11</code></pre>
+<p>We should note that the coefficient of <span class="math inline">\(\log(\text{normalSale})\)</span> has
+changed considerably, and the model is a somewhat different model now
+for the individual stores.</p>
+<p>From a computational viewpoint the most important thing that has changed is
+that the number of parameters has increased a lot. In the first and simple
+model there are two parameters. In the second model there are 353 parameters.
+Computing the maximum-likelihood estimate is a considerably more difficult
+problem in the second case.</p>
+</div>
+<div id="finite-mixture-models" class="section level2" number="6.4">
+<h2>
+<span class="header-section-number">6.4</span> Finite mixture models<a class="anchor" aria-label="anchor" href="#finite-mixture-models"><i class="fas fa-link"></i></a>
+</h2>
+<p>A finite mixture model is a model of a pair of random variables <span class="math inline">\((Y, Z)\)</span>
+with <span class="math inline">\(Z \in \{1, \ldots, K\}\)</span>, <span class="math inline">\(P(Z = k) = p_k\)</span>, and the conditional distribution
+of <span class="math inline">\(Y\)</span> given <span class="math inline">\(Z = k\)</span> having density <span class="math inline">\(f_k( \cdot \mid \theta_k)\)</span>. The joint
+density is then
+<span class="math display">\[(y, k) \mapsto f_k(y \mid \theta_k) p_k,\]</span>
+and the marginal density for the distribution of <span class="math inline">\(Y\)</span> is
+<span class="math display">\[f(y \mid \theta) =  \sum_{k=1}^K f_k(y \mid \theta_k) p_k\]</span>
+where <span class="math inline">\(\theta\)</span> is the vector of all parameters. We say that the
+model has <span class="math inline">\(K\)</span> mixture components and call <span class="math inline">\(f_k( \cdot \mid \theta_k)\)</span>
+the mixture distributions and <span class="math inline">\(p_k\)</span> the mixture weights.</p>
+<p>The main usage of mixture models is to situations where <span class="math inline">\(Z\)</span> is not observed.
+In practice, only <span class="math inline">\(Y\)</span> is observed, and parameter estimation has to be
+based on the marginal distribution of <span class="math inline">\(Y\)</span> with density <span class="math inline">\(f(\cdot \mid \theta)\)</span>,
+which is a weighted sum of the mixture distributions.</p>
+<p>The set of all probability measures on <span class="math inline">\(\{1, \ldots, K\}\)</span> is an exponential
+family with sufficient statistic
+<span class="math display">\[\tilde{t}_0(k) = (\delta_{1k}, \delta_{2k}, \ldots, \delta_{(K-1)k}) \in \mathbb{R}^{K-1},\]</span>
+canonical parameter <span class="math inline">\(\alpha = (\alpha_1, \ldots, \alpha_{K-1}) \in \mathbb{R}^{K-1}\)</span>
+and
+<span class="math display">\[p_k = \frac{e^{\alpha_k}}{1 + \sum_{l=1}^{K-1} e^{\alpha_l}}.\]</span></p>
+<p>When <span class="math inline">\(f_k\)</span> is an exponential family as well with sufficient statistic
+<span class="math inline">\(\tilde{t}_k : \mathcal{Y} \to \mathbb{R}^{p_k}\)</span> and <span class="math inline">\(\theta_k\)</span> the
+canonical parameter, we bundle <span class="math inline">\(\alpha, \theta_1, \ldots, \theta_K\)</span>
+into <span class="math inline">\(\theta\)</span> and define
+<span class="math display">\[t_1(y) = \left(\begin{array}{c}
+\tilde{t}_0 \\
+0 \\
+0 \\
+\vdots \\
+0
+\end{array}
+\right)\]</span>
+together with
+<span class="math display">\[t_2(y \mid k) = \left(\begin{array}{c}
+0 \\
+\delta_{1k} \tilde{t}_1(y) \\
+\delta_{2k} \tilde{t}_2(y) \\
+\vdots \\
+\delta_{Kk} \tilde{t}_K(y)
+\end{array}
+\right)\]</span>
+we see that we have an exponential family of the joint distribution of <span class="math inline">\((Y, Z)\)</span>
+with the <span class="math inline">\(p = K-1 + p_1 + \ldots + p_K\)</span>-dimensional canonical parameter <span class="math inline">\(\theta\)</span>,
+with the sufficient statistic <span class="math inline">\(t_1\)</span> determining the marginal distribution of <span class="math inline">\(Z\)</span>
+and with the sufficient statistic <span class="math inline">\(t_2\)</span> determining the <em>conditional</em> distribution
+of <span class="math inline">\(Y\)</span> given <span class="math inline">\(Z\)</span>. We have here made the conditioning variable explicit.</p>
+<p>The marginal density of <span class="math inline">\(Y\)</span> in the exponential family parametrization then
+becomes
+<span class="math display">\[f(y \mid \theta) = \sum_{k=1}^K  e^{\theta^T (t_1(k) + t_2(y \mid k)) - \log \varphi_1(\theta) - \log \varphi_2(\theta \mid k)}.\]</span>
+For small <span class="math inline">\(K\)</span> it is usually unproblematic to implement the computation of
+the marginal density using the formula above, and the computation of derivatives
+can likewise be implemented based on the formulas derived in Section <a href="four-examples.html#exp-fam-deriv">6.1.3</a>.</p>
+<div id="Gaus-mix-ex" class="section level3" number="6.4.1">
+<h3>
+<span class="header-section-number">6.4.1</span> Gaussian mixtures<a class="anchor" aria-label="anchor" href="#Gaus-mix-ex"><i class="fas fa-link"></i></a>
+</h3>
+<p>A Gaussian mixture model is a mixture model where all the mixture distributions are<br>
+Gaussian distributions but potentially with different means and variances. In this
+section we focus on the simplest Gaussian mixture model with <span class="math inline">\(K = 2\)</span> mixture
+components.</p>
+<p>When <span class="math inline">\(K = 2\)</span>, the Gaussian mixture model is parametrized by the five parameters:
+the mixture weight <span class="math inline">\(p = P(Z = 1) \in (0, 1)\)</span>, the two means <span class="math inline">\(\mu_1, \mu_2 \in \mathbb{R}\)</span>,
+and the two variances <span class="math inline">\(\sigma_1, \sigma_2 &gt; 0\)</span>. This is <em>not</em> the parametrization
+using canonical exponential family parameters, which we return to below. First
+we will simply simulate random variables from this model.</p>
+<div class="sourceCode" id="cb283"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sigma1</span> <span class="op">&lt;-</span> <span class="fl">1</span>
+<span class="va">sigma2</span> <span class="op">&lt;-</span> <span class="fl">2</span>
+<span class="va">mu1</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="fl">0.5</span>
+<span class="va">mu2</span> <span class="op">&lt;-</span> <span class="fl">4</span>
+<span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">0.5</span>
+<span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">5000</span>
+<span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">FALSE</span><span class="op">)</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span>, prob <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">p</span>, <span class="fl">1</span> <span class="op">-</span> <span class="va">p</span><span class="op">)</span><span class="op">)</span>
+<span class="co">## Conditional simulation from the mixture components</span>
+<span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">numeric</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>
+<span class="va">n1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">z</span><span class="op">)</span>
+<span class="va">y</span><span class="op">[</span><span class="va">z</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span><span class="op">(</span><span class="va">n1</span>, <span class="va">mu1</span>, <span class="va">sigma1</span><span class="op">)</span>
+<span class="va">y</span><span class="op">[</span><span class="op">!</span><span class="va">z</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="va">n1</span>, <span class="va">mu2</span>, <span class="va">sigma2</span><span class="op">)</span></code></pre></div>
+<p>The simulation above generated 5000 samples from a two-component
+Gaussian mixture model with mixture distributions <span class="math inline">\(\mathcal{N}(-0.5, 1)\)</span>
+and <span class="math inline">\(\mathcal{N}(4, 4)\)</span>, and with each component having weight <span class="math inline">\(0.5\)</span>.
+This gives a bimodal distribution as illustrated by the histogram on Figure
+<a href="four-examples.html#fig:mixture-gaus-histogram">6.1</a>.</p>
+<div class="sourceCode" id="cb284"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">yy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">3</span>, <span class="fl">11</span>, <span class="fl">0.1</span><span class="op">)</span>
+<span class="va">dens</span> <span class="op">&lt;-</span> <span class="va">p</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">dnorm</a></span><span class="op">(</span><span class="va">yy</span>, <span class="va">mu1</span>, <span class="va">sigma1</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">p</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">dnorm</a></span><span class="op">(</span><span class="va">yy</span>, <span class="va">mu2</span>, <span class="va">sigma2</span><span class="op">)</span>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span>mapping <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">..density..</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> 
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_histogram.html">geom_histogram</a></span><span class="op">(</span>bins <span class="op">=</span> <span class="fl">20</span><span class="op">)</span> <span class="op">+</span> 
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span><span class="va">yy</span>, <span class="va">dens</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"blue"</span>, size <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span> 
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html">stat_density</a></span><span class="op">(</span>bw <span class="op">=</span> <span class="st">"SJ"</span>, geom<span class="op">=</span><span class="st">"line"</span>, color <span class="op">=</span> <span class="st">"red"</span>, size <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></code></pre></div>
+<div class="figure" style="text-align: center">
+<span style="display:block;" id="fig:mixture-gaus-histogram"></span>
+<img src="CSwR_files/figure-html/mixture-gaus-histogram-1.png" alt="Histogram and density estimate (red) of data simulated from a two-component Gaussian mixture distribution. The true mixture distribution has " width="70%"><p class="caption">
+Figure 6.1: Histogram and density estimate (red) of data simulated from a two-component Gaussian mixture distribution. The true mixture distribution has
+</p>
+</div>
+<p>It is possible to give a mathematically different representation of the
+marginal distribution of <span class="math inline">\(Y\)</span> that is sometimes useful. Though it gives
+the same marginal distribution from the same components, it does provide a
+different interpretation of what a mixture model is a model of, and it does
+provide a different way of simulating from a mixture distribution.</p>
+<p>If we let <span class="math inline">\(Y_1 \sim \mathcal{N}(\mu_1, \sigma_1^2)\)</span> and <span class="math inline">\(Y_2 \sim \mathcal{N}(\mu_2, \sigma_2^2)\)</span>
+be independent, and independent of <span class="math inline">\(Z\)</span>, we can define</p>
+<p><span class="math display" id="eq:mixturerep">\[\begin{equation}
+Y = 1(Z = 1) Y_1 + 1(Z = 2) Y_2 = Y_{Z}.
+\tag{6.3}
+\end{equation}\]</span></p>
+<p>Clearly, the conditional distribution of <span class="math inline">\(Y\)</span> given <span class="math inline">\(Z = k\)</span> is <span class="math inline">\(f_k\)</span>.
+From <a href="four-examples.html#eq:mixturerep">(6.3)</a> it follows directly that
+<span class="math display">\[E(Y^n) = P(Z = 1) E(Y_1^n) + P(Z = 2) E(Y_2^n) = p m_1(n) + (1 - p) m_2(n)\]</span>
+where <span class="math inline">\(m_k(n)\)</span> denotes the <span class="math inline">\(n\)</span>th non-central moment of the <span class="math inline">\(k\)</span>th mixture
+component. In particular,</p>
+<p><span class="math display">\[E(Y) = p \mu_1 + (1 - p) \mu_2.\]</span></p>
+<p>The variance can be found from the second moment as</p>
+<p><span class="math display">\[\begin{align}
+V(Y) &amp; = p(\mu_1^2 + \sigma_1^2) + (1-p)(\mu_2^2 + \sigma_2^2) -  (p \mu_1 + (1 - p) \mu_2)^2 \\
+&amp; = p\sigma_1^2 + (1 - p) \sigma_2^2 + p(1-p)(\mu_1^2 + \mu_2^2 - 2 \mu_1 \mu_2).
+\end{align}\]</span></p>
+<p>While it is certainly possible to derive this formula by other means, using
+<a href="four-examples.html#eq:mixturerep">(6.3)</a> gives a simple argument based on
+elementary properties of expectation and independence
+of <span class="math inline">\((Y_1, Y_2)\)</span> and <span class="math inline">\(Z\)</span>.</p>
+<p>The construction via <a href="four-examples.html#eq:mixturerep">(6.3)</a> has an interpretation that differs
+from how a mixture model was defined in the first place. Though <span class="math inline">\((Y, Z)\)</span> has
+the correct joint distribution, <span class="math inline">\(Y\)</span> is by <a href="four-examples.html#eq:mixturerep">(6.3)</a> the result of <span class="math inline">\(Z\)</span> <em>selecting</em> one
+out of two possible observations. The difference can best be illustrated by
+an example. Suppose that we have a large population consisting of married couples entirely.
+We can draw a sample of individuals (ignoring the marriage relations
+completely) from this population and let <span class="math inline">\(Z\)</span> denote the sex and <span class="math inline">\(Y\)</span> the
+height of the individual. Then <span class="math inline">\(Y\)</span> follows a mixture distribution with two
+components corresponding to males and females according to the definition.
+At the risk of being heteronormative, suppose that all couples consist
+of one male and one female. We could then also draw a sample
+of married couples, and for each couple flip a coin to decide whether to report
+the male’s or the female’s height. This corresponds to the construction
+of <span class="math inline">\(Y\)</span> by <a href="four-examples.html#eq:mixturerep">(6.3)</a>. We get the same marginal mixture
+distribution of heights though.</p>
+<p>Arguably the heights of individuals in a marriage are not
+independent, but this is actually immaterial. Any dependence structure between
+<span class="math inline">\(Y_1\)</span> and <span class="math inline">\(Y_2\)</span> is lost in the transformation <a href="four-examples.html#eq:mixturerep">(6.3)</a>, and we
+can just as well assume them independent for mathematical convenience.
+We won’t be able to tell the difference from observing only <span class="math inline">\(Y\)</span> (and <span class="math inline">\(Z\)</span>) anyway.</p>
+<p>We illustrate below how <a href="four-examples.html#eq:mixturerep">(6.3)</a> can be used for alternative
+implementations of ways to simulate from the mixture model. We compare empirical
+means and variances to the theoretical values to test if all the implementations
+actually simulate from the Gaussian mixture model.</p>
+<div class="sourceCode" id="cb285"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co">## Mean</span>
+<span class="va">mu</span> <span class="op">&lt;-</span> <span class="va">p</span> <span class="op">*</span> <span class="va">mu1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">p</span><span class="op">)</span> <span class="op">*</span> <span class="va">mu2</span>
+
+<span class="co">## Variance </span>
+<span class="va">sigmasq</span> <span class="op">&lt;-</span> <span class="va">p</span> <span class="op">*</span> <span class="va">sigma1</span><span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">p</span><span class="op">)</span> <span class="op">*</span> <span class="va">sigma2</span><span class="op">^</span><span class="fl">2</span> <span class="op">+</span> 
+  <span class="va">p</span> <span class="op">*</span> <span class="op">(</span><span class="fl">1</span><span class="op">-</span><span class="va">p</span><span class="op">)</span><span class="op">*</span><span class="op">(</span><span class="va">mu1</span><span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="va">mu2</span><span class="op">^</span><span class="fl">2</span> <span class="op">-</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">mu1</span> <span class="op">*</span> <span class="va">mu2</span><span class="op">)</span>
+
+<span class="co">## Simulation using the selection formulation via 'ifelse'</span>
+<span class="va">y2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html">ifelse</a></span><span class="op">(</span><span class="va">z</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">mu1</span>, <span class="va">sigma1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">mu2</span>, <span class="va">sigma2</span><span class="op">)</span><span class="op">)</span>
+
+<span class="co">## Yet another way of simulating from a mixture model</span>
+<span class="co">## using arithmetic instead of 'ifelse' for the selection </span>
+<span class="co">## and with Y_1 and Y_2 actually being dependent</span>
+<span class="va">y3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>
+<span class="va">y3</span> <span class="op">&lt;-</span> <span class="va">z</span> <span class="op">*</span> <span class="op">(</span><span class="va">sigma1</span> <span class="op">*</span> <span class="va">y3</span> <span class="op">+</span> <span class="va">mu1</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="op">!</span><span class="va">z</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="va">sigma2</span> <span class="op">*</span> <span class="va">y3</span> <span class="op">+</span> <span class="va">mu2</span><span class="op">)</span>
+
+<span class="co">## Returning to the definition again, this last method simulates conditionally </span>
+<span class="co">## from the mixture components via transformation of an underlying Gaussian</span>
+<span class="co">## variable with mean 0 and variance 1</span>
+<span class="va">y4</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>
+<span class="va">y4</span><span class="op">[</span><span class="va">z</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">sigma1</span> <span class="op">*</span> <span class="va">y4</span><span class="op">[</span><span class="va">z</span><span class="op">]</span> <span class="op">+</span> <span class="va">mu1</span>
+<span class="va">y4</span><span class="op">[</span><span class="op">!</span><span class="va">z</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">sigma2</span> <span class="op">*</span> <span class="va">y4</span><span class="op">[</span><span class="op">!</span><span class="va">z</span><span class="op">]</span> <span class="op">+</span> <span class="va">mu2</span>
+
+<span class="co">## Tests</span>
+<span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span><span class="op">(</span>mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">mu</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">y2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">y3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">y4</span><span class="op">)</span><span class="op">)</span>,
+      variance <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">sigmasq</span>, <span class="fu"><a href="https://rdrr.io/r/stats/cor.html">var</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/cor.html">var</a></span><span class="op">(</span><span class="va">y2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/cor.html">var</a></span><span class="op">(</span><span class="va">y3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/cor.html">var</a></span><span class="op">(</span><span class="va">y4</span><span class="op">)</span><span class="op">)</span>, 
+      row.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"true"</span>, <span class="st">"conditional"</span>, <span class="st">"ifelse"</span>, <span class="st">"arithmetic"</span>, 
+                    <span class="st">"conditional2"</span> <span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>##                  mean variance
+## true         1.750000 7.562500
+## conditional  1.728195 7.381843
+## ifelse       1.713098 7.513963
+## arithmetic   1.708420 7.566312
+## conditional2 1.700052 7.463941</code></pre>
+<p>In terms of run time there is not a big difference between three of
+the ways of simulating from a mixture model. A benchmark study (not shown) will
+reveal that the first and third methods are comparable in terms of run time
+and slightly faster than the fourth, while the second using <code>ifelse</code> takes more
+than twice as much time as the others. This is
+unsurprising as the <code>ifelse</code> method takes <a href="four-examples.html#eq:mixturerep">(6.3)</a> very literally
+and generates twice the number of Gaussian variables actually needed.</p>
+<p>The marginal density of <span class="math inline">\(Y\)</span> is
+<span class="math display">\[f(y) = p \frac{1}{\sqrt{2 \pi \sigma_1^2}} e^{-\frac{(y - \mu_1)^2}{2 \sigma_1^2}} + 
+(1 - p)\frac{1}{\sqrt{2 \pi \sigma_2^2}}e^{-\frac{(y - \mu_2)^2}{2 \sigma_2^2}}\]</span>
+as given in terms of the parameters <span class="math inline">\(p\)</span>, <span class="math inline">\(\mu_1, \mu_2\)</span>, <span class="math inline">\(\sigma_1^2\)</span> and <span class="math inline">\(\sigma_2^2\)</span>.</p>
+<p>Returning to the canonical parameters we see that they are given as
+follows:
+<span class="math display">\[\theta_1  = \log \frac{p}{1 - p}, \quad 
+\theta_2  = \frac{\mu_1}{2\sigma_1^2}, \quad
+\theta_3  = \frac{1}{2\sigma_1^2}, \quad
+\theta_4  = \frac{\mu_2}{\sigma_2^2}, \quad
+\theta_5  = \frac{1}{2\sigma_2^2}.\]</span></p>
+<p>The joint density in this parametrization then becomes
+<span class="math display">\[(y,k) \mapsto \left\{ \begin{array}{ll} 
+\exp\left(\theta_1 + \theta_2 y - \theta_3 y^2 - \log (1 + e^{\theta_1}) - \frac{ \theta_2^2}{4\theta_3}+ \frac{1}{2} \log(\theta_3) \right) &amp; \quad \text{if } k = 1 \\
+\exp\left(\theta_4 y - \theta_5 y^2 - \log (1 + e^{\theta_1}) - \frac{\theta_4^2}{4\theta_5} + \frac{1}{2}\log(\theta_5) \right) &amp;  \quad \text{if } k = 2 
+\end{array} \right. \]</span>
+and the marginal density for <span class="math inline">\(Y\)</span> is</p>
+<p><span class="math display">\[\begin{align}
+f(y \mid \theta) &amp; = \exp\left(\theta_1 + \theta_2 y - \theta_3 y^2 - \log (1 + e^{\theta_1}) - \frac{ \theta_2^2}{4\theta_3}+ \frac{1}{2} \log(\theta_3) \right) \\ 
+&amp; + \exp\left(\theta_4 y - \theta_5 y^2 - \log (1 + e^{\theta_1}) - \frac{\theta_4^2}{4\theta_5} + \frac{1}{2}\log(\theta_5) \right).
+\end{align}\]</span></p>
+<p>There is no apparent benefit to the canonical parametrization when considering
+the marginal density. It is, however, of value when we need the logarithm of
+the joint density as we will for the EM-algorithm.</p>
+</div>
+</div>
+<div id="mixed-models" class="section level2" number="6.5">
+<h2>
+<span class="header-section-number">6.5</span> Mixed models<a class="anchor" aria-label="anchor" href="#mixed-models"><i class="fas fa-link"></i></a>
+</h2>
+<p>A mixed model is a regression model of observations that allows for
+random variation at two different levels. In this section we will
+focus on mixed models in an exponential family context. Mixed models can be
+considered in greater generality but there will then be little shared
+structure and one has to deal with the models much more on a case-by-case
+manner.</p>
+<p>In a mixed model we have observations <span class="math inline">\(y_j \in \mathcal{Y}\)</span>
+and <span class="math inline">\(z \in \mathcal{Z}\)</span> such that:</p>
+<ul>
+<li>the distribution of <span class="math inline">\(z\)</span> is an exponential family with canonical parameter
+<span class="math inline">\(\theta_0\)</span>
+</li>
+<li>
+<em>conditionally</em> on <span class="math inline">\(z\)</span> the <span class="math inline">\(y_j\)</span>s are independent with a distribution from an exponential
+family with sufficient statistics <span class="math inline">\(t_j( \cdot \mid z)\)</span>.</li>
+</ul>
+<p>This definition emphasizes how the <span class="math inline">\(y_j\)</span>s have variation at two levels.
+There is variation in the underlying <span class="math inline">\(z\)</span>, which is the first level of variation
+(often called the <em>random effect</em>),
+and then there is variation among the <span class="math inline">\(y_j\)</span>s given the <span class="math inline">\(z\)</span>, which is the
+second level of variation. It is a special case of hierarchical models
+(Bayesian networks with tree graphs) also known as <em>multilevel</em> models, with the
+mixed model having only two levels. When we observe data from such a model
+we typically observe independent replications, <span class="math inline">\((y_{ij})_{j=1, \ldots, m_i}\)</span>
+for <span class="math inline">\(i = 1, \ldots, n\)</span>, of the <span class="math inline">\(y_j\)</span>s only. Note that we allow for a different
+number, <span class="math inline">\(m_i\)</span>, of <span class="math inline">\(y_j\)</span>s for each <span class="math inline">\(i\)</span>.</p>
+<p>The simplest class of mixed models is obtained by <span class="math inline">\(t_j = t\)</span> not
+depending on <span class="math inline">\(j\)</span>, and
+<span class="math display">\[t(y_j \mid z) = \left(\begin{array}{cc} t_1(y_j) \\ t_2(y_j, z) \end{array} \right)\]</span>
+for some fixed maps <span class="math inline">\(t_1 : \mathcal{Y} \mapsto \mathbb{R}^{p_1}\)</span> and <span class="math inline">\(t_2 : \mathcal{Y} \times \mathcal{Z} \mapsto \mathbb{R}^{p_2}\)</span>.
+This is called a <em>random effects</em> model (this is a model where there are no <em>fixed effects</em> in
+the sense that <span class="math inline">\(t_j\)</span> does not depend on <span class="math inline">\(j\)</span>, and given the random effect
+<span class="math inline">\(z\)</span> the <span class="math inline">\(y_j\)</span>s are i.i.d.). The canonical parameters associated with such a model
+are <span class="math inline">\(\theta_0\)</span> that enters into the distribution of the random effect,
+<span class="math inline">\(\theta_1 \in \mathbb{R}^{p_1}\)</span> and <span class="math inline">\(\theta_2 \in \mathbb{R}^{p_2}\)</span> that enter
+into the conditional distribution of <span class="math inline">\(y_j\)</span> given <span class="math inline">\(z\)</span>.</p>
+
+<div class="example">
+<p><span id="exm:gaussian-mixed" class="example"><strong>Example 6.4  </strong></span>The special case of a <em>Gaussian, linear</em> random effects model is the model where
+<span class="math inline">\(z\)</span> is <span class="math inline">\(\mathcal{N}(0, 1)\)</span> distributed, <span class="math inline">\(\mathcal{Y} = \mathbb{R}\)</span>
+(with base measure proportional to Lebesgue measure)
+and the sufficient statistic is
+<span class="math display">\[t(y_j \mid z) = \left(\begin{array}{cc} y_j \\ - y_j^2 \\ zy_j \end{array}\right).\]</span>
+There are no free parameters in the distribution of <span class="math inline">\(z\)</span>.</p>
+<p>From Example <a href="four-examples.html#exm:gaussian-exponential">6.2</a>
+it follows that the conditional variance of <span class="math inline">\(y\)</span> given <span class="math inline">\(z\)</span> is
+<span class="math display">\[\sigma^2 = \frac{1}{2\theta_2}\]</span>
+and the conditional mean of <span class="math inline">\(y\)</span> given <span class="math inline">\(z\)</span> is
+<span class="math display">\[\frac{\theta_1 + \theta_3 z}{2 \theta_2} = \sigma^2 \theta_1 + \sigma^2 \theta_3 z.\]</span>
+Reparametrizing in terms of <span class="math inline">\(\sigma^2\)</span>, <span class="math inline">\(\beta_0 = \sigma^2 \theta_1\)</span> and
+<span class="math inline">\(\nu = \sigma^2 \theta_3\)</span> we see how the conditional distribution of <span class="math inline">\(y_j\)</span>
+given <span class="math inline">\(z\)</span> is <span class="math inline">\(\mathcal{N}(\beta_0 + \nu z, \sigma^2)\)</span>. From this it is clear
+how the mixed model of <span class="math inline">\(y_j\)</span> <em>conditionally on <span class="math inline">\(z\)</span></em> is a regression model. However,
+we do not observe <span class="math inline">\(z\)</span> in practice.</p>
+<p>Using the above distributional result we can see that
+the Gaussian random effects model of observations <span class="math inline">\(y_{ij}\)</span> can
+equivalently be stated as</p>
+<p><span class="math display">\[Y_{ij} = \beta_0 + \nu Z_i + \varepsilon_{ij}\]</span></p>
+<p>for <span class="math inline">\(i = 1, \ldots, n\)</span> and <span class="math inline">\(j = 1, \ldots, m_i\)</span> where
+<span class="math inline">\(Z_1, \ldots, Z_n\)</span> are i.i.d. <span class="math inline">\(\mathcal{N}(0, 1)\)</span>-distributed
+and independent of
+<span class="math inline">\(\varepsilon_{11}, \varepsilon_{12}, \ldots, \varepsilon_{1n_1}, \ldots, \varepsilon_{mn_m}\)</span>
+that are themselves i.i.d. <span class="math inline">\(\mathcal{N}(0, \sigma^2)\)</span>-distributed.</p>
+</div>
+
+</div>
+</div>
+  <div class="chapter-nav">
+<div class="prev"><a href="mci.html"><span class="header-section-number">5</span> Monte Carlo integration</a></div>
+<div class="next"><a href="numopt.html"><span class="header-section-number">7</span> Numerical optimization</a></div>
+</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
+    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
+      <ul class="nav navbar-nav">
+<li><a class="nav-link" href="#four-examples"><span class="header-section-number">6</span> Four Examples</a></li>
+<li>
+<a class="nav-link" href="#exp-fam"><span class="header-section-number">6.1</span> Exponential families</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#full-exponential-families"><span class="header-section-number">6.1.1</span> Full exponential families</a></li>
+<li><a class="nav-link" href="#bayes-net"><span class="header-section-number">6.1.2</span> Exponential family Bayesian networks</a></li>
+<li><a class="nav-link" href="#exp-fam-deriv"><span class="header-section-number">6.1.3</span> Likelihood computations</a></li>
+<li><a class="nav-link" href="#curved-exponential-families"><span class="header-section-number">6.1.4</span> Curved exponential families</a></li>
+</ul>
+</li>
+<li>
+<a class="nav-link" href="#multinomial-models"><span class="header-section-number">6.2</span> Multinomial models</a><ul class="nav navbar-nav"><li><a class="nav-link" href="#pep-moth"><span class="header-section-number">6.2.1</span> Peppered Moths</a></li></ul>
+</li>
+<li><a class="nav-link" href="#regression"><span class="header-section-number">6.3</span> Regression models</a></li>
+<li>
+<a class="nav-link" href="#finite-mixture-models"><span class="header-section-number">6.4</span> Finite mixture models</a><ul class="nav navbar-nav"><li><a class="nav-link" href="#Gaus-mix-ex"><span class="header-section-number">6.4.1</span> Gaussian mixtures</a></li></ul>
+</li>
+<li><a class="nav-link" href="#mixed-models"><span class="header-section-number">6.5</span> Mixed models</a></li>
+</ul>
+
+      <div class="book-extra">
+        <ul class="list-unstyled">
+<li><a id="book-source" href="https://github.com/nielsrhansen/CSwR/blob/master/21-Examples.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/nielsrhansen/CSwR/edit/master/21-Examples.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+        </ul>
+</div>
+    </nav>
+</div>
+
+</div>
+</div> <!-- .container -->
+
+<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2021-10-12, Git version: 6b05821.</p>
+  </div>
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  </div>
+
+</div></div>
+</footer><!-- dynamically load mathjax for compatibility with self-contained --><script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script><script type="text/x-mathjax-config">const popovers = document.querySelectorAll('a.footnote-ref[data-toggle="popover"]');
+for (let popover of popovers) {
+  const div = document.createElement('div');
+  div.setAttribute('style', 'position: absolute; top: 0, left:0; width:0, height:0, overflow: hidden; visibility: hidden;');
+  div.innerHTML = popover.getAttribute('data-content');
+
+  var has_math = div.querySelector("span.math");
+  if (has_math) {
+    document.body.appendChild(div);
+    MathJax.Hub.Queue(["Typeset", MathJax.Hub, div]);
+    MathJax.Hub.Queue(function() {
+      popover.setAttribute('data-content', div.innerHTML);
+      document.body.removeChild(div);
+    })
+  }
+}
+</script>
+</body>
+</html>
