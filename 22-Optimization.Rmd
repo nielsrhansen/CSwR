@@ -16,8 +16,9 @@ is a *penalty function*, likewise twice differentiable, that does not
 depend upon data. 
 
 Statistical optimization problems share some properties 
-that we should pay attention to. The $-\ell$ 
-term in the objective function to be minimized is a sum over the 
+that we should pay attention to. The term
+$$-\ell(\theta) = - \sum_{i=1}^n \log(f_{\theta}(x_i))$$ 
+in the objective function to be minimized is a sum over the 
 data, and the more data we have the more computationally demanding 
 it is to evaluate $H$ and its derivatives. There are exceptions, though, 
 when a sufficient statistic can be computed upfront, but generally 
@@ -28,29 +29,24 @@ uncertainty of the parameter estimate being computed, further
 optimization makes no relevant difference.
 
 In fact, blindly pursuing the global maximum of the likelihood can 
-lead you astray if your model is not well 
-behaved. In situations where $H$ is 
-not convex, as is the case for finite mixtures, there are common examples where 
-the likelihood is unbounded, yet there will be a local minimizer that is a 
-good estimate. Though we typically phrase our algorithms 
-as optimization algorithms, what we are really pursuing
-when $H$ is not convex are stationary points; solutions to $\nabla H(\theta) = 0$. 
-And rather than being fixated on computing the global minimizer of $H$ 
-to the greatest numerical precision, we should instead explore 
-the likelihood surface and find as many 
-approximately stationary points as possible. In this respect, optimization 
-in statistics differs from certain other applications of optimization. Finding
-the maximizer of the likelihood is not "the thing". It is a surrogate for 
-exploring model fits, and we should also remeber to understand the 
-statistical precision of our fitted model. As a minimum we should quantify the uncertainty of (relevant aspects of) the fitted model that is due to the finite sample size.
+lead you astray if your model is not well behaved. In situations where $H$ is 
+not convex the negative log-likelihood may be unbounded, e.g. for finite mixtures, yet 
+a good estimate can be found as a local minimizer. So even if we phrase 
+the objective as a global optimization objective, we may be equally interested i local 
+minima or even just stationary points; solutions to $\nabla H(\theta) = 0$. Optimization is a computational 
+tool used in statistics for adapting models to data -- but the minimizer of $H$
+for a particular data set is not intrinsically interesting. There may be 
+little gained from computing a minimizer of $H$ to high numerical precision, 
+and assessment of model fit and quantification of model uncertainty is of 
+greater practical importance than a highly accurately determined minimizer. 
 
 For the generic minimization problem considered in this chapter, the practical 
 challenge when implementing algorithms in R is typically 
 to implement efficient evaluation of $H$ and its derivatives. In particular, 
 efficient evaluations of $-\ell$. Several choices of standard optimization
 algorithms are possible and some are already implemented and available in R. 
-For many practical purposes the BFGS-algorithms as implemented via the `optim` 
-function work well and require only the computation of gradients. It is, of course,
+For many practical purposes the BFGS-algorithms as implemented via `optim()` 
+work well and require only the computation of gradients. It is, of course,
 paramount that $H$ and $\nabla H$ are correctly implemented, and 
 efficiency of the algorithms is largely determined by the efficiency of
 the implementation of $H$ and $\nabla H$ but also by the choice of parametrization. 
@@ -65,40 +61,87 @@ A numerical optimization algorithm computes from an initial value
 $\theta_0 \in \Theta$ a sequence $\theta_1, \theta_2, \ldots \in \Theta$.
 One could hope for 
 $$\theta_n \rightarrow \text{arg min}_{\theta} H(\theta)$$
-for $n \to \infty$, but much less can typically be guaranteed. First, 
+for $n \to \infty$, but less can typically be guaranteed. First, 
 the global minimizer may not exist or it may not be unique, in which 
 case the convergence itself is undefined or ambiguous. Second, $\theta_n$
 can in general only be shown to converge to a *local* minimizer if anything. 
-Third, $\theta_n$ may not even converge, but $H(\theta_n)$
-may still converge to a local minimum. 
+Third, $\theta_n$ may not converge, even if $H(\theta_n)$
+converges to a local minimum. 
 
-This section will give a brief introduction to convergence analysis 
-of optimization algorithms. We will see what kind of conditions on $H$ can be 
-used to show  convergence results and some of the basic proof techniques.
+To discuss properties of optimization algorithms in greater detail we 
+need ways to quantify, analyze and monitor their convergence. This can be 
+done in a number of different ways. For instance in terms of $\theta_n$ or $H(\theta_n)$ -- or 
+perhaps in terms of $\nabla H(\theta_n)$. Focusing on $H(\theta_n)$ we
+say that an algorithm is a *descent algorithm* if
+$$H(\theta_0) \geq H(\theta_1) \geq H(\theta_2) \geq \ldots.$$
+If all inequalities are sharp (except if some $\theta_i$ is a local minimizer), 
+the algorithm is called a *strict* descent algorithm. The 
+sequence $H(\theta_n)$ is convergent for any descent algorithm if $H$ 
+is bounded from below, e.g. if the *level set*
+$$\mathrm{lev}(\theta_0) =  \{\theta \in \Theta \mid H(\theta) \leq H(\theta_0)\}$$
+is compact. However, even for a strict descent algorithm, 
+$H(\theta_n)$ may descent in smaller and smaller steps toward a limit that is 
+not a (local) minimum. A good optimization algorithm needs to 
+guarantee more than descent -- it needs to guarantee *sufficient* descent 
+in each step. 
+
+Many algorithms can be phrased as
+$$\theta_n = \Phi(\theta_{n-1})$$
+for a map $\Phi : \Theta \to \Theta$.
+When $\Phi$ is continuous and $\theta_n \rightarrow \theta_{\infty}$
+it follows that 
+$$\Phi(\theta_n) \rightarrow \Phi(\theta_{\infty}).$$
+Since $\Phi(\theta_n) = \theta_{n+1} \rightarrow \theta_{\infty}$ we see that
+$$\Phi(\theta_{\infty}) = \theta_{\infty}.$$
+That is, $\theta_{\infty}$ is a *fixed point* of $\Phi$. If $\theta_n$ is 
+not convergent, any accumulation point of $\theta_n$ will still be a 
+fixed point of $\Phi$. Thus we can search for potential accumulation 
+points by searching for fixed points of the map $\Phi: \Theta \to \Theta$. 
+
+Mathematics is full of *fixed point theorems* that: i) give conditions under which a map 
+has a fixed point; and ii) in some cases guarantee that the iterates $\Phi^{\circ n}(\theta_0)$
+converge to a fixed point. The most prominent result is [Banach's fixed point 
+theorem](https://en.wikipedia.org/wiki/Banach_fixed-point_theorem). 
+It states that if $\Phi$ is a *contraction*, that is,
+$$\| \Phi(\theta) - \Phi(\theta')\| \leq c \|\theta - \theta'\|$$
+for a constant $c \in [0,1)$ (using any norm), then $\Phi$ has a unique 
+fixed point and $\theta_n = \Phi^{\circ n}(\theta_0)$ converges to that fixed 
+point for any starting point $\theta_0 \in \Theta$. 
+
+We will show how a simple gradient descent algorithm can be 
+analyzed -- both as a descent algorithm and through Banach's 
+fixed point theorem. This will demonstrate basic proof techniques as
+well as typical conditions on $H$ that can give convergence results 
+for optimization algorithms. 
 We will only scratch the surface here with the intention that it can motivate
 the algorithms introduced in subsequent sections and chapters as well 
-as the empirical techniques introduced below for practical assessment of 
+as empirical techniques for practical assessment of 
 convergence.
 
 Indeed, theory rarely provides us with sharp quantitative results on 
 the rate of convergence and we will need computational techniques to monitor and measure convergence of algorithms in practice. Otherwise we cannot compare 
 the efficiency of different algorithms. 
 
-### Descent algorithms
+### Gradient descent 
 
-```{example, grad-descent}
+We will assume in this section that $\Theta = \mathbb{R}^p$. This will 
+simplify the analysis a bit, but with minor modifications it can 
+be generalized to the case where $\Theta$ is open and convex. 
+
 Suppose that $D^2H(\theta)$ has *numerical radius* uniformly bounded by $L$, that is,
 $$|\gamma^T D^2H(\theta) \gamma| \leq L \|\gamma\|_2^2$$
-for all $\theta \in \Theta$ and $\gamma \in \mathbb{R}^p$. Define 
-an algorithm by 
-$$\theta_{n} = \theta_{n-1} - \frac{1}{L + 1} \nabla H(\theta_{n-1}).$$
+for all $\theta \in \Theta$ and $\gamma \in \mathbb{R}^p$. The 
+*gradient descent* algorithm with a fixed step length $1/(L + 1)$ is given by
+\begin{align}
+\theta_{n} & = \theta_{n-1} - \frac{1}{L + 1} \nabla H(\theta_{n-1}).  (\#eq:grad-descent)
+\end{align}
 Fixing $n$ there is by Taylor's theorem a
 $\tilde{\theta} = \alpha \theta_{n} + (1- \alpha)\theta_{n-1}$ (where $\alpha \in [0,1]$) 
 on the line between $\theta_n$ and $\theta_{n-1}$ such that
 
 \begin{align*}
 H(\theta_n) & = H(\theta_{n-1}) - \frac{1}{L+1} \|\nabla H(\theta_{n-1})\|_2^2 +  
-  \frac{1}{(L+1)^2} \nabla H(\theta_{n-1})^T D^2H(\tilde{\theta}) \nabla H(\theta_{n-1}) \\
+ \\  & \qquad \frac{1}{(L+1)^2} \nabla H(\theta_{n-1})^T D^2H(\tilde{\theta}) \nabla H(\theta_{n-1}) \\
 & \leq H(\theta_{n-1}) - \frac{1}{L+1} \|\nabla H(\theta_{n-1})\|_2^2 + 
    \frac{L}{(L+1)^2} \|\nabla H(\theta_{n-1})\|_2^2 \\
 & = H(\theta_{n-1}) - \frac{1}{(L+1)^2} \|\nabla H(\theta_{n-1})\|_2^2.
@@ -106,94 +149,41 @@ H(\theta_n) & = H(\theta_{n-1}) - \frac{1}{L+1} \|\nabla H(\theta_{n-1})\|_2^2 +
   
 This shows that $H(\theta_n) \leq H(\theta_{n-1})$, and if $\theta_{n-1}$ is not a 
 stationary point, $H(\theta_n) < H(\theta_{n-1})$. That is, the algorithm 
-will produce a sequence with non-increasing $H$-values, and unless it 
-hits a stationary point the $H$-values will be strictly decreasing. The 
-algorithm is an example of a *gradient descent* algorithm.
+is a descent algorithm, and unless it 
+hits a stationary point it is a strict descent algorithm. 
 
-```
-
-In general, we define a *descent algorithm* to be an algorithm for which
-$$H(\theta_0) \geq H(\theta_1) \geq H(\theta_2) \geq \ldots.$$
-If all inequalities are sharp, unless if some $\theta_i$ is a local minimizer, 
-the algorithm is called a *strict* descent algorithm. The gradient descent
-algorithm in Example \@ref(exm:grad-descent) is a strict descent algorithm.
-However, even for a strict descent algorithm, $H$ may just descent in smaller 
-and smaller steps without converging toward a local minimum -- even if $H$ is 
-bounded below. 
-
-Suppose now that $H$ is *level bounded*, 
-meaning that the closed set
-$$\mathrm{lev}(\theta_0) =  \{\theta \in \Theta \mid H(\theta) \leq H(\theta_0)\}$$
-is bounded (and thereby compact). Then $H$ is bounded from below and 
-$H(\theta_n)$ is convergent for any descent algorithm. 
-Restricting attention to the gradient descent algorithm, we see that 
+It furthermore follows that
 
 \begin{align}
 H(\theta_n) & = 
-(H(\theta_n) - H(\theta_{n-1})) + (H(\theta_{n-1}) - H(\theta_{n-2})) + ... + 
-(H(\theta_1) - H(\theta_0)) + H(\theta_0) \\
+(H(\theta_n) - H(\theta_{n-1})) + (H(\theta_{n-1}) - H(\theta_{n-2})) + ... \\
+& \qquad + (H(\theta_1) - H(\theta_0)) + H(\theta_0) \\
 & \leq H(\theta_0) - \frac{1}{(L + 1)^2} \sum_{k=1}^n \|\nabla H(\theta_{k-1})\|_2^2.
 \end{align}
 
-Because $H$ is bounded below, this implies that $\sum_{k=1}^{\infty} \|\nabla H(\theta_{k-1})\|_2^2 < \infty$
+If $H$ is bounded below, $\sum_{k=1}^{\infty} \|\nabla H(\theta_{k-1})\|_2^2 < \infty$
 and hence
 $$\|\nabla H(\theta_{n})\|_2 \rightarrow 0$$
-for $n \to \infty$. By compactness of $\mathrm{lev}(\theta_0)$,
-$\theta_n$ has a convergent subsequence with limit $\theta_{\infty}$, and 
-we conclude by continuity of $\nabla H$ that 
+for $n \to \infty$. For any accumulation point, $\theta_{\infty}$, of 
+the sequence $\theta_n$, it follows by continuity of $\nabla H$ that 
 $$\nabla H(\theta_{\infty}) = 0,$$
-and $\theta_{\infty}$ is a stationary point. In fact, this holds for any 
-limit point of the sequence, and this implies that if $H$ has a *unique*
-stationary point in $\mathrm{lev}(\theta_0)$, $\theta_{\infty}$ is a minimizer, 
-and 
+and $\theta_{\infty}$ is a stationary point. If $H$ has a *unique*
+stationary point in $\mathrm{lev}(\theta_0)$, $\theta_{\infty}$ is a (local) 
+minimizer, and 
 $$\theta_n \rightarrow \theta_{\infty}$$
 for $n \to \infty$. 
 
-To summarize, if $D^2H(\theta)$ has uniformly bounded numerical radius, and if
-$H$ is level bounded with a unique stationary point in $\mathrm{lev}(\theta_0)$, 
-then the gradient descent algorithm of Example \@ref(exm:grad-descent) is a strict descent
-algorithm that converges toward that minimum. A sufficient condition 
-on $H$ for this to hold is that the eigenvalues of (the symmetric) matrix 
-$D^2H(\theta)$ for all $\theta$ are contained in an interval $[l, L]$ 
-with $0 < l \leq L.$ In this case, $H$ is a *strongly convex function* 
-with a unique global minimizer. 
-
-### Maps and fixed points
-
-Most algorithms take the form of an *update scheme*, which from a mathematical
-viewpoint is a map $\Phi : \Theta \to \Theta$ such that 
-$$\theta_n = \Phi(\theta_{n-1}) = \Phi \circ \Phi (\theta_{n-2}) =  \Phi^{\circ n}(\theta_0).$$
-The gradient descent algorithm from Example \@ref(exm:grad-descent) is given 
+The gradient descent algorithm \@ref(eq:grad-descent) is given 
 by the map 
 $$\Phi_{\nabla}(\theta) = \theta - \frac{1}{L + 1} \nabla H(\theta).$$
-When the map $\Phi$ is continuous and $\theta_n \rightarrow \theta_{\infty}$
-it follows that 
-$$\Phi(\theta_n) \rightarrow \Phi(\theta_{\infty}).$$
-Since $\Phi(\theta_n) = \theta_{n+1} \rightarrow \theta_{\infty}$ we see that
-$$\Phi(\theta_{\infty}) = \theta_{\infty}.$$
-That is, $\theta_{\infty}$ is a *fixed point* of $\Phi$. The gradient descent 
-map, $\Phi_{\nabla}$, has $\theta$ as fixed point if and only if  
+The gradient descent map, $\Phi_{\nabla}$, has $\theta$ as fixed point if and only if  
 $$\nabla H(\theta) = 0,$$
 that is, if and only if $\theta$ is a stationary point. 
 
-We can use the  observation above to flip the perspective around. Instead of asking if $\theta_n$ converges to a 
-local minimizer for a given algorithm, we can ask if we can find a map
-$\Phi: \Theta \to \Theta$ whose fixed points are local minimizers. If so, we 
-can ask if the iterates $\Phi^{\circ n}(\theta_0)$ converge. Mathematics
-is full of *fixed point theorems* that: i) give conditions under which a map 
-has a fixed point; and ii) in some cases guarantee that the iterates $\Phi^{\circ n}(\theta_0)$
-converge. The most prominent such fixed point theorem is [Banach's fixed point 
-theorem](https://en.wikipedia.org/wiki/Banach_fixed-point_theorem). 
-It states that if $\Phi$ is a *contraction*, that is,
-$$\| \Phi(\theta) - \Phi(\theta')\| \leq c \|\theta - \theta'\|$$
-for a constant $c \in [0,1)$ (using any norm), then $\Phi$ has a unique 
-fixed point and $\Phi^{\circ n}(\theta_0)$ converges to that fixed point for 
-any starting point $\theta_0 \in \Theta$. 
-
-We will show that $\Phi_{\nabla}$ is a contraction on $\mathrm{lev}(\theta_0)$
-under the assumption that the eigenvalues of $D^2H(\theta)$ for all 
-$\theta \in \mathrm{lev}(\theta_0)$ are contained in an interval $[l, L]$ 
-with $0 < l \leq L$. If $\theta, \theta' \in \mathrm{lev}(\theta_0)$ we find 
+We will show that $\Phi_{\nabla}$ is a contraction on $\Theta$
+under the assumption that the eigenvalues of the (symmetric) matrix 
+$D^2H(\theta)$ for all $\theta \in \Theta$ are contained in an interval $[l, L]$ 
+with $0 < l \leq L$. If $\theta, \theta' \in \Theta$ we find 
 by Taylor's theorem that 
 $$\nabla H(\theta) = \nabla H(\theta') + D^2H(\tilde{\theta})(\theta - \theta')$$
 for some $\tilde{\theta}$ on the line between $\theta$ and $\theta'$. 
@@ -211,119 +201,211 @@ For the gradient descent map this gives that
 
 since the eigenvalues of $I - \frac{1}{L+1} D^2H(\tilde{\theta})$ are all between 
 $1 - L/(L + 1)$ and $1 - l/(L+1)$. This shows that $\Phi_{\nabla}$ is a 
-contraction for the $2$-norm on $\mathrm{lev}(\theta_0)$ with 
-$c = 1 - l/(L + 1) < 1$. This provides an alternative proof,
-via Banach's fixed point theorem, of convergence of the gradient descent algorithm 
-in Example \@ref(exm:grad-descent) for a *strongly* convex $H$ with uniformly 
-bounded Hessian.
+contraction for the $2$-norm with $c = 1 - l/(L + 1) < 1$. From Banach's fixed
+point theorem it follows that there is a unique stationary point, $\theta_{\infty}$,
+and $\theta_n \rightarrow \theta_{\infty}$. Since $D^2H(\theta_{\infty})$ is 
+positive definite, $\theta_{\infty}$ is a (global) minimizer.
 
-The number $c$ quantifies how fast $\theta_n$ converges toward the fixed point.
-The smaller $c$ is, the faster is the convergence. Details are given in the next section, 
-but it is worth noticing here that $c = 1 - l/(L + 1)$ is independent of the 
-dimension of $\Theta$ for given bounds $l$ and $L$. It way also be 
-worth noticing that $\kappa = (L + 1) / l$ is an upper bound on the 
+To summarize, if $D^2H(\theta)$ has uniformly bounded numerical radius, and if
+$H$ has a unique stationary point $\theta_{\infty}$ in the compact set $\mathrm{lev}(\theta_0)$, then the gradient descent algorithm is a strict descent
+algorithm that converges toward that (local) minimum $\theta_{\infty}.$
+The fixed step length was key to this analysis. 
+The upper bound on the numerical radius 
+of $D^2H(\theta)$ guarantees descent with a fixed step length, and the
+fixed step length then guarantees sufficient descent.
+
+When the eigenvalues of $D^2H(\theta)$ are in $[l, L]$ for $0 < l \leq L$, 
+$H$ is a *strongly convex function* with a unique global minimizer 
+$\theta_{\infty}$ and all level sets $\mathrm{lev}(\theta_0)$ compact.
+Convergence can then also be established via Banach's fixed point theorem. 
+The constant $c = 1 - l/(L + 1) = 1 - \kappa^{-1}$ with $\kappa = (L + 1) / l$
+then quantifies the rate of the convergence, as will be discussed in greater 
+detail in the next section. The constant $\kappa$ is an upper bound on the
 [conditioning number](https://en.wikipedia.org/wiki/Condition_number#Matrices)
-of the matrix $D^2H(\theta)$ uniformly in $\theta \in \mathrm{lev}(\theta_0)$. 
-A large conditioning number of the second derivative indicates that the graph 
-of $H$ looks like a narrow ravine, which will force $\kappa^{-1}$ to be small,
-thus $c$ to be close to one and the convergence to be slow. 
+of the matrix $D^2H(\theta)$ uniformly in $\theta$, and a large value of 
+$\kappa$ means that $c$ is close to 1 and the convergence can be slow. 
+A large conditioning number for the second derivative indicates that the graph 
+of $H$ looks like a narrow ravine, in which case we can expect the 
+gradient descent algorithm to be slow.
 
 ### Convergence rate
 
-Banach's fixed point theorem tells us more than just convergence. 
-It actually tells us that 
+When $\theta_n = \Phi^{\circ n}(\theta_0)$ for a contraction $\Phi$, 
+Banach's fixed point theorem tells us that there is a unique fixed point 
+$\theta_{\infty}.$ That $\Phi$ is a contraction further implies that  
 $$\|\theta_n - \theta_{\infty}\| = \|\Phi(\theta_{n-1}) - \theta_{\infty}\| \leq c \|\theta_{n-1} - \theta_{\infty}\| \leq c^n \|\theta_0 - \theta_{\infty}\|.$$
 That is, $\|\theta_n - \theta_{\infty}\| \to 0$ with at least geometric rate $c < 1$. 
 
-To discuss how fast numerical optimization algorithms converge in general, 
-there is a refined notion of asymptotic convergence *order* as well as 
-*rate*. 
+In the numerical optimization literature, convergence at a geometric rate is 
+known as linear convergence (the number of correct digits increases linearly 
+with the number of iterations), and a linearly convergent algorithm is often 
+quantified in terms of its asymptotic convergence rate. 
 
-```{definition, order-rate}
-We say that a convergent sequence $(\theta_n)_{n \geq 1}$ in $\mathbb{R}^p$ has asymptotic convergence order $q$ with asymptotic rate $r \in (0, 1)$ if 
-$$\lim_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|^q} = r.$$
-````
+::: {.definition #order-rate}
+Let $(\theta_n)_{n \geq 1}$ be a convergent sequence in $\mathbb{R}^p$ with 
+limit $\theta_{\infty}$. Let $\| \cdot \|$ be a norm on $\mathbb{R}^p$. We say 
+that the convergence is linear if 
+$$\limsup_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|} = r$$
+for some $r \in (0, 1)$, in which case $r$ is called the asymptotic rate.
+:::
 
-If the order is $q = 1$ we say that the convergence is linear, if $q = 2$
-we say that the convergence is quadratic and so on. If 
+
+Convergence of an algorithm can be faster or slower than linear. If      
 $$\limsup_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|} = 1$$
-we say that convergence is sublinear.
-Banach's fixed point theorem implies a convergence that is at least as fast as 
-linear convergence with asymptotic rate $c$. 
-Moreover, if $\Phi$ is just a contraction for $n \geq N_0$ for some $N_0$, 
-then for $n \geq N_0$
-$$\|\theta_{n + 1} - \theta_{n}\| \leq c \| \theta_{n} - \theta_{n-1}\|.$$
-The convergence may be superlinear, but if it is linear, the rate is bounded by $c$.
-To indicate if $\Phi$ is asymptotically a contraction, we can introduce
-$$R_n = \frac{\|\theta_{n + 1} - \theta_{n}\|}{\|\theta_{n} - \theta_{n- 1}\|}$$
-and monitor its behavior as $n \to \infty$. The constant
-$$r = \limsup_{n \to \infty} R_n$$
-is then asymptotically the smallest possible contraction constant. 
-If convergence is sublinear and $R_n \to 1$ the sequence is 
-called logarithmically convergent (by definition), while $r \in (0,1)$ is an 
-indication of linear convergence with rate $r$, and $r = 0$ is an indication of 
-superlinear convergence.
+we say that the convergence is sublinear, and if 
+$$\limsup_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|} = 0$$
+we say that the convergence is superlinear. There is also a refined 
+notion of convergence order for superlinearly convergent algorithms
+that more precisely describes the convergence. 
 
-In practice, we can plot the ratio $R_n$ as the algorithm is running, and 
-use $R_n$ as an estimate of the rate $r$ for large $n$. However, 
-this can be a quite unstable method for estimating the rate. Alternatively, 
-we can run the algorithm for a large number, $N$, say, of iterations. 
-Ideally so that $\theta_N = \theta_{\infty}$ up to computer precision. 
-Then if we have linear convergence with rate $r$,
+For a contraction, $\theta_n = \Phi^{\circ n}(\theta_0)$ converges linearly 
+or superlinearly. If it converges linearly, the asymptotic rate is bounded by 
+$c$, but this is a global constant and may be pessimistic. The following 
+lemma provides a local upper bound on the asymptotic rate in terms of 
+the derivative of $\Phi$ in the limit $\theta_{\infty}$. 
+
+::: {.lemma #fixed-point-rate} 
+Let $\Phi : \mathbb{R}^p \to \mathbb{R}^p$ be twice continuously differentiable. If 
+$\theta_n = \Phi^{\circ n}(\theta_0)$ converges linearly toward a fixed point $\theta_{\infty}$ 
+of $\Phi$ then 
+$$r_{\max} = \sup_{\gamma: \|\gamma \| = 1} \|D \Phi(\theta_{\infty}) \gamma\|$$
+is an upper bound on the asymptotic rate.
+:::
+
+::: {.proof .boxed}
+By Taylor's theorem, 
+\begin{align*}
+\theta_{n} = \theta_{\infty} + D \Phi(\theta_{\infty})(\theta_{n-1} - \theta_{\infty}) +
+o(\|\theta_{n-1} - \theta_{\infty}\|_2).
+\end{align*}
+Rearranging yields
+\begin{align*}
+\limsup_{n \to \infty} 
+\frac{\| \theta_{n} - \theta_{\infty}\|}{\| \theta_{n-1} - \theta_{\infty}\|} 
+& = \limsup_{n \to \infty} 
+\frac{\| D \Phi(\theta_{\infty})(\theta_{n-1} - \theta_{\infty})\|}{\| \theta_{n-1} - \theta_{\infty}\|} \\
+& = \limsup_{n \to \infty} 
+\| D \Phi(\theta_{\infty})\left(\frac{\theta_{n-1} - \theta_{\infty}}{\| \theta_{n-1} - \theta_{\infty}\|} \right)\| \\
+& \leq r_{\max}.
+\end{align*}
+:::
+
+Note that it is possible that $r_{\max} \geq 1$ even if the convergence is linear, 
+in which case $r_{\max}$ is a useless upper bound. Moreover, the actual rate 
+can depend on the starting point $\theta_0$, and even when $r_{\max} < 1$ it 
+only quantifies the worst case convergence rate. 
+
+To estimate the actual convergence rate, note that linear 
+convergence with rate $r$ implies that for any $\delta > 0$
 $$
-\| \theta_n - \theta_N \| \simeq r \| \theta_{n-1} - \theta_N \| \simeq \ldots 
-\simeq r^{n - N_0} \| \theta_{N_0} - \theta_N \|
+\| \theta_n - \theta_{\infty} \| \leq (r + \delta) \| \theta_{n-1} - \theta_{\infty} \| \leq \ldots 
+\leq (r + \delta)^{n - N_0} \| \theta_{N_0} - \theta_{\infty} \|
 $$
-for $n \geq N_0$ and $N_0$ sufficiently large. That is, 
-$$\log \|\theta_{n} - \theta_{N}\| \simeq n \log(r) + d,$$
-for $n \geq N_0$, and we can plot and monitor $\log \|\theta_{n} - \theta_{N}\|$.
-It should decay approximately linearly as a function of $n$ with slope 
-$\log(r) < 0$, which can be estimated by least squares. If the algorithm has sublinear convergence
-we will see this as a slower-than-linear decay. Finally, it is also possible to 
-estimate the order $q$ as well as the rate $r$ by using that 
-$$\log \|\theta_{n} - \theta_{N}\| \simeq q \log \|\theta_{n-1} - \theta_{N}\| + \log(r)$$
-for $n \geq N_0$. We can estimate $q$ and $\log(r)$
-by fitting a linear function by least squares to these log-log transformed norms 
-of errors. 
+$n \geq N_0$ with $N_0$ sufficiently large (depending on $\delta$). That is, 
+$$\log \|\theta_{n} - \theta_{\infty}\| \leq n \log(r + \delta) + d,$$
+for $n \geq N_0$. In practice, we run the algorithm for $N$ 
+iterations, so that $\theta_N = \theta_{\infty}$ up to computer precision, 
+and we plot $\log \|\theta_{n} - \theta_{N}\|$ as a function of $n$. 
+The decay should be approximately linear for $n \geq N_0$ for some $N_0$, in 
+which case the slope is about $\log(r) < 0$, which can then be estimated by least squares. 
+A slower-than-linear or faster-than-linear decay indicate that the 
+algorithm converges sublinearly or superlinearly, respectively.
 
-It is, of course, possible to investigate convergence 
-in terms of the sequences $H(\theta_n)$ and $\nabla H(\theta_n)$ instead. Here  $\nabla H(\theta_n)$ is particularly appealing as we know that the limit should be $0$.
-We use the same terminology of order and rate for these sequences. That is, 
-using the gradient to quantify convergence, the order is $q$ and the 
-rate is $r \in (0, 1)$ if 
-$$\lim_{n \to \infty} \frac{\|\nabla H(\theta_n)\|}{\|\nabla H(\theta_{n-1})\|^q} = r.$$
-If the order is linear, the rate can then be estimated from
-$$\log \|\nabla H(\theta_n)\| \simeq n \log(r) + d$$
-for $n \geq N_0$ by least squares. 
+It is, of course, possible to quantify convergence 
+in terms of the sequences $H(\theta_n)$ and $\nabla H(\theta_n)$ instead.
+For a descent algorithm with $H(\theta_n) \rightarrow H(\theta_\infty)$ linearly for 
+$n \to \infty$, we can plot 
+$$\log(H(\theta_n) - H(\theta_N))$$ 
+as a function of $n$, and use least squares to estimate the asymptotic rate of 
+convergence of $H(\theta_n)$.
 
-It is important to notice that all rates discussed above are *per iteration*,
+Using $\nabla H(\theta_n)$ to quantify convergence is particularly appealing 
+as we know that the limit is $0$. This also means that we can monitor 
+its convergence while the algorithm is running and not only after it has 
+converged. If $\nabla H(\theta_n)$ converges linearly in the norm $\|\cdot\|$, that is,
+$$\limsup_{n \to \infty} \frac{\|\nabla H(\theta_n)\|}{\|\nabla H(\theta_{n-1})\|} = r,$$
+we have for any $\delta > 0$ that 
+$$\log \|\nabla H(\theta_n)\| \leq n \log(r + \delta) + d$$
+for $n \geq N_0$ and $N_0$ sufficiently large. Again, least squares
+can be used to estimate the asymptotic rate of convergence of 
+$\|\nabla H(\theta_n)\|$. 
+
+The concepts of linear convergence and asymptotic rate are, unfortunately, not 
+independent of the norm used, nor does linear convergence of $\theta_n$ in $\|\cdot\|$
+imply linear convergence of $H(\theta_n)$ or $\|\nabla H(\theta_n)\|$. 
+We can shown, though, that if $\theta_n$ converges linearly in any norm, the other two 
+sequences converge linearly along an arithmetic subsequence. Similarly, it can be shown 
+that in any other norm than $\| \cdot \|$, $\theta_n$ is linearly convergent 
+along an arithmetic subsequence. 
+
+::: {.theorem #linear-convergence} 
+Suppose that $H$ is three times continuously 
+differentiable with $\nabla H (\theta_{\infty}) = 0$ and $D^2 H(\theta_{\infty})$
+positive definite. If $\theta_n$ converges linearly toward $\theta_{\infty}$ 
+in any norm then for some $k \geq 1$, the subsequences $H(\theta_{nk})$ and 
+$\|\nabla H(\theta_{nk})\|$ converge linearly toward $H(\theta_{\infty})$ 
+  and $0$, respectively.
+:::
+
+::: {.proof .boxed} 
+Let $G = D^2 H(\theta_{\infty})$ and $g_n = \theta_n - \theta_{\infty}$.
+Since $G$ is positive definite it defines a norm, and since all norms
+on $\mathbb{R}^p$ are equivalent there are constants $a, b > 0$ such that 
+$$a \| x \|^2 \leq x^T G x \leq b \| x \|^2.$$
+
+By Taylor's theorem, 
+$$H(\theta_{(n + 1)k}) - H(\theta_{\infty}) = g_{(n + 1)k}^T G  g_{(n + 1)k} + o(\|g_{(n + 1)k}\|^2).$$
+From this, 
+\begin{align*}
+\limsup_{n \to \infty} \frac{H(\theta_{(n + 1)k}) - H(\theta_{\infty})}{H(\theta_{nk}) - H(\theta_{\infty})}
+& = \limsup_{n \to \infty} \frac{g_{(n + 1)k}^T G  g_{(n + 1)k}}{g_{nk}^T G  g_{nk}} \\
+& \leq \limsup_{n \to \infty} \frac{b \| g_{(n + 1)k}\|^2}{a \| g_{nk}\|^2} 
+= \frac{b}{a} r^{2k}
+\end{align*}
+where $r \in (0, 1)$ is the asymptotic rate of $\theta_n \to \theta_{\infty}$.
+By choosing $k$ sufficiently large, the right hand side above is strictly 
+smaller than 1, which gives an upper bound on the rate along the 
+subsequence $H(\theta_{nk})$. A similar argument gives a lower bound strictly larger 
+than 0, which shows that the convergence is not superlinear. 
+
+Using Taylor's theorem on $\nabla H(\theta_{nk})$ yields a similar 
+proof for the subsequence $\|\nabla H(\theta_{nk})\|$ -- with $G$ replaced 
+by $G^2$ in the bounds.
+:::
+
+
+The bounds in the proof are often pessimistic since $g_n$ and $g_{n+1}$ 
+can point in completely different directions. 
+Exercise ?? shows, however, that if $\theta_n$ approaches $\theta_{\infty}$ nicely 
+along a fixed direction (making $g_n$ and $g_{n+1}$ almost collinear), 
+$H(\theta_n)$ as well as $\|\nabla H(\theta_n)\|$
+inherit linear convergence from $\theta_n$ and even with the same rate. 
+
+All rates discussed hithereto are *per iteration*,
 which is natural when investigating a single algorithm. However, different 
 algorithms may spend different amounts of time per iteration, and it does not 
 make sense to make a comparison of per iteration rates across different 
-algorithms. If one iteration takes $\delta$ time units (seconds, say) 
+algorithms. We therefore need to be able to convert between per iteration
+and per time unit rates. If one iteration takes $\delta$ time units (seconds, say) 
 the *per time unit* rate is 
 $$r^{1/\delta}.$$ 
 If $t_n$ denotes the run time of $n$ iterations, we could 
 estimate $\delta$ as $t_N / N$ for $N$ sufficiently large. 
 
 We will throughout systematically investigate convergence 
-as a function of $t_n$ instead of $n$, and we will estimate rates per time unit
-directly by least squares regression on $t_n$ instead of $n$. 
+as a function of time $t_n$ instead of iterations $n$, and we will estimate 
+rates per time unit directly by least squares regression on $t_n$ 
+instead of $n$. 
 
 ### Stopping criteria
 
-The discussion above on theoretical convergence properties and practical 
-methods for measuring convergence rates has left one important 
-practical question unanswered. No algorithm can run for an infinite number 
+One important practical question remains unanswered even 
+if we understand the theoretical convergence properties of an 
+algorithm well and have good methods for measuring it convergence rates. 
+No algorithm can run for an infinite number 
 of iterations, thus all algorithms need a criterion for when
-to stop. 
-
-We say that an algorithm *has converged* by iteration $n$ if 
-$$H(\theta_n) - H(\theta_{\infty}) < \varepsilon_0$$
-for an error tolerance $\varepsilon_0 > 0$. Unfortunately, we cannot
-compute $H(\theta_n) - H(\theta_{\infty})$, and the choice of an 
-appropriate stopping criterion is notoriously difficult. 
-Below we give four of the most commonly used criteria and 
+to stop, but the choice of an appropriate stopping criterion is 
+notoriously difficult. We present four of the most commonly used criteria and 
 discuss benefits and deficits for each of them. 
 
 **Maximal number of iterations:** Stop when 
@@ -339,13 +421,11 @@ criterion so that it works as a safeguard against an infinite loop.
 
 The other three stopping criteria all depend on choosing a 
 *tolerance parameter* $\varepsilon > 0$, which will play different roles in the three 
-criteria, and which should not be confused with the error tolerance. 
-The three criteria can be used individually and in combinations, 
+criteria. The three criteria can be used individually and in combinations, 
 but unfortunately neither of them nor their combination provide convergence 
-guarantees. It is nevertheless common to abuse 
-the terminology and say that an algorithm has converged when the stopping 
-criterion is reached, but since none of the criteria are sufficient for 
-convergence such a practice can be misleading. 
+guarantees. It is nevertheless common say that an algorithm "has converged" 
+when the stopping criterion is satisfied, but since none of the criteria 
+are sufficient for convergence this can be a bit misleading. 
 
 **Small relative change:** Stop when 
 $$\|\theta_n - \theta_{n-1}\| \leq \varepsilon(\|\theta_n\| + \varepsilon).$$
@@ -363,8 +443,9 @@ of the objective function. Some algorithms, such as the EM-algorithm, do not
 need to evaluate the objective function, and it may even be difficult to do so. 
 In those cases this criterion can be used. The main deficit is that a 
 single iteration with little change in the parameter can happen for many 
-reasons besides convergence, and it does not imply that
-$H(\theta_{n}) - H(\theta_{\infty})$ is small.
+reasons besides convergence, and it does not imply that neither 
+$\|\theta_n - \theta_{\infty}\|$ nor $H(\theta_{n}) - H(\theta_{\infty})$ 
+are small.
 
 **Small relative descent:** Stop when 
 $$H(\theta_{n-1}) - H(\theta_n) \leq \varepsilon (|H(\theta_n)| + \varepsilon).$$
@@ -387,16 +468,19 @@ algorithm enters a part of $\Theta$ where $H$ is very flat, say.
 **Small gradient:** Stop when 
 $$\|\nabla H(\theta_n)\| \leq \varepsilon.$$
 This criterion directly measures if $\theta_n$ is close to being a stationary 
-point, but a small value of $\|\nabla H(\theta_n)\|$ is still no guarantee that
-$H(\theta_{n}) - H(\theta_{\infty})$ is small. The criterion also requires
-the computation of the gradient. In addition, different norms, 
-$\|\cdot\|$, can be used, and
-if the coordinates of the gradient generally are of different orders of 
-magnitude it is sensible to choose a norm that rescales the coordinates. 
+point (and not if $\theta_n$ is close to a stationary point). 
+A small value of $\|\nabla H(\theta_n)\|$ is still no guarantee that
+$\|\theta_n - \theta_{\infty}\|$ or $H(\theta_{n}) - H(\theta_{\infty})$ are 
+small. The criterion also requires the computation of the gradient. In addition, 
+different norms, $\|\cdot\|$, can be used, and
+if different coordinates of the gradient are of different orders of 
+magnitude this should be reflected by the norm. Alternatively, the parameters
+should be rescaled.
 
-Neither of the four criteria above give a theoretical convergence guarantee, but 
-in some special cases it is possible to develop criteria with a stronger 
-theoretical support. If we can find a continuous function $\tilde{H}$ satisfying 
+Neither of the four criteria above gives a theoretical convergence guarantee 
+in terms of how close $H(\theta_{n})$ is to $H(\theta_{\infty})$. In some 
+special cases it is possible to develop criteria with a stronger 
+theoretical support. If there is a continuous function $\tilde{H}$ satisfying 
 $H(\theta_{\infty}) = \tilde{H}(\theta_{\infty})$ and 
 $$H(\theta_{\infty}) \geq \tilde{H}(\theta)$$
 for all $\theta \in \Theta$ (or just in $\mathrm{lev}(\theta_0)$ for a descent
@@ -405,39 +489,44 @@ $$0 \leq H(\theta_{n}) - H(\theta_{\infty}) \leq
 H(\theta_{n}) - \tilde{H}(\theta_{n}),$$ 
 and the right hand side directly quantifies convergence. Convex duality 
 theory gives for many convex optimization problems such a function, $\tilde{H}$,
-and in those cases a convergence criterion based on $H(\theta_{n}) - \tilde{H}(\theta_{n})$ actually comes with a theoretical guarantee on
-how close we are to the theoretical minimum. We will not pursue 
+and in those cases a convergence criterion based on 
+$H(\theta_{n}) - \tilde{H}(\theta_{n})$ actually comes with a theoretical guarantee on
+how close we are to the minimum. We will not pursue 
 the necessary convex duality theory here, but it is useful to know 
 that in some cases we can do better than the ad hoc criteria above.
 
 ## Descent direction algorithms
 
 The negative gradient of $H$ in $\theta$ is the direction of steepest descent.
-Starting from $\theta_0$ and with the goal of minimizing $H$, it is natural 
-to move away from $\theta_0$ in the direction of $-\nabla H(\theta_0)$. 
-Thus we could define  
-$$\theta_1 = \theta_0 - \gamma \nabla H(\theta_0)$$
+Since the goal is to minimize $H$, it is natural to move 
+away from $\theta$ in the direction of $-\nabla H(\theta)$. 
+However, other directions than the negative gradient can also be suitable
+descent directions.
+
+::: {.definition} A *descent direction* in $\theta$ 
+is a vector $\rho \in \mathbb{R}^p$ such that 
+$$\nabla H(\theta)^T \rho < 0.$$
+::: 
+
+When $\theta$ is not a stationary point,  
+$$\nabla H(\theta)^T -\nabla H(\theta)$ = - \| \nabla H(\theta)^T \|_2 < 0$$
+and $-\nabla H(\theta)^T$ is a descent direction in $\theta$ according to 
+the definition.
+
+Given $\theta_n$ and a descent direction $\rho_n$ in $\theta_n$ we can define 
+$$\theta_{n+1} = \theta_n + \gamma \rho_n$$
 for a suitably chosen $\gamma > 0$. By Taylor's theorem 
-$$H(\theta_1) = H(\theta_0) - \gamma \|\nabla H(\theta_0)\|^2_2 + o(\gamma),$$
-which means that if $\theta_0$ is not a stationary point ($\nabla H(\theta_0) \neq 0$) 
-then 
-$$H(\theta_1) < H(\theta_0)$$
-for $\gamma$ small enough.
-
-
-More generally, we define a *descent direction* in $\theta_0$ 
-as a vector $\rho_0 \in \mathbb{R}^p$ such that 
-$$\nabla H(\theta_0)^T \rho_0 < 0.$$
-By the same kind of Taylor argument as above, $H$ will descent for a sufficiently 
-small step size in the direction of any descent direction. And if $\theta_0$
-is not a stationary point, $-\nabla H(\theta_0)^T$ is a descent direction. 
+$$H(\theta_{n+1}) = H(\theta_n) + \gamma \nabla H(\theta_n) \rho_n + o(\gamma),$$
+which means that
+$$H(\theta_{n+1}) < H(\theta_n)$$
+if $\gamma$ is small enough. 
 
 One strategy for choosing $\gamma$ is to minimize the univariate 
 function 
-$$\gamma \mapsto H(\theta_0 + \gamma \rho_0),$$
+$$\gamma \mapsto H(\theta_n + \gamma \rho_n),$$
 which is an example of a *line search* method. Such a minimization 
-would give the maximal possible descent in the direction $\rho_0$,
-and as we have argued, if $\rho_0$ is a descent direction, a minimizer $\gamma > 0$
+would give the maximal possible descent in the direction $\rho_n$,
+and as we have argued, if $\rho_n$ is a descent direction, a minimizer $\gamma > 0$
 guarantees descent of $H$. However, unless the minimization can be 
 done analytically it is often computationally too expensive. 
 Less will also do, and as shown in Example \@ref(exm:grad-descent),
@@ -448,15 +537,15 @@ fix one (sufficiently small) step length that will guarantee descent.
 
 We consider algorithms of the form 
 $$\theta_{n+1} = \theta_n + \gamma_{n} \rho_n$$
-for descent directions $\rho_n$ and starting in $\theta_0$. 
-The step lengths, $\gamma_n$, are chosen so as to give 
+starting in $\theta_n$ and with $\rho_n$ a descent direction in $\theta_n$. 
+The step lengths, $\gamma_n$, should be chosen so as to give 
 sufficient descent in each iteration. 
 
-We let $h(\gamma) = H(\theta_{n} + \gamma \rho_{n})$ 
-denote the univariate and differentiable function of $\gamma$,
+The function $h(\gamma) = H(\theta_{n} + \gamma \rho_{n})$ 
+is a univariate and differentiable function,
 $$h : [0,\infty) \to \mathbb{R},$$ 
-that gives the value of $H$ in the direction of the descent direction
-$\rho_n$. We can observe that 
+that gives the value of $H$ in the descent direction
+$\rho_n$. We find that 
 $$h'(\gamma) = \nabla H(\theta_{n} + \gamma \rho_{n})^T \rho_{n},$$
 and maximal descent in direction $\rho_n$ can be found by solving
 $h'(\gamma) = 0$ for $\gamma$. As mentioned above, less will do. First note
@@ -1265,5 +1354,32 @@ by $\alpha \Phi + (1 - \alpha) I$ for $\alpha \in (0,1)$ we get
 Krasnoselskii-Mann iterates of the form 
 $$\theta_n = \alpha \Phi(\theta_{n-1}) + (1 - \alpha) \theta_{n-1}$$
 that will converge to a fixed point of $\Phi$ provided it has one. 
+
+Banach's fixed point theorem implies a convergence that is at least as fast as 
+linear convergence with asymptotic rate $c$. 
+Moreover, if $\Phi$ is just a contraction for $n \geq N_0$ for some $N_0$, 
+then for $n \geq N_0$
+$$\|\theta_{n + 1} - \theta_{n}\| \leq c \| \theta_{n} - \theta_{n-1}\|.$$
+The convergence may be superlinear, but if it is linear, the rate is bounded by $c$.
+To indicate if $\Phi$ is asymptotically a contraction, we can introduce
+$$R_n = \frac{\|\theta_{n + 1} - \theta_{n}\|}{\|\theta_{n} - \theta_{n- 1}\|}$$
+and monitor its behavior as $n \to \infty$. The constant
+$$r = \limsup_{n \to \infty} R_n$$
+is then asymptotically the smallest possible contraction constant. 
+If convergence is sublinear and $R_n \to 1$ the sequence is 
+called logarithmically convergent (by definition), while $r \in (0,1)$ is an 
+indication of linear convergence with rate $r$, and $r = 0$ is an indication of 
+superlinear convergence.
+
+In practice, we can plot the ratio $R_n$ as the algorithm is running, and 
+use $R_n$ as an estimate of the rate $r$ for large $n$. However, 
+this can be a quite unstable method for estimating the rate.
+
+Finally, it is also possible to 
+estimate the order $q$ as well as the rate $r$ by using that 
+$$\log \|\theta_{n} - \theta_{N}\| \simeq q \log \|\theta_{n-1} - \theta_{N}\| + \log(r)$$
+for $n \geq N_0$. We can estimate $q$ and $\log(r)$
+by fitting a linear function by least squares to these log-log transformed norms 
+of errors. 
 
 Iteration, fixed points, convergence criteria. Ref to [Nonlinear Parameter Optimization Using R Tools](http://onlinelibrary.wiley.com/book/10.1002/9781118884003).
