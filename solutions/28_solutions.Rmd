@@ -1,0 +1,85 @@
+---
+title: "Stochastic optimization: Exercise solutions"
+author: "Niels Richard Hansen"
+date: "October 15, 2021"
+output:
+  html_document: 
+    code_folding: show 
+---
+
+
+# Exercise 9.1
+
+```{r decay}
+library(ggplot2)
+library(magrittr)
+decay_scheduler <- function(gamma0 = 1, a = 1, K = 1, gamma1, n1) {
+  force(a)
+  if (!missing(gamma1) && !missing(n1))
+    K <- n1^a * gamma1 / (gamma0 - gamma1)
+  b <- gamma0 * K
+  function(n) b / (K + n^a)
+}
+```
+
+```{r online-gauss-SG-SE, echo=-1}
+set.seed(13102020)
+N <- 5000
+beta_true = c(2, 3)
+sigma <- 5
+mu <- function(z, beta) exp(beta[1] + beta[2] * z)
+beta <- vector("list", N)
+
+rate <- decay_scheduler(gamma0 = 0.0004, K = 100) 
+beta[[1]] <- c(beta0 = 1, beta1 = 1)
+
+for(i in 2:N) {
+  # Simulating a new data point
+  z <- runif(1, -1, 1)
+  y <- rnorm(1, mu(z, beta_true), sigma)
+  # Update via squared error gradient 
+  mu_old <- mu(z, beta[[i - 1]])
+  beta[[i]] <- beta[[i - 1]]  - rate(i) * mu_old * (mu_old - y) * c(1, z)
+}
+beta[[N]]  # Compare this to beta_true
+```
+
+```{r online-gauss-SG-LL, echo=-c(1, 2), dependson="online-gauss-SG-SE"}
+set.seed(13102020)
+beta_SE <- cbind(as.data.frame(do.call(rbind, beta)),
+                 data.frame(iteration = 1:N, loss = "squared error"))
+
+rate <- decay_scheduler(gamma0 = 0.01, K = 100) 
+beta[[1]] <- c(beta0 = 1, beta1 = 1)
+
+for(i in 2:N) {
+  # Simulating a new data point
+  z <- runif(1, -1, 1)
+  y <- rnorm(1, mu(z, beta_true), sigma)
+  # Update via log-likelihood gradient 
+  mu_old <- mu(z, beta[[i - 1]])
+  beta[[i]] <- beta[[i - 1]]  - rate(i) * (mu_old - y) * c(1, z)
+}
+beta[[N]]  # Compare this to beta_true
+```
+
+```{r gauss-sgd, echo=FALSE, dependson="online_gauss_SG", warning=FALSE, fig.height=4, fig.width=8, out.width="100%"}
+beta_all <- rbind(
+  cbind(as.data.frame(do.call(rbind, beta)),
+        data.frame(iteration = 1:N, loss = "log-likelihood")),
+  beta_SE) %>% 
+  tidyr::pivot_longer(cols = c("beta0", "beta1"), names_to = "Parameter") %>% 
+  dplyr::filter(iteration %% 50 == 0)
+
+ggplot(beta_all, aes(iteration, value, color = Parameter)) + 
+  geom_hline(yintercept = beta_true[1], color = "blue") + 
+  geom_hline(yintercept = beta_true[2], color = "red") + 
+  geom_point(alpha = 0.5, shape = 16, size = 2) + 
+  ylim(c(1.75, 3.25)) + 
+  ylab("Parameter value") +
+  xlab("Number of data points") +
+  facet_wrap("loss") +
+  scale_color_manual(values = c("blue", "red"))
+```
+
+

@@ -4,17 +4,17 @@ SG <- function(
   N,                 # Sample size
   gamma,             # Decay schedule or a fixed learning rate
   maxiter = 100,     # Max epoch iterations
+  sampler = sample,  # How data is resampled. Default is a random permutation
   cb = NULL, 
   ...
 ) {
   gamma <- if (is.function(gamma)) gamma(1:maxiter) else rep(gamma, maxiter) 
   for(k in 1:maxiter) {
     if(!is.null(cb)) cb()
-    samp <- sample(N)   
+    samp <- sampler(N)   
     for(j in 1:N) {
       i <-  samp[j]
-      gr <- grad(par, i, ...)
-      par <- par - gamma[k] * gr
+      par <- par - gamma[k] * grad(par, i, ...)
     }
   }
   par
