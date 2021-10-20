@@ -101,6 +101,8 @@ tracer <- function(
   get <- function(simplify = FALSE) {
     if (simplify) {
       col_names <- unique(unlist(lapply(values_save, names)))
+      values_save <- lapply(values_save,
+                            function(entry) lapply(entry, col_to_row))
       values_save <- lapply(
         col_names,
         function(x) {
@@ -140,7 +142,15 @@ tracer <- function(
   structure(list(tracer = tracer, get = get, clear = clear), class = "tracer")
 }
 
-
+# If x is a matrix object which encodes a column vector, then the transpose of x
+# is returned. Otherwise, x is returned.
+col_to_row <- function(x) {
+    if (inherits(x, "matrix") && nrow(x) > 1 && ncol(x) == 1) {
+        t(x)
+    } else {
+        x
+    }
+}
 
 #' Subsetting tracer objects
 #'
