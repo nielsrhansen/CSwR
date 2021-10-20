@@ -76,7 +76,6 @@ the accuracy of the model and the time it takes to compute with it.</p>
 <p>The optimization algorithms considered in Chapters <a href="numopt.html#numopt">7</a> and <a href="em.html#em">8</a>
 work on all available data and take deterministic steps in each iteration.
 The models are based on accurate local computations of derivatives that can be
-demanding to compute for large data sets. Moreover, the algorithms
 greedily exploit the local model obtained from derivatives, but they do
 little exploration.</p>
 <p>By including randomness into optimization algorithms it is
@@ -102,41 +101,40 @@ progress more quickly while still using the entire batch of data.</p>
 <h2>
 <span class="header-section-number">9.1</span> Stochastic gradient algorithms<a class="anchor" aria-label="anchor" href="#SG-alg"><i class="fas fa-link"></i></a>
 </h2>
-<p>The stochastic gradient algorithms have their origin in an online learning
-framework, where the objective function is an expected loss and data arrives
-sequentially as a stream of data points. <span class="citation"><a href="references.html#ref-Robbins:1951" role="doc-biblioref">Robbins and Monro</a> (<a href="references.html#ref-Robbins:1951" role="doc-biblioref">1951</a>)</span> introduced in their
-seminal paper a variant of the online stochastic gradient algorithm that they
-called the <em>stochastic approximation method</em>, and they established the first
-convergence result for such algorithms. To understand what the stochastic gradient
-algorithms generally are supposed to optimize, we will introduce the
-general framework of a population model below and give conditions that ensure
-that the basic online algorithm converges. Subsequently, the basic online algorithm
-is turned into an algorithm for batch data, which is the algorithm of
+<p>Stochastic gradient algorithms have their origin in an online learning
+framework, where data arrives sequentially as a stream of data points and where
+the objective function is an expected loss. <span class="citation"><a href="references.html#ref-Robbins:1951" role="doc-biblioref">Robbins and Monro</a> (<a href="references.html#ref-Robbins:1951" role="doc-biblioref">1951</a>)</span> introduced in
+their seminal paper a variant of the online stochastic gradient algorithm that
+they called the <em>stochastic approximation method</em>, and they established the
+first convergence result for such algorithms. To understand what stochastic
+gradient algorithms are supposed to optimize, we introduce the
+general framework of a population model and give conditions that ensure
+that the basic online algorithm converges. Subsequently, the basic online
+algorithm is turned into an algorithm for batch data, which is the algorithm of
 primary interest. In the following sections, various beneficial extensions of
 the basic batch algorithm are explored.</p>
 <div id="Pop-model" class="section level3" number="9.1.1">
 <h3>
-<span class="header-section-number">9.1.1</span> Population models<a class="anchor" aria-label="anchor" href="#Pop-model"><i class="fas fa-link"></i></a>
+<span class="header-section-number">9.1.1</span> Population models and loss functions<a class="anchor" aria-label="anchor" href="#Pop-model"><i class="fas fa-link"></i></a>
 </h3>
 <p>We will consider observations from the sample
 space <span class="math inline">\(\mathcal{X}\)</span>, and we will be interested in estimating parameters
 from the parameter space <span class="math inline">\(\Theta\)</span>. A loss function
 <span class="math display">\[L : \mathcal{X} \times \Theta \to \mathbb{R}\]</span>
-is fixed throughout, and we will be interested in minimizing the expected
+is fixed throughout, and we want to minimize the expected
 loss also known as the <em>risk</em>. That is, we want to minimize
 <span class="math display">\[H(\theta) = E(L(X, \theta)) = \int L(x, \theta) \mathrm{\mu}(dx)\]</span>
 with <span class="math inline">\(X \in \mathcal{X}\)</span> having distribution <span class="math inline">\(\mu\)</span>.
 Of course, it is implicitly understood that the expectation has to be well
 defined for all <span class="math inline">\(\theta\)</span>.</p>
-
 <div class="example">
 <p><span id="exm:least-squares" class="example"><strong>Example 9.1  </strong></span>Suppose that <span class="math inline">\(X = (Y, Z)\)</span> with <span class="math inline">\(Y\)</span> a real valued random variable, and
 that <span class="math inline">\(\mu(z, \theta)\)</span> denotes a parametrized mean value conditionally on <span class="math inline">\(Z = z\)</span>.
-Then the mean squared error is defined in terms of the squared error loss as
+With the squared error loss,
+<span class="math display">\[L((y,z), \theta) = \frac{1}{2} (y - \mu(z, \theta))^2,\]</span>
+the risk is the mean squared error
 <span class="math display">\[\mathrm{MSE}(\theta) = \frac{1}{2} E (Y - \mu(Z, \theta))^2.\]</span>
-That is, the loss function is the squared error loss
-<span class="math inline">\(L((y,z), \theta) = \frac{1}{2} (y - \mu(z, \theta))^2\)</span>.
-From the definition it follows that
+From the definition of <span class="math inline">\(\mathrm{MSE}(\theta)\)</span> we see that
 <span class="math display">\[2 \mathrm{MSE}(\theta) =  E(Y - E(Y \mid Z))^2 + E (E(Y\mid Z) - \mu(Z, \theta))^2,\]</span>
 where the first term does not depend upon <span class="math inline">\(\theta\)</span>. Thus minimizing the
 mean squared error is the same as finding <span class="math inline">\(\theta_0\)</span> such that <span class="math inline">\(\mu(z, \theta_0)\)</span>
@@ -144,36 +142,60 @@ is the optimal approximation of <span class="math inline">\(E(Y \mid Z = z)\)</s
 </div>
 <p>Note how the link between the distribution of <span class="math inline">\(X\)</span> and the parameter is defined
 in the example above by the choice of loss function. There is no upfront
-assumption that <span class="math inline">\(E(Y\mid Z = z) = \mu(z, \theta_0)\)</span> for some “true” <span class="math inline">\(\theta_0\)</span>, but
-if there is such a <span class="math inline">\(\theta_0\)</span>, it will clearly be a minimizer. In general, the
+assumption that <span class="math inline">\(E(Y\mid Z = z) = \mu(z, \theta_0)\)</span> for any <span class="math inline">\(\theta_0 \in \Theta\)</span>,
+but if there is such a <span class="math inline">\(\theta_0\)</span>, it will clearly be a minimizer. In general, the
 optimal <span class="math inline">\(\theta_0\)</span> is simply the <span class="math inline">\(\theta\)</span> that minimizes the risk.</p>
-<p>The mean squared error is suitable when we model the conditional mean of <span class="math inline">\(Y\)</span>.
-Other loss functions include the check loss functions used for
-<a href="https://en.wikipedia.org/wiki/Quantile_regression#Quantiles">quantile regression</a>.
-The absolute value is a special case suitable for modeling the conditional
-median. The following example will introduce the log-likelihood loss that is
-suitable for a parametrized family of distributions.</p>
-
+<p>An alternative to the squared error loss is the log-likelihood loss,
+which can be used when we have a parametrized family of distributions.</p>
 <div class="example">
-<p><span id="exm:log-likelihood" class="example"><strong>Example 9.2  </strong></span>Suppose that <span class="math inline">\(f_{\theta}\)</span> denotes a density on <span class="math inline">\(\mathcal{X}\)</span> parametrized by <span class="math inline">\(\theta\)</span>.
-Then the cross-entropy is defined in terms of the log-likelihood loss as
-<span class="math display">\[H(\theta) = - E \log(f_{\theta}(X)).\]</span>
-Thus the loss function is <span class="math inline">\(L(x, \theta) = - \log f_{\theta}(x)\)</span>.
-If the distribution of <span class="math inline">\(X\)</span> has density <span class="math inline">\(f^0\)</span> then
+<p><span id="exm:log-likelihood" class="example"><strong>Example 9.2  </strong></span>Suppose that <span class="math inline">\(f_{\theta}\)</span> denotes a density on <span class="math inline">\(\mathcal{X}\)</span> parametrized by
+<span class="math inline">\(\theta\)</span>. Then the log-likelihood loss is
+<span class="math display">\[L(x, \theta) = - \log f_{\theta}(x).\]</span>
+The corresponding risk,
+<span class="math display">\[H(\theta) = - E \log(f_{\theta}(X)),\]</span>
+is known as the cross-entropy. If the distribution of <span class="math inline">\(X\)</span> has density <span class="math inline">\(f^0\)</span> then
 <span class="math display">\[\begin{align*}
 H(\theta) &amp; = - E \log(f^0(X)) - E \log(f_{\theta}(X)/f^0(X)) \\
-&amp; = H(f^0) + D(f_0 \ || \ f_{\theta})
+&amp; = H(f^0) + D(f^0 \ || \ f_{\theta})
 \end{align*}\]</span>
 where the first term is the entropy of <span class="math inline">\(f^0\)</span>, and the second is the
 Kullback-Leibler divergence of <span class="math inline">\(f_{\theta}\)</span> from <span class="math inline">\(f^0\)</span>.
-Note that the entropy does not depend upon <span class="math inline">\(\theta\)</span> and minimizing
+The entropy does not depend upon <span class="math inline">\(\theta\)</span> and minimizing
 the cross-entropy is thus the same as finding a <span class="math inline">\(\theta\)</span> with <span class="math inline">\(f_{\theta}\)</span>
 being the optimal approximation of <span class="math inline">\(f^0\)</span> in a Kullback-Leibler sense.</p>
+<p>We consider now the same regression setup as in Example <a href="StochOpt.html#exm:least-squares">9.1</a>
+with <span class="math inline">\(X = (Y, Z)\)</span>, but we let
+<span class="math display">\[f_{\theta}(y | z) = e^{- \mu(z, \theta)} \frac{y^{\mu(z, \theta)}}{y!}\]</span>
+denote the Poisson point probabilities for the Poisson distribution with mean
+<span class="math inline">\(\mu(z, \theta)\)</span> conditionally on <span class="math inline">\(Z = z\)</span>. Then the log-likelihood loss is
+<span class="math display">\[- \log f_{\theta}(y | z) = \mu(z, \theta) - y \log(\mu(z, \theta))\]</span>
+up to an additive constant not depending on <span class="math inline">\(\theta\)</span>, and the cross-entropy is
+<span class="math display">\[H(\theta) = E\big(\mu(Z, \theta) - E(Y \mid Z) \log(\mu(Z, \theta))\big),\]</span>
+again up to an additive constant. This risk function quantifies how <span class="math inline">\(\mu(Z, \theta)\)</span>
+deviates from <span class="math inline">\(E(Y \mid Z)\)</span> in a different way than the risk based on the
+squared error loss. However, if <span class="math inline">\(E(Y \mid Z = z) = \mu(z, \theta_0)\)</span> for
+some <span class="math inline">\(\theta_0\)</span>, it is still true that <span class="math inline">\(\theta_0\)</span> is a minimizer, cf. 
+Exercise <a href="StochOpt.html#exr:cross-entropy">9.1</a>.</p>
 </div>
+<p>The log-likelihood loss is an appropriate loss function if the
+parametrized family of distributions fits data well.
+For a Gaussian (conditional) mean value model the log-likelihood loss gives the
+same risk as the squared error loss – but the squared error loss can
+also be suitable even if data is not Gaussian. It can be a suitable loss
+whenever we just want to fit a model of the conditional
+mean of <span class="math inline">\(Y\)</span>. If we want to fit the (conditional) median instead, we
+can use the absolute deviation
+<span class="math display">\[L((y,z), \theta) = |y - \mu(z, \theta)|.\]</span>
+This is a special case of the check loss functions used for
+<a href="https://en.wikipedia.org/wiki/Quantile_regression#Quantiles">quantile regression</a>.
+Thus by choosing the loss function we decide which aspects of the
+distribution we model, that is, whether we want a good global fit as for the
+log-likelihood loss, a fit of the mean value as for the squared error loss, or
+a fit of the the median or another quantile as for the check loss.</p>
 </div>
-<div id="online-stochastic-gradient-algorithm" class="section level3" number="9.1.2">
+<div id="online-sg" class="section level3" number="9.1.2">
 <h3>
-<span class="header-section-number">9.1.2</span> Online stochastic gradient algorithm<a class="anchor" aria-label="anchor" href="#online-stochastic-gradient-algorithm"><i class="fas fa-link"></i></a>
+<span class="header-section-number">9.1.2</span> Online stochastic gradient algorithm<a class="anchor" aria-label="anchor" href="#online-sg"><i class="fas fa-link"></i></a>
 </h3>
 <p>The classical stochastic gradient algorithm is an example of an online
 learning algorithm.
@@ -185,20 +207,25 @@ is unbiased as an estimate of the gradient of <span class="math inline">\(H\)</s
 With inspiration from gradient descent algorithms it is natural to suggest
 stochastic parameter updates of the form
 <span class="math display">\[\theta_{n + 1} = \theta_n - \gamma_n \nabla_{\theta} L(X_{n+1}, \theta_n)\]</span>
-starting from some initial value <span class="math inline">\(\theta_0\)</span>. The sequence of
-step size parameters <span class="math inline">\(\gamma_n \geq 0\)</span> are known collectively
+starting from some initial value <span class="math inline">\(\theta_0\)</span>. The direction,
+<span class="math inline">\(\nabla_{\theta} L(X_{n+1}, \theta_n)\)</span>, is, however, not guaranteed to be a
+descent direction for <span class="math inline">\(H\)</span>, and even if it is, <span class="math inline">\(\gamma_n\)</span> is typically not
+chosen to guarantee descent.</p>
+<p>The sequence of step size parameters <span class="math inline">\(\gamma_n \geq 0\)</span> are known collectively
 as the <em>learning rate</em>. It can be a deterministic sequence, but <span class="math inline">\(\gamma_n\)</span> may
-also be allowed to depend on <span class="math inline">\(X_1, \ldots, X_{n}\)</span> and <span class="math inline">\(\theta_0, \ldots, \theta_{n}\)</span>.</p>
-
+also depend on <span class="math inline">\(X_1, \ldots, X_{n}\)</span> and <span class="math inline">\(\theta_0, \ldots, \theta_{n}\)</span>.
+For stochastic gradient algorithms, convergence can be shown under global
+conditions on the decay of the learning rate rather than local conditions
+on the individual step lengths.</p>
 <div class="theorem">
-<span id="thm:SG-conv" class="theorem"><strong>Theorem 9.1  </strong></span>Suppose <span class="math inline">\(H\)</span> is strongly convex and
-<span class="math inline">\(E(\|\nabla_{\theta} L(X, \theta))\|^2) \leq A + B \|\theta\|^2\)</span>. If
-<span class="math inline">\(\theta^*\)</span> is the global minimizer of <span class="math inline">\(H\)</span> then <span class="math inline">\(\theta_n\)</span> converges almost surely
+<p><span id="thm:SG-conv" class="theorem"><strong>Theorem 9.1  </strong></span>Suppose <span class="math inline">\(H\)</span> is strongly convex and
+<span class="math display">\[E(\|\nabla_{\theta} L(X, \theta))\|^2) \leq A + B \|\theta\|^2.\]</span>
+If <span class="math inline">\(\theta^*\)</span> is the global minimizer of <span class="math inline">\(H\)</span> then <span class="math inline">\(\theta_n\)</span> converges almost surely
 toward <span class="math inline">\(\theta^*\)</span> if
 <span class="math display" id="eq:conv-cond">\[\begin{equation}
 \sum_{n=1}^{\infty} \gamma_n^2 &lt; \infty \quad \text{and} \quad 
 \sum_{n=1}^{\infty} \gamma_n = \infty. \tag{9.1}
-\end{equation}\]</span>
+\end{equation}\]</span></p>
 </div>
 <p>From the above result, convergence of the algorithm
 is guaranteed if the learning rate, <span class="math inline">\(\gamma_n\)</span>, converges to 0 but
@@ -243,22 +270,23 @@ target rate.</p>
   <span class="kw">function</span><span class="op">(</span><span class="va">n</span><span class="op">)</span> <span class="va">b</span> <span class="op">/</span> <span class="op">(</span><span class="va">K</span> <span class="op">+</span> <span class="va">n</span><span class="op">^</span><span class="va">a</span><span class="op">)</span>
 <span class="op">}</span></code></pre></div>
 <p>The following example of online Poisson regression illustrates the general ideas.</p>
-
 <div class="example">
-<p><span id="exm:online-pois-SG" class="example"><strong>Example 9.3  </strong></span>In this example <span class="math inline">\(Y_i \mid Z_i = z_i \sim \mathrm{Pois(e^{\beta_0 + \beta_1 z_i})}\)</span>
-for <span class="math inline">\(\beta = (\beta_0, \beta_1)^T\)</span> the parameter vector.
+<p><span id="exm:online-pois-SG" class="example"><strong>Example 9.3  </strong></span>In this example <span class="math inline">\(Y_i \mid Z_i = z_i \sim \mathrm{Pois}(\varphi(\beta_0 + \beta_1 z_i))\)</span>
+for <span class="math inline">\(\beta = (\beta_0, \beta_1)^T\)</span> the parameter vector and
+<span class="math inline">\(\varphi: \mathbb{R} \to (0,\infty)\)</span> a continuously differentiable function.
 We let the <span class="math inline">\(Z_i\)</span>-s be uniformly distributed in <span class="math inline">\((-1, 1)\)</span>, but this choice is not
 particularly important. The conditional mean of <span class="math inline">\(Y_i\)</span> given <span class="math inline">\(Z_i = z_i\)</span> is
-<span class="math display">\[\mu(z_i, \beta) = e^{\beta_0 + \beta_1 z_i}\]</span>
-and we will first consider the squared error loss. To this end, we observe that
-<span class="math display">\[\nabla_{\beta}  \mu(z_i, \beta) =  \mu(z_i, \beta) 
+<span class="math display">\[\mu(z_i, \beta) = \varphi(\beta_0 + \beta_1 z_i)\]</span>
+and we will first consider the squared error loss. To this end, observe that
+<span class="math display">\[\nabla_{\beta}  \mu(z_i, \beta) =  \varphi'(\beta_0 + \beta_1 z_i) 
 \left( \begin{array}{c} 1 \\ z_i \end{array} \right),\]</span>
-which for the squared error loss gives the gradient
+which for the squared error loss results in the gradient
 <span class="math display">\[\nabla_{\beta} \frac{1}{2} (y_i - \mu(z_i, \beta) )^2 = 
-  \mu(z_i, \beta) (\mu(z_i, \beta) - y_i) \left( \begin{array}{c} 1 \\ z_i \end{array} \right).\]</span></p>
+  \varphi'(\beta_0 + \beta_1 z_i) (\mu(z_i, \beta) - y_i) \left( \begin{array}{c} 1 \\ z_i \end{array} \right).\]</span></p>
 </div>
-<p>To clearly emulate the online nature of the algorithm, the implementation below
-generates the observations sequentially in the loop.</p>
+<p>We simulate data and explore the learning algorithm in the special case
+with <span class="math inline">\(\varphi = \exp\)</span>. To clearly emulate the online nature of the algorithm,
+the implementation below generates the observations sequentially in the loop.</p>
 <div class="sourceCode" id="cb388"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">5000</span>
 <span class="va">beta_true</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>
@@ -276,23 +304,31 @@ generates the observations sequentially in the loop.</p>
   <span class="va">mu_old</span> <span class="op">&lt;-</span> <span class="fu">mu</span><span class="op">(</span><span class="va">z</span>, <span class="va">beta</span><span class="op">[[</span><span class="va">i</span> <span class="op">-</span> <span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>
   <span class="va">beta</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">beta</span><span class="op">[[</span><span class="va">i</span> <span class="op">-</span> <span class="fl">1</span><span class="op">]</span><span class="op">]</span>  <span class="op">-</span> <span class="fu">rate</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="op">*</span> <span class="va">mu_old</span> <span class="op">*</span> <span class="op">(</span><span class="va">mu_old</span> <span class="op">-</span> <span class="va">y</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">z</span><span class="op">)</span>
 <span class="op">}</span>
-<span class="va">beta</span><span class="op">[[</span><span class="va">N</span><span class="op">]</span><span class="op">]</span>  <span class="co"># Compare this to beta_true</span></code></pre></div>
+<span class="va">beta</span><span class="op">[[</span><span class="va">N</span><span class="op">]</span><span class="op">]</span>  <span class="co"># This is close to beta_true; the algorithm works!</span></code></pre></div>
 <pre><code>##    beta0    beta1 
 ## 2.037990 2.987941</code></pre>
 <p>For the log-likelihood loss we instead find the gradient
 <span class="math display">\[\nabla_{\beta} \big( \mu(z_i, \beta) - y_i \log(\mu(z_i, \beta)) \big) = 
+  \frac{\varphi'(\beta_0 + \beta_1 z_i)}{\mu(z_i, \beta)} (\mu(z_i, \beta) - y_i) 
+\left( \begin{array}{c} 1 \\ z_i \end{array} \right),\]</span>
+which leads to a slightly different but equally valid algorithm. In the special
+case with <span class="math inline">\(\varphi = \exp\)</span>, the derivative is <span class="math inline">\(\varphi'(\beta_0 + \beta_1 z_i) = \mu(z_i, \beta)\)</span>,
+<span class="math display">\[\nabla_{\beta} \big( \mu(z_i, \beta) - y_i \log(\mu(z_i, \beta)) \big) = 
   (\mu(z_i, \beta) - y_i) 
 \left( \begin{array}{c} 1 \\ z_i \end{array} \right),\]</span>
-which leads to a slightly different but equally valid algorithm. We see that the
-gradient only differs from the squared error gradient by lacking the factor <span class="math inline">\(\mu(z_i, \beta)\)</span>.
-The distribution of this factor has range between <span class="math inline">\(e^{-1} \simeq 0.3679\)</span>
+and the log-likelihood gradient differs from the squared error gradient by
+lacking the factor <span class="math inline">\(\mu(z_i, \beta)\)</span>.
+With <span class="math inline">\(Z\)</span> uniformly distributed on <span class="math inline">\((-1, 1\)</span>), the distribution of
+<span class="math inline">\(\mu(Z, (2, 3))\)</span> has range between <span class="math inline">\(e^{-1} \simeq 0.3679\)</span>
 and <span class="math inline">\(e^5 \simeq 148.4\)</span> and is right skewed, that is, it is concentrated toward the
 smaller values but with a long right tail. Its median is <span class="math inline">\(e^2 \simeq 7.389\)</span>,
-while its mean is <span class="math inline">\((e^5 - e) / 6 \simeq 24.67\)</span>. Due to the factor <span class="math inline">\(\mu(z_i, \beta)\)</span>,
-the squared error gradient is typically longer than the log-likelihood
-gradient — sometimes by a large factor. In the implementation below with the
+while its mean is <span class="math inline">\((e^5 - e) / 6 \simeq 24.67\)</span>.</p>
+<p>The squared error gradient is typically longer than the log-likelihood
+gradient due to the factor <span class="math inline">\(\mu(z_i, \beta)\)</span> — and sometimes by a large factor.
+In the implementation below with the
 gradient of the log-likelihood we therefore choose <span class="math inline">\(\gamma_0\)</span>
-a factor 25 larger than the <span class="math inline">\(\gamma_0 = 0.0004\)</span> used with the squared error gradient.</p>
+a factor 25 larger than the <span class="math inline">\(\gamma_0 = 0.0004\)</span> that was used with the
+squared error gradient.</p>
 <div class="sourceCode" id="cb390"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rate</span> <span class="op">&lt;-</span> <span class="fu">decay_scheduler</span><span class="op">(</span>gamma0 <span class="op">=</span> <span class="fl">0.01</span>, K <span class="op">=</span> <span class="fl">100</span><span class="op">)</span> 
 <span class="va">beta</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>beta0 <span class="op">=</span> <span class="fl">1</span>, beta1 <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>
@@ -305,7 +341,7 @@ a factor 25 larger than the <span class="math inline">\(\gamma_0 = 0.0004\)</spa
   <span class="va">mu_old</span> <span class="op">&lt;-</span> <span class="fu">mu</span><span class="op">(</span><span class="va">z</span>, <span class="va">beta</span><span class="op">[[</span><span class="va">i</span> <span class="op">-</span> <span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>
   <span class="va">beta</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">beta</span><span class="op">[[</span><span class="va">i</span> <span class="op">-</span> <span class="fl">1</span><span class="op">]</span><span class="op">]</span>  <span class="op">-</span> <span class="fu">rate</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="va">mu_old</span> <span class="op">-</span> <span class="va">y</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">z</span><span class="op">)</span>
 <span class="op">}</span>
-<span class="va">beta</span><span class="op">[[</span><span class="va">N</span><span class="op">]</span><span class="op">]</span>  <span class="co"># Compare this to beta_true</span></code></pre></div>
+<span class="va">beta</span><span class="op">[[</span><span class="va">N</span><span class="op">]</span><span class="op">]</span>  <span class="co"># This is close to beta_true; this algorithm also works!</span></code></pre></div>
 <pre><code>##    beta0    beta1 
 ## 2.008452 2.987035</code></pre>
 
@@ -317,18 +353,31 @@ Figure 9.2: Estimated parameter values for the two parameters <span class="math 
 </div>
 <p>Figure <a href="StochOpt.html#fig:pois-sgd">9.2</a> shows how the estimates of <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span>
 converge toward the true values for the two different choices of loss functions.
-The gradient from the squared error loss resulted in slower convergence and
+With <span class="math inline">\(\varphi = \exp\)</span> and either loss function, the risk, <span class="math inline">\(H(\beta)\)</span>, is
+strongly convex and attains its unique minimum in <span class="math inline">\(\beta^* = (2, 3)^T\)</span>.
+Theorem <a href="StochOpt.html#thm:SG-conv">9.1</a> suggests convergence for appropriate learning
+rates – except that the growth condition on the gradient is not fulfilled
+with <span class="math inline">\(\varphi = \exp\)</span>. The growth condition <em>is</em> fulfilled if we replace
+the exponential function by softplus, <span class="math inline">\(\varphi(w) = \log(1 + e^w)\)</span>, which for
+small values of <span class="math inline">\(w\)</span> behaves like the exponential function, but grows linearly
+with <span class="math inline">\(w\)</span> for <span class="math inline">\(w \to \infty\)</span>.</p>
+<p>The gradient from the squared error loss resulted in slower convergence and
 a more jagged sample path than the gradient from the log-likelihood. This is
 explained by the random factor <span class="math inline">\(\mu(z_i, \beta)\)</span> for the squared error gradient,
-which also makes the algorithm unstable if <span class="math inline">\(\gamma_0\)</span> is chosen much larger than in
-the implementation. Thus
-we cannot simply increase <span class="math inline">\(\gamma_0\)</span> to make the convergence faster when using
-the squared error gradient. If we attempt to dampen the fluctuations by
-lowering <span class="math inline">\(\gamma_0\)</span>, the convergence will be even slower.</p>
-<p>The example illustrates that a suitable choice of decay schedule — and even just
-the choice of the three parameters in our power law schedule — depends heavily
-on the problem considered and the gradient used, and it is a
-problem specific challenge to find a good schedule.</p>
+which makes the step sizes somewhat irregular when data is from a Poisson
+distribution. It also makes choosing <span class="math inline">\(\gamma_0\)</span> a delicate balance.
+A small increase of <span class="math inline">\(\gamma_0\)</span> will make the algorithm unstable, while
+decreasing <span class="math inline">\(\gamma_0\)</span> will make the convergence even slower, though
+the fluctuations will also be damped. Making the right choice – or even a suitable choice –
+of decay schedule depends heavily on the problem considered and the
+gradient used. It is a problem specific challenge to find a good schedule –
+and even just to choose the three parameters when we use the power law schedule.</p>
+<p>The example illustrates that the loss function not only determines what
+we model, but also how well the learning algorithm works. Both loss
+functions are appropriate, but since the data is from the Poisson distribution,
+the log-likelihood loss leads to faster convergence. Exercise
+<a href="StochOpt.html#exr:gauss-log-normal">9.2</a> explores the opposite situation where the data
+is from a Gaussian distribution.</p>
 </div>
 <div id="batch-stochastic-gradient-algorithms" class="section level3" number="9.1.3">
 <h3>
@@ -344,10 +393,10 @@ is sufficiently large, many standard batch algorithms are slow, and
 some ideas from online algorithms can beneficially be transferred to batch
 processing of data.</p>
 <p>Within the population model framework in Section <a href="StochOpt.html#Pop-model">9.1.1</a>
-the objective is to minimize a theoretical objective function defined
-in terms of the probability distribution <span class="math inline">\(\mu\)</span>. For the online
-algorithms we imagine an endless stream of data points from <span class="math inline">\(\mu\)</span>, which can be used to ultimately
-minimize the expected loss <span class="math inline">\(H(\theta)\)</span>. Batch algorithms replace
+the objective is to minimize the population risk, <span class="math inline">\(H(\theta)\)</span>, defined
+as the expected loss w.r.t. the probability distribution <span class="math inline">\(\mu\)</span>. For the online
+algorithms we imagine an endless stream of data points from <span class="math inline">\(\mu\)</span>, which can be
+used to ultimately minimize <span class="math inline">\(H(\theta)\)</span>. Batch algorithms replace
 the population quantity by an empirical surrogate — the average loss on the batch
 <span class="math display">\[H_N(\theta) = \frac{1}{N} \sum_{i=1}^N L(x_i, \theta).\]</span>
 Minimizing <span class="math inline">\(H_N\)</span> as a surrogate of minimizing <span class="math inline">\(H\)</span> is known as
@@ -359,10 +408,18 @@ data we get diminishing returns; doubling the run time will only lower the
 precision of <span class="math inline">\(H_N\)</span> as an approximation of <span class="math inline">\(H\)</span> by a factor <span class="math inline">\(1 / \sqrt{2} \simeq 0.7\)</span>.
 The same is, of course,
 true if we look at the gradient, <span class="math inline">\(\nabla H_N(\theta)\)</span>, or higher derivatives
-of <span class="math inline">\(H_N\)</span>. Could we get away with using a fraction of data points each time we compute the
-gradient, and then somehow cycle through the entire data set as the optimization
-algorithm progresses? The answer is yes, and the stochastic gradient
-algorithm gives a (randomized) procedure for “cycling through the data.”</p>
+of <span class="math inline">\(H_N\)</span>.</p>
+<p>It is not obvious that the computational costs of using the entire data set
+to compute the gradient, say, is worth the effort compared to using only a
+fraction of the data. Thus we ask if there is a better tradeoff between
+run time and precision by using a fraction of data points each time
+we compute the gradient? The stochastic gradient algorithm is one
+such algorithm that “cycles through the data” and uses only a random
+fraction of data points for each computation. In its basic version presented
+first, it uses only a single data point in each iteration, and it is
+really the same algorithm as presented in Section <a href="StochOpt.html#online-sg">9.1.2</a>
+except that the population risk is replaced by the empirical risk defined in
+terms of the batch data.</p>
 <p>With <span class="math inline">\(\hat{\mu}_N = \frac{1}{N}\sum_{i=1}^N \delta_{x_i}\)</span> denoting the
 empirical distribution of the batch data set, we see that
 <span class="math display">\[H_N(\theta) = \int L(x, \theta) \mathrm{\mu}_N(dx),\]</span>
@@ -418,12 +475,12 @@ is the same as sampling a permutation of the indices.</p>
   <span class="va">par</span>
 <span class="op">}</span></code></pre></div>
 <p>One epoch in the algorithm above is exactly one pass through the entire batch of
-data points, but in a random order. Changing the default value of the <code>sampler</code>
-argument to <code>function(N) sample(N, replace = TRUE)</code> would result in sampling with replacement,
-in which case an epoch would be a pass through
-<span class="math inline">\(N\)</span> data points sampled independently from the batch. Doing so, some data points would
-be repeated while other data points from the
-batch would be missing. Sampling with replacement will feed the stochastic gradient
+data points, but in a random order. The default value of <code>sampler = sample</code>
+means that resampling is done without replacement. If we call <code>SG()</code> with
+<code>sampler = function(N) sample(N, replace = TRUE)</code> we would get sampling
+with replacement, in which case an epoch would be a pass through
+<span class="math inline">\(N\)</span> data points sampled independently from the batch.
+Sampling with replacement will feed the stochastic gradient
 algorithm with i.i.d. samples from the empirical distribution. Sampling without
 replacement introduces some dependence. Curiously, sampling without
 replacement has turned out to be empirically superior to sampling
@@ -437,9 +494,8 @@ ordering can easily lead the algorithm astray. <em>It is therefore important to
 always randomize the order of the data points somehow</em>. A minimal amount of randomization
 in common use is to just do one initial random permutation, corresponding
 to moving <code>samp &lt;- sampler(N)</code> outside of the outer for-loop above. This may
-be enough randomization for the algorithm to work in practice, but the link
+be enough randomization for the algorithm to work in some cases, but the link
 to the convergence result for the online algorithm is lost.</p>
-
 <div class="example">
 <p><span id="exm:batch-pois-SG" class="example"><strong>Example 9.4  </strong></span>As a continuation of Example <a href="StochOpt.html#exm:online-pois-SG">9.3</a> we consider the batch version
 of Poisson regression. We will only use the log-likelihood gradient, and we
@@ -455,8 +511,14 @@ algorithm for 1000 epochs with a decay schedule that
 interpolates between <span class="math inline">\(\gamma_0 = 0.02\)</span> and <span class="math inline">\(\gamma_1 = 0.001\)</span>.</p>
 <div class="sourceCode" id="cb394"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pois_SG_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="st">"par"</span>, N <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>
-<span class="va">rate</span> <span class="op">&lt;-</span> <span class="fu">decay_scheduler</span><span class="op">(</span>gamma0 <span class="op">=</span> <span class="fl">0.02</span>, gamma1 <span class="op">=</span> <span class="fl">0.001</span>, n1 <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span> 
-<span class="fu">SG</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, <span class="va">grad_pois</span>, N <span class="op">=</span> <span class="va">N</span>, gamma <span class="op">=</span> <span class="va">rate</span>, maxiter <span class="op">=</span> <span class="fl">1000</span>, cb <span class="op">=</span> <span class="va">pois_SG_tracer</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span></code></pre></div>
+<span class="fu">SG</span><span class="op">(</span>
+  <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, 
+  <span class="va">grad_pois</span>, 
+  N <span class="op">=</span> <span class="va">N</span>, 
+  gamma <span class="op">=</span> <span class="fu">decay_scheduler</span><span class="op">(</span>gamma0 <span class="op">=</span> <span class="fl">0.02</span>, gamma1 <span class="op">=</span> <span class="fl">0.001</span>, n1 <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span>, 
+  maxiter <span class="op">=</span> <span class="fl">1000</span>, 
+  cb <span class="op">=</span> <span class="va">pois_SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
+<span class="op">)</span></code></pre></div>
 <pre><code>## [1] 1.905394 3.162559</code></pre>
 <p>The resulting parameter estimate should be compared to the maximum-likelihood
 estimate from an ordinary Poisson regression.</p>
@@ -478,8 +540,13 @@ minimizer.</p>
 <span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="va">N</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html">rpois</a></span><span class="op">(</span><span class="va">N</span>, <span class="fu">mu</span><span class="op">(</span><span class="va">z</span>, <span class="va">beta_true</span><span class="op">)</span><span class="op">)</span>
 <span class="va">pois_SG_tracer_2</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="st">"par"</span>, N <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>
-<span class="va">rate</span> <span class="op">&lt;-</span> <span class="fu">decay_scheduler</span><span class="op">(</span>gamma0 <span class="op">=</span> <span class="fl">0.02</span>, gamma1 <span class="op">=</span> <span class="fl">0.001</span>, n1 <span class="op">=</span> <span class="fl">100</span><span class="op">)</span> 
-<span class="fu">SG</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, <span class="va">grad_pois</span>, N <span class="op">=</span> <span class="va">N</span>, gamma <span class="op">=</span> <span class="va">rate</span>, cb <span class="op">=</span> <span class="va">pois_SG_tracer_2</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span></code></pre></div>
+<span class="fu">SG</span><span class="op">(</span>
+  par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, 
+  grad <span class="op">=</span> <span class="va">grad_pois</span>, 
+  N <span class="op">=</span> <span class="va">N</span>, 
+  gamma <span class="op">=</span> <span class="fu">decay_scheduler</span><span class="op">(</span>gamma0 <span class="op">=</span> <span class="fl">0.02</span>, gamma1 <span class="op">=</span> <span class="fl">0.001</span>, n1 <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>, 
+  cb <span class="op">=</span> <span class="va">pois_SG_tracer_2</span><span class="op">$</span><span class="va">tracer</span>
+<span class="op">)</span></code></pre></div>
 <pre><code>## [1] 1.994688 3.022137</code></pre>
 <div class="sourceCode" id="cb400"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">beta_hat_2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/glm.html">glm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">z</span>, family <span class="op">=</span> <span class="va">poisson</span><span class="op">)</span><span class="op">)</span></code></pre></div>
@@ -487,8 +554,8 @@ minimizer.</p>
 
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:batch-pois-sgd-fig"></span>
-<img src="CSwR_files/figure-html/batch-pois-sgd-fig-1.png" alt="Estimated parameter values for the two parameters \(\beta_0\) (true value \(2\)) and \(\beta_1\) (true value \(3\)) in the Poisson regression model as a function of the number of iterations in the stochastic gradient algorithm. For batch size \(N = 50\), the algorithm converges to a parameter clearly different from the theoretically optimal one (gray dashed lines), while for batch size \(N = 500\) the limit is closer to \((2, 3).\)" width="100%"><p class="caption">
-Figure 9.3: Estimated parameter values for the two parameters <span class="math inline">\(\beta_0\)</span> (true value <span class="math inline">\(2\)</span>) and <span class="math inline">\(\beta_1\)</span> (true value <span class="math inline">\(3\)</span>) in the Poisson regression model as a function of the number of iterations in the stochastic gradient algorithm. For batch size <span class="math inline">\(N = 50\)</span>, the algorithm converges to a parameter clearly different from the theoretically optimal one (gray dashed lines), while for batch size <span class="math inline">\(N = 500\)</span> the limit is closer to <span class="math inline">\((2, 3).\)</span>
+<img src="CSwR_files/figure-html/batch-pois-sgd-fig-1.png" alt="Estimated parameter values for the two parameters \(\beta_0 =2\) and \(\beta_1 = 3\) in the Poisson regression model as a function of the number of iterations in the stochastic gradient algorithm. For batch size \(N = 50\), the algorithm converges to a parameter clearly different from the theoretically optimal one (gray dashed lines), while for batch size \(N = 500\) the limit is closer to \((2, 3).\)" width="100%"><p class="caption">
+Figure 9.3: Estimated parameter values for the two parameters <span class="math inline">\(\beta_0 =2\)</span> and <span class="math inline">\(\beta_1 = 3\)</span> in the Poisson regression model as a function of the number of iterations in the stochastic gradient algorithm. For batch size <span class="math inline">\(N = 50\)</span>, the algorithm converges to a parameter clearly different from the theoretically optimal one (gray dashed lines), while for batch size <span class="math inline">\(N = 500\)</span> the limit is closer to <span class="math inline">\((2, 3).\)</span>
 </p>
 </div>
 <p>Example <a href="StochOpt.html#exm:batch-pois-SG">9.4</a> and Figure <a href="StochOpt.html#fig:batch-pois-sgd-fig">9.3</a>, in
@@ -511,7 +578,7 @@ to the early machine learning community in 1960 via ADALINE (Adaptive Linear Neu
 by Bernard Widrow and Ted Hoff. ADALINE was
 <a href="https://www.youtube.com/watch?v=hc2Zj55j1zU">implemented as a physical device</a>
 capable of learning patterns
-via stochastic gradient updates. The math is the same today, though the implementation
+via stochastic gradient updates. The math is the same today, but the implementation
 has fortunately become somewhat easier.</p>
 <p>With a linear model and the squared error loss,
 <span class="math inline">\(L((y, x), \beta) = \frac{1}{2} (y - \beta^T x)^2\)</span>,
@@ -556,8 +623,7 @@ valued <code>shares</code>, which will be the target variable of our predictions
 <p>Two of the variables, <code>timedelta</code> and <code>url</code>, are not relevant predictors, and
 <code>is_weekend</code> is redundant given the other weekday variables, so we exclude
 those three variables. Some of the predictors are also highly correlated,
-and we exclude four additional predictors before the model matrix is constructed.
-The <code>shares</code> target variable is, in addition, log-transformed.</p>
+and we exclude four additional predictors before the model matrix is constructed.</p>
 <div class="sourceCode" id="cb404"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">News</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span>
   <span class="va">News</span>,
@@ -569,17 +635,15 @@ The <code>shares</code> target variable is, in addition, log-transformed.</p>
   <span class="op">-</span> <span class="va">self_reference_max_shares</span>,
   <span class="op">-</span> <span class="va">kw_min_max</span>
 <span class="op">)</span>
-<span class="co"># The model matrix without an explicit intercept is constructed using </span>
-<span class="co"># all variables reamining in the data set but the target variable 'shares' </span>
-<span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/model.matrix.html">model.matrix</a></span><span class="op">(</span><span class="va">shares</span> <span class="op">~</span> <span class="va">.</span> <span class="op">-</span> <span class="fl">1</span>, data <span class="op">=</span> <span class="va">News</span><span class="op">)</span>  
-<span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">News</span><span class="op">$</span><span class="va">shares</span><span class="op">)</span></code></pre></div>
+<span class="co"># The model matrix without an explicit intercept is constructed from all</span>
+<span class="co"># variables remaining in the data set but the target variable 'shares' </span>
+<span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/model.matrix.html">model.matrix</a></span><span class="op">(</span><span class="va">shares</span> <span class="op">~</span> <span class="va">.</span> <span class="op">-</span> <span class="fl">1</span>, data <span class="op">=</span> <span class="va">News</span><span class="op">)</span>  </code></pre></div>
 <p>This data set is by current standards not a large data set – the dense model
 matrix takes only about 20 MB of memory – and the
-linear model can easily be fitted by simply solving the least squares problem.
-It takes about 0.2 seconds on a standard laptop to compute the solution.</p>
-<div class="sourceCode" id="cb405"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">lm_News</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lmfit.html">lm.fit</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span><span class="op">)</span></code></pre></div>
-<p>The residual plot in Figure <a href="StochOpt.html#fig:fig-res-lm-News">9.4</a> shows that the
+linear model (with the target variable <code>shares</code> log-transformed)
+can easily be fitted by simply solving the least squares problem.
+It takes about 0.2 seconds on a standard laptop to compute the solution.
+The residual plot in Figure <a href="StochOpt.html#fig:fig-res-lm-News">9.4</a> shows that the
 model is actually not a poor fit to data, though there is a considerable
 unexplained residual variance.</p>
 <div class="figure" style="text-align: center">
@@ -592,52 +656,68 @@ Figure 9.4: Residual plot for the linear model of the logarithm of news article 
 illustrate a number of stochastic gradient algorithms even though we can
 compute the optimizer easily by other means. The real practical benefit of
 stochastic gradient algorithms comes when applied to large scale problems that are difficult to
-treat as textbook examples. And using a toy problem makes it easier to
+treat as textbook examples. But using a toy problem makes it easier to
 understand in detail how the different algorithms behave.</p>
-<p>The very first thing we will do is to standardize all the columns of <span class="math inline">\(X\)</span> to have
-the same norm. Specifically in this case to have non-central second moment 1.
-This does not change the optimization problem, but corresponds to a
+<p>We will standardize all the columns of <span class="math inline">\(X\)</span> to have the same norm. Specifically
+to have non-central second moment 1.
+This does not change the optimization problem but corresponds to a
 reparametrization where all parameters are rescaled. The rescaling brings
 the parameters on a comparable scale, which is typically a good idea for
-optimization algorithms based on gradients only. After rescaling we
+optimization algorithms based on gradients only, see also Exercise
+<a href="StochOpt.html#exr:news-cond-number">9.3</a>. After rescaling we
 initialize the linear model with a call to <code>ls_model()</code> and refit the
 model using the new parametrization.</p>
-<div class="sourceCode" id="cb406"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb405"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">X_raw</span> <span class="op">&lt;-</span> <span class="va">X</span>
-<span class="co"># Standardization</span>
+<span class="co"># Standardization and log-transforming the target variable</span>
 <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/scale.html">scale</a></span><span class="op">(</span><span class="va">X</span>, center <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
+<span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">News</span><span class="op">$</span><span class="va">shares</span><span class="op">)</span>
 <span class="co"># The '%&lt;-%' destructure assignment operator is from the zeallot package</span>
-<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">par0</span>, <span class="va">H</span>, <span class="va">grad_obs</span><span class="op">)</span> <span class="op">%&lt;-%</span> <span class="fu">ls_model</span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span><span class="op">)</span>
-
+<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">par0</span>, <span class="va">H</span>, <span class="va">ls_grad</span><span class="op">)</span> <span class="op">%&lt;-%</span> <span class="fu">ls_model</span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span><span class="op">)</span>
+<span class="co"># Fitting the model using standard linear model computations</span>
 <span class="va">lm_News</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lmfit.html">lm.fit</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span><span class="op">)</span>
 <span class="va">par_hat</span> <span class="op">&lt;-</span> <span class="va">lm_News</span><span class="op">$</span><span class="va">coefficients</span>  <span class="co"># Will be used below for comparisons</span></code></pre></div>
 <p>We first run the stochastic gradient algorithm with a fixed learning rate of
 <span class="math inline">\(\gamma = 10^{-5}\)</span> for 50 epochs with a tracer that computes and
 stores the value of the objective function at each epoch.</p>
-<div class="sourceCode" id="cb407"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb406"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="st">"value"</span>, expr <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/substitute.html">quote</a></span><span class="op">(</span><span class="va">value</span> <span class="op">&lt;-</span> <span class="fu">H</span><span class="op">(</span><span class="va">par</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
-<span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, grad <span class="op">=</span> <span class="va">grad_obs</span>, N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, gamma <span class="op">=</span> <span class="fl">1e-5</span>, maxiter <span class="op">=</span> <span class="fl">50</span>, cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span></code></pre></div>
+<span class="fu">SG</span><span class="op">(</span>
+  par <span class="op">=</span> <span class="va">par0</span>, 
+  grad <span class="op">=</span> <span class="va">ls_grad</span>, 
+  N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, 
+  gamma <span class="op">=</span> <span class="fl">1e-5</span>, 
+  maxiter <span class="op">=</span> <span class="fl">50</span>, 
+  cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
+<span class="op">)</span></code></pre></div>
 <p>Using the trace from the last epochs, we can compare the objective function
 values to the minimum found using <code><a href="https://rdrr.io/r/stats/lmfit.html">lm.fit()</a></code> above. The minimum was
-not reached completely after the 50 epochs that took a little more than 17
-seconds.</p>
-<div class="sourceCode" id="cb408"><pre class="downlit sourceCode r">
+not reached completely after the 50 epochs that took some time to compute.</p>
+<div class="sourceCode" id="cb407"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG_trace_low</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">SG_tracer</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">tail</a></span><span class="op">(</span><span class="va">SG_trace_low</span><span class="op">)</span></code></pre></div>
 <pre><code>##        value    .time
-## 45 0.4268483 17.30030
-## 46 0.4262983 17.68812
-## 47 0.4259705 18.01967
-## 48 0.4251088 18.37306
-## 49 0.4245424 18.72601
-## 50 0.4240064 19.06375</code></pre>
-<div class="sourceCode" id="cb410"><pre class="downlit sourceCode r">
+## 45 0.4268483 17.26148
+## 46 0.4262983 17.82874
+## 47 0.4259705 18.21194
+## 48 0.4251088 18.61303
+## 49 0.4245424 18.99180
+## 50 0.4240064 19.37994</code></pre>
+<div class="sourceCode" id="cb409"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">H</span><span class="op">(</span><span class="va">par_hat</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 0.3781595</code></pre>
-<p>We will use profiling to investigate what most of the 17 seconds were spent
+<p>We will use profiling to investigate what most of the time was spent
 on in the stochastic gradient algorithm.</p>
-<div class="sourceCode" id="cb412"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/profvis/man/profvis.html">profvis</a></span><span class="op">(</span><span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, <span class="va">grad_obs</span>, N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, gamma <span class="op">=</span> <span class="fl">1e-5</span>, maxiter <span class="op">=</span> <span class="fl">50</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb411"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/profvis/man/profvis.html">profvis</a></span><span class="op">(</span>
+  <span class="fu">SG</span><span class="op">(</span>
+    par <span class="op">=</span> <span class="va">par0</span>, 
+    grad <span class="op">=</span> <span class="va">ls_grad</span>, 
+    N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, 
+    gamma <span class="op">=</span> <span class="fl">1e-5</span>,
+    maxiter <span class="op">=</span> <span class="fl">50</span>
+  <span class="op">)</span>
+<span class="op">)</span></code></pre></div>
 <div class="inline-figure"><img src="figures/SG_profile.png" width="90%" style="display: block; margin: auto;"></div>
 <p>The <a href="figures/SG_profile.html">profiling result</a> shows, unsurprisingly, that the
 computation of the gradient and the update of the parameter vector takes up most
@@ -653,13 +733,26 @@ we run it with a larger
 learning rate of <span class="math inline">\(\gamma = 5 \times 10^{-5}\)</span> and then with a power law decay
 schedule, which interpolates from an initial learning rate of <span class="math inline">\(10^{-3}\)</span> to
 a learning rate of <span class="math inline">\(10^{-5}\)</span> after 50 epochs.</p>
-<div class="sourceCode" id="cb413"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb412"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG_tracer</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span>
-<span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, <span class="va">grad_obs</span>, N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, gamma <span class="op">=</span> <span class="fl">5e-5</span>, maxiter<span class="op">=</span> <span class="fl">50</span>, cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span>
+<span class="fu">SG</span><span class="op">(</span>
+  par <span class="op">=</span> <span class="va">par0</span>, 
+  grad <span class="op">=</span> <span class="va">ls_grad</span>, 
+  N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, 
+  gamma <span class="op">=</span> <span class="fl">5e-5</span>, 
+  maxiter<span class="op">=</span> <span class="fl">50</span>, 
+  cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
+<span class="op">)</span>
 <span class="va">SG_trace_high</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">SG_tracer</span><span class="op">)</span>
 <span class="va">SG_tracer</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span>
-<span class="va">rate</span> <span class="op">&lt;-</span> <span class="fu">decay_scheduler</span><span class="op">(</span>gamma0 <span class="op">=</span> <span class="fl">1e-3</span>, gamma1 <span class="op">=</span> <span class="fl">1e-5</span>, a <span class="op">=</span> <span class="fl">0.6</span>, n1 <span class="op">=</span> <span class="fl">50</span><span class="op">)</span>
-<span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, <span class="va">grad_obs</span>, N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, gamma <span class="op">=</span> <span class="va">rate</span>, maxiter<span class="op">=</span> <span class="fl">50</span>, cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span>
+<span class="fu">SG</span><span class="op">(</span>
+  par <span class="op">=</span> <span class="va">par0</span>, 
+  grad <span class="op">=</span> <span class="va">ls_grad</span>, 
+  N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>,
+  gamma <span class="op">=</span> <span class="fu">decay_scheduler</span><span class="op">(</span>gamma0 <span class="op">=</span> <span class="fl">7e-5</span>, gamma1 <span class="op">=</span> <span class="fl">4e-5</span>, a <span class="op">=</span> <span class="fl">0.5</span>, n1 <span class="op">=</span> <span class="fl">50</span><span class="op">)</span>, 
+  maxiter<span class="op">=</span> <span class="fl">50</span>, 
+  cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
+<span class="op">)</span>
 <span class="va">SG_trace_decay</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">SG_tracer</span><span class="op">)</span></code></pre></div>
 <p>We will compare the convergence of the three stochastic gradient algorithms with
 the convergence of gradient descent with backtracking. For gradient descent we choose
@@ -669,49 +762,59 @@ steps and then all subsequent steps will use the step length
 optimization resulted in backtracking until a step length around <span class="math inline">\(8 \times 10^{-2}\)</span> was
 reached, thus this choice of <span class="math inline">\(\gamma\)</span> will use a minimal amount of time on
 the backtracking step of the algorithm.</p>
-<div class="sourceCode" id="cb414"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb413"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">grad_H</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">beta</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">X</span> <span class="op">%*%</span> <span class="va">beta</span> <span class="op">-</span> <span class="va">y</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>
 <span class="va">GD_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="st">"value"</span>, N <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>
-<span class="fu">GD</span><span class="op">(</span><span class="va">par0</span>, <span class="va">H</span>, <span class="va">grad_H</span>, gamma <span class="op">=</span> <span class="fl">8e-2</span>, maxiter <span class="op">=</span> <span class="fl">800</span>, cb <span class="op">=</span> <span class="va">GD_tracer</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span>
+<span class="fu">GD</span><span class="op">(</span>
+  par <span class="op">=</span> <span class="va">par0</span>, 
+  H <span class="op">=</span> <span class="va">H</span>, 
+  gr <span class="op">=</span> <span class="va">grad_H</span>, 
+  gamma <span class="op">=</span> <span class="fl">8e-2</span>, 
+  maxiter <span class="op">=</span> <span class="fl">800</span>, 
+  cb <span class="op">=</span> <span class="va">GD_tracer</span><span class="op">$</span><span class="va">tracer</span>
+<span class="op">)</span>
 <span class="va">GD_trace</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">GD_tracer</span><span class="op">)</span></code></pre></div>
 <p>Figure <a href="StochOpt.html#fig:news-trace-plot">9.5</a> shows how the four algorithms converge.
-The stochastic gradient algorithm with the high learning rate
-<span class="math inline">\(\gamma = 5 \times 10^{-5}\)</span> decays about as fast as the gradient descent
-algorithm, and both are somewhat faster than stochastic gradient with
-the low learning rate <span class="math inline">\(\gamma = 10^{-5}\)</span>. Using the power law decay schedule
-is initially a little faster than the high learning
-rate, but eventually the decay becomes slower. Even though there is some theoretical guarantee
-of convergence with the power law decay schedule, the choice of a
-suitable learning rate or decay schedule in practice is just as much
-an empirical art.</p>
+The gradient descent algorithm converges faster than the stochastic gradient
+algorithm with the low learning rate <span class="math inline">\(\gamma = 10^{-5}\)</span>, but with the
+high learning rate <span class="math inline">\(\gamma = 5 \times 10^{-5}\)</span> and the power law decay schedule
+the stochastic gradient algorithm converges about as fast as gradient descent.
+For this particular run, the power law decay schedule shows marginally
+faster convergence than the fixed high learning rate, and this was ensured after
+some tuning of the decay schedule parameters. Despite<br>
+theoretical guarantees of convergence with the power law decay schedule,
+the practical choice of a suitable learning rate or decay schedule is really
+an empirical art. With very large data, the tuning
+of learning rate parameters can be done on a small subset
+of data before the algorithms are run using the full data set.</p>
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:news-trace-plot"></span>
 <img src="CSwR_files/figure-html/news-trace-plot-1.png" alt="Convergence of squared error loss on the news article data set for four algorithms: gradient descent (gd) and three basic stochastic gradient algorithms with a low learning rate, a high learning rate and a power law decay schedule." width="100%"><p class="caption">
 Figure 9.5: Convergence of squared error loss on the news article data set for four algorithms: gradient descent (gd) and three basic stochastic gradient algorithms with a low learning rate, a high learning rate and a power law decay schedule.
 </p>
 </div>
-<p>Comparisons of optimization algorithms should generally be done by
-monitoring their convergence as a function of real time and not iterations,
-but the comparisons in Figure <a href="StochOpt.html#fig:news-trace-plot">9.5</a> are arguably not
-entirely fair to the stochastic gradient algorithm.
-The figure indicates that stochastic gradient and gradient descent
-are about equally fast, but when comparing algorithms in terms of
-real time we are admittedly comparing
-their specific implementations, and the R implementation of the
-stochastic gradient algorithm has some shortcomings. One
+<p>For comparison purposes it is typically better to monitor convergence of
+optimization algorithms as a function of real time than iterations,
+but when comparing algorithms in terms of
+real time we are admittedly comparing their specific implementations.
+The R implementation of the stochastic gradient algorithm has some shortcomings
+that are not shared by the gradient descent algorithm. One
 epoch of the stochastic gradient algorithm should be about as computationally
 demanding as one iteration of gradient descent as both will
 compute the gradient in each data point exactly once and add them up.
 The vectorized batch gradient computation is fairly efficient in R, but the iterative
 looping over data in the stochastic gradient algorithm is not, and this
 inefficiency is compounded by the inefficiency of matrix slicing
-that results in data copying as the profiling revealed.
-One way to circumvent these shortcomings of the implementation
-is to rewrite the inner loop of an epoch using Rcpp.</p>
-<p>In the subsequent section we will see alternatives to the
-basic stochastic gradient algorithm, which will diminish the shortcomings
-of a pure R implementation somewhat. Thus we will not pursue the Rcpp implementation
-here but return to it in Section <a href="StochOpt.html#SG-Rcpp">9.3</a>.</p>
+that results in data copying as the profiling revealed. Thus the
+comparisons in Figure <a href="StochOpt.html#fig:news-trace-plot">9.5</a> are arguably not
+entirely fair to the stochastic gradient algorithm – only the
+specific R implementation.</p>
+<p>In the subsequent section we will see alternatives to the basic stochastic
+gradient algorithm, which will diminish the shortcomings of a pure R
+implementation somewhat. Another way to circumvent some of the shortcomings of
+the R implementation is to rewrite the algorithm using Rcpp. We will pursue
+Rcpp implementations in Section <a href="StochOpt.html#SG-Rcpp">9.3</a>, but we will first consider
+some beneficial modifications of the basic algorithm.</p>
 </div>
 </div>
 <div id="beyond-basic-stochastic-gradient-algorithms" class="section level2" number="9.2">
@@ -722,7 +825,7 @@ here but return to it in Section <a href="StochOpt.html#SG-Rcpp">9.3</a>.</p>
 computed, and though unbiased as an estimate of <span class="math inline">\(\nabla_{\theta} H_N(\theta)\)</span>
 it has a large variance.
 This affects the basic stochastic gradient algorithm negatively as the directions
-suggested can oscillate quite wildly from iteration to iteration. This section
+of each update can oscillate quite wildly from iteration to iteration. This section
 covers some techniques that yield a better tradeoff between
 run time and variability.</p>
 <p>The most obvious technique is to use more than one observation per computation
@@ -746,7 +849,7 @@ to achieve both speed and robustness.</p>
 <p>The three steps of the mini-batch stochastic gradient algorithm
 with mini-batch size <span class="math inline">\(m\)</span> are: given <span class="math inline">\(\theta_{n}\)</span></p>
 <ul>
-<li>sample <span class="math inline">\(m\)</span> indices, <span class="math inline">\(I_n = \{i_1, \ldots, i_m\}\)</span>, from <span class="math inline">\(1, \ldots, N\)</span>
+<li>sample <span class="math inline">\(m\)</span> indices, <span class="math inline">\(I_n = \{i_1, \ldots, i_m\}\)</span>, from <span class="math inline">\(\{1, \ldots, N\}\)</span>
 </li>
 <li>compute <span class="math inline">\(\rho_n = \frac{1}{m} \sum_{i\in I_n} \nabla_{\theta} L(x_i, \theta_{n})\)</span>
 </li>
@@ -754,7 +857,7 @@ with mini-batch size <span class="math inline">\(m\)</span> are: given <span cla
 </li>
 </ul>
 <p>Of course, the mini-batch algorithm with <span class="math inline">\(m = 1\)</span> is the basic stochastic gradient
-algorithm. As for the basic algorithm, we implement the variation of the sampling,
+algorithm. As for the basic algorithm, we implement the variation
 where we sample a <em>partition</em>
 <span class="math display">\[I_1 \cup \ldots \cup I_M \subseteq \{1, \ldots, N\}\]</span>
 for <span class="math inline">\(M = \lfloor N / m \rfloor\)</span> and in one epoch loop through the mini-batches
@@ -764,7 +867,7 @@ stochastic gradient algorithm, and we will therefore implement a more generic
 version of the algorithm. What is common to all the modifications is that they
 differ in the details of the epoch loop, thus we take out that loop as a separate
 function.</p>
-<div class="sourceCode" id="cb415"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb414"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span>
   <span class="va">par</span>, 
   <span class="va">N</span>,                 <span class="co"># Sample size</span>
@@ -785,12 +888,12 @@ function.</p>
 <span class="op">}</span></code></pre></div>
 <p>The implementation uses <code>batch()</code> as the default update function,
 and we implement this function below. It uses the
-random permutation to generate the <span class="math inline">\(M\)</span> mini-batches, and looping through the
-mini-batches it calls <code><a href="https://rdrr.io/pkg/numDeriv/man/grad.html">grad()</a></code> for the computation of the average
-gradient for each mini-batch and then updates the parameter accordingly.
+random permutation to generate the <span class="math inline">\(M\)</span> mini-batches, and it contains a
+loop through the mini-batches containing a call of <code><a href="https://rdrr.io/pkg/numDeriv/man/grad.html">grad()</a></code>
+for the computation of the average gradient for each mini-batch in the loop.
 Note that the <code>grad</code> argument to <code>batch()</code> will be captured by and passed on from
 a call of <code>SG()</code> via the <code>...</code> argument.</p>
-<div class="sourceCode" id="cb416"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb415"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">batch</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span>
     <span class="va">par</span>, 
     <span class="va">samp</span>,
@@ -806,22 +909,21 @@ a call of <code>SG()</code> via the <code>...</code> argument.</p>
     <span class="op">}</span>
     <span class="va">par</span>
 <span class="op">}</span></code></pre></div>
-<p>The <code><a href="https://rdrr.io/pkg/numDeriv/man/grad.html">grad()</a></code> function implemented in <code>ls_model()</code> above assumes that the
-index argument <span class="math inline">\(i\)</span> is a single number and not a vector. As it is implemented,
-it computes for a vector <span class="math inline">\(i\)</span> a matrix containing the
+<p>The <code><a href="https://rdrr.io/pkg/numDeriv/man/grad.html">grad()</a></code> function implemented in <code>ls_model()</code> in Section <a href="StochOpt.html#news">9.1.4</a> assumes
+that the index argument <span class="math inline">\(i\)</span> is a single number and not a vector. It computes
+for a vector <span class="math inline">\(i\)</span> a matrix containing the
 different gradients as columns. We therefore reimplement
 <code>ls_model()</code> so that <code><a href="https://rdrr.io/pkg/numDeriv/man/grad.html">grad()</a></code> computes the average of the gradients
 as it is supposed to for a mini-batch.</p>
-<div class="sourceCode" id="cb417"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb416"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ls_model</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">N</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span>
   <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html">unname</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>
   <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
     par0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span><span class="op">)</span>,
-    <span class="co"># Objective function</span>
     H <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">beta</span><span class="op">)</span>
       <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">-</span> <span class="va">X</span> <span class="op">%*%</span> <span class="va">beta</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">N</span><span class="op">)</span>,
-    <span class="co"># Gradient </span>
+    <span class="co"># Gradient that works for a mini-batch indexed by i</span>
     grad <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">beta</span>, <span class="va">i</span><span class="op">)</span> <span class="op">{</span>               
       <span class="va">xi</span> <span class="op">&lt;-</span> <span class="va">X</span><span class="op">[</span><span class="va">i</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span>
       <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">xi</span>, <span class="va">xi</span> <span class="op">%*%</span> <span class="va">beta</span> <span class="op">-</span> <span class="va">y</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">i</span><span class="op">)</span>
@@ -829,8 +931,8 @@ as it is supposed to for a mini-batch.</p>
   <span class="op">)</span>
 <span class="op">}</span></code></pre></div>
 <p>We initialize the linear model using the new implementation of <code>ls_model()</code>.</p>
-<div class="sourceCode" id="cb418"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">par0</span>, <span class="va">H</span>, <span class="va">grad_obs</span><span class="op">)</span> <span class="op">%&lt;-%</span> <span class="fu">ls_model</span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb417"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">par0</span>, <span class="va">H</span>, <span class="va">ls_grad</span><span class="op">)</span> <span class="op">%&lt;-%</span> <span class="fu">ls_model</span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span><span class="op">)</span></code></pre></div>
 <p>With increased flexibility of the algorithms comes more tuning parameters,
 and making a good choice of all of them becomes increasingly difficult. When
 introducing mini-batches we need to choose the mini-batch size in
@@ -839,18 +941,22 @@ will depend on the size of the mini-batch. To simplify matters, a mini-batch
 size of 1000 and a fixed learning rate are used in the subsequent applications.
 The learning rate will generally be chosen as large as
 possible without making the algorithms diverge, and with a mini-batch size of 1000
-it is possible to run the algorithm with a learning rate of <span class="math inline">\(\gamma = 5 \times 10^{-2}\)</span>.</p>
-<div class="sourceCode" id="cb419"><pre class="downlit sourceCode r">
+it is possible to run the algorithm with a learning rate of <span class="math inline">\(\gamma = 0.05\)</span>.</p>
+<div class="sourceCode" id="cb418"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG_tracer</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span>
 <span class="fu">SG</span><span class="op">(</span>
-  <span class="va">par0</span>, N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, gamma <span class="op">=</span> <span class="fl">5e-2</span>, grad <span class="op">=</span> <span class="va">grad_obs</span>, 
-  m <span class="op">=</span> <span class="fl">1000</span>, maxiter <span class="op">=</span> <span class="fl">200</span>, cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
-<span class="op">)</span>
-<span class="va">SG_trace_mini</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">SG_tracer</span><span class="op">)</span></code></pre></div>
+  par <span class="op">=</span> <span class="va">par0</span>, 
+  N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, 
+  gamma <span class="op">=</span> <span class="fl">5e-2</span>, 
+  grad <span class="op">=</span> <span class="va">ls_grad</span>, 
+  m <span class="op">=</span> <span class="fl">1000</span>, 
+  maxiter <span class="op">=</span> <span class="fl">200</span>, 
+  cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
+<span class="op">)</span></code></pre></div>
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:news-trace-plot-2"></span>
-<img src="CSwR_files/figure-html/news-trace-plot-2-1.png" alt="Convergence of squared error loss on the news article data set for three algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), and mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (mini)." width="100%"><p class="caption">
-Figure 9.6: Convergence of squared error loss on the news article data set for three algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), and mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (mini).
+<img src="CSwR_files/figure-html/news-trace-plot-2-1.png" alt="Convergence of squared error loss on the news article data set for three algorithms: basic stochastic gradient with a power law decay schedule (decay), gradient descent (gd), and mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (mini)." width="100%"><p class="caption">
+Figure 9.6: Convergence of squared error loss on the news article data set for three algorithms: basic stochastic gradient with a power law decay schedule (decay), gradient descent (gd), and mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (mini).
 </p>
 </div>
 <p>Figure <a href="StochOpt.html#fig:news-trace-plot-2">9.6</a> shows that this implementation of
@@ -859,7 +965,11 @@ algorithm converges faster than the basic stochastic gradient algorithm with
 a power law decay schedule
 as well as the gradient descent algorithm. Eventually, it begins to
 fluctuate due to the fixed learning rate, but it quickly gets close to
-the minimum.</p>
+the minimum. We should not jump to conclusions from this assessment. It
+only really shows the improvement to the specific R implementation
+of using a mini-batch algorithm, and this implementation clearly benefits
+from the more vectorized computations with mini-batches of size 1000,
+and we will return to this discussion in Section <a href="StochOpt.html#Rcpp-grad-epoch">9.3.1</a>.</p>
 </div>
 <div id="momentum" class="section level3" number="9.2.2">
 <h3>
@@ -891,7 +1001,7 @@ clear how to achieve this between two epochs using the generic <code>SG()</code>
 implementation, but by implementing momentum epochs using a function factory,
 we can easily use an enclosing environment of the epoch function
 for storage.</p>
-<div class="sourceCode" id="cb420"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb419"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">momentum</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">rho</span> <span class="op">&lt;-</span> <span class="fl">0</span>
   <span class="kw">function</span><span class="op">(</span>
@@ -917,17 +1027,28 @@ for storage.</p>
 of the function factory <code>momentum()</code> returns the momentum epoch function
 with is own local environment used to store <span class="math inline">\(\rho\)</span>. With momentum, we can
 increase the learning rate to <span class="math inline">\(\gamma = 7 \times 10^{-2}\)</span>.</p>
-<div class="sourceCode" id="cb421"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">SG_trace_moment</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">SG_tracer</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb420"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">SG_tracer</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span>
+<span class="fu">SG</span><span class="op">(</span>
+  par <span class="op">=</span> <span class="va">par0</span>, 
+  N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, 
+  gamma <span class="op">=</span> <span class="fl">7e-2</span>, 
+  epoch <span class="op">=</span> <span class="fu">momentum</span><span class="op">(</span><span class="op">)</span>, 
+  grad <span class="op">=</span> <span class="va">ls_grad</span>,
+  m <span class="op">=</span> <span class="fl">1000</span>, 
+  maxiter <span class="op">=</span> <span class="fl">150</span>, 
+  cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
+<span class="op">)</span></code></pre></div>
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:SG-fig-2"></span>
 <img src="CSwR_files/figure-html/SG-fig-2-1.png" alt="Convergence of squared error loss on the news article data set for four algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), and mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate either without momentum (mini) or with momentum (moment)." width="100%"><p class="caption">
 Figure 9.7: Convergence of squared error loss on the news article data set for four algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), and mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate either without momentum (mini) or with momentum (moment).
 </p>
 </div>
-<p>Figure <a href="StochOpt.html#fig:SG-fig-2">9.7</a> shows that due to the increased learning rate of the momentum
-algorithm it decays a little faster than the mini-batch algorithm without
-momentum. With enough memory, momentum dampens rapid fluctuations,
+<p>Figure <a href="StochOpt.html#fig:SG-fig-2">9.7</a> shows that the momentum
+algorithm converges a little faster than the mini-batch algorithm without
+momentum. This can be explained by the slightly larger learning rate made
+possible by the use of momentum. With enough memory, momentum dampens rapid fluctuations,
 which allows for a larger choice of learning rate and a speedier convergence.
 However, too much memory results in low frequency oscillations and slow convergence.
 The excellent article <a href="https://distill.pub/2017/momentum/">Why Momentum Really Works</a>
@@ -940,12 +1061,13 @@ contains many more details about momentum algorithms and beautiful illustrations
 <p>One difficulty with optimization algorithms based only on gradients
 is that gradients are not invariant to reparametrizations. In fact, using gradients
 implicitly assumes that all parameters are on comparable scales. For our news article
-example, we standardized the <span class="math inline">\(X\)</span>-matrix to achieve this, but for many other
+example, we standardized the model matrix to achieve this, but for many other
 optimization problems it is not so easy to choose a parametrization with all
-parameters on comparable scales. And even when we can do so, the common scale
-can change from problem to problem making it impossible to recommend a good
-generic choice of a learning rate. The practical implication is that a considerable
-amount of tuning is necessary, when the algorithms are applied in practice.</p>
+parameters on comparable scales. And even when we can reparametrize so that
+all parameters are on a common scale, this common scale can change from
+problem to problem making it impossible to recommend a good
+default choice of learning rate. The practical implication is that a considerable
+amount of tuning is necessary, when the algorithms are applied.</p>
 <p>Algorithms that implement adaptive learning rates are alternatives to extensive
 tuning. They include schemes for adjusting the learning rate to the specific
 optimization problem. Adapting the learning rate is equivalent to scaling
@@ -955,7 +1077,7 @@ coordinate of the gradient separately.</p>
 <p>To gain some intuition on how to sensibly adapt the scales of the gradient,
 we will analyze the typical scale of the mini-batch gradient for the linear
 model. Introduce first the normalized squared column norms
-<span class="math display">\[\zeta_j = \frac{1}{N} \sum_{i=1}^N x_{ij}^2 = \frac{1}{N} \| x_{\cdot j}\|^2_2\]</span>
+<span class="math display">\[\zeta_j = \frac{1}{N} \sum_{i=1}^N x_{ij}^2 = \frac{1}{N} \| x_{\cdot j}\|^2_2,\]</span>
 and note that with a standardized <span class="math inline">\(X\)</span>, all the <span class="math inline">\(\zeta_j\)</span>-s are equal. With
 <span class="math inline">\(\hat{\beta}\)</span> the least squares estimate we also have that
 <span class="math display">\[\frac{1}{N} \sum_{i=1}^N x_{ij} (y_i - \hat{\beta}{}^Tx_i) = 0\]</span>
@@ -1020,7 +1142,7 @@ the algorithm with <span class="math inline">\(q = 1/2\)</span>.</p>
 <p>The <code>adam()</code> function below is a function factory just as <code>momentum()</code>, which
 returns a function doing the Adam epoch update loop with an enclosing
 environment used for storage of <code>rho</code> and <code>v</code>.</p>
-<div class="sourceCode" id="cb422"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb421"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">adam</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">rho</span> <span class="op">&lt;-</span> <span class="va">v</span> <span class="op">&lt;-</span> <span class="fl">0</span>
   <span class="kw">function</span><span class="op">(</span>
@@ -1045,36 +1167,49 @@ environment used for storage of <code>rho</code> and <code>v</code>.</p>
     <span class="va">par</span>
   <span class="op">}</span>
 <span class="op">}</span></code></pre></div>
-<p>We run the stochastic gradient algorithm with adam updates and mini-batches of
-size 1000 with a fixed learning rate of <span class="math inline">\(10^{-2}\)</span> and a power law decay
-schedule interpolating between a learning rate of <span class="math inline">\(0.5\)</span> and <span class="math inline">\(2 \times 10^{-3}\)</span>.
+<p>We run the stochastic gradient algorithm with Adam epochs and mini-batches of
+size 1000 with a fixed learning rate of <span class="math inline">\(0.01\)</span> and a power law decay
+schedule interpolating between a learning rate of <span class="math inline">\(0.5\)</span> and <span class="math inline">\(0.002\)</span>.
 The theoretical results by <span class="citation"><a href="references.html#ref-kingma2014adam" role="doc-biblioref">Kingma and Ba</a> (<a href="references.html#ref-kingma2014adam" role="doc-biblioref">2014</a>)</span> support a decay schedule proportional
 to <span class="math inline">\(1/\sqrt{n}\)</span>, thus we take <span class="math inline">\(a = 0.5\)</span> below.</p>
-<div class="sourceCode" id="cb423"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb422"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG_tracer</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span>
 <span class="fu">SG</span><span class="op">(</span>
-  <span class="va">par0</span>, N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, gamma <span class="op">=</span> <span class="fl">1e-2</span>, epoch <span class="op">=</span> <span class="fu">adam</span><span class="op">(</span><span class="op">)</span>, grad <span class="op">=</span> <span class="va">grad_obs</span>,
-  m <span class="op">=</span> <span class="fl">1000</span>, maxiter <span class="op">=</span> <span class="fl">150</span>, cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
+  par <span class="op">=</span> <span class="va">par0</span>, 
+  N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, 
+  gamma <span class="op">=</span> <span class="fl">1e-2</span>, 
+  epoch <span class="op">=</span> <span class="fu">adam</span><span class="op">(</span><span class="op">)</span>, 
+  grad <span class="op">=</span> <span class="va">ls_grad</span>,
+  m <span class="op">=</span> <span class="fl">1000</span>, 
+  maxiter <span class="op">=</span> <span class="fl">150</span>, 
+  cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
 <span class="op">)</span>
 <span class="va">SG_trace_adam</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">SG_tracer</span><span class="op">)</span>
-<span class="va">rate</span> <span class="op">&lt;-</span> <span class="fu">decay_scheduler</span><span class="op">(</span>gamma0 <span class="op">=</span> <span class="fl">0.5</span>, gamma1 <span class="op">=</span> <span class="fl">2e-3</span>, a <span class="op">=</span> <span class="fl">0.5</span>, n1 <span class="op">=</span> <span class="fl">150</span><span class="op">)</span> 
 <span class="va">SG_tracer</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span>
 <span class="fu">SG</span><span class="op">(</span>
-  <span class="va">par0</span>, N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, gamma <span class="op">=</span> <span class="va">rate</span>, epoch <span class="op">=</span> <span class="fu">adam</span><span class="op">(</span><span class="op">)</span>, grad <span class="op">=</span> <span class="va">grad_obs</span>,
-  m <span class="op">=</span> <span class="fl">1000</span>, maxiter <span class="op">=</span> <span class="fl">150</span>, cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
+  par <span class="op">=</span> <span class="va">par0</span>, 
+  N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, 
+  gamma <span class="op">=</span> <span class="fu">decay_scheduler</span><span class="op">(</span>gamma0 <span class="op">=</span> <span class="fl">0.5</span>, gamma1 <span class="op">=</span> <span class="fl">2e-3</span>, a <span class="op">=</span> <span class="fl">0.5</span>, n1 <span class="op">=</span> <span class="fl">150</span><span class="op">)</span>, 
+  epoch <span class="op">=</span> <span class="fu">adam</span><span class="op">(</span><span class="op">)</span>, 
+  grad <span class="op">=</span> <span class="va">ls_grad</span>,
+  m <span class="op">=</span> <span class="fl">1000</span>, 
+  maxiter <span class="op">=</span> <span class="fl">150</span>, 
+  cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
 <span class="op">)</span>
 <span class="va">SG_trace_adam_decay</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">SG_tracer</span><span class="op">)</span></code></pre></div>
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:SG-fig-3"></span>
-<img src="CSwR_files/figure-html/SG-fig-3-1.png" alt="Convergence of squared error loss on the news article data set for six algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate either without momentum (mini) or with momentum (moment), and the Adam algorithm either with a fixed learning rate (adam) or a power law decay schedule (adam\_decay)." width="100%"><p class="caption">
-Figure 9.8: Convergence of squared error loss on the news article data set for six algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate either without momentum (mini) or with momentum (moment), and the Adam algorithm either with a fixed learning rate (adam) or a power law decay schedule (adam_decay).
+<img src="CSwR_files/figure-html/SG-fig-3-1.png" alt="Convergence of squared error loss on the news article data set for six algorithms: basic stochastic gradient with a power law decay schedule (decay), gradient descent (gd), mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate either without momentum (mini) or with momentum (moment), and the Adam algorithm either with a fixed learning rate (adam) or a power law decay schedule (adam\_decay)." width="100%"><p class="caption">
+Figure 9.8: Convergence of squared error loss on the news article data set for six algorithms: basic stochastic gradient with a power law decay schedule (decay), gradient descent (gd), mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate either without momentum (mini) or with momentum (moment), and the Adam algorithm either with a fixed learning rate (adam) or a power law decay schedule (adam_decay).
 </p>
 </div>
 <p>Figure <a href="StochOpt.html#fig:SG-fig-3">9.8</a> shows that both runs of the Adam implementation
-decay faster initially than any of the other algorithms. Eventually they
+converge faster initially than any of the other algorithms. Eventually they
 both level off when the error is around <span class="math inline">\(10^{-3}\)</span> and from this point on
 they fluctuate randomly. What is not shown is that Adam is also somewhat
-more robust to changes of the learning rate and rescaling of the parameters.</p>
+more robust to changes of the learning rate and rescaling of the parameters.
+Though Adam has more tuning parameters, it is easier to find good values
+of those parameters that will lead to fast convergence.</p>
 </div>
 </div>
 <div id="SG-Rcpp" class="section level2" number="9.3">
@@ -1087,7 +1222,7 @@ section we will explore how either parts of the algorithms or entire
 algorithms can be moved to C++ via Rcpp.</p>
 <p>The modularity of the <code>SG()</code> implementation makes it easy to replace the
 implementation of either the gradient computation or the entire epoch
-loop in C++, while retaining the overall control of the algorithm and the
+loop by a C++ implementation, while retaining the overall control of the algorithm and the
 resampling in R. This is explored first and consists mostly of translating
 the numerical linear algebra of the gradient computations into C++ code.
 We can then easily test, compare and benchmark the implementations using the R
@@ -1098,7 +1233,7 @@ we need access to a sampler in C++ that can do the randomization. While
 there are various C++ interfaces to an equivalent of <code><a href="https://rdrr.io/r/base/sample.html">sample()</a></code>, some
 considerations need to go into an appropriate choice. Second, we have to
 give up on tracing as otherwise implemented. Though it is possible to implement
-callback of an R function from a C++ functions, a tracer will not have
+callback of an R function from a C++ function, a tracer will not have
 the same access to the calling environment as in the R implementation.
 Thus for performance assessment we will rely on benchmarking
 of the entire algorithm.</p>
@@ -1108,137 +1243,432 @@ that R provides, though we will benefit from Rcpp data types like
 we will use <a href="http://dirk.eddelbuettel.com/code/rcpp.armadillo.html">RcppArmadillo</a>
 to regain an abstract approach to numerical linear
 algebra via the C++ library <a href="http://arma.sourceforge.net/">Armadillo</a>.</p>
-<div id="gradients-and-epochs-in-rcpp" class="section level3" number="9.3.1">
+<div id="Rcpp-grad-epoch" class="section level3" number="9.3.1">
 <h3>
-<span class="header-section-number">9.3.1</span> Gradients and epochs in Rcpp<a class="anchor" aria-label="anchor" href="#gradients-and-epochs-in-rcpp"><i class="fas fa-link"></i></a>
+<span class="header-section-number">9.3.1</span> Gradients and epochs in Rcpp<a class="anchor" aria-label="anchor" href="#Rcpp-grad-epoch"><i class="fas fa-link"></i></a>
 </h3>
-<div class="sourceCode" id="cb424"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb424-1"><a href="StochOpt.html#cb424-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
-<span id="cb424-2"><a href="StochOpt.html#cb424-2" aria-hidden="true" tabindex="-1"></a>NumericVector lin_grad(NumericVector beta, IntegerVector ii, </span>
-<span id="cb424-3"><a href="StochOpt.html#cb424-3" aria-hidden="true" tabindex="-1"></a>                       NumericMatrix X, NumericVector y) {</span>
-<span id="cb424-4"><a href="StochOpt.html#cb424-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> m = ii.length(), p = beta.length();</span>
-<span id="cb424-5"><a href="StochOpt.html#cb424-5" aria-hidden="true" tabindex="-1"></a>  NumericVector grad(p), yhat(m);</span>
-<span id="cb424-6"><a href="StochOpt.html#cb424-6" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Shift indices one down due to zero-indexing in C++</span></span>
-<span id="cb424-7"><a href="StochOpt.html#cb424-7" aria-hidden="true" tabindex="-1"></a>  IntegerVector iii = clone(ii) - <span class="dv">1</span>;  </span>
-<span id="cb424-8"><a href="StochOpt.html#cb424-8" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb424-9"><a href="StochOpt.html#cb424-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; m; ++i) {</span>
-<span id="cb424-10"><a href="StochOpt.html#cb424-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; p; ++j) {</span>
-<span id="cb424-11"><a href="StochOpt.html#cb424-11" aria-hidden="true" tabindex="-1"></a>      yhat[i] += X(iii[i], j) * beta[j];</span>
-<span id="cb424-12"><a href="StochOpt.html#cb424-12" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb424-13"><a href="StochOpt.html#cb424-13" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb424-14"><a href="StochOpt.html#cb424-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; m; ++i) {</span>
-<span id="cb424-15"><a href="StochOpt.html#cb424-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; p; ++j) {</span>
-<span id="cb424-16"><a href="StochOpt.html#cb424-16" aria-hidden="true" tabindex="-1"></a>      grad[j] += X(iii[i], j) * (yhat[i]- y[iii[i]]);</span>
-<span id="cb424-17"><a href="StochOpt.html#cb424-17" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb424-18"><a href="StochOpt.html#cb424-18" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb424-19"><a href="StochOpt.html#cb424-19" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> grad / m;</span>
-<span id="cb424-20"><a href="StochOpt.html#cb424-20" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<div class="sourceCode" id="cb425"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb425-1"><a href="StochOpt.html#cb425-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
-<span id="cb425-2"><a href="StochOpt.html#cb425-2" aria-hidden="true" tabindex="-1"></a>NumericVector lin_epoch(NumericVector par, IntegerVector ii, </span>
-<span id="cb425-3"><a href="StochOpt.html#cb425-3" aria-hidden="true" tabindex="-1"></a>                        <span class="dt">double</span> gamma, NumericMatrix X, NumericVector y, <span class="dt">int</span> m = <span class="dv">50</span>) {</span>
-<span id="cb425-4"><a href="StochOpt.html#cb425-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> p = par.length(), N = ii.length();</span>
-<span id="cb425-5"><a href="StochOpt.html#cb425-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> M = floor(N / m);</span>
-<span id="cb425-6"><a href="StochOpt.html#cb425-6" aria-hidden="true" tabindex="-1"></a>  NumericVector grad(p), yhat(N), beta = clone(par);</span>
-<span id="cb425-7"><a href="StochOpt.html#cb425-7" aria-hidden="true" tabindex="-1"></a>  IntegerVector iii = clone(ii) - <span class="dv">1</span>;  </span>
-<span id="cb425-8"><a href="StochOpt.html#cb425-8" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb425-9"><a href="StochOpt.html#cb425-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; M; ++j) {</span>
-<span id="cb425-10"><a href="StochOpt.html#cb425-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
-<span id="cb425-11"><a href="StochOpt.html#cb425-11" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
-<span id="cb425-12"><a href="StochOpt.html#cb425-12" aria-hidden="true" tabindex="-1"></a>        yhat[i] += X(iii[i], k) * beta[k];</span>
-<span id="cb425-13"><a href="StochOpt.html#cb425-13" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb425-14"><a href="StochOpt.html#cb425-14" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb425-15"><a href="StochOpt.html#cb425-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
-<span id="cb425-16"><a href="StochOpt.html#cb425-16" aria-hidden="true" tabindex="-1"></a>      grad[k] = <span class="dv">0</span>;</span>
-<span id="cb425-17"><a href="StochOpt.html#cb425-17" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
-<span id="cb425-18"><a href="StochOpt.html#cb425-18" aria-hidden="true" tabindex="-1"></a>        grad[k] += X(iii[i], k) * (yhat[i] - y[iii[i]]);</span>
-<span id="cb425-19"><a href="StochOpt.html#cb425-19" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb425-20"><a href="StochOpt.html#cb425-20" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb425-21"><a href="StochOpt.html#cb425-21" aria-hidden="true" tabindex="-1"></a>    beta = beta - gamma * grad / m;</span>
-<span id="cb425-22"><a href="StochOpt.html#cb425-22" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb425-23"><a href="StochOpt.html#cb425-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> beta;</span>
-<span id="cb425-24"><a href="StochOpt.html#cb425-24" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<p>A mini-batch run with Rcpp gradients</p>
-<div class="sourceCode" id="cb426"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">SG_tracer</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span>
-<span class="fu">SG</span><span class="op">(</span>
-  <span class="va">par0</span>, N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, gamma <span class="op">=</span> <span class="fl">5e-5</span>, grad <span class="op">=</span> <span class="va">lin_grad</span>, 
-  X <span class="op">=</span> <span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span>, m <span class="op">=</span> <span class="fl">1</span>, maxiter <span class="op">=</span> <span class="fl">100</span>, cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
+<p>We first implement the computation of the mini-batch gradient in Rcpp for
+the linear model, thus replacing the R implementation of the gradient in
+<code>ls_model()</code>. The implemented function takes the model matrix <span class="math inline">\(X\)</span> and the
+target variable <span class="math inline">\(y\)</span> as arguments in addition to
+the parameter and the subset of indices representing the mini-batch.
+The matrix-vector multiplications for computing predicted values,
+residuals and ultimately the gradient are replaced by two double for-loops.</p>
+<div class="sourceCode" id="cb423"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb423-1"><a href="StochOpt.html#cb423-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb423-2"><a href="StochOpt.html#cb423-2" aria-hidden="true" tabindex="-1"></a>NumericVector lin_grad(</span>
+<span id="cb423-3"><a href="StochOpt.html#cb423-3" aria-hidden="true" tabindex="-1"></a>    NumericVector beta, </span>
+<span id="cb423-4"><a href="StochOpt.html#cb423-4" aria-hidden="true" tabindex="-1"></a>    IntegerVector ii, </span>
+<span id="cb423-5"><a href="StochOpt.html#cb423-5" aria-hidden="true" tabindex="-1"></a>    NumericMatrix X, </span>
+<span id="cb423-6"><a href="StochOpt.html#cb423-6" aria-hidden="true" tabindex="-1"></a>    NumericVector y</span>
+<span id="cb423-7"><a href="StochOpt.html#cb423-7" aria-hidden="true" tabindex="-1"></a>) {</span>
+<span id="cb423-8"><a href="StochOpt.html#cb423-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> m = ii.length(), p = beta.length();</span>
+<span id="cb423-9"><a href="StochOpt.html#cb423-9" aria-hidden="true" tabindex="-1"></a>  NumericVector grad(p), yhat(m);</span>
+<span id="cb423-10"><a href="StochOpt.html#cb423-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Shift indices one down due to zero-indexing in C++</span></span>
+<span id="cb423-11"><a href="StochOpt.html#cb423-11" aria-hidden="true" tabindex="-1"></a>  IntegerVector iii = clone(ii) - <span class="dv">1</span>;  </span>
+<span id="cb423-12"><a href="StochOpt.html#cb423-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb423-13"><a href="StochOpt.html#cb423-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; m; ++i) {</span>
+<span id="cb423-14"><a href="StochOpt.html#cb423-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; p; ++j) {</span>
+<span id="cb423-15"><a href="StochOpt.html#cb423-15" aria-hidden="true" tabindex="-1"></a>      yhat[i] += X(iii[i], j) * beta[j];</span>
+<span id="cb423-16"><a href="StochOpt.html#cb423-16" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb423-17"><a href="StochOpt.html#cb423-17" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb423-18"><a href="StochOpt.html#cb423-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; m; ++i) {</span>
+<span id="cb423-19"><a href="StochOpt.html#cb423-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; p; ++j) {</span>
+<span id="cb423-20"><a href="StochOpt.html#cb423-20" aria-hidden="true" tabindex="-1"></a>      grad[j] += X(iii[i], j) * (yhat[i]- y[iii[i]]);</span>
+<span id="cb423-21"><a href="StochOpt.html#cb423-21" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb423-22"><a href="StochOpt.html#cb423-22" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb423-23"><a href="StochOpt.html#cb423-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> grad / m;</span>
+<span id="cb423-24"><a href="StochOpt.html#cb423-24" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Note how <code>clone(ii)</code> is used to create a copy of the index vector <code>ii</code> before
+it is shifted by one. When R objects like vectors and matrices are passed
+as arguments to a C++ function, only a pointer to the data in the object
+is effectively passed. A modification of the resulting Rcpp object within
+the body of the C++ function will be reflected in R – most likely
+as an unwanted side effect. To prevent this we can create a
+copy using <code>clone()</code> of all data in the object – a so-called deep copy.</p>
+<p>Since only a pointer to a matrix is passed when calling
+a C++ function, no notable cost is associated with passing the entire
+model matrix as argument. On the contrary, if we were to pass a subset of the model
+matrix to the C++ function from R, data would inevitably be copied.
+And since slicing of the matrix in C++ does not create a copy of data,
+the implementation of <code>lin_grad()</code> avoids the data copying problem that
+matrix slicing in R incurred on the gradient computations.</p>
+<p>We could test <code>lin_grad()</code> by comparing it to <code>ls_grad()</code> for different
+choices of parameter vectors and indices. A simple way to achieve this is
+to run the mini-batch stochastic gradient algorithm with either implementation
+of the gradient for one epoch and compare the results. Note
+that we make sure the algorithms use the same mini-batches by setting the seed.</p>
+<div class="sourceCode" id="cb424"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>
+<span class="va">par1</span> <span class="op">&lt;-</span> <span class="fu">SG</span><span class="op">(</span>
+  par <span class="op">=</span> <span class="va">par0</span>,
+  grad <span class="op">=</span> <span class="va">ls_grad</span>,
+  N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>,
+  gamma <span class="op">=</span> <span class="fl">0.01</span>,
+  maxiter <span class="op">=</span> <span class="fl">1</span>
 <span class="op">)</span>
-<span class="va">SG_trace_Rcpp_grad</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">SG_tracer</span><span class="op">)</span>
-<span class="va">SG_tracer</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span>
-<span class="fu">SG</span><span class="op">(</span>
-  <span class="va">par0</span>, N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, gamma <span class="op">=</span> <span class="fl">5e-5</span>, epoch <span class="op">=</span> <span class="va">lin_epoch</span>,   
-  X <span class="op">=</span> <span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span>, m <span class="op">=</span> <span class="fl">1</span>, maxiter <span class="op">=</span> <span class="fl">200</span>, cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
+<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>
+<span class="va">par2</span> <span class="op">&lt;-</span> <span class="fu">SG</span><span class="op">(</span>
+  par <span class="op">=</span> <span class="va">par0</span>, 
+  grad <span class="op">=</span> <span class="va">lin_grad</span>,
+  N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>,
+  gamma <span class="op">=</span> <span class="fl">0.01</span>,
+  maxiter <span class="op">=</span> <span class="fl">1</span>, 
+  X <span class="op">=</span> <span class="va">X</span>,
+  y <span class="op">=</span> <span class="va">y</span>
 <span class="op">)</span>
-<span class="va">SG_trace_Rcpp_epoch</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">SG_tracer</span><span class="op">)</span>
-<span class="va">SG_tracer</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span>
-<span class="fu">SG</span><span class="op">(</span>
-  <span class="va">par0</span>, N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, gamma <span class="op">=</span> <span class="fl">5e-2</span>, epoch <span class="op">=</span> <span class="va">lin_epoch</span>,   
-  X <span class="op">=</span> <span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span>, m <span class="op">=</span> <span class="fl">1000</span>, maxiter <span class="op">=</span> <span class="fl">200</span>, cb <span class="op">=</span> <span class="va">SG_tracer</span><span class="op">$</span><span class="va">tracer</span>
+<span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="va">par1</span> <span class="op">-</span> <span class="va">par2</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] 0 0</code></pre>
+<p>The differences are all 0, thus the test indicates that <code>lin_grad()</code> implements
+the same computation as <code>ls_grad()</code>.</p>
+<p>We can also move the entire epoch loop to C++, thus replacing the <code>batch()</code>
+R function by Rcpp function <code>lin_batch()</code> below. This is achieved simply by
+adding one outer loop to <code>lin_grad()</code> above, which loops over mini-batches and
+updates the parameter vector.</p>
+<div class="sourceCode" id="cb426"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb426-1"><a href="StochOpt.html#cb426-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb426-2"><a href="StochOpt.html#cb426-2" aria-hidden="true" tabindex="-1"></a>NumericVector lin_batch(</span>
+<span id="cb426-3"><a href="StochOpt.html#cb426-3" aria-hidden="true" tabindex="-1"></a>    NumericVector par, </span>
+<span id="cb426-4"><a href="StochOpt.html#cb426-4" aria-hidden="true" tabindex="-1"></a>    IntegerVector ii, </span>
+<span id="cb426-5"><a href="StochOpt.html#cb426-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> gamma, </span>
+<span id="cb426-6"><a href="StochOpt.html#cb426-6" aria-hidden="true" tabindex="-1"></a>    NumericMatrix X, </span>
+<span id="cb426-7"><a href="StochOpt.html#cb426-7" aria-hidden="true" tabindex="-1"></a>    NumericVector y, </span>
+<span id="cb426-8"><a href="StochOpt.html#cb426-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> m = <span class="dv">50</span></span>
+<span id="cb426-9"><a href="StochOpt.html#cb426-9" aria-hidden="true" tabindex="-1"></a>) {</span>
+<span id="cb426-10"><a href="StochOpt.html#cb426-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> p = par.length(), N = ii.length();</span>
+<span id="cb426-11"><a href="StochOpt.html#cb426-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> M = floor(N / m);</span>
+<span id="cb426-12"><a href="StochOpt.html#cb426-12" aria-hidden="true" tabindex="-1"></a>  NumericVector grad(p), yhat(N), beta = clone(par);</span>
+<span id="cb426-13"><a href="StochOpt.html#cb426-13" aria-hidden="true" tabindex="-1"></a>  IntegerVector iii = clone(ii) - <span class="dv">1</span>;  </span>
+<span id="cb426-14"><a href="StochOpt.html#cb426-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb426-15"><a href="StochOpt.html#cb426-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; M; ++j) {</span>
+<span id="cb426-16"><a href="StochOpt.html#cb426-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
+<span id="cb426-17"><a href="StochOpt.html#cb426-17" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
+<span id="cb426-18"><a href="StochOpt.html#cb426-18" aria-hidden="true" tabindex="-1"></a>        yhat[i] += X(iii[i], k) * beta[k];</span>
+<span id="cb426-19"><a href="StochOpt.html#cb426-19" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb426-20"><a href="StochOpt.html#cb426-20" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb426-21"><a href="StochOpt.html#cb426-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
+<span id="cb426-22"><a href="StochOpt.html#cb426-22" aria-hidden="true" tabindex="-1"></a>      grad[k] = <span class="dv">0</span>;</span>
+<span id="cb426-23"><a href="StochOpt.html#cb426-23" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
+<span id="cb426-24"><a href="StochOpt.html#cb426-24" aria-hidden="true" tabindex="-1"></a>        grad[k] += X(iii[i], k) * (yhat[i] - y[iii[i]]);</span>
+<span id="cb426-25"><a href="StochOpt.html#cb426-25" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb426-26"><a href="StochOpt.html#cb426-26" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb426-27"><a href="StochOpt.html#cb426-27" aria-hidden="true" tabindex="-1"></a>    beta = beta - gamma * (grad / m);</span>
+<span id="cb426-28"><a href="StochOpt.html#cb426-28" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb426-29"><a href="StochOpt.html#cb426-29" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> beta;</span>
+<span id="cb426-30"><a href="StochOpt.html#cb426-30" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>We can test the implementation of <code>lin_batch()</code> just as <code>lin_grad()</code> by
+running the stochastic gradient algorithm for one epoch. We note that
+the <code>lin_batch()</code> function should be passed to <code>SG()</code> as the <code>epoch</code> argument,
+and that no <code>grad</code> argument is required. The gradient computations are hard
+coded into the implementation of this epoch function.</p>
+<div class="sourceCode" id="cb427"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>
+<span class="va">par1</span> <span class="op">&lt;-</span> <span class="fu">SG</span><span class="op">(</span>
+  par <span class="op">=</span> <span class="va">par0</span>,
+  grad <span class="op">=</span> <span class="va">ls_grad</span>,
+  N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>,
+  gamma <span class="op">=</span> <span class="fl">0.01</span>,
+  maxiter <span class="op">=</span> <span class="fl">1</span>
 <span class="op">)</span>
-<span class="va">SG_trace_Rcpp_epoch_mini</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">SG_tracer</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>
+<span class="va">par2</span> <span class="op">&lt;-</span> <span class="fu">SG</span><span class="op">(</span>
+  par <span class="op">=</span> <span class="va">par0</span>, 
+  epoch <span class="op">=</span> <span class="va">lin_batch</span>,   
+  N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>,
+  gamma <span class="op">=</span> <span class="fl">0.01</span>,
+  maxiter <span class="op">=</span> <span class="fl">1</span>, 
+  X <span class="op">=</span> <span class="va">X</span>,
+  y <span class="op">=</span> <span class="va">y</span>
+<span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="va">par1</span> <span class="op">-</span> <span class="va">par2</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] 0 0</code></pre>
+<p>We see that these differences are also zero, and the test indicates that
+<code>lin_batch()</code> implements the same computation as <code>batch()</code> with either
+of the two implementations of the gradient.</p>
+<p>To investigate the effect of the C++ implementation, the mini-batch
+stochastic gradient algorithm is run with the Rcpp implementations of
+either the gradient or the entire epoch using a mini-batch size of 1000
+and a constant learning rate <span class="math inline">\(\gamma = 0.05\)</span>, which can be compared to
+the pure R implementation. In addition, we run the algorithm with
+mini-batch size one and <span class="math inline">\(\gamma = 5 \times 10^{-5}\)</span> using the Rcpp
+implementation of the epoch.</p>
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:SG-fig-4"></span>
-<img src="CSwR_files/figure-html/SG-fig-4-1.png" alt="Convergence of squared error loss on the news article data set for six algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate either without momentum (mini) or with momentum (moment), and the ADAM algorithm either with a fixed learning rate (adam) or a power law decay schedule (adam\_decay)." width="100%"><p class="caption">
-Figure 9.9: Convergence of squared error loss on the news article data set for six algorithms: gradient descent (gd), basic stochastic gradient with a power law decay schedule (decay), mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate either without momentum (mini) or with momentum (moment), and the ADAM algorithm either with a fixed learning rate (adam) or a power law decay schedule (adam_decay).
+<img src="CSwR_files/figure-html/SG-fig-4-1.png" alt="Convergence of squared error loss on the news article data set for four algorithms: R implementation of mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (mini), the same mini-batch algorithm but with the gradient implemented in Rcpp (Rcpp_grad_mini) and with the entire epoch implemented in Rcpp (Rcpp_epoch_mini), and the basic stochastic gradient algorithm with the entire epoch implemented in Rcpp (Rcpp_epoch)." width="100%"><p class="caption">
+Figure 9.9: Convergence of squared error loss on the news article data set for four algorithms: R implementation of mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (mini), the same mini-batch algorithm but with the gradient implemented in Rcpp (Rcpp_grad_mini) and with the entire epoch implemented in Rcpp (Rcpp_epoch_mini), and the basic stochastic gradient algorithm with the entire epoch implemented in Rcpp (Rcpp_epoch).
 </p>
 </div>
+<p>Figure <a href="StochOpt.html#fig:SG-fig-4">9.9</a> shows, unsurprisingly, that implementing the
+gradient as a C++ function makes the convergence faster compared to the pure
+R implementation, but turning the entire epoch into a C++ function results in
+little if any further improvement. However, the figure also shows that
+the basic stochastic gradient algorithm (mini-batch size equal to one) converges
+at a rate comparable to that of the mini-batch algorithm with mini-batch
+size 1000 when the entire epoch is in C++. Thus any benefit of the mini-batch
+algorithm with mini-batch size 1000 seems to be largely due to the
+inefficiency of the basic algorithm in pure R. Experiments using the
+<code>lin_batch()</code> epoch implementation (not shown) suggest that the mini-batch
+algorithm does have a real edge over the basic algorithm, but with much smaller
+mini-batch sizes, e.g. <span class="math inline">\(m = 20\)</span>, cf Exercise <a href="StochOpt.html#exr:mini-batch-size">9.4</a>.</p>
 </div>
 <div id="full-rcpp-implementations" class="section level3" number="9.3.2">
 <h3>
 <span class="header-section-number">9.3.2</span> Full Rcpp implementations<a class="anchor" aria-label="anchor" href="#full-rcpp-implementations"><i class="fas fa-link"></i></a>
 </h3>
-<p>Here</p>
-<div class="sourceCode" id="cb427"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb427-1"><a href="StochOpt.html#cb427-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(dqrng)]]</span></span>
-<span id="cb427-2"><a href="StochOpt.html#cb427-2" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
-<span id="cb427-3"><a href="StochOpt.html#cb427-3" aria-hidden="true" tabindex="-1"></a>NumericVector SG_Rcpp(NumericVector par, <span class="dt">int</span> N, NumericVector gamma,</span>
-<span id="cb427-4"><a href="StochOpt.html#cb427-4" aria-hidden="true" tabindex="-1"></a>                      NumericMatrix X, NumericVector y,</span>
-<span id="cb427-5"><a href="StochOpt.html#cb427-5" aria-hidden="true" tabindex="-1"></a>                      <span class="dt">int</span> m = <span class="dv">50</span>, <span class="dt">int</span> maxiter = <span class="dv">100</span>) {</span>
-<span id="cb427-6"><a href="StochOpt.html#cb427-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> p = par.length(), M = floor(N / m);</span>
-<span id="cb427-7"><a href="StochOpt.html#cb427-7" aria-hidden="true" tabindex="-1"></a>  NumericVector grad(p), yhat(N), beta = clone(par);</span>
-<span id="cb427-8"><a href="StochOpt.html#cb427-8" aria-hidden="true" tabindex="-1"></a>  IntegerVector ii;</span>
-<span id="cb427-9"><a href="StochOpt.html#cb427-9" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb427-10"><a href="StochOpt.html#cb427-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> l = <span class="dv">0</span>; l &lt; maxiter; ++l) {</span>
-<span id="cb427-11"><a href="StochOpt.html#cb427-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Note that dqsample_int samples from {0, 1, ..., N - 1}</span></span>
-<span id="cb427-12"><a href="StochOpt.html#cb427-12" aria-hidden="true" tabindex="-1"></a>    ii = dqrng::dqsample_int(N, N); </span>
-<span id="cb427-13"><a href="StochOpt.html#cb427-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; M; ++j) {</span>
-<span id="cb427-14"><a href="StochOpt.html#cb427-14" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
-<span id="cb427-15"><a href="StochOpt.html#cb427-15" aria-hidden="true" tabindex="-1"></a>        yhat[i] = <span class="dv">0</span>;</span>
-<span id="cb427-16"><a href="StochOpt.html#cb427-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
-<span id="cb427-17"><a href="StochOpt.html#cb427-17" aria-hidden="true" tabindex="-1"></a>          yhat[i] += X(ii[i], k) * beta[k];</span>
-<span id="cb427-18"><a href="StochOpt.html#cb427-18" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb427-19"><a href="StochOpt.html#cb427-19" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb427-20"><a href="StochOpt.html#cb427-20" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
-<span id="cb427-21"><a href="StochOpt.html#cb427-21" aria-hidden="true" tabindex="-1"></a>        grad[k] = <span class="dv">0</span>;</span>
-<span id="cb427-22"><a href="StochOpt.html#cb427-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
-<span id="cb427-23"><a href="StochOpt.html#cb427-23" aria-hidden="true" tabindex="-1"></a>          grad[k] += X(ii[i], k) * (yhat[i] - y[ii[i]]);</span>
-<span id="cb427-24"><a href="StochOpt.html#cb427-24" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb427-25"><a href="StochOpt.html#cb427-25" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb427-26"><a href="StochOpt.html#cb427-26" aria-hidden="true" tabindex="-1"></a>      beta = beta - gamma[l] * grad / m;</span>
-<span id="cb427-27"><a href="StochOpt.html#cb427-27" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb427-28"><a href="StochOpt.html#cb427-28" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb427-29"><a href="StochOpt.html#cb427-29" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> beta;</span>
-<span id="cb427-30"><a href="StochOpt.html#cb427-30" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<div class="sourceCode" id="cb428"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb428-1"><a href="StochOpt.html#cb428-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(RcppArmadillo)]]</span></span>
-<span id="cb428-2"><a href="StochOpt.html#cb428-2" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
-<span id="cb428-3"><a href="StochOpt.html#cb428-3" aria-hidden="true" tabindex="-1"></a>arma::colvec SG_arma(NumericVector par, <span class="dt">int</span> N, NumericVector gamma,</span>
-<span id="cb428-4"><a href="StochOpt.html#cb428-4" aria-hidden="true" tabindex="-1"></a>                      <span class="at">const</span> arma::mat&amp; X, <span class="at">const</span> arma::colvec&amp; y, </span>
-<span id="cb428-5"><a href="StochOpt.html#cb428-5" aria-hidden="true" tabindex="-1"></a>                      <span class="dt">int</span> m = <span class="dv">50</span>, <span class="dt">int</span> maxiter = <span class="dv">100</span>) {</span>
-<span id="cb428-6"><a href="StochOpt.html#cb428-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> p = par.length(), M = floor(N / m);</span>
-<span id="cb428-7"><a href="StochOpt.html#cb428-7" aria-hidden="true" tabindex="-1"></a>  arma::colvec grad(p), yhat(N), beta = clone(par);</span>
-<span id="cb428-8"><a href="StochOpt.html#cb428-8" aria-hidden="true" tabindex="-1"></a>  uvec ii, iii;</span>
-<span id="cb428-9"><a href="StochOpt.html#cb428-9" aria-hidden="true" tabindex="-1"></a>  gamma = gamma / m;</span>
-<span id="cb428-10"><a href="StochOpt.html#cb428-10" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb428-11"><a href="StochOpt.html#cb428-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> l = <span class="dv">0</span>; l &lt; maxiter; ++l) {</span>
-<span id="cb428-12"><a href="StochOpt.html#cb428-12" aria-hidden="true" tabindex="-1"></a>    ii = as&lt;arma::uvec&gt;(dqrng::dqsample_int(N, N));</span>
-<span id="cb428-13"><a href="StochOpt.html#cb428-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; M; ++j) {</span>
-<span id="cb428-14"><a href="StochOpt.html#cb428-14" aria-hidden="true" tabindex="-1"></a>      iii = ii.subvec(j * m, (j + <span class="dv">1</span>) * m - <span class="dv">1</span>);</span>
-<span id="cb428-15"><a href="StochOpt.html#cb428-15" aria-hidden="true" tabindex="-1"></a>      beta = beta - gamma[l] * X.rows(iii).t() * (X.rows(iii) * beta - y(iii)); </span>
-<span id="cb428-16"><a href="StochOpt.html#cb428-16" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb428-17"><a href="StochOpt.html#cb428-17" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb428-18"><a href="StochOpt.html#cb428-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> beta;</span>
-<span id="cb428-19"><a href="StochOpt.html#cb428-19" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-
+<p>In this section we convert the entire stochastic gradient algorithm for
+the linear model into a C++ function. Two considerations come up
+when doing so:</p>
+<ul>
+<li>How do we sample with or without replacement in C++?</li>
+<li>Is it possible in C++ to implement the gradient computations using
+numerical linear algebra instead of two double for-loops?</li>
+</ul>
+<p>We deal with the first question first, that is, how to sample from a finite
+set of size <span class="math inline">\(d\)</span> in C++ such as <code><a href="https://rdrr.io/r/base/sample.html">sample()</a></code> does in R. Though it may seem
+like a rather trivial problem, it is not entirely trivial to implement
+sampling from a general distribution on a finite set of size <span class="math inline">\(d\)</span> that
+is both correct and efficient as a function of <span class="math inline">\(d\)</span>. A non-exhaustive list of
+ways to sample from discrete sets using Rcpp is:</p>
+<ul>
+<li>The R function <code><a href="https://rdrr.io/r/base/sample.html">sample()</a></code> can be retrieved via
+<code>Function sample("sample");</code> in Rcpp, which makes the function callable from
+C++ code. There is, however, an overhead
+associated with calling R functions from C++, which we prefer to avoid.</li>
+<li>There is an <a href="https://dirk.eddelbuettel.com/code/rcpp/html/sample_8h_source.html">Rcpp sugar</a> implementation of <code><a href="https://rdrr.io/r/base/sample.html">sample()</a></code>. It generates different samples than
+the R function <code><a href="https://rdrr.io/r/base/sample.html">sample()</a></code>.</li>
+<li>There is an <a href="https://gallery.rcpp.org/articles/using-the-Rcpp-based-sample-implementation/">RcppArmadilloExtension</a> implementation of <code><a href="https://rdrr.io/r/base/sample.html">sample()</a></code>. See also the blog post <a href="https://barumpark.com/blog/2019/Sampling-Integers/">Sampling Integers</a>. It requires the R
+package RcppArmadillo, and it also generates different samples than the R function <code><a href="https://rdrr.io/r/base/sample.html">sample()</a></code>.</li>
+<li>There is the function <code><a href="https://daqana.github.io/dqrng/reference/dqsample.html">dqsample.int()</a></code> from the <a href="https://www.daqana.org/dqrng/">dqrng package</a>
+dealt with in Section <a href="univariate-random-variables.html#rng-packages">4.1.2</a>. It requires the R package dqrng and
+runs on an independent stream of pseudo random numbers then R’s RNG.</li>
+</ul>
+<p>The Rcpp sugar and the Rcpp Armadillo versions of <code><a href="https://rdrr.io/r/base/sample.html">sample()</a></code> are touched on
+in the <a href="https://cran.r-project.org/web/packages/Rcpp/vignettes/Rcpp-introduction.pdf">Rcpp introduction vignette</a>, but they are not documented in detail. Both use R’s stream of pseudo random numbers, but they
+nevertheless generate sequences that differ from each other and from <code><a href="https://rdrr.io/r/base/sample.html">sample()</a></code>.
+To reproduce results in R, we would have to write an interface to those C++
+functions if we were to use them. Since the dqrng package provides an interface
+to <code><a href="https://daqana.github.io/dqrng/reference/dqsample.html">dqsample.int()</a></code> from R as well as from C++, we will use that sampler
+in our implementations.</p>
+<p>If we only want to generate random permutations, there are a couple of additional
+alternatives. There is <code>randperm()</code> from the <a href="http://arma.sourceforge.net/docs.html#randperm">Armadillo library</a>, and there is also
+<code>std::random_shuffle()</code> from the <a href="https://en.cppreference.com/w/cpp/algorithm/random_shuffle">C++ Standard Library</a>.
+The implementation of <code>std::random_shuffle()</code> is, however, not specified
+by the standard and can be compiler dependent. Both of these alternatives
+will also run on an independent stream of pseudo random numbers then<br>
+R’s RNG, and will not be considered any further.</p>
+<p>The full Rcpp implementation of the stochastic gradient algorithm is now
+a simple extension of <code>lin_batch()</code> with one additional outer loop over
+the epochs and a single line calling <code>dqsample_int()</code> to sample the
+random permutation.</p>
+<div class="sourceCode" id="cb429"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb429-1"><a href="StochOpt.html#cb429-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(dqrng)]]</span></span>
+<span id="cb429-2"><a href="StochOpt.html#cb429-2" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb429-3"><a href="StochOpt.html#cb429-3" aria-hidden="true" tabindex="-1"></a>NumericVector SG_Rcpp(</span>
+<span id="cb429-4"><a href="StochOpt.html#cb429-4" aria-hidden="true" tabindex="-1"></a>    NumericVector par, </span>
+<span id="cb429-5"><a href="StochOpt.html#cb429-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> N, </span>
+<span id="cb429-6"><a href="StochOpt.html#cb429-6" aria-hidden="true" tabindex="-1"></a>    NumericVector gamma,</span>
+<span id="cb429-7"><a href="StochOpt.html#cb429-7" aria-hidden="true" tabindex="-1"></a>    NumericMatrix X, </span>
+<span id="cb429-8"><a href="StochOpt.html#cb429-8" aria-hidden="true" tabindex="-1"></a>    NumericVector y,</span>
+<span id="cb429-9"><a href="StochOpt.html#cb429-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> m = <span class="dv">50</span>, </span>
+<span id="cb429-10"><a href="StochOpt.html#cb429-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> maxiter = <span class="dv">100</span></span>
+<span id="cb429-11"><a href="StochOpt.html#cb429-11" aria-hidden="true" tabindex="-1"></a>) {</span>
+<span id="cb429-12"><a href="StochOpt.html#cb429-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> p = par.length(), M = floor(N / m);</span>
+<span id="cb429-13"><a href="StochOpt.html#cb429-13" aria-hidden="true" tabindex="-1"></a>  NumericVector grad(p), yhat(N), beta = clone(par);</span>
+<span id="cb429-14"><a href="StochOpt.html#cb429-14" aria-hidden="true" tabindex="-1"></a>  IntegerVector ii;</span>
+<span id="cb429-15"><a href="StochOpt.html#cb429-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb429-16"><a href="StochOpt.html#cb429-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> l = <span class="dv">0</span>; l &lt; maxiter; ++l) {</span>
+<span id="cb429-17"><a href="StochOpt.html#cb429-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Note that dqsample_int samples from {0, 1, ..., N - 1}</span></span>
+<span id="cb429-18"><a href="StochOpt.html#cb429-18" aria-hidden="true" tabindex="-1"></a>    ii = dqrng::dqsample_int(N, N); </span>
+<span id="cb429-19"><a href="StochOpt.html#cb429-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; M; ++j) {</span>
+<span id="cb429-20"><a href="StochOpt.html#cb429-20" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
+<span id="cb429-21"><a href="StochOpt.html#cb429-21" aria-hidden="true" tabindex="-1"></a>        yhat[i] = <span class="dv">0</span>;</span>
+<span id="cb429-22"><a href="StochOpt.html#cb429-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
+<span id="cb429-23"><a href="StochOpt.html#cb429-23" aria-hidden="true" tabindex="-1"></a>          yhat[i] += X(ii[i], k) * beta[k];</span>
+<span id="cb429-24"><a href="StochOpt.html#cb429-24" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb429-25"><a href="StochOpt.html#cb429-25" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb429-26"><a href="StochOpt.html#cb429-26" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
+<span id="cb429-27"><a href="StochOpt.html#cb429-27" aria-hidden="true" tabindex="-1"></a>        grad[k] = <span class="dv">0</span>;</span>
+<span id="cb429-28"><a href="StochOpt.html#cb429-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
+<span id="cb429-29"><a href="StochOpt.html#cb429-29" aria-hidden="true" tabindex="-1"></a>          grad[k] += X(ii[i], k) * (yhat[i] - y[ii[i]]);</span>
+<span id="cb429-30"><a href="StochOpt.html#cb429-30" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb429-31"><a href="StochOpt.html#cb429-31" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb429-32"><a href="StochOpt.html#cb429-32" aria-hidden="true" tabindex="-1"></a>      beta = beta - gamma[l] * (grad / m);</span>
+<span id="cb429-33"><a href="StochOpt.html#cb429-33" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb429-34"><a href="StochOpt.html#cb429-34" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb429-35"><a href="StochOpt.html#cb429-35" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> beta;</span>
+<span id="cb429-36"><a href="StochOpt.html#cb429-36" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>We test the implementation by comparing it to the pure R implementation, but
+using <code>dqsample_int() / dqsample.int()</code> to sample the same permutations in both cases.</p>
+<div class="sourceCode" id="cb430"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://daqana.github.io/dqrng/reference/dqrng-functions.html">dqset.seed</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span> 
+<span class="va">par1</span> <span class="op">&lt;-</span> <span class="fu">SG</span><span class="op">(</span>
+  par <span class="op">=</span> <span class="va">par0</span>, 
+  grad <span class="op">=</span> <span class="va">ls_grad</span>,
+  N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, 
+  gamma <span class="op">=</span> <span class="fl">1e-3</span>, 
+  maxiter <span class="op">=</span> <span class="fl">10</span>,
+  sampler <span class="op">=</span> <span class="fu">dqrng</span><span class="fu">::</span><span class="va"><a href="https://daqana.github.io/dqrng/reference/dqsample.html">dqsample.int</a></span>
+<span class="op">)</span>
+<span class="fu"><a href="https://daqana.github.io/dqrng/reference/dqrng-functions.html">dqset.seed</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span> 
+<span class="va">par2</span> <span class="op">&lt;-</span> <span class="fu">SG_Rcpp</span><span class="op">(</span>
+  par <span class="op">=</span> <span class="va">par0</span>, 
+  N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>,
+  gamma <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1e-3</span>, <span class="fl">10</span><span class="op">)</span>,
+  X <span class="op">=</span> <span class="va">X</span>, 
+  y <span class="op">=</span> <span class="va">y</span>,
+  maxiter <span class="op">=</span> <span class="fl">10</span>
+<span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="va">par1</span> <span class="op">-</span> <span class="va">par2</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] 0 0</code></pre>
+<p>The two most notable overall differences between <code>SG()</code> and <code>SG_Rcpp()</code> is that
+<code>SG_Rcpp()</code> is low level and very problem specific, while <code>SG()</code> is high level
+and generic. It is
+surely possible to refactor the C++ code to write a more generic stochastic
+gradient algorithm, that would rely on other functions for computing
+e.g. the gradient. However, to retain performance those functions would need to
+be implemented in C++ as well.</p>
+<p>To achieve a more high level implementation, we can use the RcppArmadillo
+package, which provides an interface to numerical linear
+algebra from the C++ library <a href="http://arma.sourceforge.net">Armadillo</a>.
+In this way we can use a matrix-vector style implementation similar to
+the R implementation but without excessive data copying. It is, however,
+necessary to use various data types from the Armadillo library, e.g. 
+matrices and column vectors, and it is also necessary to type
+cast the sequence of integers from <code>dqsample_int()</code> as a <code>uvec</code> data type.</p>
+<div class="sourceCode" id="cb432"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb432-1"><a href="StochOpt.html#cb432-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(RcppArmadillo)]]</span></span>
+<span id="cb432-2"><a href="StochOpt.html#cb432-2" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb432-3"><a href="StochOpt.html#cb432-3" aria-hidden="true" tabindex="-1"></a>arma::colvec SG_arma(</span>
+<span id="cb432-4"><a href="StochOpt.html#cb432-4" aria-hidden="true" tabindex="-1"></a>    NumericVector par, </span>
+<span id="cb432-5"><a href="StochOpt.html#cb432-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> N, </span>
+<span id="cb432-6"><a href="StochOpt.html#cb432-6" aria-hidden="true" tabindex="-1"></a>    NumericVector gamma,</span>
+<span id="cb432-7"><a href="StochOpt.html#cb432-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> arma::mat&amp; X, </span>
+<span id="cb432-8"><a href="StochOpt.html#cb432-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> arma::colvec&amp; y, </span>
+<span id="cb432-9"><a href="StochOpt.html#cb432-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> m = <span class="dv">50</span>, </span>
+<span id="cb432-10"><a href="StochOpt.html#cb432-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> maxiter = <span class="dv">100</span></span>
+<span id="cb432-11"><a href="StochOpt.html#cb432-11" aria-hidden="true" tabindex="-1"></a>) {</span>
+<span id="cb432-12"><a href="StochOpt.html#cb432-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> p = par.length(), M = floor(N / m);</span>
+<span id="cb432-13"><a href="StochOpt.html#cb432-13" aria-hidden="true" tabindex="-1"></a>  arma::colvec grad(p), yhat(N), beta = clone(par);</span>
+<span id="cb432-14"><a href="StochOpt.html#cb432-14" aria-hidden="true" tabindex="-1"></a>  uvec ii, iii;</span>
+<span id="cb432-15"><a href="StochOpt.html#cb432-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb432-16"><a href="StochOpt.html#cb432-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> l = <span class="dv">0</span>; l &lt; maxiter; ++l) {</span>
+<span id="cb432-17"><a href="StochOpt.html#cb432-17" aria-hidden="true" tabindex="-1"></a>    ii = as&lt;arma::uvec&gt;(dqrng::dqsample_int(N, N));</span>
+<span id="cb432-18"><a href="StochOpt.html#cb432-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; M; ++j) {</span>
+<span id="cb432-19"><a href="StochOpt.html#cb432-19" aria-hidden="true" tabindex="-1"></a>      iii = ii.subvec(j * m, (j + <span class="dv">1</span>) * m - <span class="dv">1</span>);</span>
+<span id="cb432-20"><a href="StochOpt.html#cb432-20" aria-hidden="true" tabindex="-1"></a>      beta = beta - gamma[l] * (X.rows(iii).t() * (X.rows(iii) * beta - y(iii)) / m); </span>
+<span id="cb432-21"><a href="StochOpt.html#cb432-21" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb432-22"><a href="StochOpt.html#cb432-22" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb432-23"><a href="StochOpt.html#cb432-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> beta;</span>
+<span id="cb432-24"><a href="StochOpt.html#cb432-24" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>The function returns a column vector, which R represents as a <span class="math inline">\(p \times 1\)</span>
+matrix, whereas all the other implementations return a vector. But besides this
+difference, a test will show that <code>SG_Rcpp()</code> computes the same updates as
+all other implementations when <code>dqsample_int()</code> is used.</p>
+<p>We benchmark and compare all five implementations of the mini-batch
+stochastic gradient algorithm by running them for 10 epoch iterations
+with a fixed learning rate of <span class="math inline">\(\gamma = 10^{-4}\)</span> and the default mini-batch size
+<span class="math inline">\(m = 50\)</span>.</p>
+<div class="sourceCode" id="cb433"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">bench</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/bench/man/mark.html">mark</a></span><span class="op">(</span>
+  SG <span class="op">=</span> <span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fl">1e-4</span>, maxiter <span class="op">=</span> <span class="fl">10</span>, grad <span class="op">=</span> <span class="va">ls_grad</span><span class="op">)</span>,
+  SG_lin_grad <span class="op">=</span> <span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fl">1e-4</span>, maxiter <span class="op">=</span> <span class="fl">10</span>, grad <span class="op">=</span> <span class="va">lin_grad</span>, X <span class="op">=</span> <span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span>,
+  SG_lin_batch <span class="op">=</span> <span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fl">1e-4</span>, <span class="va">lin_batch</span>, maxiter <span class="op">=</span> <span class="fl">10</span>, X <span class="op">=</span> <span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span>,
+  SG_Rcpp <span class="op">=</span> <span class="fu">SG_Rcpp</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1e-4</span>, <span class="fl">10</span><span class="op">)</span>, X <span class="op">=</span> <span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span>, maxiter <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,
+  SG_arma <span class="op">=</span> <span class="fu">SG_arma</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1e-4</span>, <span class="fl">10</span><span class="op">)</span>, X <span class="op">=</span> <span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span>, maxiter <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>, 
+  check <span class="op">=</span> <span class="cn">FALSE</span>, iterations <span class="op">=</span> <span class="fl">5</span>
+<span class="op">)</span></code></pre></div>
+<pre><code>## # A tibble: 5 × 6
+##   expression        min   median `itr/sec` mem_alloc `gc/sec`
+##   &lt;bch:expr&gt;   &lt;bch:tm&gt; &lt;bch:tm&gt;     &lt;dbl&gt; &lt;bch:byt&gt;    &lt;dbl&gt;
+## 1 SG              814ms    872ms      1.12  183.18MB    5.15 
+## 2 SG_lin_grad     420ms    471ms      2.20    43.9MB    2.20 
+## 3 SG_lin_batch    348ms    352ms      2.80    9.13MB    0.559
+## 4 SG_Rcpp         301ms    304ms      3.25    1.82MB    0.651
+## 5 SG_arma         541ms    554ms      1.79    4.54MB    0</code></pre>
+<p>The pure R implementation (SG) is, unsurprisingly, the slowest, but the full
+Rcpp implementation (SG_Rcpp) is less then a factor 3 faster. The
+Armadillo based implementation is somewhat slower, though still faster than
+the pure R implementation.</p>
+<p>We rerun all algorithms, but this time with the mini-batch size <span class="math inline">\(m = 1\)</span>. Because
+<code>SG()</code> allocates a lot of memory, the
+default memory tracking of <code>mark()</code> will become prohibitively slow,
+thus memory tracking is disabled.</p>
+<div class="sourceCode" id="cb435"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">bench</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/bench/man/mark.html">mark</a></span><span class="op">(</span>
+  SG <span class="op">=</span> <span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fl">1e-4</span>, maxiter <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">1</span>, grad <span class="op">=</span> <span class="va">ls_grad</span><span class="op">)</span>,
+  SG_lin_grad <span class="op">=</span> <span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fl">1e-4</span>, maxiter <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">1</span>, grad <span class="op">=</span> <span class="va">lin_grad</span>, X <span class="op">=</span> <span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span>,
+  SG_lin_batch <span class="op">=</span> <span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fl">1e-4</span>, <span class="va">lin_batch</span>, maxiter <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">1</span>, X <span class="op">=</span> <span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span>,
+  SG_Rcpp <span class="op">=</span> <span class="fu">SG_Rcpp</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1e-4</span>, <span class="fl">10</span><span class="op">)</span>, X <span class="op">=</span> <span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span>, maxiter <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,
+  SG_arma <span class="op">=</span> <span class="fu">SG_arma</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1e-4</span>, <span class="fl">10</span><span class="op">)</span>, X <span class="op">=</span> <span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span>, maxiter <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, 
+  check <span class="op">=</span> <span class="cn">FALSE</span>, memory <span class="op">=</span> <span class="cn">FALSE</span>, iterations <span class="op">=</span> <span class="fl">5</span>
+<span class="op">)</span></code></pre></div>
+<pre><code>## # A tibble: 5 × 6
+##   expression        min   median `itr/sec` mem_alloc `gc/sec`
+##   &lt;bch:expr&gt;   &lt;bch:tm&gt; &lt;bch:tm&gt;     &lt;dbl&gt; &lt;bch:byt&gt;    &lt;dbl&gt;
+## 1 SG              5.28s    5.33s     0.185        NA    3.23 
+## 2 SG_lin_grad     2.26s     2.4s     0.415        NA    7.30 
+## 3 SG_lin_batch 373.04ms 378.84ms     2.62         NA    0.523
+## 4 SG_Rcpp      363.37ms 367.44ms     2.66         NA    0    
+## 5 SG_arma      732.43ms 747.51ms     1.34         NA    0</code></pre>
+<p>This reveals some bigger differences. With a fixed number of epoch iterations,
+the total amount of computations does not change substantially when
+changing the mini-batch size from 50 to 1, but the run times of <code>SG()</code>
+and <code>SG_lin_grad()</code> increase notably. The C++
+implementations <code>SG_lin_batch()</code> and <code>SG_Rcpp</code> mostly retain the run time
+they had for <span class="math inline">\(m = 50\)</span>. The runtime of the Armadillo implementation is
+not affected that much either, but it is still slower than the two other
+C++ based implementations and now by about a factor 2.</p>
+<p>In summary, when the mini-batches are not too small, the improvements on runtime
+by using Rcpp were relatively small – about a factor 2 to 3. However, when
+the mini-batch size is small or even one, the runtime was about a factor 10
+smaller when using either the full Rcpp implementation or the Rcpp implementation
+of the entire epoch update. Using <code>lin_batch()</code> for the epoch updates strikes
+a good compromise in this particular example, by being runtime competitive
+but with the main control structures of the algorithm in R.</p>
 </div>
+</div>
+<div id="stochopt:ex" class="section level2" number="9.4">
+<h2>
+<span class="header-section-number">9.4</span> Exercises<a class="anchor" aria-label="anchor" href="#stochopt:ex"><i class="fas fa-link"></i></a>
+</h2>
+<div class="exercise">
+<p><span id="exr:cross-entropy" class="exercise"><strong>Exercise 9.1  </strong></span>Consider the loss
+<span class="math display">\[L((y, z), \theta) = \mu(z, \theta) - y \log (\mu(z, \theta))\]</span>
+for a model, <span class="math inline">\(\mu(z, \theta)\)</span>, of the conditional mean, <span class="math inline">\(E(Y \mid Z = z)\)</span>, of
+<span class="math inline">\(Y\)</span> given <span class="math inline">\(Z = z\)</span>. See also Example <a href="StochOpt.html#exm:log-likelihood">9.2</a>.</p>
+<p>Show that the function
+<span class="math display">\[a \mapsto a - b \log(a)\]</span>
+for fixed <span class="math inline">\(b\)</span> attains it unique minimum in <span class="math inline">\((0, \infty)\)</span> for <span class="math inline">\(a = b\)</span>.</p>
+<p>Then show the lower bound on the risk
+<span class="math display">\[H(\theta) = E(L((Y, Z), \theta)) \geq E\Big( E(Y \mid Z)  - E(Y \mid Z) \log (E(Y \mid Z))\Big),\]</span>
+and conclude that if <span class="math inline">\(E(Y \mid Z = z) = \mu(z, \theta_0)\)</span> for some <span class="math inline">\(\theta_0\)</span>,
+then <span class="math inline">\(\theta_0\)</span> is a global minimizer of the risk.</p>
+</div>
+<div class="exercise">
+<p><span id="exr:gauss-log-normal" class="exercise"><strong>Exercise 9.2  </strong></span>Consider the same online setup as in Example <a href="StochOpt.html#exm:online-pois-SG">9.3</a> but with
+<span class="math display">\[Y_i \mid Z_i = z_i \sim \mathcal{N}(e^{\beta_0 + \beta_1 z_i}, 5)\]</span>
+instead. That is, the conditional mean value model is still log-linear, but
+the distribution is Gaussian instead of Poisson.</p>
+<p>Replicate the online learning simulation as in Example <a href="StochOpt.html#exm:online-pois-SG">9.3</a> using
+the Poisson log-likelihood gradient and the squared error gradient. You may want
+to experiment with different learning rates. How does the change of the
+distribution affect the convergence of the algorithms?</p>
+</div>
+<div class="exercise">
+<p><span id="exr:news-cond-number" class="exercise"><strong>Exercise 9.3  </strong></span>Show that for the linear model and the squared error loss, the hessian of the
+objective function is
+<span class="math display">\[D^2 H_N(\beta) = X^T X\]</span>
+where <span class="math inline">\(X\)</span> is the model matrix. Compute the eigenvalues of this matrix using
+the news data from Section <a href="StochOpt.html#news">9.1.4</a> before and after standardization. What are
+the conditioning numbers of the matrices, and how do their values
+relate to convergence of gradient based methods? See also Section <a href="numopt.html#grad-descent">7.1.1</a>.</p>
+</div>
+<div class="exercise">
+<p><span id="exr:mini-batch-size" class="exercise"><strong>Exercise 9.4  </strong></span>Make sure that you have a working implementation of the mini-batch stochastic
+gradient algorithm for the news data from Section <a href="StochOpt.html#news">9.1.4</a> with
+the <code>lin_batch()</code> Rcpp implementation of the epoch updates. Set up an experiment
+where you run the algorithm over a grid of mini-batch sizes and learning rates.
+Run the algorithm until the absolute deviation from the minimum of the
+empirical squared error loss is less than 0.01 and determine the optimal
+choice of the tuning parameters.</p>
+</div>
+
 </div>
 </div>
 
@@ -1253,8 +1683,8 @@ Figure 9.9: Convergence of squared error loss on the news article data set for s
 <li><a class="nav-link" href="#StochOpt"><span class="header-section-number">9</span> Stochastic Optimization</a></li>
 <li>
 <a class="nav-link" href="#SG-alg"><span class="header-section-number">9.1</span> Stochastic gradient algorithms</a><ul class="nav navbar-nav">
-<li><a class="nav-link" href="#Pop-model"><span class="header-section-number">9.1.1</span> Population models</a></li>
-<li><a class="nav-link" href="#online-stochastic-gradient-algorithm"><span class="header-section-number">9.1.2</span> Online stochastic gradient algorithm</a></li>
+<li><a class="nav-link" href="#Pop-model"><span class="header-section-number">9.1.1</span> Population models and loss functions</a></li>
+<li><a class="nav-link" href="#online-sg"><span class="header-section-number">9.1.2</span> Online stochastic gradient algorithm</a></li>
 <li><a class="nav-link" href="#batch-stochastic-gradient-algorithms"><span class="header-section-number">9.1.3</span> Batch stochastic gradient algorithms</a></li>
 <li><a class="nav-link" href="#news"><span class="header-section-number">9.1.4</span> Predicting news article sharing on social media</a></li>
 </ul>
@@ -1268,10 +1698,11 @@ Figure 9.9: Convergence of squared error loss on the news article data set for s
 </li>
 <li>
 <a class="nav-link" href="#SG-Rcpp"><span class="header-section-number">9.3</span> Stochastic gradient algorithms with Rcpp</a><ul class="nav navbar-nav">
-<li><a class="nav-link" href="#gradients-and-epochs-in-rcpp"><span class="header-section-number">9.3.1</span> Gradients and epochs in Rcpp</a></li>
+<li><a class="nav-link" href="#Rcpp-grad-epoch"><span class="header-section-number">9.3.1</span> Gradients and epochs in Rcpp</a></li>
 <li><a class="nav-link" href="#full-rcpp-implementations"><span class="header-section-number">9.3.2</span> Full Rcpp implementations</a></li>
 </ul>
 </li>
+<li><a class="nav-link" href="#stochopt:ex"><span class="header-section-number">9.4</span> Exercises</a></li>
 </ul>
 
       <div class="book-extra">
@@ -1293,7 +1724,7 @@ Figure 9.9: Convergence of squared error loss on the news article data set for s
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2021-10-12, Git version: 6b05821.</p>
+    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2021-10-20, Git version: 86c4ccf.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

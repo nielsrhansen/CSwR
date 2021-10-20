@@ -82,7 +82,7 @@ is a <em>penalty function</em>, likewise twice differentiable, that does not
 depend upon data.</p>
 <p>Statistical optimization problems share some properties
 that we should pay attention to. The term
-<span class="math display">\[-\ell(\theta) = - \sum_{i=1}^n \log(f_{\theta}(x_i))\]</span>
+<span class="math display">\[-\ell(\theta) = - \sum_{i=1}^N \log(f_{\theta}(x_i))\]</span>
 in the objective function to be minimized is a sum over the
 data, and the more data we have the more computationally demanding
 it is to evaluate <span class="math inline">\(H\)</span> and its derivatives. There are exceptions, though,
@@ -96,7 +96,7 @@ optimization makes no relevant difference.</p>
 lead you astray if your model is not well behaved. In situations where <span class="math inline">\(H\)</span> is
 not convex the negative log-likelihood may be unbounded, e.g. for finite mixtures, yet
 a good estimate can be found as a local minimizer. So even if we phrase
-the objective as a global optimization objective, we may be equally interested i local
+the objective as a global optimization objective, we may be equally interested in local
 minima or even just stationary points; solutions to <span class="math inline">\(\nabla H(\theta) = 0\)</span>. Optimization is a computational
 tool used in statistics for adapting models to data – but the minimizer of <span class="math inline">\(H\)</span>
 for a particular data set is not intrinsically interesting. There may be
@@ -132,9 +132,8 @@ Third, <span class="math inline">\(\theta_n\)</span> may not converge, even if <
 converges to a local minimum.</p>
 <p>To discuss properties of optimization algorithms in greater detail we
 need ways to quantify, analyze and monitor their convergence. This can be
-done in a number of different ways. For instance in terms of <span class="math inline">\(\theta_n\)</span> or <span class="math inline">\(H(\theta_n)\)</span> – or
-perhaps in terms of <span class="math inline">\(\nabla H(\theta_n)\)</span>. Focusing on <span class="math inline">\(H(\theta_n)\)</span> we
-say that an algorithm is a <em>descent algorithm</em> if
+done in terms of <span class="math inline">\(\theta_n\)</span>, <span class="math inline">\(H(\theta_n)\)</span> or <span class="math inline">\(\nabla H(\theta_n)\)</span>.
+Focusing on <span class="math inline">\(H(\theta_n)\)</span> we say that an algorithm is a <em>descent algorithm</em> if
 <span class="math display">\[H(\theta_0) \geq H(\theta_1) \geq H(\theta_2) \geq \ldots.\]</span>
 If all inequalities are sharp (except if some <span class="math inline">\(\theta_i\)</span> is a local minimizer),
 the algorithm is called a <em>strict</em> descent algorithm. The
@@ -179,9 +178,9 @@ convergence.</p>
 <p>Indeed, theory rarely provides us with sharp quantitative results on
 the rate of convergence and we will need computational techniques to monitor and measure convergence of algorithms in practice. Otherwise we cannot compare
 the efficiency of different algorithms.</p>
-<div id="gradient-descent" class="section level3" number="7.1.1">
+<div id="grad-descent" class="section level3" number="7.1.1">
 <h3>
-<span class="header-section-number">7.1.1</span> Gradient descent<a class="anchor" aria-label="anchor" href="#gradient-descent"><i class="fas fa-link"></i></a>
+<span class="header-section-number">7.1.1</span> Gradient descent<a class="anchor" aria-label="anchor" href="#grad-descent"><i class="fas fa-link"></i></a>
 </h3>
 <p>We will assume in this section that <span class="math inline">\(\Theta = \mathbb{R}^p\)</span>. This will
 simplify the analysis a bit, but with minor modifications it can
@@ -255,7 +254,7 @@ and <span class="math inline">\(\theta_n \rightarrow \theta_{\infty}\)</span>. S
 positive definite, <span class="math inline">\(\theta_{\infty}\)</span> is a (global) minimizer.</p>
 <p>To summarize, if <span class="math inline">\(D^2H(\theta)\)</span> has uniformly bounded numerical radius, and if
 <span class="math inline">\(H\)</span> has a unique stationary point <span class="math inline">\(\theta_{\infty}\)</span> in the compact set <span class="math inline">\(\mathrm{lev}(\theta_0)\)</span>, then the gradient descent algorithm is a strict descent
-algorithm that converges toward that (local) minimum <span class="math inline">\(\theta_{\infty}.\)</span>
+algorithm that converges toward that (local) minimizer <span class="math inline">\(\theta_{\infty}.\)</span>
 The fixed step length was key to this analysis.
 The upper bound on the numerical radius
 of <span class="math inline">\(D^2H(\theta)\)</span> guarantees descent with a fixed step length, and the
@@ -336,14 +335,14 @@ only quantifies the worst case convergence rate.</p>
 convergence with rate <span class="math inline">\(r\)</span> implies that for any <span class="math inline">\(\delta &gt; 0\)</span>
 <span class="math display">\[
 \| \theta_n - \theta_{\infty} \| \leq (r + \delta) \| \theta_{n-1} - \theta_{\infty} \| \leq \ldots 
-\leq (r + \delta)^{n - N_0} \| \theta_{N_0} - \theta_{\infty} \|
+\leq (r + \delta)^{n - n_0} \| \theta_{n_0} - \theta_{\infty} \|
 \]</span>
-<span class="math inline">\(n \geq N_0\)</span> with <span class="math inline">\(N_0\)</span> sufficiently large (depending on <span class="math inline">\(\delta\)</span>). That is,
+<span class="math inline">\(n \geq n_0\)</span> with <span class="math inline">\(n_0\)</span> sufficiently large (depending on <span class="math inline">\(\delta\)</span>). That is,
 <span class="math display">\[\log \|\theta_{n} - \theta_{\infty}\| \leq n \log(r + \delta) + d,\]</span>
-for <span class="math inline">\(n \geq N_0\)</span>. In practice, we run the algorithm for <span class="math inline">\(N\)</span>
-iterations, so that <span class="math inline">\(\theta_N = \theta_{\infty}\)</span> up to computer precision,
-and we plot <span class="math inline">\(\log \|\theta_{n} - \theta_{N}\|\)</span> as a function of <span class="math inline">\(n\)</span>.
-The decay should be approximately linear for <span class="math inline">\(n \geq N_0\)</span> for some <span class="math inline">\(N_0\)</span>, in
+for <span class="math inline">\(n \geq n_0\)</span>. In practice, we run the algorithm for <span class="math inline">\(M\)</span>
+iterations, so that <span class="math inline">\(\theta_M = \theta_{\infty}\)</span> up to computer precision,
+and we plot <span class="math inline">\(\log \|\theta_{n} - \theta_{M}\|\)</span> as a function of <span class="math inline">\(n\)</span>.
+The decay should be approximately linear for <span class="math inline">\(n \geq n_0\)</span> for some <span class="math inline">\(n_0\)</span>, in
 which case the slope is about <span class="math inline">\(\log(r) &lt; 0\)</span>, which can then be estimated by least squares.
 A slower-than-linear or faster-than-linear decay indicate that the
 algorithm converges sublinearly or superlinearly, respectively.</p>
@@ -351,7 +350,7 @@ algorithm converges sublinearly or superlinearly, respectively.</p>
 in terms of the sequences <span class="math inline">\(H(\theta_n)\)</span> and <span class="math inline">\(\nabla H(\theta_n)\)</span> instead.
 For a descent algorithm with <span class="math inline">\(H(\theta_n) \rightarrow H(\theta_\infty)\)</span> linearly for
 <span class="math inline">\(n \to \infty\)</span>, we can plot
-<span class="math display">\[\log(H(\theta_n) - H(\theta_N))\]</span>
+<span class="math display">\[\log(H(\theta_n) - H(\theta_M))\]</span>
 as a function of <span class="math inline">\(n\)</span>, and use least squares to estimate the asymptotic rate of
 convergence of <span class="math inline">\(H(\theta_n)\)</span>.</p>
 <p>Using <span class="math inline">\(\nabla H(\theta_n)\)</span> to quantify convergence is particularly appealing
@@ -361,7 +360,7 @@ converged. If <span class="math inline">\(\nabla H(\theta_n)\)</span> converges 
 <span class="math display">\[\limsup_{n \to \infty} \frac{\|\nabla H(\theta_n)\|}{\|\nabla H(\theta_{n-1})\|} = r,\]</span>
 we have for any <span class="math inline">\(\delta &gt; 0\)</span> that
 <span class="math display">\[\log \|\nabla H(\theta_n)\| \leq n \log(r + \delta) + d\]</span>
-for <span class="math inline">\(n \geq N_0\)</span> and <span class="math inline">\(N_0\)</span> sufficiently large. Again, least squares
+for <span class="math inline">\(n \geq n_0\)</span> and <span class="math inline">\(n_0\)</span> sufficiently large. Again, least squares
 can be used to estimate the asymptotic rate of convergence of
 <span class="math inline">\(\|\nabla H(\theta_n)\|\)</span>.</p>
 <p>The concepts of linear convergence and asymptotic rate are, unfortunately, not
@@ -417,7 +416,7 @@ and per time unit rates. If one iteration takes <span class="math inline">\(\del
 the <em>per time unit</em> rate is
 <span class="math display">\[r^{1/\delta}.\]</span>
 If <span class="math inline">\(t_n\)</span> denotes the run time of <span class="math inline">\(n\)</span> iterations, we could
-estimate <span class="math inline">\(\delta\)</span> as <span class="math inline">\(t_N / N\)</span> for <span class="math inline">\(N\)</span> sufficiently large.</p>
+estimate <span class="math inline">\(\delta\)</span> as <span class="math inline">\(t_M / M\)</span> for <span class="math inline">\(M\)</span> sufficiently large.</p>
 <p>We will throughout systematically investigate convergence
 as a function of time <span class="math inline">\(t_n\)</span> instead of iterations <span class="math inline">\(n\)</span>, and we will estimate
 rates per time unit directly by least squares regression on <span class="math inline">\(t_n\)</span>
@@ -436,13 +435,13 @@ to stop, but the choice of an appropriate stopping criterion is
 notoriously difficult. We present four of the most commonly used criteria and
 discuss benefits and deficits for each of them.</p>
 <p><strong>Maximal number of iterations:</strong> Stop when
-<span class="math display">\[n = N\]</span>
-for a fixed maximal number of iterations <span class="math inline">\(N\)</span>.
+<span class="math display">\[n = M\]</span>
+for a fixed maximal number of iterations <span class="math inline">\(M\)</span>.
 This is arguably the simplest criterion, but, obviously,
 reaching a maximal number of iterations provides no evidence in
-itself that <span class="math inline">\(H(\theta_N)\)</span> is sufficiently close to a (local) minimum. For
+itself that <span class="math inline">\(H(\theta_M)\)</span> is sufficiently close to a (local) minimum. For
 a specific problem we could from experience know of a sufficiently large
-<span class="math inline">\(N\)</span> so that the algorithm has typically converged after <span class="math inline">\(N\)</span> iterations, but
+<span class="math inline">\(M\)</span> so that the algorithm has typically converged after <span class="math inline">\(M\)</span> iterations, but
 the most important use of this criterion is in combination with another
 criterion so that it works as a safeguard against an infinite loop.</p>
 <p>The other three stopping criteria all depend on choosing a
@@ -525,11 +524,11 @@ Since the goal is to minimize <span class="math inline">\(H\)</span>, it is natu
 away from <span class="math inline">\(\theta\)</span> in the direction of <span class="math inline">\(-\nabla H(\theta)\)</span>.
 However, other directions than the negative gradient can also be suitable
 descent directions.</p>
-<p>::: {.definition} A <em>descent direction</em> in <span class="math inline">\(\theta\)</span>
-is a vector <span class="math inline">\(\rho \in \mathbb{R}^p\)</span> such that
-<span class="math display">\[\nabla H(\theta)^T \rho &lt; 0.\]</span>
-:::</p>
-<p>When <span class="math inline">\(\theta\)</span> is not a stationary point,<br><span class="math display">\[\nabla H(\theta)^T -\nabla H(\theta)$ = - \| \nabla H(\theta)^T \|_2 &lt; 0\]</span>
+<div class="definition">
+<p><span id="def:unlabeled-div-3" class="definition"><strong>Definition 7.2  </strong></span>A <em>descent direction</em> in <span class="math inline">\(\theta\)</span> is a vector <span class="math inline">\(\rho \in \mathbb{R}^p\)</span> such that
+<span class="math display">\[\nabla H(\theta)^T \rho &lt; 0.\]</span></p>
+</div>
+<p>When <span class="math inline">\(\theta\)</span> is not a stationary point,<br><span class="math display">\[\nabla H(\theta)^T(-\nabla H(\theta)) = - \| \nabla H(\theta)^T \|_2^2 &lt; 0\]</span>
 and <span class="math inline">\(-\nabla H(\theta)^T\)</span> is a descent direction in <span class="math inline">\(\theta\)</span> according to
 the definition.</p>
 <p>Given <span class="math inline">\(\theta_n\)</span> and a descent direction <span class="math inline">\(\rho_n\)</span> in <span class="math inline">\(\theta_n\)</span> we can define
@@ -547,7 +546,7 @@ would give the maximal possible descent in the direction <span class="math inlin
 and as we have argued, if <span class="math inline">\(\rho_n\)</span> is a descent direction, a minimizer <span class="math inline">\(\gamma &gt; 0\)</span>
 guarantees descent of <span class="math inline">\(H\)</span>. However, unless the minimization can be
 done analytically it is often computationally too expensive.
-Less will also do, and as shown in Example <a href="#exm:grad-descent"><strong>??</strong></a>,
+Less will also do, and as shown in Section <a href="numopt.html#grad-descent">7.1.1</a>,
 if the Hessian has uniformly bounded numerical radius it is possible to
 fix one (sufficiently small) step length that will guarantee descent.</p>
 <div id="line-search" class="section level3" number="7.2.1">
@@ -622,9 +621,9 @@ choice of <span class="math inline">\(\gamma_0 = 1\)</span>. But for other algor
 crucially on the scale of the parameters, and there is then no general
 advice on choosing <span class="math inline">\(\gamma_0\)</span>.</p>
 </div>
-<div id="gradient-descent-1" class="section level3" number="7.2.2">
+<div id="gradient-descent" class="section level3" number="7.2.2">
 <h3>
-<span class="header-section-number">7.2.2</span> Gradient descent<a class="anchor" aria-label="anchor" href="#gradient-descent-1"><i class="fas fa-link"></i></a>
+<span class="header-section-number">7.2.2</span> Gradient descent<a class="anchor" aria-label="anchor" href="#gradient-descent"><i class="fas fa-link"></i></a>
 </h3>
 <p>We implement gradient descent with backtracking below as the function <code>GD()</code>.
 For gradient descent, the sufficient descent condition amounts to
@@ -1331,8 +1330,8 @@ Krasnoselskii-Mann iterates of the form
 that will converge to a fixed point of <span class="math inline">\(\Phi\)</span> provided it has one.</p>
 <p>Banach’s fixed point theorem implies a convergence that is at least as fast as
 linear convergence with asymptotic rate <span class="math inline">\(c\)</span>.
-Moreover, if <span class="math inline">\(\Phi\)</span> is just a contraction for <span class="math inline">\(n \geq N_0\)</span> for some <span class="math inline">\(N_0\)</span>,
-then for <span class="math inline">\(n \geq N_0\)</span>
+Moreover, if <span class="math inline">\(\Phi\)</span> is just a contraction for <span class="math inline">\(n \geq n_0\)</span> for some <span class="math inline">\(n_0\)</span>,
+then for <span class="math inline">\(n \geq n_0\)</span>
 <span class="math display">\[\|\theta_{n + 1} - \theta_{n}\| \leq c \| \theta_{n} - \theta_{n-1}\|.\]</span>
 The convergence may be superlinear, but if it is linear, the rate is bounded by <span class="math inline">\(c\)</span>.
 To indicate if <span class="math inline">\(\Phi\)</span> is asymptotically a contraction, we can introduce
@@ -1350,7 +1349,7 @@ this can be a quite unstable method for estimating the rate.</p>
 <p>Finally, it is also possible to
 estimate the order <span class="math inline">\(q\)</span> as well as the rate <span class="math inline">\(r\)</span> by using that
 <span class="math display">\[\log \|\theta_{n} - \theta_{N}\| \simeq q \log \|\theta_{n-1} - \theta_{N}\| + \log(r)\]</span>
-for <span class="math inline">\(n \geq N_0\)</span>. We can estimate <span class="math inline">\(q\)</span> and <span class="math inline">\(\log(r)\)</span>
+for <span class="math inline">\(n \geq n_0\)</span>. We can estimate <span class="math inline">\(q\)</span> and <span class="math inline">\(\log(r)\)</span>
 by fitting a linear function by least squares to these log-log transformed norms
 of errors.</p>
 <p>Iteration, fixed points, convergence criteria. Ref to <a href="http://onlinelibrary.wiley.com/book/10.1002/9781118884003">Nonlinear Parameter Optimization Using R Tools</a>.</p>
@@ -1366,7 +1365,7 @@ of errors.</p>
 <li><a class="nav-link" href="#numopt"><span class="header-section-number">7</span> Numerical optimization</a></li>
 <li>
 <a class="nav-link" href="#algorithms-and-convergence"><span class="header-section-number">7.1</span> Algorithms and convergence</a><ul class="nav navbar-nav">
-<li><a class="nav-link" href="#gradient-descent"><span class="header-section-number">7.1.1</span> Gradient descent</a></li>
+<li><a class="nav-link" href="#grad-descent"><span class="header-section-number">7.1.1</span> Gradient descent</a></li>
 <li><a class="nav-link" href="#convergence-rate"><span class="header-section-number">7.1.2</span> Convergence rate</a></li>
 <li><a class="nav-link" href="#stopping-criteria"><span class="header-section-number">7.1.3</span> Stopping criteria</a></li>
 </ul>
@@ -1374,7 +1373,7 @@ of errors.</p>
 <li>
 <a class="nav-link" href="#descent-direction-algorithms"><span class="header-section-number">7.2</span> Descent direction algorithms</a><ul class="nav navbar-nav">
 <li><a class="nav-link" href="#line-search"><span class="header-section-number">7.2.1</span> Line search</a></li>
-<li><a class="nav-link" href="#gradient-descent-1"><span class="header-section-number">7.2.2</span> Gradient descent</a></li>
+<li><a class="nav-link" href="#gradient-descent"><span class="header-section-number">7.2.2</span> Gradient descent</a></li>
 <li><a class="nav-link" href="#conjugate-gradients"><span class="header-section-number">7.2.3</span> Conjugate gradients</a></li>
 <li><a class="nav-link" href="#pep-moth-descent"><span class="header-section-number">7.2.4</span> Peppered Moths</a></li>
 </ul>
@@ -1404,7 +1403,7 @@ of errors.</p>
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2021-10-12, Git version: 6b05821.</p>
+    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2021-10-20, Git version: 86c4ccf.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">
