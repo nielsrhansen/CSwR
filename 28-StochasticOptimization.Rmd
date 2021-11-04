@@ -1086,7 +1086,7 @@ We initialize the linear model using the new implementation of `ls_model()`.
 
 ```{r ls-grad-update, echo = 1, results = 'hide', dependson=c("LS-model", "ls-model-update")}
 c(par0, H, ls_grad) %<-% ls_model(X, y)
-par0 # Problems with caching this chuck; maybe this helps?
+par0 # Problems with caching this chuck; maybe this helps? It doesn't
 
 ```
 
@@ -1142,8 +1142,8 @@ fluctuate due to the fixed learning rate, but it quickly gets close to
 the minimum. We should not jump to conclusions from this assessment. It
 only really shows the improvement to the specific R implementation 
 of using a mini-batch algorithm, and this implementation clearly benefits 
-from the more vectorized computations with mini-batches of size 1000,
-and we will return to this discussion in Section \@ref(Rcpp-grad-epoch).
+from the more vectorized computations with mini-batches of size 1000.
+We will return to this discussion in Section \@ref(Rcpp-grad-epoch).
 
 ### Momentum
 
@@ -1351,7 +1351,6 @@ adam <- function() {
     ...
   ) {
     M <- floor(length(samp) / m)
-   
     for(j in 0:(M - 1)) {
       i <- samp[(j * m + 1):(j * m + m)]
       gr <- grad(par, i, ...) 
@@ -1670,7 +1669,7 @@ SG(
 SG_trace_Rcpp_epoch_mini <- summary(SG_tracer)
 ```
 
-```{r SG-fig-4, echo=FALSE, dependson=c("SG-basic", "SG-4", "SG-5", "SG-6", "SG-7", "SG-8"), fig.height=4, fig.width=8, out.width="100%", fig.cap="Convergence of squared error loss on the news article data set for four algorithms: R implementation of mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (mini), the same mini-batch algorithm but with the gradient implemented in Rcpp (Rcpp_grad_mini) and with the entire epoch implemented in Rcpp (Rcpp_epoch_mini), and the basic stochastic gradient algorithm with the entire epoch implemented in Rcpp (Rcpp_epoch)."}
+```{r SG-fig-4, echo=FALSE, dependson=c("SG-basic", "SG-4", "SG-5", "SG-6", "SG-7", "SG-8"), fig.height=4, fig.width=8, out.width="100%", fig.cap="Convergence of squared error loss on the news article data set for four algorithms: R implementation of mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (mini), the same mini-batch algorithm but with the gradient implemented in Rcpp (Rcpp\\_grad\\_mini) and with the entire epoch implemented in Rcpp (Rcpp\\_epoch\\_mini), and the basic stochastic gradient algorithm with the entire epoch implemented in Rcpp (Rcpp\\_epoch)."}
 dplyr::bind_rows(
   Rcpp_grad_mini = SG_trace_Rcpp_grad[seq(1, 200, 3), ],
   Rcpp_epoch = SG_trace_Rcpp_epoch[seq(1, 200, 3), ],
