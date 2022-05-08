@@ -53,6 +53,7 @@
 <li><a class="" href="numopt.html"><span class="header-section-number">7</span> Numerical optimization</a></li>
 <li><a class="" href="em.html"><span class="header-section-number">8</span> Expectation maximization algorithms</a></li>
 <li><a class="" href="StochOpt.html"><span class="header-section-number">9</span> Stochastic Optimization</a></li>
+<li><a class="" href="the-stochastic-em-algorithm.html"><span class="header-section-number">10</span> The stochastic EM algorithm</a></li>
 <li class="book-part">Appendix</li>
 <li><a class="" href="app-R.html"><span class="header-section-number">A</span> R programming</a></li>
 <li><a class="" href="references.html">References</a></li>
@@ -140,7 +141,7 @@ via the vector <code>.Random.seed</code>. Its first entry, <code>.Random.seed[1]
 pseudorandom number generator used as well as the generator for
 Gaussian variables and discrete uniform variables. This
 information is decoded by <code><a href="https://rdrr.io/r/base/Random.html">RNGkind()</a></code>.</p>
-<div class="sourceCode" id="cb122"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb109"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">RNGkind</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] "Mersenne-Twister" "Inversion"        "Rejection"</code></pre>
 <p>For the Mersenne Twister,
@@ -150,43 +151,43 @@ The implementation needs a position variable because it does 624 updates of the
 state vector at a time and then runs through those values sequentially
 before the next update. This is equivalent to but more efficient than e.g.
 implementing the position shifts explicitly as in the definition of <span class="math inline">\(f\)</span> above.</p>
-<div class="sourceCode" id="cb124"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb111"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">27112015</span><span class="op">)</span>           <span class="co">## Computes a new seed from an integer</span>
 <span class="va">oldseed</span> <span class="op">&lt;-</span> <span class="va">.Random.seed</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>  <span class="co">## The actual seed</span>
 <span class="va">.Random.seed</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>              <span class="co">## Encoding of generators used, will stay fixed</span></code></pre></div>
 <pre><code>## [1] 10403</code></pre>
-<div class="sourceCode" id="cb126"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb113"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">.Random.seed</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>              <span class="co">## Start position after the seed has been set is 624</span></code></pre></div>
 <pre><code>## [1] 624</code></pre>
-<div class="sourceCode" id="cb128"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb115"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">tmp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>
 <span class="va">tmp</span></code></pre></div>
 <pre><code>## [1] 0.7793288</code></pre>
 <p>Every time a random number is generated, e.g. by <code>runif</code> above, the same underlying
 sequence of pseudorandom numbers is used, and the state vector stored in
 <code>.Random.seed</code> is updated accordingly.</p>
-<div class="sourceCode" id="cb130"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb117"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">oldseed</span>, <span class="fl">5</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1]         624 -1660633125 -1167670944  1031453153   815285806</code></pre>
-<div class="sourceCode" id="cb132"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb119"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">.Random.seed</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>, <span class="fl">5</span><span class="op">)</span>     <span class="co">## The state vector and position has been updated</span></code></pre></div>
 <pre><code>## [1]           1  -696993996 -1035426662  -378189083  -745352065</code></pre>
-<div class="sourceCode" id="cb134"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb121"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">tmp</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span>          </code></pre></div>
 <pre><code>## [1] 0.7793288 0.5613179</code></pre>
-<div class="sourceCode" id="cb136"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb123"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">.Random.seed</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>, <span class="fl">5</span><span class="op">)</span>     <span class="co">## The state vector has not changed, only the position</span></code></pre></div>
 <pre><code>## [1]           2  -696993996 -1035426662  -378189083  -745352065</code></pre>
 <p>Resetting the seed will restart the pseudorandom number generator with the
 same seed and result in the same sequence of random numbers.</p>
-<div class="sourceCode" id="cb138"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb125"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">27112015</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">.Random.seed</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>, <span class="fl">5</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1]         624 -1660633125 -1167670944  1031453153   815285806</code></pre>
-<div class="sourceCode" id="cb140"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb127"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">oldseed</span>, <span class="fl">5</span><span class="op">)</span>             <span class="co">## Same as current .Random.seed</span></code></pre></div>
 <pre><code>## [1]         624 -1660633125 -1167670944  1031453153   815285806</code></pre>
-<div class="sourceCode" id="cb142"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb129"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>                     <span class="co">## Same as tmp</span></code></pre></div>
 <pre><code>## [1] 0.7793288</code></pre>
 <p>Note that when using any of the standard R generators, any value of <span class="math inline">\(0\)</span> or <span class="math inline">\(1\)</span>
@@ -196,17 +197,17 @@ in <span class="math inline">\((0, 1)\)</span>.</p>
 <p>Some of the random number generators implemented in R use more than one
 pseudorandom number per variable. This is, for instance, the case when we simulate
 Gamma distributed random variables.</p>
-<div class="sourceCode" id="cb144"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb131"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">27112015</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/stats/GammaDist.html">rgamma</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>                 <span class="co">## A single Gamma distributed random number</span></code></pre></div>
 <pre><code>## [1] 1.192619</code></pre>
-<div class="sourceCode" id="cb146"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb133"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">.Random.seed</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>, <span class="fl">5</span><span class="op">)</span>    <span class="co">## Position changed to 2</span></code></pre></div>
 <pre><code>## [1]           2  -696993996 -1035426662  -378189083  -745352065</code></pre>
-<div class="sourceCode" id="cb148"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb135"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/GammaDist.html">rgamma</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>                 <span class="co">## A single Gamma distributed random number</span></code></pre></div>
 <pre><code>## [1] 0.2794622</code></pre>
-<div class="sourceCode" id="cb150"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb137"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">.Random.seed</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>, <span class="fl">5</span><span class="op">)</span>    <span class="co">## Position changed to 5</span></code></pre></div>
 <pre><code>## [1]           5  -696993996 -1035426662  -378189083  -745352065</code></pre>
 <p>In the example above, the first Gamma variable required two pseudorandom
@@ -316,89 +317,89 @@ callable from the R console. That is, nothing needs to be exported from C/C++.
 If nothing is exported, <code>sourceCpp</code> will actually not load the shared object
 file, so we need to trick <code>sourceCpp</code> to do so anyway. In the implementation
 below we achieve this by simply exporting a direct interface to the xorwow generator.</p>
-<div class="sourceCode" id="cb152"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb152-1"><a href="univariate-random-variables.html#cb152-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
-<span id="cb152-2"><a href="univariate-random-variables.html#cb152-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;R_ext/Random.h&gt;</span></span>
-<span id="cb152-3"><a href="univariate-random-variables.html#cb152-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb152-4"><a href="univariate-random-variables.html#cb152-4" aria-hidden="true" tabindex="-1"></a><span class="co">/* The Random.h header file contains the function declarations for the functions </span></span>
-<span id="cb152-5"><a href="univariate-random-variables.html#cb152-5" aria-hidden="true" tabindex="-1"></a><span class="co"> that R rely on internally for a user defined generator, and it also defines </span></span>
-<span id="cb152-6"><a href="univariate-random-variables.html#cb152-6" aria-hidden="true" tabindex="-1"></a><span class="co"> the type Int32 as an unsigned int. */</span></span>
-<span id="cb152-7"><a href="univariate-random-variables.html#cb152-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb152-8"><a href="univariate-random-variables.html#cb152-8" aria-hidden="true" tabindex="-1"></a><span class="at">static</span> Int32 z[<span class="dv">5</span>];     <span class="co">// The state vector </span></span>
-<span id="cb152-9"><a href="univariate-random-variables.html#cb152-9" aria-hidden="true" tabindex="-1"></a><span class="at">static</span> <span class="dt">double</span> res;</span>
-<span id="cb152-10"><a href="univariate-random-variables.html#cb152-10" aria-hidden="true" tabindex="-1"></a><span class="at">static</span> <span class="dt">int</span> nseed = <span class="dv">5</span>;  <span class="co">// Length of the state vector</span></span>
-<span id="cb152-11"><a href="univariate-random-variables.html#cb152-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb152-12"><a href="univariate-random-variables.html#cb152-12" aria-hidden="true" tabindex="-1"></a><span class="co">// Implementation of xorwow from Marsaglia's "Xorshift RNGs" </span></span>
-<span id="cb152-13"><a href="univariate-random-variables.html#cb152-13" aria-hidden="true" tabindex="-1"></a><span class="co">// modified so as to return a double in [0, 1). The '&gt;&gt;' and '&lt;&lt;' </span></span>
-<span id="cb152-14"><a href="univariate-random-variables.html#cb152-14" aria-hidden="true" tabindex="-1"></a><span class="co">// operators in C are bitwise right and left shift operators, and </span></span>
-<span id="cb152-15"><a href="univariate-random-variables.html#cb152-15" aria-hidden="true" tabindex="-1"></a><span class="co">// the caret, '^', is the xor operator. </span></span>
-<span id="cb152-16"><a href="univariate-random-variables.html#cb152-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb152-17"><a href="univariate-random-variables.html#cb152-17" aria-hidden="true" tabindex="-1"></a><span class="dt">double</span> * user_unif_rand()</span>
-<span id="cb152-18"><a href="univariate-random-variables.html#cb152-18" aria-hidden="true" tabindex="-1"></a>{ </span>
-<span id="cb152-19"><a href="univariate-random-variables.html#cb152-19" aria-hidden="true" tabindex="-1"></a>  Int32 t = z[<span class="dv">4</span>];</span>
-<span id="cb152-20"><a href="univariate-random-variables.html#cb152-20" aria-hidden="true" tabindex="-1"></a>  Int32 s = z[<span class="dv">1</span>];</span>
-<span id="cb152-21"><a href="univariate-random-variables.html#cb152-21" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">0</span>] += <span class="dv">362437</span>;</span>
-<span id="cb152-22"><a href="univariate-random-variables.html#cb152-22" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">4</span>] = z[<span class="dv">3</span>];</span>
-<span id="cb152-23"><a href="univariate-random-variables.html#cb152-23" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">3</span>] = z[<span class="dv">2</span>];</span>
-<span id="cb152-24"><a href="univariate-random-variables.html#cb152-24" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">2</span>] = s;</span>
-<span id="cb152-25"><a href="univariate-random-variables.html#cb152-25" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Right shift t by 2, then bitwise xor between t and its shift</span></span>
-<span id="cb152-26"><a href="univariate-random-variables.html#cb152-26" aria-hidden="true" tabindex="-1"></a>  t ^= t &gt;&gt; <span class="dv">2</span>;  </span>
-<span id="cb152-27"><a href="univariate-random-variables.html#cb152-27" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Left shift t by 1 and s by 4, xor them, xor with s and xor with t</span></span>
-<span id="cb152-28"><a href="univariate-random-variables.html#cb152-28" aria-hidden="true" tabindex="-1"></a>  t ^= s ^ (s &lt;&lt; <span class="dv">4</span>) ^ (t &lt;&lt; <span class="dv">1</span>);</span>
-<span id="cb152-29"><a href="univariate-random-variables.html#cb152-29" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">1</span>] = t;</span>
-<span id="cb152-30"><a href="univariate-random-variables.html#cb152-30" aria-hidden="true" tabindex="-1"></a>  res = (z[<span class="dv">0</span>] + t) * <span class="fl">2.32830643653869e-10</span>;</span>
-<span id="cb152-31"><a href="univariate-random-variables.html#cb152-31" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> &amp;res;</span>
-<span id="cb152-32"><a href="univariate-random-variables.html#cb152-32" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb152-33"><a href="univariate-random-variables.html#cb152-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb152-34"><a href="univariate-random-variables.html#cb152-34" aria-hidden="true" tabindex="-1"></a><span class="co">// A seed initializer using Marsaglia's congruential PRNG</span></span>
-<span id="cb152-35"><a href="univariate-random-variables.html#cb152-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb152-36"><a href="univariate-random-variables.html#cb152-36" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span>  user_unif_init(Int32 seed_in) { </span>
-<span id="cb152-37"><a href="univariate-random-variables.html#cb152-37" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">0</span>] = seed_in;</span>
-<span id="cb152-38"><a href="univariate-random-variables.html#cb152-38" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">1</span>] = <span class="dv">69069</span> * z[<span class="dv">0</span>] + <span class="dv">1</span>;</span>
-<span id="cb152-39"><a href="univariate-random-variables.html#cb152-39" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">2</span>] = <span class="dv">69069</span> * z[<span class="dv">1</span>] + <span class="dv">1</span>;</span>
-<span id="cb152-40"><a href="univariate-random-variables.html#cb152-40" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">3</span>] = <span class="dv">69069</span> * z[<span class="dv">2</span>] + <span class="dv">1</span>;</span>
-<span id="cb152-41"><a href="univariate-random-variables.html#cb152-41" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">4</span>] = <span class="dv">69069</span> * z[<span class="dv">3</span>] + <span class="dv">1</span>;</span>
-<span id="cb152-42"><a href="univariate-random-variables.html#cb152-42" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb152-43"><a href="univariate-random-variables.html#cb152-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb152-44"><a href="univariate-random-variables.html#cb152-44" aria-hidden="true" tabindex="-1"></a><span class="co">// Two functions to make '.Random.seed' in R reflect the state vector</span></span>
-<span id="cb152-45"><a href="univariate-random-variables.html#cb152-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb152-46"><a href="univariate-random-variables.html#cb152-46" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> * user_unif_nseed() { <span class="cf">return</span> &amp;nseed; }</span>
-<span id="cb152-47"><a href="univariate-random-variables.html#cb152-47" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> * user_unif_seedloc() { <span class="cf">return</span> (<span class="dt">int</span> *) &amp;z; }</span>
-<span id="cb152-48"><a href="univariate-random-variables.html#cb152-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb152-49"><a href="univariate-random-variables.html#cb152-49" aria-hidden="true" tabindex="-1"></a><span class="co">// Wrapper to make 'user_unif_rand' callable from R</span></span>
-<span id="cb152-50"><a href="univariate-random-variables.html#cb152-50" aria-hidden="true" tabindex="-1"></a><span class="dt">double</span> xor_runif() {</span>
-<span id="cb152-51"><a href="univariate-random-variables.html#cb152-51" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> *user_unif_rand();</span>
-<span id="cb152-52"><a href="univariate-random-variables.html#cb152-52" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb152-53"><a href="univariate-random-variables.html#cb152-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb152-54"><a href="univariate-random-variables.html#cb152-54" aria-hidden="true" tabindex="-1"></a><span class="co">// This module will export two functions to be directly available from R.</span></span>
-<span id="cb152-55"><a href="univariate-random-variables.html#cb152-55" aria-hidden="true" tabindex="-1"></a><span class="co">// Note: if nothing is exported, `sourceCpp` will not load the shared </span></span>
-<span id="cb152-56"><a href="univariate-random-variables.html#cb152-56" aria-hidden="true" tabindex="-1"></a><span class="co">// object file generated by the compilation of the code, and </span></span>
-<span id="cb152-57"><a href="univariate-random-variables.html#cb152-57" aria-hidden="true" tabindex="-1"></a><span class="co">// 'user_unif_rand' will not become available to the internals of R. </span></span>
-<span id="cb152-58"><a href="univariate-random-variables.html#cb152-58" aria-hidden="true" tabindex="-1"></a>RCPP_MODULE(xorwow) {</span>
-<span id="cb152-59"><a href="univariate-random-variables.html#cb152-59" aria-hidden="true" tabindex="-1"></a>  Rcpp::function(<span class="st">"xor_set.seed"</span>, &amp;user_unif_init, <span class="st">"Seeds Marsaglia's xorwow"</span>);</span>
-<span id="cb152-60"><a href="univariate-random-variables.html#cb152-60" aria-hidden="true" tabindex="-1"></a>  Rcpp::function(<span class="st">"xor_runif"</span>, &amp;xor_runif, <span class="st">"A uniform from Marsaglia's xorwow"</span>);</span>
-<span id="cb152-61"><a href="univariate-random-variables.html#cb152-61" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb139"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb139-1"><a href="univariate-random-variables.html#cb139-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
+<span id="cb139-2"><a href="univariate-random-variables.html#cb139-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;R_ext/Random.h&gt;</span></span>
+<span id="cb139-3"><a href="univariate-random-variables.html#cb139-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-4"><a href="univariate-random-variables.html#cb139-4" aria-hidden="true" tabindex="-1"></a><span class="co">/* The Random.h header file contains the function declarations for the functions </span></span>
+<span id="cb139-5"><a href="univariate-random-variables.html#cb139-5" aria-hidden="true" tabindex="-1"></a><span class="co"> that R rely on internally for a user defined generator, and it also defines </span></span>
+<span id="cb139-6"><a href="univariate-random-variables.html#cb139-6" aria-hidden="true" tabindex="-1"></a><span class="co"> the type Int32 as an unsigned int. */</span></span>
+<span id="cb139-7"><a href="univariate-random-variables.html#cb139-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-8"><a href="univariate-random-variables.html#cb139-8" aria-hidden="true" tabindex="-1"></a><span class="at">static</span> Int32 z[<span class="dv">5</span>];     <span class="co">// The state vector </span></span>
+<span id="cb139-9"><a href="univariate-random-variables.html#cb139-9" aria-hidden="true" tabindex="-1"></a><span class="at">static</span> <span class="dt">double</span> res;</span>
+<span id="cb139-10"><a href="univariate-random-variables.html#cb139-10" aria-hidden="true" tabindex="-1"></a><span class="at">static</span> <span class="dt">int</span> nseed = <span class="dv">5</span>;  <span class="co">// Length of the state vector</span></span>
+<span id="cb139-11"><a href="univariate-random-variables.html#cb139-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-12"><a href="univariate-random-variables.html#cb139-12" aria-hidden="true" tabindex="-1"></a><span class="co">// Implementation of xorwow from Marsaglia's "Xorshift RNGs" </span></span>
+<span id="cb139-13"><a href="univariate-random-variables.html#cb139-13" aria-hidden="true" tabindex="-1"></a><span class="co">// modified so as to return a double in [0, 1). The '&gt;&gt;' and '&lt;&lt;' </span></span>
+<span id="cb139-14"><a href="univariate-random-variables.html#cb139-14" aria-hidden="true" tabindex="-1"></a><span class="co">// operators in C are bitwise right and left shift operators, and </span></span>
+<span id="cb139-15"><a href="univariate-random-variables.html#cb139-15" aria-hidden="true" tabindex="-1"></a><span class="co">// the caret, '^', is the xor operator. </span></span>
+<span id="cb139-16"><a href="univariate-random-variables.html#cb139-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-17"><a href="univariate-random-variables.html#cb139-17" aria-hidden="true" tabindex="-1"></a><span class="dt">double</span> * user_unif_rand()</span>
+<span id="cb139-18"><a href="univariate-random-variables.html#cb139-18" aria-hidden="true" tabindex="-1"></a>{ </span>
+<span id="cb139-19"><a href="univariate-random-variables.html#cb139-19" aria-hidden="true" tabindex="-1"></a>  Int32 t = z[<span class="dv">4</span>];</span>
+<span id="cb139-20"><a href="univariate-random-variables.html#cb139-20" aria-hidden="true" tabindex="-1"></a>  Int32 s = z[<span class="dv">1</span>];</span>
+<span id="cb139-21"><a href="univariate-random-variables.html#cb139-21" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">0</span>] += <span class="dv">362437</span>;</span>
+<span id="cb139-22"><a href="univariate-random-variables.html#cb139-22" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">4</span>] = z[<span class="dv">3</span>];</span>
+<span id="cb139-23"><a href="univariate-random-variables.html#cb139-23" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">3</span>] = z[<span class="dv">2</span>];</span>
+<span id="cb139-24"><a href="univariate-random-variables.html#cb139-24" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">2</span>] = s;</span>
+<span id="cb139-25"><a href="univariate-random-variables.html#cb139-25" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Right shift t by 2, then bitwise xor between t and its shift</span></span>
+<span id="cb139-26"><a href="univariate-random-variables.html#cb139-26" aria-hidden="true" tabindex="-1"></a>  t ^= t &gt;&gt; <span class="dv">2</span>;  </span>
+<span id="cb139-27"><a href="univariate-random-variables.html#cb139-27" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Left shift t by 1 and s by 4, xor them, xor with s and xor with t</span></span>
+<span id="cb139-28"><a href="univariate-random-variables.html#cb139-28" aria-hidden="true" tabindex="-1"></a>  t ^= s ^ (s &lt;&lt; <span class="dv">4</span>) ^ (t &lt;&lt; <span class="dv">1</span>);</span>
+<span id="cb139-29"><a href="univariate-random-variables.html#cb139-29" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">1</span>] = t;</span>
+<span id="cb139-30"><a href="univariate-random-variables.html#cb139-30" aria-hidden="true" tabindex="-1"></a>  res = (z[<span class="dv">0</span>] + t) * <span class="fl">2.32830643653869e-10</span>;</span>
+<span id="cb139-31"><a href="univariate-random-variables.html#cb139-31" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> &amp;res;</span>
+<span id="cb139-32"><a href="univariate-random-variables.html#cb139-32" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb139-33"><a href="univariate-random-variables.html#cb139-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-34"><a href="univariate-random-variables.html#cb139-34" aria-hidden="true" tabindex="-1"></a><span class="co">// A seed initializer using Marsaglia's congruential PRNG</span></span>
+<span id="cb139-35"><a href="univariate-random-variables.html#cb139-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-36"><a href="univariate-random-variables.html#cb139-36" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span>  user_unif_init(Int32 seed_in) { </span>
+<span id="cb139-37"><a href="univariate-random-variables.html#cb139-37" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">0</span>] = seed_in;</span>
+<span id="cb139-38"><a href="univariate-random-variables.html#cb139-38" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">1</span>] = <span class="dv">69069</span> * z[<span class="dv">0</span>] + <span class="dv">1</span>;</span>
+<span id="cb139-39"><a href="univariate-random-variables.html#cb139-39" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">2</span>] = <span class="dv">69069</span> * z[<span class="dv">1</span>] + <span class="dv">1</span>;</span>
+<span id="cb139-40"><a href="univariate-random-variables.html#cb139-40" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">3</span>] = <span class="dv">69069</span> * z[<span class="dv">2</span>] + <span class="dv">1</span>;</span>
+<span id="cb139-41"><a href="univariate-random-variables.html#cb139-41" aria-hidden="true" tabindex="-1"></a>  z[<span class="dv">4</span>] = <span class="dv">69069</span> * z[<span class="dv">3</span>] + <span class="dv">1</span>;</span>
+<span id="cb139-42"><a href="univariate-random-variables.html#cb139-42" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb139-43"><a href="univariate-random-variables.html#cb139-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-44"><a href="univariate-random-variables.html#cb139-44" aria-hidden="true" tabindex="-1"></a><span class="co">// Two functions to make '.Random.seed' in R reflect the state vector</span></span>
+<span id="cb139-45"><a href="univariate-random-variables.html#cb139-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-46"><a href="univariate-random-variables.html#cb139-46" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> * user_unif_nseed() { <span class="cf">return</span> &amp;nseed; }</span>
+<span id="cb139-47"><a href="univariate-random-variables.html#cb139-47" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> * user_unif_seedloc() { <span class="cf">return</span> (<span class="dt">int</span> *) &amp;z; }</span>
+<span id="cb139-48"><a href="univariate-random-variables.html#cb139-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-49"><a href="univariate-random-variables.html#cb139-49" aria-hidden="true" tabindex="-1"></a><span class="co">// Wrapper to make 'user_unif_rand' callable from R</span></span>
+<span id="cb139-50"><a href="univariate-random-variables.html#cb139-50" aria-hidden="true" tabindex="-1"></a><span class="dt">double</span> xor_runif() {</span>
+<span id="cb139-51"><a href="univariate-random-variables.html#cb139-51" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> *user_unif_rand();</span>
+<span id="cb139-52"><a href="univariate-random-variables.html#cb139-52" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb139-53"><a href="univariate-random-variables.html#cb139-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-54"><a href="univariate-random-variables.html#cb139-54" aria-hidden="true" tabindex="-1"></a><span class="co">// This module will export two functions to be directly available from R.</span></span>
+<span id="cb139-55"><a href="univariate-random-variables.html#cb139-55" aria-hidden="true" tabindex="-1"></a><span class="co">// Note: if nothing is exported, `sourceCpp` will not load the shared </span></span>
+<span id="cb139-56"><a href="univariate-random-variables.html#cb139-56" aria-hidden="true" tabindex="-1"></a><span class="co">// object file generated by the compilation of the code, and </span></span>
+<span id="cb139-57"><a href="univariate-random-variables.html#cb139-57" aria-hidden="true" tabindex="-1"></a><span class="co">// 'user_unif_rand' will not become available to the internals of R. </span></span>
+<span id="cb139-58"><a href="univariate-random-variables.html#cb139-58" aria-hidden="true" tabindex="-1"></a>RCPP_MODULE(xorwow) {</span>
+<span id="cb139-59"><a href="univariate-random-variables.html#cb139-59" aria-hidden="true" tabindex="-1"></a>  Rcpp::function(<span class="st">"xor_set.seed"</span>, &amp;user_unif_init, <span class="st">"Seeds Marsaglia's xorwow"</span>);</span>
+<span id="cb139-60"><a href="univariate-random-variables.html#cb139-60" aria-hidden="true" tabindex="-1"></a>  Rcpp::function(<span class="st">"xor_runif"</span>, &amp;xor_runif, <span class="st">"A uniform from Marsaglia's xorwow"</span>);</span>
+<span id="cb139-61"><a href="univariate-random-variables.html#cb139-61" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>We first test the direct interface to the xorwow algorithm.</p>
-<div class="sourceCode" id="cb153"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb140"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">xor_set.seed</span><span class="op">(</span><span class="fl">3573076633</span><span class="op">)</span>
 <span class="fu">xor_runif</span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 0.9090892</code></pre>
 <p>Then we set R’s pseudorandom number generator to be our user supplied
 generator.</p>
-<div class="sourceCode" id="cb155"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb142"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">default_prng</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Random.html">RNGkind</a></span><span class="op">(</span><span class="st">"user"</span><span class="op">)</span></code></pre></div>
 <p>All R’s standard random number generators will after the call <code><a href="https://rdrr.io/r/base/Random.html">RNGkind("user")</a></code>
 rely on the user provided generator, in this case the xorwow generator.
 Note that R does an “initial scrambling” of the argument given to <code>set.seed</code>
 before it is passed on to our user defined initializer. This
 scrambling turns 24102019 used below into 3573076633 used above.</p>
-<div class="sourceCode" id="cb156"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb143"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">24102019</span><span class="op">)</span>
 <span class="va">.Random.seed</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>  <span class="co">## The state vector as seeded </span></code></pre></div>
 <pre><code>## [1] -721890663    9136518 -310030769 1191753796  194708085</code></pre>
-<div class="sourceCode" id="cb158"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb145"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>          <span class="co">## As above since same unscrambled seed is used</span></code></pre></div>
 <pre><code>## [1] 0.9090892</code></pre>
-<div class="sourceCode" id="cb160"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb147"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">.Random.seed</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>  <span class="co">## The state vector after one update</span></code></pre></div>
 <pre><code>## [1] -721528226  331069150    9136518 -310030769 1191753796</code></pre>
 <p>The code above shows the state vector of the xorwow algorithm when seeded
@@ -410,7 +411,7 @@ run time in a notable way when using e.g. <code>runif</code>. The generator is 
 not the bottleneck. As the implementation
 of xorwow above is experimental and has not been thoroughly tested, we will
 not rely on it and quickly reset the random number generator to its default value.</p>
-<div class="sourceCode" id="cb162"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb149"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## Resetting the generator to the default</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Random.html">RNGkind</a></span><span class="op">(</span><span class="va">default_prng</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></code></pre></div>
 </div>
@@ -425,7 +426,7 @@ generators as well as <a href="http://prng.di.unimi.it">Xoroshiro128+ and Xoshir
 that are shift-register algorithms. Xoroshiro128+ is the default and other
 generators can be chosen using <code>dqRNGkind</code>. The usage of generators from dqrng
 is similar to the usage of base R generators.</p>
-<div class="sourceCode" id="cb163"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb150"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://daqana.github.io/dqrng/">dqrng</a></span><span class="op">)</span>
 <span class="fu"><a href="https://daqana.github.io/dqrng/reference/dqrng-functions.html">dqset.seed</a></span><span class="op">(</span><span class="fl">24102019</span><span class="op">)</span>
 <span class="fu"><a href="https://daqana.github.io/dqrng/reference/dqrng-functions.html">dqrunif</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></code></pre></div>
@@ -438,7 +439,7 @@ random variables as well as uniform discrete distributions (<code>dqsample</code
 <code>dqsample.int</code>). All based on the fast pseudorandom integer generators that
 the package includes. In addition, the package has a C++ interface that makes it
 possible to use its generators in compiled code as well.</p>
-<div class="sourceCode" id="cb165"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb152"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html">microbenchmark</a></span><span class="op">(</span>
   <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="fl">1e6</span><span class="op">)</span>,
   <span class="fu"><a href="https://daqana.github.io/dqrng/reference/dqrng-functions.html">dqrunif</a></span><span class="op">(</span><span class="fl">1e6</span><span class="op">)</span>
@@ -601,7 +602,7 @@ proposal <span class="math inline">\(Y \sim g\)</span> can therefore be carried 
 by testing if a uniformly distributed random variable <span class="math inline">\(U\)</span> on <span class="math inline">\((0,1)\)</span>
 satisfies
 <span class="math display">\[U &gt; e^{\kappa(\cos(Y) - 1)}.\]</span></p>
-<div class="sourceCode" id="cb167"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb154"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">vMsim_slow</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">kappa</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">numeric</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>
   <span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">n</span><span class="op">)</span> <span class="op">{</span>
@@ -615,7 +616,7 @@ satisfies
   <span class="op">}</span>
   <span class="va">y</span>
 <span class="op">}</span></code></pre></div>
-<div class="sourceCode" id="cb168"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb155"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">k</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">k</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html">cos</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">pi</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Bessel.html">besselI</a></span><span class="op">(</span><span class="va">k</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span>
 <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">vMsim_slow</span><span class="op">(</span><span class="fl">100000</span>, <span class="fl">0.5</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html">hist</a></span><span class="op">(</span><span class="va">x</span>, breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="op">-</span><span class="va">pi</span>, <span class="va">pi</span>, length.out <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>, prob <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
@@ -632,7 +633,7 @@ Figure 4.1: Histograms of 100,000 simulated data points from von Mises distribut
 
 <p>Figure <a href="univariate-random-variables.html#fig:vMsim">4.1</a> confirms that the implementation simulates
 from the von Mises distribution.</p>
-<div class="sourceCode" id="cb169"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb156"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/system.time.html">system.time</a></span><span class="op">(</span><span class="fu">vMsim_slow</span><span class="op">(</span><span class="fl">100000</span>, kappa <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>##    user  system elapsed 
 ##   2.507   0.158   2.693</code></pre>
@@ -640,7 +641,7 @@ from the von Mises distribution.</p>
 seconds, it might still be possible to improve it. To investigate what most
 of the run time is spent on we use the line profiling tool as implemented in
 the profvis package.</p>
-<div class="sourceCode" id="cb171"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb158"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://rstudio.github.io/profvis/">profvis</a></span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/pkg/profvis/man/profvis.html">profvis</a></span><span class="op">(</span><span class="fu">vMsim_slow</span><span class="op">(</span><span class="fl">10000</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <div class="inline-figure"><img src="figures/vMsim-profile.png" width="90%" style="display: block; margin: auto;"></div>
@@ -662,7 +663,7 @@ wrapper of the random number generator that will cache a suitable amount
 of random variables. This function will take care of some bookkeeping
 and variables can then be extracted as needed. This also nicely
 illustrates the use of a <a href="https://adv-r.hadley.nz/function-factories.html">function factory</a>.</p>
-<div class="sourceCode" id="cb172"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb159"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rng_stream</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">m</span>, <span class="va">rng</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">args</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>
   <span class="va">cache</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html">do.call</a></span><span class="op">(</span><span class="va">rng</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">m</span>, <span class="va">args</span><span class="op">)</span><span class="op">)</span>
@@ -690,7 +691,7 @@ then it generates the estimated number of variables needed. This may be
 repeated a couple of times.</p>
 <p>We can then reimplement <code>vMsim</code> using <code>rng_stream</code>. For later usage we add the
 possibility of printing out some tracing information.</p>
-<div class="sourceCode" id="cb173"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb160"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">vMsim</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">kappa</span>, <span class="va">trace</span> <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">count</span> <span class="op">&lt;-</span> <span class="fl">0</span>
   <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">numeric</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>
@@ -711,7 +712,7 @@ possibility of printing out some tracing information.</p>
 <span class="op">}</span></code></pre></div>
 <p>We should, of course, remember to test that the new implementation still
 generates variables from the von Mises distribution.</p>
-<div class="sourceCode" id="cb174"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb161"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">vMsim</span><span class="op">(</span><span class="fl">100000</span>, <span class="fl">0.5</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html">hist</a></span><span class="op">(</span><span class="va">x</span>, breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="op">-</span><span class="va">pi</span>, <span class="va">pi</span>, length.out <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>, prob <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/curve.html">curve</a></span><span class="op">(</span><span class="fu">f</span><span class="op">(</span><span class="va">x</span>, <span class="fl">0.5</span><span class="op">)</span>, <span class="op">-</span><span class="va">pi</span>, <span class="va">pi</span>, col <span class="op">=</span> <span class="st">"blue"</span>, lwd <span class="op">=</span> <span class="fl">2</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
@@ -727,7 +728,7 @@ Figure 4.2: Histograms of 100,000 simulated data points from von Mises distribut
 
 <p>Then we can compare the run time of this new implementation to the
 run time of the first implementation.</p>
-<div class="sourceCode" id="cb175"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb162"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/system.time.html">system.time</a></span><span class="op">(</span><span class="fu">vMsim</span><span class="op">(</span><span class="fl">100000</span>, kappa <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>##    user  system elapsed 
 ##   1.076   0.718   2.052</code></pre>
@@ -747,7 +748,7 @@ rejections there will be. We can, however, benefit from the ideas in <code>rng_s
 on how to estimate the fraction of acceptances from a first round, which can be
 used for subsequent simulations. This is done in the following fully
 vectorized R implementation.</p>
-<div class="sourceCode" id="cb177"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb164"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">vMsim_vec</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">kappa</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">fact</span> <span class="op">&lt;-</span> <span class="fl">1</span>
   <span class="va">j</span> <span class="op">&lt;-</span> <span class="fl">1</span>
@@ -774,22 +775,22 @@ few entries, and it is inconsequential that it is grown dynamically.</p>
 <p>Finally, a C++ implementation via Rcpp is given below where the random variables are
 then again generated one at a time via the C-interface to R’s random number
 generators. There is no (substantial) overhead of doing so in C++.</p>
-<div class="sourceCode" id="cb178"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb178-1"><a href="univariate-random-variables.html#cb178-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
-<span id="cb178-2"><a href="univariate-random-variables.html#cb178-2" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</span>
-<span id="cb178-3"><a href="univariate-random-variables.html#cb178-3" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
-<span id="cb178-4"><a href="univariate-random-variables.html#cb178-4" aria-hidden="true" tabindex="-1"></a>NumericVector vMsim_cpp(<span class="dt">int</span> n, <span class="dt">double</span> kappa) {</span>
-<span id="cb178-5"><a href="univariate-random-variables.html#cb178-5" aria-hidden="true" tabindex="-1"></a>  NumericVector y(n);</span>
-<span id="cb178-6"><a href="univariate-random-variables.html#cb178-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> y0;</span>
-<span id="cb178-7"><a href="univariate-random-variables.html#cb178-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">bool</span> reject;</span>
-<span id="cb178-8"><a href="univariate-random-variables.html#cb178-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; n; ++i) {</span>
-<span id="cb178-9"><a href="univariate-random-variables.html#cb178-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">do</span> {</span>
-<span id="cb178-10"><a href="univariate-random-variables.html#cb178-10" aria-hidden="true" tabindex="-1"></a>      y0 = R::runif(- M_PI, M_PI);</span>
-<span id="cb178-11"><a href="univariate-random-variables.html#cb178-11" aria-hidden="true" tabindex="-1"></a>      reject = R::runif(<span class="dv">0</span>, <span class="dv">1</span>) &gt; exp(kappa * (cos(y0) - <span class="dv">1</span>));</span>
-<span id="cb178-12"><a href="univariate-random-variables.html#cb178-12" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">while</span>(reject);</span>
-<span id="cb178-13"><a href="univariate-random-variables.html#cb178-13" aria-hidden="true" tabindex="-1"></a>    y[i] = y0;</span>
-<span id="cb178-14"><a href="univariate-random-variables.html#cb178-14" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb178-15"><a href="univariate-random-variables.html#cb178-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> y;</span>
-<span id="cb178-16"><a href="univariate-random-variables.html#cb178-16" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb165"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb165-1"><a href="univariate-random-variables.html#cb165-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
+<span id="cb165-2"><a href="univariate-random-variables.html#cb165-2" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</span>
+<span id="cb165-3"><a href="univariate-random-variables.html#cb165-3" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb165-4"><a href="univariate-random-variables.html#cb165-4" aria-hidden="true" tabindex="-1"></a>NumericVector vMsim_cpp(<span class="dt">int</span> n, <span class="dt">double</span> kappa) {</span>
+<span id="cb165-5"><a href="univariate-random-variables.html#cb165-5" aria-hidden="true" tabindex="-1"></a>  NumericVector y(n);</span>
+<span id="cb165-6"><a href="univariate-random-variables.html#cb165-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> y0;</span>
+<span id="cb165-7"><a href="univariate-random-variables.html#cb165-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">bool</span> reject;</span>
+<span id="cb165-8"><a href="univariate-random-variables.html#cb165-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; n; ++i) {</span>
+<span id="cb165-9"><a href="univariate-random-variables.html#cb165-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">do</span> {</span>
+<span id="cb165-10"><a href="univariate-random-variables.html#cb165-10" aria-hidden="true" tabindex="-1"></a>      y0 = R::runif(- M_PI, M_PI);</span>
+<span id="cb165-11"><a href="univariate-random-variables.html#cb165-11" aria-hidden="true" tabindex="-1"></a>      reject = R::runif(<span class="dv">0</span>, <span class="dv">1</span>) &gt; exp(kappa * (cos(y0) - <span class="dv">1</span>));</span>
+<span id="cb165-12"><a href="univariate-random-variables.html#cb165-12" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">while</span>(reject);</span>
+<span id="cb165-13"><a href="univariate-random-variables.html#cb165-13" aria-hidden="true" tabindex="-1"></a>    y[i] = y0;</span>
+<span id="cb165-14"><a href="univariate-random-variables.html#cb165-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb165-15"><a href="univariate-random-variables.html#cb165-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> y;</span>
+<span id="cb165-16"><a href="univariate-random-variables.html#cb165-16" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:vMsim3"></span>
 <img src="CSwR_files/figure-html/vMsim3-1.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom)." width="49%"><img src="CSwR_files/figure-html/vMsim3-2.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom)." width="49%"><img src="CSwR_files/figure-html/vMsim3-3.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom)." width="49%"><img src="CSwR_files/figure-html/vMsim3-4.png" alt="Histograms of 100,000 simulated data points from von Mises distributions with parameters \(\kappa = 0.5\) (left) and \(\kappa = 2\) (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom)." width="49%"><p class="caption">
@@ -802,11 +803,11 @@ and the fast R implementation,
 and confirms that the implementations do simulate from the von Mises distribution.
 We conclude by measuring the run time of the implementations using
 <code>system.time</code> and a combined microbenchmark of all four different implementations.</p>
-<div class="sourceCode" id="cb179"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb166"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/system.time.html">system.time</a></span><span class="op">(</span><span class="fu">vMsim_cpp</span><span class="op">(</span><span class="fl">100000</span>, kappa <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>##    user  system elapsed 
 ##   0.045   0.001   0.047</code></pre>
-<div class="sourceCode" id="cb181"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb168"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html">microbenchmark</a></span><span class="op">(</span>
   <span class="fu">vMsim_slow</span><span class="op">(</span><span class="fl">1000</span>, kappa <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,
   <span class="fu">vMsim</span><span class="op">(</span><span class="fl">1000</span>, kappa <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,
@@ -860,7 +861,7 @@ gamma distributed. The rejection sampler is otherwise implemented as for
 the non-vectorized von Mises distribution. To investigate rejection probabilities below
 we additionally implement the possibility of printing out some tracing
 information.</p>
-<div class="sourceCode" id="cb183"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb170"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## r &gt;= 1 </span>
 <span class="va">tfun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">y</span>, <span class="va">a</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">b</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">3</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span><span class="op">)</span>
@@ -907,7 +908,7 @@ A very tight envelope will lead to fewer rejections, while a loose envelope will
 lead to many rejections. Using the tracing option as implemented we obtain
 estimates of the rejection probability and thus a quantification of
 how tight the envelope is.</p>
-<div class="sourceCode" id="cb184"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb171"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">gammasim</span><span class="op">(</span><span class="fl">100000</span>, <span class="fl">16</span>, trace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">gammasim</span><span class="op">(</span><span class="fl">100000</span>, <span class="fl">8</span>, trace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">gammasim</span><span class="op">(</span><span class="fl">100000</span>, <span class="fl">4</span>, trace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
@@ -1021,7 +1022,7 @@ This distribution has density
 which is log-concave (when the shape parameters are greater than one).
 We implement the rejection sampling algorithm for this density with the adaptive
 envelope using two points.</p>
-<div class="sourceCode" id="cb186"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb173"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">Betasim</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">x1</span>, <span class="va">x2</span>, <span class="va">alpha</span>, <span class="va">beta</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">lf</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">(</span><span class="va">alpha</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="va">beta</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">x</span><span class="op">)</span> 
   <span class="va">lf_deriv</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">(</span><span class="va">alpha</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span><span class="op">/</span><span class="va">x</span> <span class="op">-</span> <span class="op">(</span><span class="va">beta</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span><span class="op">/</span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">x</span><span class="op">)</span>
@@ -1065,7 +1066,7 @@ Figure 4.6: Histograms of simulated variables from Beta distributions using the 
 <p>Note that as a safeguard we implemented a test on the <span class="math inline">\(a_i\)</span>-s to check that
 the formulas used are actually meaningful, specifically that there are no
 divisions by zero.</p>
-<div class="sourceCode" id="cb187"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb174"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">Betasim</span><span class="op">(</span><span class="fl">1</span>, x1 <span class="op">=</span> <span class="fl">0.25</span>, x2 <span class="op">=</span> <span class="fl">0.75</span>, alpha <span class="op">=</span> <span class="fl">4</span>, beta <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>  </code></pre></div>
 <pre><code>## Error in Betasim(1, x1 = 0.25, x2 = 0.75, alpha = 4, beta = 2): ## The
 implementation requires a_1 and a_2 different ## and both different from zero. Choose
@@ -1089,7 +1090,7 @@ Betasim(1, x1 = 0.2, x2 = 0.8, alpha = 4, beta = 2)    </code></pre>
 uniform distribution as proposal distribution. As it turns out, the uniform
 density is not a particularly tight envelope. We illustrate this by
 studying the proportion of rejections for our previous implementation.</p>
-<div class="sourceCode" id="cb191"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb178"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">vMsim</span><span class="op">(</span><span class="fl">10000</span>, <span class="fl">0.1</span>, trace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">vMsim</span><span class="op">(</span><span class="fl">10000</span>, <span class="fl">0.5</span>, trace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">vMsim</span><span class="op">(</span><span class="fl">10000</span>, <span class="fl">2</span>, trace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
@@ -1107,7 +1108,7 @@ but it is on <span class="math inline">\((-\pi/2, \pi/2)\)</span>. It is, furthe
 as well as <span class="math inline">\((\pi/2, \pi)\)</span>, which implies that on these two intervals the
 log-density is below the corresponding chords. These chords can be
 pieced together with tangents to give an envelope.</p>
-<div class="sourceCode" id="cb193"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb180"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">vMsim_adapt</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">x1</span>, <span class="va">x2</span>, <span class="va">kappa</span>, <span class="va">trace</span> <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">lf</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">kappa</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html">cos</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> 
   <span class="va">lf_deriv</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">-</span> <span class="va">kappa</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html">sin</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>
@@ -1169,7 +1170,7 @@ pieced together with tangents to give an envelope.</p>
 Figure 4.7: Histograms of simulated variables from von Mises distributions using the rejection sampler with the adaptive envelope based on a combination of log-concavity and log-convexity. The true density (blue) and the envelope (red) are added to the plots.
 </p>
 </div>
-<div class="sourceCode" id="cb194"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb181"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">vMsim_adapt</span><span class="op">(</span><span class="fl">100000</span>, <span class="op">-</span><span class="fl">0.4</span>, <span class="fl">0.4</span>, <span class="fl">5</span>, trace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">vMsim_adapt</span><span class="op">(</span><span class="fl">100000</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, trace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">vMsim_adapt</span><span class="op">(</span><span class="fl">100000</span>, <span class="op">-</span><span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">5</span>, trace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
@@ -1185,7 +1186,7 @@ always a good question how the added complexity and bookkeeping induced by
 using more advanced and adaptive envelopes affect run time. It is even a good question
 if our current adaptive implementation will outperform our first, and
 much simpler, implementation that used the uniform envelope.</p>
-<div class="sourceCode" id="cb196"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb183"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html">microbenchmark</a></span><span class="op">(</span><span class="fu">vMsim_adapt</span><span class="op">(</span><span class="fl">100</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">5</span><span class="op">)</span>,
                <span class="fu">vMsim_adapt</span><span class="op">(</span><span class="fl">100</span>, <span class="op">-</span><span class="fl">0.4</span>, <span class="fl">0.4</span>, <span class="fl">5</span><span class="op">)</span>,
                <span class="fu">vMsim_adapt</span><span class="op">(</span><span class="fl">100</span>, <span class="op">-</span><span class="fl">0.2</span>, <span class="fl">0.2</span>, <span class="fl">5</span><span class="op">)</span>,
@@ -1305,7 +1306,7 @@ adaptive envelopes suggested in Section <a href="univariate-random-variables.htm
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2021-10-20, Git version: 86c4ccf.</p>
+    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2022-05-08, Git version: c532a37.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

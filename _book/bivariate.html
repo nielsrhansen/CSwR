@@ -6,14 +6,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Chapter 3 Bivariate smoothing | Computational Statistics with R</title>
 <meta name="author" content="Niels Richard Hansen">
-<meta name="description" content="The focus of this chapter is on estimating how one variable, \(Y\), is smoothly related to another, \(X\). Thus we are directly aiming for an estimate of (aspects of) the conditional distribution...">
+<meta name="description" content="This chapter is on the estimation of a smooth relation between two variables \((X, Y)\). We will focus on direct estimation of (aspects of) the conditional distribution of \(Y\) given \(X\). Thus...">
 <meta name="generator" content="bookdown 0.24 with bs4_book()">
 <meta property="og:title" content="Chapter 3 Bivariate smoothing | Computational Statistics with R">
 <meta property="og:type" content="book">
-<meta property="og:description" content="The focus of this chapter is on estimating how one variable, \(Y\), is smoothly related to another, \(X\). Thus we are directly aiming for an estimate of (aspects of) the conditional distribution...">
+<meta property="og:description" content="This chapter is on the estimation of a smooth relation between two variables \((X, Y)\). We will focus on direct estimation of (aspects of) the conditional distribution of \(Y\) given \(X\). Thus...">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Chapter 3 Bivariate smoothing | Computational Statistics with R">
-<meta name="twitter:description" content="The focus of this chapter is on estimating how one variable, \(Y\), is smoothly related to another, \(X\). Thus we are directly aiming for an estimate of (aspects of) the conditional distribution...">
+<meta name="twitter:description" content="This chapter is on the estimation of a smooth relation between two variables \((X, Y)\). We will focus on direct estimation of (aspects of) the conditional distribution of \(Y\) given \(X\). Thus...">
 <!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/header-attrs-2.10/header-attrs.js"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
 <script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/_Roboto%20Slab-0.4.0/font.css" rel="stylesheet">
@@ -53,6 +53,7 @@
 <li><a class="" href="numopt.html"><span class="header-section-number">7</span> Numerical optimization</a></li>
 <li><a class="" href="em.html"><span class="header-section-number">8</span> Expectation maximization algorithms</a></li>
 <li><a class="" href="StochOpt.html"><span class="header-section-number">9</span> Stochastic Optimization</a></li>
+<li><a class="" href="the-stochastic-em-algorithm.html"><span class="header-section-number">10</span> The stochastic EM algorithm</a></li>
 <li class="book-part">Appendix</li>
 <li><a class="" href="app-R.html"><span class="header-section-number">A</span> R programming</a></li>
 <li><a class="" href="references.html">References</a></li>
@@ -67,25 +68,35 @@
 <h1>
 <span class="header-section-number">3</span> Bivariate smoothing<a class="anchor" aria-label="anchor" href="#bivariate"><i class="fas fa-link"></i></a>
 </h1>
-<p>The focus of this chapter is on estimating how one variable, <span class="math inline">\(Y\)</span>, is smoothly
-related to another, <span class="math inline">\(X\)</span>. Thus we are directly aiming for an estimate of
-(aspects of) the conditional distribution of <span class="math inline">\(Y\)</span> given <span class="math inline">\(X\)</span>. If both variables
-are real valued, we can get a pretty good idea of their relation by simply
-looking at a scatter plot, and what we are aiming for is also often referred to
-as <em>scatter plot smoothing</em>. In some cases <span class="math inline">\(X\)</span> represents a random variable,
-while in other cases, as the temperature example below, <span class="math inline">\(X\)</span> represents a
-deterministic variable. In the example below <span class="math inline">\(X\)</span> is time, and in other applications
-<span class="math inline">\(X\)</span> could be fixed by an experimental design.</p>
-<p>One of the examples that will be used throughout is the monthly and yearly
-temperatures in Nuuk, Greenland, see <span class="citation"><a href="references.html#ref-Vinther:2006" role="doc-biblioref">Vinther et al.</a> (<a href="references.html#ref-Vinther:2006" role="doc-biblioref">2006</a>)</span>. The updated data is available
+<p>This chapter is on the estimation of a smooth relation between two variables
+<span class="math inline">\((X, Y)\)</span>. We will focus on direct estimation of (aspects of) the
+conditional distribution of <span class="math inline">\(Y\)</span> given <span class="math inline">\(X\)</span>. Thus the variables are treated
+asymmetrically. When both variables are real valued, we get a good idea
+about their relation from a scatter plot of <span class="math inline">\(Y\)</span> against <span class="math inline">\(X\)</span>,
+and the aim is basically to smooth the relation that the scatter plot shows.</p>
+<p>For most of the methods considered, it does not matter if <span class="math inline">\(X\)</span> represents a
+deterministic or a random variable. Thus <span class="math inline">\(X\)</span> could be fixed by an experimental
+design, it could represent time or it could be an observed variable.
+In Figure <a href="bivariate.html#fig:NuukSmooth">3.1</a> (left),
+<span class="math inline">\(Y\)</span> is the annual average temperature in Nuuk, Greenland, and <span class="math inline">\(X\)</span> is
+time in calendar years. In Figure <a href="bivariate.html#fig:NuukSmooth">3.1</a> (right), <span class="math inline">\(Y\)</span> is
+the monthly average temperature in Nuuk, while <span class="math inline">\(X\)</span> is the monthly average
+temperature in Qaqortoq – a town further south of Nuuk in Greenland. In
+the former example, time is deterministic and we are interested in how
+the temperature in Nuuk changes over time. Is there, for instance, a trend?
+In the second example, we are interested in how the temperature in Qaqortoq
+is predictive of the temperature in Nuuk. We will use those two
+temperature examples throughout, see <span class="citation"><a href="references.html#ref-Vinther:2006" role="doc-biblioref">Vinther et al.</a> (<a href="references.html#ref-Vinther:2006" role="doc-biblioref">2006</a>)</span>. The raw data is available
 from the site
-<a href="https://crudata.uea.ac.uk/cru/data/greenland/">SW Greenland temperature data</a>.</p>
-<pre><code>## Warning: `read_table2()` was deprecated in readr 2.0.0.
-## Please use `read_table()` instead.</code></pre>
+<a href="https://crudata.uea.ac.uk/cru/data/greenland/">SW Greenland temperature data</a>,
+but is also available from the CSwR package.</p>
 
-<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">p_Nuuk</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="va">Nuuk_year</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Year</span>, y <span class="op">=</span> <span class="va">Temperature</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span><span class="op">(</span><span class="op">)</span>
-<span class="va">p_Nuuk</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_smooth.html">geom_smooth</a></span><span class="op">(</span>se <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span> 
+<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">p_Nuuk</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="va">Nuuk_year</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Year</span>, y <span class="op">=</span> <span class="va">Temperature</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> 
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span><span class="op">(</span><span class="op">)</span>
+
+<span class="va">p_Nuuk</span> <span class="op">+</span> 
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_smooth.html">geom_smooth</a></span><span class="op">(</span>se <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span>         <span class="co"># A loess smoother</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_smooth.html">geom_smooth</a></span><span class="op">(</span>
     method <span class="op">=</span> <span class="st">"lm"</span>, 
     formula <span class="op">=</span> <span class="va">y</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html">poly</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">10</span><span class="op">)</span>,      <span class="co"># A degree-10 polynomial expansion</span>
@@ -99,19 +110,31 @@ from the site
     se <span class="op">=</span> <span class="cn">FALSE</span>
   <span class="op">)</span>
 
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="va">Nuuk</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Month</span>, y <span class="op">=</span> <span class="va">Temperature</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> 
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>group <span class="op">=</span> <span class="va">Year</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">+</span> 
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">+</span>
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_smooth.html">geom_smooth</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"red"</span>, se <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>  <span class="co"># A spline smoother</span></code></pre></div>
+<span class="va">p_Nuuk_Qaqortoq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="va">Nuuk_Qaqortoq</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span><span class="va">Temp_Qaqortoq</span>, <span class="va">Temp_Nuuk</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> 
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span><span class="op">(</span><span class="op">)</span>
+
+<span class="va">p_Nuuk_Qaqortoq</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_smooth.html">geom_smooth</a></span><span class="op">(</span>
+    method <span class="op">=</span> <span class="st">"lm"</span>, 
+    formula <span class="op">=</span> <span class="va">y</span> <span class="op">~</span> <span class="va">x</span>,                 <span class="co"># A straight line smoother</span>
+    color <span class="op">=</span> <span class="st">"red"</span>, 
+    se <span class="op">=</span> <span class="cn">FALSE</span>
+  <span class="op">)</span> <span class="op">+</span> 
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_smooth.html">geom_smooth</a></span><span class="op">(</span>
+    method <span class="op">=</span> <span class="st">"gam"</span>, 
+    formula <span class="op">=</span> <span class="va">y</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">x</span>, bs <span class="op">=</span> <span class="st">"cr"</span><span class="op">)</span>,   <span class="co"># A spline smoother via 'mgcv::gam()'</span>
+    color <span class="op">=</span> <span class="st">"purple"</span>, 
+    se <span class="op">=</span> <span class="cn">FALSE</span>
+  <span class="op">)</span></code></pre></div>
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:NuukSmooth"></span>
-<img src="CSwR_files/figure-html/NuukSmooth-1.png" alt="Nuuk average yearly temperature in degrees Celsius (left) smoothed using loess (black), a degree 10 polynomial (red) and a smooth spline (purple). Nuuk annual temperature cycles (right) smoothed using a spline." width="49%"><img src="CSwR_files/figure-html/NuukSmooth-2.png" alt="Nuuk average yearly temperature in degrees Celsius (left) smoothed using loess (black), a degree 10 polynomial (red) and a smooth spline (purple). Nuuk annual temperature cycles (right) smoothed using a spline." width="49%"><p class="caption">
-Figure 3.1: Nuuk average yearly temperature in degrees Celsius (left) smoothed using loess (black), a degree 10 polynomial (red) and a smooth spline (purple). Nuuk annual temperature cycles (right) smoothed using a spline.
+<img src="CSwR_files/figure-html/NuukSmooth-1.png" alt="Nuuk average yearly temperature in degrees Celsius (left) smoothed using loess (black), a degree 10 polynomial (red) and a smooth spline (purple). Nuuk average monthly temperature against Qaqortoq average montly temperature (right) smoothed using a straight line (red) and a smooth spline (purple)." width="49%"><img src="CSwR_files/figure-html/NuukSmooth-2.png" alt="Nuuk average yearly temperature in degrees Celsius (left) smoothed using loess (black), a degree 10 polynomial (red) and a smooth spline (purple). Nuuk average monthly temperature against Qaqortoq average montly temperature (right) smoothed using a straight line (red) and a smooth spline (purple)." width="49%"><p class="caption">
+Figure 3.1: Nuuk average yearly temperature in degrees Celsius (left) smoothed using loess (black), a degree 10 polynomial (red) and a smooth spline (purple). Nuuk average monthly temperature against Qaqortoq average montly temperature (right) smoothed using a straight line (red) and a smooth spline (purple).
 </p>
 </div>
-<div id="nearest-neighbor-smoothers" class="section level2" number="3.1">
+<div id="nearest-neighbor-and-kernel-smoothers" class="section level2" number="3.1">
 <h2>
-<span class="header-section-number">3.1</span> Nearest neighbor smoothers<a class="anchor" aria-label="anchor" href="#nearest-neighbor-smoothers"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.1</span> Nearest neighbor and kernel smoothers<a class="anchor" aria-label="anchor" href="#nearest-neighbor-and-kernel-smoothers"><i class="fas fa-link"></i></a>
 </h2>
 <p>One of the most basic ideas on smoothing bivariate data is to use a
 running mean or moving average. This is particularly sensible when the
@@ -127,7 +150,7 @@ as the <span class="math inline">\(x\)</span>-values lie in a metric space, and 
 regression functions, <span class="math inline">\(f(x) = E(Y \mid X = x)\)</span>, under minimal assumptions.
 The practical problem is that <span class="math inline">\(k\)</span> must grow slowly in high dimensions,
 and the estimator is not a panacea.</p>
-<p>In this chapter we focus exclusively on <span class="math inline">\(x\)</span> being real valued with the
+<p>In this chapter we focus mostly on <span class="math inline">\(x\)</span> being real valued with the
 ordinary metric used to define the nearest neighbors. The total ordering of the
 real line adds a couple of extra possibilities to the definition of <span class="math inline">\(N_i\)</span>.
 When <span class="math inline">\(k\)</span> is odd, the <em>symmetric</em> nearest neighbor smoother takes <span class="math inline">\(N_i\)</span> to consist
@@ -175,7 +198,7 @@ and computing the matrix-vector product. Indeed, this is often not the best
 way to compute the smoothed values.</p>
 <p>It is, on the other hand, useful to see how <span class="math inline">\(\mathbf{S}\)</span> can be constructed
 for the symmetric nearest neighbor smoother.</p>
-<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">w</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fl">11</span>, <span class="fl">11</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">147</span> <span class="op">-</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span>
 <span class="va">S</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span><span class="va">w</span>, <span class="fl">147</span> <span class="op">-</span> <span class="fl">10</span>, <span class="fl">147</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <pre><code>## Warning in matrix(w, 147 - 10, 147, byrow = TRUE): data length [148] is not a sub-multiple or
@@ -184,7 +207,7 @@ for the symmetric nearest neighbor smoother.</p>
 and the fact that <code>w</code> has length <span class="math inline">\(147 + 1\)</span>, which will effectively cause <code>w</code> to be
 translated by one to the right every time it is recycled for a new row. As seen,
 the code triggers a warning by R, but in this case we get what we want.</p>
-<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">S</span></code></pre></div>
 <div class="inline-figure"><img src="CSwR_files/figure-html/S-NN-top-actual-1.png" width="70%" style="display: block; margin: auto;"></div>
 <p>We can use the matrix to smooth the annual average temperature in Nuuk using a
@@ -193,12 +216,12 @@ at a given year is the average of the temperatures in the period
 from five years before to five years after. Note that to add the smoothed
 values to the previous plot we need to pad the values at the boundaries
 with <code>NA</code>s to get a vector of length 147.</p>
-<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Check first if data is sorted correctly.</span>
 <span class="co"># The test is backwards, but confirms that data isn't unsorted :-)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/is.unsorted.html">is.unsorted</a></span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Year</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] FALSE</code></pre>
-<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">f_hat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">5</span><span class="op">)</span>, <span class="va">S</span> <span class="op">%*%</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span>
 <span class="va">p_Nuuk</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">f_hat</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span></code></pre></div>
 <div class="figure" style="text-align: center">
@@ -218,7 +241,7 @@ which can be used for a much more efficient implementation
 than the matrix-vector multiplication. It should be emphasized
 again that the identity above and the implementation below
 assume that data is sorted according to <span class="math inline">\(x\)</span>-values.</p>
-<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># The vector 'y' must be sorted according to the x-values</span>
 <span class="va">run_mean</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">y</span>, <span class="va">k</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">n</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span>
@@ -232,7 +255,7 @@ assume that data is sorted according to <span class="math inline">\(x\)</span>-v
   <span class="va">s</span>
 <span class="op">}</span></code></pre></div>
 
-<div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">p_Nuuk</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fu">run_mean</span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>, <span class="fl">11</span><span class="op">)</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span></code></pre></div>
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:Nuuk-NN-plot2"></span>
@@ -243,11 +266,11 @@ Figure 3.3: Annual average temperature in Nuuk smoothed using the running mean w
 <p>The R function <code><a href="https://rdrr.io/r/stats/filter.html">filter()</a></code> (from the stats package) can be used to compute running
 means and general moving averages using any weight vector. We compare our two
 implementations to <code><a href="https://rdrr.io/r/stats/filter.html">filter()</a></code>.</p>
-<div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">f_hat_filter</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fl">11</span>, <span class="fl">11</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="va">f_hat_filter</span> <span class="op">-</span> <span class="va">f_hat</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] -4.440892e-16  4.440892e-16</code></pre>
-<div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="va">f_hat_filter</span> <span class="op">-</span> <span class="fu">run_mean</span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>, <span class="fl">11</span><span class="op">)</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] -1.332268e-15  4.440892e-16</code></pre>
 <p>Note that <code><a href="https://rdrr.io/r/stats/filter.html">filter()</a></code> uses the same boundary convention as used in <code>run_mean()</code>.</p>
@@ -316,12 +339,12 @@ can be computed without actually computing all the <span class="math inline">\(\
 We disregard boundary values (with the <code>NA</code> value), so to get
 a comparable quantity across different choices of <span class="math inline">\(k\)</span> we use <code><a href="https://rdrr.io/r/base/mean.html">mean()</a></code> instead of
 <code><a href="https://rdrr.io/r/base/sum.html">sum()</a></code> in the implementation.</p>
-<div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">loocv</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">k</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">f_hat</span> <span class="op">&lt;-</span> <span class="fu">run_mean</span><span class="op">(</span><span class="va">y</span>, <span class="va">k</span><span class="op">)</span>
   <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="op">(</span><span class="op">(</span><span class="va">y</span> <span class="op">-</span> <span class="va">f_hat</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="fl">1</span><span class="op">/</span><span class="va">k</span><span class="op">)</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> 
 <span class="op">}</span></code></pre></div>
-<div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">k</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">40</span>, <span class="fl">2</span><span class="op">)</span>
 <span class="va">CV</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">sapply</a></span><span class="op">(</span><span class="va">k</span>, <span class="va">loocv</span>, y <span class="op">=</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span><span class="op">)</span>
 <span class="va">k_opt</span> <span class="op">&lt;-</span> <span class="va">k</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.min.html">which.min</a></span><span class="op">(</span><span class="va">CV</span><span class="op">)</span><span class="op">]</span>
@@ -335,7 +358,7 @@ Figure 3.4: The leave-one-out cross-validation criterion for the running mean as
 <p>The optimal choice of <span class="math inline">\(k\)</span> is 15, but the LOOCV criterion jumps quite a
 lot up and down with changing neighbor size, and <span class="math inline">\(k = 9\)</span> as well as <span class="math inline">\(k = 25\)</span>
 give rather low values as well.</p>
-<div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">p_Nuuk</span> <span class="op">+</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fu">run_mean</span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>, <span class="fl">9</span><span class="op">)</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fu">run_mean</span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>, <span class="va">k_opt</span><span class="op">)</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span> <span class="op">+</span>
@@ -347,14 +370,9 @@ Figure 3.5: The <span class="math inline">\(k\)</span>-nearest neighbor smoother
 </p>
 </div>
 </div>
-</div>
-<div id="kernel-methods" class="section level2" number="3.2">
-<h2>
-<span class="header-section-number">3.2</span> Kernel methods<a class="anchor" aria-label="anchor" href="#kernel-methods"><i class="fas fa-link"></i></a>
-</h2>
-<div id="nadarayawatson-kernel-smoothing" class="section level3" number="3.2.1">
+<div id="nadarayawatson-kernel-smoothing" class="section level3" number="3.1.4">
 <h3>
-<span class="header-section-number">3.2.1</span> Nadaraya–Watson kernel smoothing<a class="anchor" aria-label="anchor" href="#nadarayawatson-kernel-smoothing"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.1.4</span> Nadaraya–Watson kernel smoothing<a class="anchor" aria-label="anchor" href="#nadarayawatson-kernel-smoothing"><i class="fas fa-link"></i></a>
 </h3>
 <p>The section before introduced the basic idea of nearest neighbor smoothing
 using a fixed number of neighbors. A very similar idea is to use a fixed
@@ -387,7 +405,7 @@ approximation techniques such as binning. In this section we will focus on
 implementing bandwidth selection rather than the kernel smoother itself.
 The basic kernel smoothing computation is also implemented in the
 <code>ksmooth</code> function from the stats package.</p>
-<div class="sourceCode" id="cb71"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">f_hat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/ksmooth.html">ksmooth</a></span><span class="op">(</span>
   <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Year</span>, 
   <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>, 
@@ -410,7 +428,7 @@ The rows sum to 1 by construction, and the diagonal elements are
 <span class="math display">\[S_{ii} = \frac{K(0)}{\sum_{l=1}^n K\left(\frac{x_l - x_i}{h}\right)}.\]</span>
 The computation of <span class="math inline">\(\mathbf{S}\)</span> for the Gaussian kernel is implemented
 using <code>outer</code> and <code>rowSums</code>.</p>
-<div class="sourceCode" id="cb72"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb71"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">kern</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="op">-</span> <span class="va">x</span><span class="op">^</span><span class="fl">2</span> <span class="op">/</span> <span class="fl">2</span><span class="op">)</span>  <span class="co"># The Gaussian kernel</span>
 <span class="va">Kij</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/outer.html">outer</a></span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Year</span>, <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Year</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span> <span class="fu">kern</span><span class="op">(</span><span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="va">y</span><span class="op">)</span> <span class="op">/</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span>
 <span class="va">S</span> <span class="op">&lt;-</span> <span class="va">Kij</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html">rowSums</a></span><span class="op">(</span><span class="va">Kij</span><span class="op">)</span>
@@ -437,13 +455,13 @@ which will make the kernel have quartiles in <span class="math inline">\(\pm 0.2
 matrix and the corresponding LOOCV value as a function of the bandwidth.
 For comparison with previous implementations the mean is computed instead of the
 sum.</p>
-<div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb72"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">loocv</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">h</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">Kij</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/outer.html">outer</a></span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Year</span>, <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Year</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span> <span class="fu">kern</span><span class="op">(</span><span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="va">y</span><span class="op">)</span> <span class="op">/</span> <span class="va">h</span><span class="op">)</span><span class="op">)</span>
   <span class="va">S</span> <span class="op">&lt;-</span> <span class="va">Kij</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html">rowSums</a></span><span class="op">(</span><span class="va">Kij</span><span class="op">)</span>
   <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="op">(</span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span> <span class="op">-</span> <span class="va">S</span> <span class="op">%*%</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html">diag</a></span><span class="op">(</span><span class="va">S</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span> 
 <span class="op">}</span></code></pre></div>
-<div class="sourceCode" id="cb74"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">h</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">5</span>, <span class="fl">0.05</span><span class="op">)</span>
 <span class="va">CV</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">sapply</a></span><span class="op">(</span><span class="va">h</span>, <span class="va">loocv</span><span class="op">)</span>
 <span class="va">h_opt</span> <span class="op">&lt;-</span> <span class="va">h</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.min.html">which.min</a></span><span class="op">(</span><span class="va">CV</span><span class="op">)</span><span class="op">]</span>
@@ -456,7 +474,7 @@ Figure 3.8: The leave-one-out cross-validation criterion for the kernel smoother
 </div>
 <p>The optimal bandwith is 1.55. We compute the resulting optimal smoother
 and compare it to the smoother computed using <code>ksmooth</code>.</p>
-<div class="sourceCode" id="cb75"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb74"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">Kij</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/outer.html">outer</a></span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Year</span>, <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Year</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span> <span class="fu">kern</span><span class="op">(</span><span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="va">y</span><span class="op">)</span> <span class="op">/</span> <span class="va">h_opt</span><span class="op">)</span><span class="op">)</span>
 <span class="va">S</span> <span class="op">&lt;-</span> <span class="va">Kij</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html">rowSums</a></span><span class="op">(</span><span class="va">Kij</span><span class="op">)</span>
 <span class="va">f_hat</span> <span class="op">&lt;-</span> <span class="va">S</span> <span class="op">%*%</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>
@@ -476,7 +494,7 @@ effectively equals zero. The truncation explains the relatively
 large differences between the two results that should otherwise be equivalent. It is an
 example where the approximate solution computed by <code>ksmooth</code> is acceptable because
 it substantially reduces the run time.</p>
-<div class="sourceCode" id="cb77"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb76"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">p_Nuuk</span> <span class="op">+</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fu">run_mean</span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>, <span class="fl">9</span><span class="op">)</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">f_hat</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span></code></pre></div>
@@ -490,137 +508,19 @@ Figure 3.9: Nadaraya–Watson kernel smoother of the annual average temperature 
 somewhat wiggly. It is locally more smooth than the <span class="math inline">\(k\)</span>-nearest neighbor smoother
 but overall comparable to this smoother with <span class="math inline">\(k = 9\)</span>.</p>
 </div>
-<div id="local-regression-smoothers" class="section level3" number="3.2.2">
-<h3>
-<span class="header-section-number">3.2.2</span> Local regression smoothers<a class="anchor" aria-label="anchor" href="#local-regression-smoothers"><i class="fas fa-link"></i></a>
-</h3>
 </div>
-</div>
-<div id="sparse-linear-algebra" class="section level2" number="3.3">
+<div id="onb" class="section level2" number="3.2">
 <h2>
-<span class="header-section-number">3.3</span> Sparse linear algebra<a class="anchor" aria-label="anchor" href="#sparse-linear-algebra"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.2</span> Orthogonal basis expansions<a class="anchor" aria-label="anchor" href="#onb"><i class="fas fa-link"></i></a>
 </h2>
-<div class="sourceCode" id="cb78"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://Matrix.R-forge.R-project.org/">Matrix</a></span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/bandSparse.html">bandSparse</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">15</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<pre><code>## 15 x 15 sparse Matrix of class "ngCMatrix"
-##                                    
-##  [1,] | | | . . . . . . . . . . . .
-##  [2,] | | | | . . . . . . . . . . .
-##  [3,] | | | | | . . . . . . . . . .
-##  [4,] . | | | | | . . . . . . . . .
-##  [5,] . . | | | | | . . . . . . . .
-##  [6,] . . . | | | | | . . . . . . .
-##  [7,] . . . . | | | | | . . . . . .
-##  [8,] . . . . . | | | | | . . . . .
-##  [9,] . . . . . . | | | | | . . . .
-## [10,] . . . . . . . | | | | | . . .
-## [11,] . . . . . . . . | | | | | . .
-## [12,] . . . . . . . . . | | | | | .
-## [13,] . . . . . . . . . . | | | | |
-## [14,] . . . . . . . . . . . | | | |
-## [15,] . . . . . . . . . . . . | | |</code></pre>
-<div class="sourceCode" id="cb80"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">K</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/bandSparse.html">bandSparse</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">n</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
-<span class="va">weights</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fl">3</span>, <span class="fl">1</span><span class="op">/</span><span class="fl">4</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fl">5</span>, <span class="va">n</span> <span class="op">-</span> <span class="fl">4</span><span class="op">)</span>, <span class="fl">1</span><span class="op">/</span><span class="fl">4</span>, <span class="fl">1</span><span class="op">/</span><span class="fl">3</span><span class="op">)</span>
-<span class="va">weights</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fl">5</span>, <span class="va">n</span> <span class="op">-</span> <span class="fl">4</span><span class="op">)</span>, <span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>
-<span class="va">p_Nuuk</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="va">Nuuk_year</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span><span class="va">Year</span>, <span class="va">Temperature</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span><span class="op">(</span><span class="op">)</span>
-<span class="va">p_Nuuk</span> <span class="op">+</span> 
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="va">K</span> <span class="op">%*%</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span><span class="op">)</span> <span class="op">*</span> <span class="va">weights</span><span class="op">)</span>, 
-            color <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span></code></pre></div>
-<div class="inline-figure"><img src="CSwR_files/figure-html/Nuuk_runmeans-1.png" width="70%" style="display: block; margin: auto;"></div>
-<p>When the smoother matrix is <em>sparse</em>, matrix multiplication can be much faster.</p>
-<p>We will present some benchmark comparisons below. First we compare the run time
-for the matrix multiplication <code>as.numeric(K %*% Nuuk_year$Temperature) * weights</code>
-using a sparse matrix (as above) with the run time
-using a dense matrix. The dense matrix is given as <code>Kdense = as.matrix(K)</code>. These
-run times are compared to using <code><a href="https://rdrr.io/r/stats/filter.html">filter()</a></code>. In all computations, <span class="math inline">\(k = 5\)</span>.</p>
-<div class="inline-figure"><img src="CSwR_files/figure-html/runmean_bench_fit-1.png" width="70%" style="display: block; margin: auto;"></div>
-<p>The difference in slopes between dense and sparse matrix multiplication should be
-noted. This is the difference between <span class="math inline">\(O(n^2)\)</span> and <span class="math inline">\(O(n)\)</span> run time. The run time for
-the dense matrix multiplication will not change with <span class="math inline">\(k\)</span>. For the
-other two it will increase (linearly) with increasing <span class="math inline">\(k\)</span>.</p>
-<p>For smoothing only once with a given smoother matrix the time to construct the matrix
-should also be taken into account for fair comparison with <code><a href="https://rdrr.io/r/stats/filter.html">filter()</a></code>. It turns out
-that the function <code>bandSparse</code> is not optimized for the specific running mean
-banded matrix, and a faster C++ function for this job is given below.</p>
-<div class="sourceCode" id="cb81"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb81-1"><a href="bivariate.html#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
-<span id="cb81-2"><a href="bivariate.html#cb81-2" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</span>
-<span id="cb81-3"><a href="bivariate.html#cb81-3" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
-<span id="cb81-4"><a href="bivariate.html#cb81-4" aria-hidden="true" tabindex="-1"></a>List fastBand(<span class="dt">int</span> n, <span class="dt">int</span> k) {</span>
-<span id="cb81-5"><a href="bivariate.html#cb81-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> N = (<span class="dv">2</span> * k + <span class="dv">1</span>) * (n - <span class="dv">2</span> * k) + <span class="dv">3</span> * k * k + k;</span>
-<span id="cb81-6"><a href="bivariate.html#cb81-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> iter = <span class="dv">0</span>;</span>
-<span id="cb81-7"><a href="bivariate.html#cb81-7" aria-hidden="true" tabindex="-1"></a>  IntegerVector i(N), p(n + <span class="dv">1</span>);</span>
-<span id="cb81-8"><a href="bivariate.html#cb81-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> col = <span class="dv">0</span>; col &lt; n; ++col) {</span>
-<span id="cb81-9"><a href="bivariate.html#cb81-9" aria-hidden="true" tabindex="-1"></a>    p[col] = iter;</span>
-<span id="cb81-10"><a href="bivariate.html#cb81-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> r = <span class="bu">std::</span>max(col - k, <span class="dv">0</span>); r &lt; <span class="bu">std::</span>min(col + k + <span class="dv">1</span>, n); ++r) {</span>
-<span id="cb81-11"><a href="bivariate.html#cb81-11" aria-hidden="true" tabindex="-1"></a>      i[iter] = r;</span>
-<span id="cb81-12"><a href="bivariate.html#cb81-12" aria-hidden="true" tabindex="-1"></a>      ++iter;</span>
-<span id="cb81-13"><a href="bivariate.html#cb81-13" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb81-14"><a href="bivariate.html#cb81-14" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb81-15"><a href="bivariate.html#cb81-15" aria-hidden="true" tabindex="-1"></a>  p[n] = N;</span>
-<span id="cb81-16"><a href="bivariate.html#cb81-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> List::create(_[<span class="st">"i"</span>] = i, _[<span class="st">"p"</span>] = p);</span>
-<span id="cb81-17"><a href="bivariate.html#cb81-17" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<p>And then R function.</p>
-<div class="sourceCode" id="cb82"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">bandSparseFast</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">k</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">n</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html">as.integer</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>
-  <span class="va">k</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html">as.integer</a></span><span class="op">(</span><span class="va">k</span><span class="op">)</span>
-  <span class="va">tmp</span> <span class="op">&lt;-</span> <span class="fu">fastBand</span><span class="op">(</span><span class="va">n</span>, <span class="va">k</span><span class="op">)</span>
-  <span class="fu">new</span><span class="op">(</span><span class="st">"ngCMatrix"</span>, 
-      i <span class="op">=</span> <span class="va">tmp</span><span class="op">$</span><span class="va">i</span>, 
-      p <span class="op">=</span> <span class="va">tmp</span><span class="op">$</span><span class="va">p</span>, 
-      Dim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">n</span><span class="op">)</span><span class="op">)</span>
-<span class="op">}</span></code></pre></div>
-<div class="inline-figure"><img src="CSwR_files/figure-html/fast_runmean_bench_fig-1.png" width="70%" style="display: block; margin: auto;"></div>
-<p>The construction of the sparse matrix turns out to take up much more time than the
-matrix-vector multiplication. The run time is still <span class="math inline">\(O(n)\)</span>, but the constant is of
-the order of a factor 16 larger than for <code><a href="https://rdrr.io/r/stats/filter.html">filter()</a></code>. With the faster construction of
-the sparse matrix, the constant is reduced to being
-of the order 5 larger than for <code><a href="https://rdrr.io/r/stats/filter.html">filter()</a></code>. For small <span class="math inline">\(n\)</span> there is some overhead
-from the constructor of the sparse matrix object even for the faster algorithm.</p>
-<p>If you implement an algorithm (like a smoother) using linear algebra (e.g. a
-matrix-vector product) then sparse matrix numerical methods can be useful
-compared to dense matrix numerical methods. The Matrix package for R implements
-sparse matrices, and you should always attempt to use methods for constructing
-the sparse matrix that avoid dense intermediates. But even with a special
-purpose constructor of a sparse band matrix, sparse linear algebra cannot
-compete with optimized special purpose algorithms like <code><a href="https://rdrr.io/r/stats/filter.html">filter()</a></code> or a
-C++ implementation of <code>run_mean()</code>. The <code><a href="https://rdrr.io/r/stats/filter.html">filter()</a></code> function even works more
-generally for kernels (weights) with <em>equidistant</em> data.</p>
-<p>We conclude this section by verifying that <code><a href="https://rdrr.io/r/stats/filter.html">filter()</a></code> actually computes
-the running mean up to numerical errors.</p>
-<div class="sourceCode" id="cb83"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/qplot.html">qplot</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">n</span>, 
-      <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="va">K</span> <span class="op">%*%</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span><span class="op">)</span> <span class="op">*</span> <span class="va">weights</span> <span class="op">-</span> 
-        <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fl">5</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html">scale_y_continuous</a></span><span class="op">(</span><span class="st">"Difference"</span><span class="op">)</span></code></pre></div>
-<div class="inline-figure"><img src="CSwR_files/figure-html/runmean_accuracy_fig-1.png" width="70%" style="display: block; margin: auto;"></div>
-<div class="sourceCode" id="cb84"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/all.html">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="va">K</span> <span class="op">%*%</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span><span class="op">)</span> <span class="op">*</span> <span class="va">weights</span> <span class="op">==</span> 
-      <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fl">5</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] FALSE</code></pre>
-<div class="sourceCode" id="cb86"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html">all.equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="va">K</span> <span class="op">%*%</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span><span class="op">)</span> <span class="op">*</span> <span class="va">weights</span>, 
-          <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fl">5</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] TRUE</code></pre>
-<div class="sourceCode" id="cb88"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="va">K</span> <span class="op">%*%</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span><span class="op">)</span> <span class="op">*</span> <span class="va">weights</span>, 
-          <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fl">5</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] FALSE</code></pre>
-</div>
-<div id="onb" class="section level2" number="3.4">
-<h2>
-<span class="header-section-number">3.4</span> Orthogonal basis expansions<a class="anchor" aria-label="anchor" href="#onb"><i class="fas fa-link"></i></a>
-</h2>
-<div id="polynomial-expansions" class="section level3" number="3.4.1">
+<div id="polynomial-expansions" class="section level3" number="3.2.1">
 <h3>
-<span class="header-section-number">3.4.1</span> Polynomial expansions<a class="anchor" aria-label="anchor" href="#polynomial-expansions"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.2.1</span> Polynomial expansions<a class="anchor" aria-label="anchor" href="#polynomial-expansions"><i class="fas fa-link"></i></a>
 </h3>
 <p>Degree 19 polynomial fitted to the temperature data.</p>
 <div class="inline-figure"><img src="CSwR_files/figure-html/Nuuk_poly_fig-1.png" width="70%" style="display: block; margin: auto;"></div>
 <p>We can extract the model matrix from the lm-object.</p>
-<div class="sourceCode" id="cb90"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb77"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">intercept</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>, <span class="va">n</span><span class="op">)</span>  <span class="co"># To make intercept column have norm one</span>
 <span class="va">polylm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html">lm</a></span><span class="op">(</span><span class="va">Temperature</span> <span class="op">~</span> <span class="va">intercept</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html">poly</a></span><span class="op">(</span><span class="va">Year</span>, <span class="fl">19</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>, data <span class="op">=</span> <span class="va">Nuuk_year</span><span class="op">)</span>
 <span class="va">Phi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/model.matrix.html">model.matrix</a></span><span class="op">(</span><span class="va">polylm</span><span class="op">)</span></code></pre></div>
@@ -635,18 +535,18 @@ With an orthogonal model matrix the normal equation reduces to the estimate
 <span class="math display">\[\hat{\beta} = \Phi^T Y\]</span>
 since <span class="math inline">\(\Phi^T \Phi = I\)</span>. The predicted (or fitted) values are <span class="math inline">\(\Phi \Phi^T Y\)</span>
 with smoother matrix <span class="math inline">\(\mathbf{S} = \Phi \Phi^T\)</span> being a projection.</p>
-<div class="sourceCode" id="cb91"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb78"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">Phi</span><span class="op">)</span> <span class="op">%*%</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="fl">1</span><span class="op">]</span></code></pre></div>
-<pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 poly(Year, 19)4 poly(Year, 19)5 
-##     -17.2469646       4.9002430      -1.7968913       0.8175400       5.9668689       1.4265091 
-## poly(Year, 19)6 poly(Year, 19)7 poly(Year, 19)8 poly(Year, 19)9 
-##      -1.9258864      -0.2523581      -2.1355117      -0.8046267</code></pre>
-<div class="sourceCode" id="cb93"><pre class="downlit sourceCode r">
+<pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 poly(Year, 19)4 
+##     -17.2469646       4.9002430      -1.7968913       0.8175400       5.9668689 
+## poly(Year, 19)5 poly(Year, 19)6 poly(Year, 19)7 poly(Year, 19)8 poly(Year, 19)9 
+##       1.4265091      -1.9258864      -0.2523581      -2.1355117      -0.8046267</code></pre>
+<div class="sourceCode" id="cb80"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coef</a></span><span class="op">(</span><span class="va">polylm</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span></code></pre></div>
-<pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 poly(Year, 19)4 poly(Year, 19)5 
-##     -17.2469646       4.9002430      -1.7968913       0.8175400       5.9668689       1.4265091 
-## poly(Year, 19)6 poly(Year, 19)7 poly(Year, 19)8 poly(Year, 19)9 
-##      -1.9258864      -0.2523581      -2.1355117      -0.8046267</code></pre>
+<pre><code>##       intercept poly(Year, 19)1 poly(Year, 19)2 poly(Year, 19)3 poly(Year, 19)4 
+##     -17.2469646       4.9002430      -1.7968913       0.8175400       5.9668689 
+## poly(Year, 19)5 poly(Year, 19)6 poly(Year, 19)7 poly(Year, 19)8 poly(Year, 19)9 
+##       1.4265091      -1.9258864      -0.2523581      -2.1355117      -0.8046267</code></pre>
 <p>With homogeneous variance
 <span class="math display">\[\hat{\beta}_i \overset{\text{approx}}{\sim} \mathcal{N}(\beta_i, \sigma^2),\]</span>
 and for <span class="math inline">\(\beta_i = 0\)</span> we have <span class="math inline">\(P(|\hat{\beta}_i| \geq 1.96\sigma) \simeq 0.05.\)</span></p>
@@ -659,9 +559,9 @@ Figure 3.11: Polynomial fit using all 19 basis functions (blue) and using a degr
 </p>
 </div>
 </div>
-<div id="fourier-expansions" class="section level3" number="3.4.2">
+<div id="fourier-expansions" class="section level3" number="3.2.2">
 <h3>
-<span class="header-section-number">3.4.2</span> Fourier expansions<a class="anchor" aria-label="anchor" href="#fourier-expansions"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.2.2</span> Fourier expansions<a class="anchor" aria-label="anchor" href="#fourier-expansions"><i class="fas fa-link"></i></a>
 </h3>
 <p>Introducing
 <span class="math display">\[x_{k,m} = \frac{1}{\sqrt{n}} e^{2 \pi i k m / n},\]</span>
@@ -676,7 +576,7 @@ where <span class="math inline">\(\Phi^*\)</span> is the conjugate transposed of
 It is the basis coefficients in the orthonormal basis given by <span class="math inline">\(\Phi\)</span>;
 <span class="math display">\[y_k = \frac{1}{\sqrt{n}} \sum_{m=0}^{n-1} \hat{\beta}_m  e^{2 \pi i k m / n}\]</span></p>
 <p>or <span class="math inline">\(y = \Phi \hat{\beta}.\)</span></p>
-<div class="sourceCode" id="cb95"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb82"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">Phi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/outer.html">outer</a></span><span class="op">(</span>
   <span class="fl">0</span><span class="op">:</span><span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>, 
   <span class="fl">0</span><span class="op">:</span><span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>, 
@@ -687,11 +587,12 @@ It is the basis coefficients in the orthonormal basis given by <span class="math
 <p>Columns in the matrix <span class="math inline">\(\Phi\)</span>:</p>
 <div class="inline-figure"><img src="CSwR_files/figure-html/Fourier_basis_fig-1.png" width="100%" style="display: block; margin: auto;"></div>
 <p>We can estimate by matrix multiplication</p>
-<div class="sourceCode" id="cb96"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb83"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">betahat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/complex.html">Conj</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">Phi</span><span class="op">)</span><span class="op">)</span> <span class="op">%*%</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span> <span class="co"># t(Phi) = Phi for Fourier bases</span>
 <span class="va">betahat</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">:</span><span class="fl">4</span>, <span class="fl">73</span>, <span class="va">n</span><span class="op">:</span><span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">]</span></code></pre></div>
-<pre><code>## [1] -17.2469646+0.0000000i  -2.4642887+2.3871189i   3.5481329+0.9099226i   1.6721444+0.7413580i
-## [5]   0.0321232+0.7089991i  -2.4642887-2.3871189i   3.5481329-0.9099226i   1.6721444-0.7413580i</code></pre>
+<pre><code>## [1] -17.2469646+0.0000000i  -2.4642887+2.3871189i   3.5481329+0.9099226i
+## [4]   1.6721444+0.7413580i   0.0321232+0.7089991i  -2.4642887-2.3871189i
+## [7]   3.5481329-0.9099226i   1.6721444-0.7413580i</code></pre>
 <p>For real <span class="math inline">\(y\)</span> it holds that <span class="math inline">\(\hat{\beta}_0\)</span> is real, and the symmetry
 <span class="math display">\[\hat{\beta}_{n-m} = \hat{\beta}_m^*\]</span>
 holds for <span class="math inline">\(m = 1, \ldots, n - 1\)</span>. (For <span class="math inline">\(n\)</span> even, <span class="math inline">\(\hat{\beta}_{n/2}\)</span> is real too).</p>
@@ -727,17 +628,19 @@ Figure 3.12: Fourier based smoother by thresholding (blue) and polynomial fit of
 The point is that the discrete Fourier transform can be computed via the
 <em>fast Fourier transform</em> (FFT), which has an <span class="math inline">\(O(n\log(n))\)</span> time complexity.
 The FFT works optimally for <span class="math inline">\(n = 2^p\)</span>.</p>
-<div class="sourceCode" id="cb98"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb85"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/fft.html">fft</a></span><span class="op">(</span><span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i   1.672144+0.741358i</code></pre>
-<div class="sourceCode" id="cb100"><pre class="downlit sourceCode r">
+<pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i
+## [4]   1.672144+0.741358i</code></pre>
+<div class="sourceCode" id="cb87"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">betahat</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></code></pre></div>
-<pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i   1.672144+0.741358i</code></pre>
+<pre><code>## [1] -17.246965+0.000000i  -2.464289+2.387119i   3.548133+0.909923i
+## [4]   1.672144+0.741358i</code></pre>
 </div>
 </div>
-<div id="splines" class="section level2" number="3.5">
+<div id="splines" class="section level2" number="3.3">
 <h2>
-<span class="header-section-number">3.5</span> Splines<a class="anchor" aria-label="anchor" href="#splines"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.3</span> Splines<a class="anchor" aria-label="anchor" href="#splines"><i class="fas fa-link"></i></a>
 </h2>
 <p>In <a href="bivariate.html#onb">the previous section</a> orthogonality of basis functions played an
 important role for computing basis function expansions efficiently as well
@@ -747,9 +650,9 @@ necessarily orthogonal.</p>
 <p>Though some of the material of this section will apply to any choice of
 basis, we restrict attention to splines and consider almost
 exclusively the widely used B-splines (the “B” is for basis).</p>
-<div id="smoothing-splines" class="section level3" number="3.5.1">
+<div id="smoothing-splines" class="section level3" number="3.3.1">
 <h3>
-<span class="header-section-number">3.5.1</span> Smoothing splines<a class="anchor" aria-label="anchor" href="#smoothing-splines"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.3.1</span> Smoothing splines<a class="anchor" aria-label="anchor" href="#smoothing-splines"><i class="fas fa-link"></i></a>
 </h3>
 <p>To motivate splines we briefly consider the following penalized least squares
 criterion for finding a smooth approximation to bivariate data: minimize
@@ -816,16 +719,16 @@ basis or any other basis – as long as
 <span class="math inline">\(\boldsymbol{\Phi}_{ij} = \varphi_j(x_i)\)</span> and <span class="math inline">\(\mathbf{\Omega}\)</span> is
 given in terms of <span class="math inline">\(\varphi''_i\)</span> as above.</p>
 </div>
-<div id="splines-in-r" class="section level3" number="3.5.2">
+<div id="splines-in-r" class="section level3" number="3.3.2">
 <h3>
-<span class="header-section-number">3.5.2</span> Splines in R<a class="anchor" aria-label="anchor" href="#splines-in-r"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.3.2</span> Splines in R<a class="anchor" aria-label="anchor" href="#splines-in-r"><i class="fas fa-link"></i></a>
 </h3>
 <p>The splines package in R implements some of the basic functions needed to work
 with splines. In particular, the <code><a href="https://rdrr.io/r/splines/splineDesign.html">splineDesign()</a></code> function that computes evaluations
 of B-splines and their derivatives.</p>
-<div class="sourceCode" id="cb102"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb89"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">splines</span><span class="op">)</span></code></pre></div>
-<div class="sourceCode" id="cb103"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb90"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Note the specification of repeated boundary knots</span>
 <span class="va">knots</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.2</span><span class="op">)</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>
 <span class="va">xx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.005</span><span class="op">)</span>
@@ -858,7 +761,7 @@ polynomials, and not an approximation, means that Simpson’s rule
 applied appropriately leads to exact computation of
 <span class="math inline">\(\mathbf{\Omega}_{ij}\)</span>. All we need is the ability to evaluate
 <span class="math inline">\(\varphi''_i\)</span> at certain points, and <code><a href="https://rdrr.io/r/splines/splineDesign.html">splineDesign()</a></code> can be used for that.</p>
-<div class="sourceCode" id="cb104"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb91"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pen_mat</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">inner_knots</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">knots</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="va">inner_knots</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>, <span class="va">inner_knots</span><span class="op">)</span><span class="op">)</span>
   <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diff.html">diff</a></span><span class="op">(</span><span class="va">inner_knots</span><span class="op">)</span>  <span class="co"># The vector of knot differences; b - a </span>
@@ -867,20 +770,20 @@ applied appropriately leads to exact computation of
   <span class="va">g_ab_mid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/splines/splineDesign.html">splineDesign</a></span><span class="op">(</span><span class="va">knots</span>, <span class="va">knots_mid</span>, derivs <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>
   <span class="va">g_a</span> <span class="op">&lt;-</span> <span class="va">g_ab</span><span class="op">[</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">g_ab</span><span class="op">)</span>, <span class="op">]</span>
   <span class="va">g_b</span> <span class="op">&lt;-</span> <span class="va">g_ab</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>, <span class="op">]</span>
-  <span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">d</span> <span class="op">*</span> <span class="va">g_a</span>,  <span class="va">g_a</span><span class="op">)</span> <span class="op">+</span> 
-      <span class="fl">4</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">d</span> <span class="op">*</span> <span class="va">g_ab_mid</span>, <span class="va">g_ab_mid</span><span class="op">)</span> <span class="op">+</span> 
-      <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">d</span> <span class="op">*</span> <span class="va">g_b</span>, <span class="va">g_b</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="fl">6</span> 
+  <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/crossprod.html">crossprod</a></span><span class="op">(</span><span class="va">d</span> <span class="op">*</span> <span class="va">g_a</span>,  <span class="va">g_a</span><span class="op">)</span> <span class="op">+</span> 
+      <span class="fl">4</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/crossprod.html">crossprod</a></span><span class="op">(</span><span class="va">d</span> <span class="op">*</span> <span class="va">g_ab_mid</span>, <span class="va">g_ab_mid</span><span class="op">)</span> <span class="op">+</span> 
+      <span class="fu"><a href="https://rdrr.io/r/base/crossprod.html">crossprod</a></span><span class="op">(</span><span class="va">d</span> <span class="op">*</span> <span class="va">g_b</span>, <span class="va">g_b</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="fl">6</span> 
 <span class="op">}</span></code></pre></div>
 <p>It is laborious to write good tests of <code>pen_mat()</code>. We would have to work out a
 set of example matrices by other means, e.g. by hand. Alternatively, we can
 compare to a simpler numerical integration technique using Riemann sums.</p>
-<div class="sourceCode" id="cb105"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb92"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">spline_deriv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/splines/splineDesign.html">splineDesign</a></span><span class="op">(</span>
   <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>, 
   <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1e-5</span><span class="op">)</span>, 
   derivs <span class="op">=</span> <span class="fl">2</span>
 <span class="op">)</span>
-<span class="va">Omega_numeric</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">spline_deriv</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span> <span class="op">*</span> <span class="fl">1e-5</span>  <span class="co"># Right Riemann sums</span>
+<span class="va">Omega_numeric</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/crossprod.html">crossprod</a></span><span class="op">(</span><span class="va">spline_deriv</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span> <span class="op">*</span> <span class="fl">1e-5</span>  <span class="co"># Right Riemann sums</span>
 <span class="va">Omega</span> <span class="op">&lt;-</span> <span class="fu">pen_mat</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>
 <span class="va">Omega_numeric</span> <span class="op">/</span> <span class="va">Omega</span></code></pre></div>
 <pre><code>##           [,1]      [,2]     [,3]     [,4]     [,5]
@@ -889,17 +792,17 @@ compare to a simpler numerical integration technique using Riemann sums.</p>
 ## [3,] 0.9999400 0.9999550 1.000000 1.000045 1.000060
 ## [4,] 1.0000000 1.0000000 1.000045 1.000034 1.000033
 ## [5,]       NaN 1.0000000 1.000060 1.000033 1.000030</code></pre>
-<div class="sourceCode" id="cb107"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb94"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="op">(</span><span class="va">Omega_numeric</span> <span class="op">-</span> <span class="va">Omega</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">Omega</span> <span class="op">+</span> <span class="fl">0.001</span><span class="op">)</span><span class="op">)</span>  <span class="co">#  Relative error</span></code></pre></div>
 <pre><code>## [1] -5.99967e-05  5.99983e-05</code></pre>
 <p>And we should also test an example with non-equidistant knots.</p>
-<div class="sourceCode" id="cb109"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb96"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">spline_deriv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/splines/splineDesign.html">splineDesign</a></span><span class="op">(</span>
   <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.65</span>, <span class="fl">0.7</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>, 
   <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1e-5</span><span class="op">)</span>, 
   derivs <span class="op">=</span> <span class="fl">2</span>
 <span class="op">)</span>
-<span class="va">Omega_numeric</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">spline_deriv</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span> <span class="op">*</span> <span class="fl">1e-5</span>  <span class="co"># Right Riemann sums</span>
+<span class="va">Omega_numeric</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/crossprod.html">crossprod</a></span><span class="op">(</span><span class="va">spline_deriv</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span> <span class="op">*</span> <span class="fl">1e-5</span>  <span class="co"># Right Riemann sums</span>
 <span class="va">Omega</span> <span class="op">&lt;-</span> <span class="fu">pen_mat</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.65</span>, <span class="fl">0.7</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="op">(</span><span class="va">Omega_numeric</span> <span class="op">-</span> <span class="va">Omega</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">Omega</span> <span class="op">+</span> <span class="fl">0.001</span><span class="op">)</span><span class="op">)</span> <span class="co"># Relative error</span></code></pre></div>
 <pre><code>## [1] -0.0001607084  0.0002545494</code></pre>
@@ -911,13 +814,13 @@ the correct second derivatives, which hasn’t been tested here.</p>
 <p>We can also test how our implementation of smoothing splines works
 on data. We do this here by implementing the matrix-algebra directly
 for computing <span class="math inline">\(\mathbf{S}_{\lambda} \mathbf{y}\)</span>.</p>
-<div class="sourceCode" id="cb111"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb98"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">inner_knots</span> <span class="op">&lt;-</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Year</span>
 <span class="va">Phi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/splines/splineDesign.html">splineDesign</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="va">inner_knots</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>, <span class="va">inner_knots</span><span class="op">)</span>, <span class="va">inner_knots</span><span class="op">)</span>
 <span class="va">Omega</span> <span class="op">&lt;-</span> <span class="fu">pen_mat</span><span class="op">(</span><span class="va">inner_knots</span><span class="op">)</span>
 <span class="va">smoother</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">lambda</span><span class="op">)</span> 
-  <span class="va">Phi</span> <span class="op">%*%</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/solve-methods.html">solve</a></span><span class="op">(</span>
-    <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">Phi</span><span class="op">)</span> <span class="op">+</span> <span class="va">lambda</span> <span class="op">*</span> <span class="va">Omega</span>, 
+  <span class="va">Phi</span> <span class="op">%*%</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html">solve</a></span><span class="op">(</span>
+    <span class="fu"><a href="https://rdrr.io/r/base/crossprod.html">crossprod</a></span><span class="op">(</span><span class="va">Phi</span><span class="op">)</span> <span class="op">+</span> <span class="va">lambda</span> <span class="op">*</span> <span class="va">Omega</span>, 
     <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">Phi</span><span class="op">)</span> <span class="op">%*%</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>
   <span class="op">)</span>
 <span class="va">p_Nuuk</span> <span class="op">+</span> 
@@ -945,21 +848,21 @@ without computing <span class="math inline">\(\mathbf{S}\)</span> or even its di
 <p>To compare our results to <code><a href="https://rdrr.io/r/stats/smooth.spline.html">smooth.spline()</a></code> we optimize the GCV criterion.
 First we implement a function that computes GCV for a fixed value of <span class="math inline">\(\lambda\)</span>.
 Here the implementation is relying on computing the smoother matrix, but
-this is not the most efficient implementation. Section <a href="bivariate.html#efficient-splines">3.5.3</a>
+this is not the most efficient implementation. Section <a href="bivariate.html#efficient-splines">3.3.3</a>
 provides a diagonalization of the smoother matrix jointly in the tuning
 parameters. This representation allows for efficient computation
 with splines, and it will become clear why it is not necessary to compute
 <span class="math inline">\(\mathbf{S}\)</span> or even its diagonal elements. The trace is nevertheless
 easily computable <span class="math inline">\(\mathbf{S}\)</span>.</p>
-<div class="sourceCode" id="cb112"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb99"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">gcv</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">lambda</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">S</span> <span class="op">&lt;-</span> <span class="va">Phi</span> <span class="op">%*%</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/solve-methods.html">solve</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">Phi</span><span class="op">)</span> <span class="op">+</span> <span class="va">lambda</span> <span class="op">*</span> <span class="va">Omega</span>, <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">Phi</span><span class="op">)</span><span class="op">)</span>
+  <span class="va">S</span> <span class="op">&lt;-</span> <span class="va">Phi</span> <span class="op">%*%</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html">solve</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/crossprod.html">crossprod</a></span><span class="op">(</span><span class="va">Phi</span><span class="op">)</span> <span class="op">+</span> <span class="va">lambda</span> <span class="op">*</span> <span class="va">Omega</span>, <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">Phi</span><span class="op">)</span><span class="op">)</span>
   <span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diag.html">diag</a></span><span class="op">(</span><span class="va">S</span><span class="op">)</span><span class="op">)</span>  <span class="co"># The trace of the smoother matrix</span>
   <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="op">(</span><span class="op">(</span><span class="va">y</span> <span class="op">-</span> <span class="va">S</span> <span class="op">%*%</span> <span class="va">y</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">df</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> 
 <span class="op">}</span></code></pre></div>
 <p>Then we apply this function to a grid of <span class="math inline">\(\lambda\)</span>-values and
 choose the value of <span class="math inline">\(\lambda\)</span> that minimizes GCV.</p>
-<div class="sourceCode" id="cb113"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb100"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">lambda</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">250</span>, <span class="fl">2</span><span class="op">)</span>
 <span class="va">GCV</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">sapply</a></span><span class="op">(</span><span class="va">lambda</span>, <span class="va">gcv</span>, y <span class="op">=</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span><span class="op">)</span>
 <span class="va">lambda_opt</span> <span class="op">&lt;-</span> <span class="va">lambda</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.min.html">which.min</a></span><span class="op">(</span><span class="va">GCV</span><span class="op">)</span><span class="op">]</span>
@@ -971,9 +874,9 @@ Figure 3.14: The generalized cross-validation criterion for smoothing splines as
 </p>
 </div>
 <p>Finally, we can visualize the resulting smoothing spline.</p>
-<div class="sourceCode" id="cb114"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">smooth_opt</span> <span class="op">&lt;-</span> <span class="va">Phi</span> <span class="op">%*%</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/solve-methods.html">solve</a></span><span class="op">(</span>
-  <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">Phi</span><span class="op">)</span> <span class="op">+</span> <span class="va">lambda_opt</span> <span class="op">*</span> <span class="va">Omega</span>, 
+<div class="sourceCode" id="cb101"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">smooth_opt</span> <span class="op">&lt;-</span> <span class="va">Phi</span> <span class="op">%*%</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html">solve</a></span><span class="op">(</span>
+  <span class="fu"><a href="https://rdrr.io/r/base/crossprod.html">crossprod</a></span><span class="op">(</span><span class="va">Phi</span><span class="op">)</span> <span class="op">+</span> <span class="va">lambda_opt</span> <span class="op">*</span> <span class="va">Omega</span>, 
   <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">Phi</span><span class="op">)</span> <span class="op">%*%</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>
 <span class="op">)</span>
 <span class="va">p_Nuuk</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">smooth_opt</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span></code></pre></div>
@@ -987,7 +890,7 @@ Figure 3.15: The smoothing spline that minimizes GCV over the tuning parameter <
 the smoothing spline that <code><a href="https://rdrr.io/r/stats/smooth.spline.html">smooth.spline()</a></code> computes by minimizing GCV
 as well.</p>
 
-<div class="sourceCode" id="cb115"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb102"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">smooth_splines</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/smooth.spline.html">smooth.spline</a></span><span class="op">(</span>
   <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Year</span>, 
   <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span>, 
@@ -995,7 +898,7 @@ as well.</p>
 <span class="op">)</span>  
 <span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="va">smooth_splines</span><span class="op">$</span><span class="va">y</span> <span class="op">-</span> <span class="va">smooth_opt</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] -0.000775662  0.001072587</code></pre>
-<div class="sourceCode" id="cb117"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb104"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">p_Nuuk</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">smooth_splines</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span></code></pre></div>
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:Nuuk-spline-opt2"></span>
@@ -1009,9 +912,9 @@ of the order <span class="math inline">\(10^{-3}\)</span> as computed above. It 
 decrease the differences by finding the optimal value of <span class="math inline">\(\lambda\)</span> with a
 higher precision, but we will not pursue this here.</p>
 </div>
-<div id="efficient-splines" class="section level3" number="3.5.3">
+<div id="efficient-splines" class="section level3" number="3.3.3">
 <h3>
-<span class="header-section-number">3.5.3</span> Efficient computation with splines<a class="anchor" aria-label="anchor" href="#efficient-splines"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.3.3</span> Efficient computation with splines<a class="anchor" aria-label="anchor" href="#efficient-splines"><i class="fas fa-link"></i></a>
 </h3>
 <p>Using the full B-spline basis with knots in every observation is computationally
 heavy and from a practical viewpoint unnecessary. Smoothing using B-splines
@@ -1075,17 +978,17 @@ are computed as an expansion using the shrunken coefficients.</li>
 given by the columns of <span class="math inline">\(\widetilde{\mathbf{U}}\)</span>. The coefficients corresponding to the
 largest eigenvalues <span class="math inline">\(\gamma_i\)</span> are shrunk relatively more toward zero
 than those corresponding to the small eigenvalues. The basis formed by the
-columns of <span class="math inline">\(\widetilde{\mathbf{U}}\)</span> is known as the Demmler-Reinch basis
+columns of <span class="math inline">\(\widetilde{\mathbf{U}}\)</span> is known as the Demmler-Reinsch basis
 with reference to <span class="citation"><a href="references.html#ref-Demmler:1975" role="doc-biblioref">Demmler and Reinsch</a> (<a href="references.html#ref-Demmler:1975" role="doc-biblioref">1975</a>)</span>.</p>
 <p>We implement the computation of the diagonalization for the Nuuk temperature
 data using <span class="math inline">\(p = 20\)</span> basis functions (18 inner knots) equidistantly distributed
 over the range of the years for which we have data.</p>
-<div class="sourceCode" id="cb118"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb105"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">inner_knots</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">1867</span>, <span class="fl">2013</span>, length.out <span class="op">=</span> <span class="fl">18</span><span class="op">)</span>
 <span class="va">Phi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/splines/splineDesign.html">splineDesign</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="va">inner_knots</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>, <span class="va">inner_knots</span><span class="op">)</span>, <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Year</span><span class="op">)</span>
 <span class="va">Omega</span> <span class="op">&lt;-</span> <span class="fu">pen_mat</span><span class="op">(</span><span class="va">inner_knots</span><span class="op">)</span>
 <span class="va">Phi_svd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/svd.html">svd</a></span><span class="op">(</span><span class="va">Phi</span><span class="op">)</span>
-<span class="va">Omega_tilde</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">Phi_svd</span><span class="op">$</span><span class="va">v</span>, <span class="va">Omega</span> <span class="op">%*%</span> <span class="va">Phi_svd</span><span class="op">$</span><span class="va">v</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="va">Phi_svd</span><span class="op">$</span><span class="va">d</span>
+<span class="va">Omega_tilde</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/crossprod.html">crossprod</a></span><span class="op">(</span><span class="va">Phi_svd</span><span class="op">$</span><span class="va">v</span>, <span class="va">Omega</span> <span class="op">%*%</span> <span class="va">Phi_svd</span><span class="op">$</span><span class="va">v</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="va">Phi_svd</span><span class="op">$</span><span class="va">d</span>
 <span class="va">Omega_tilde</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">Omega_tilde</span><span class="op">)</span> <span class="op">/</span> <span class="va">Phi_svd</span><span class="op">$</span><span class="va">d</span>
 <span class="co"># It is safer to use the numerical singular value decomposition ('svd()')</span>
 <span class="co"># for diagonalizing a positive semidefinite matrix than to use a </span>
@@ -1094,14 +997,14 @@ over the range of the years for which we have data.</p>
 <span class="va">U_tilde</span> <span class="op">&lt;-</span> <span class="va">Phi_svd</span><span class="op">$</span><span class="va">u</span> <span class="op">%*%</span> <span class="va">Omega_tilde_svd</span><span class="op">$</span><span class="va">u</span></code></pre></div>
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:spline-gamma"></span>
-<img src="CSwR_files/figure-html/spline-gamma-1.png" alt="The eigenvalues $\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues, ane the right plot shows the eigenvalues on a log-scale." width="49%"><img src="CSwR_files/figure-html/spline-gamma-2.png" alt="The eigenvalues $\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues, ane the right plot shows the eigenvalues on a log-scale." width="49%"><p class="caption">
-Figure 3.17: The eigenvalues <span class="math inline">\(\gamma_i\)</span> that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues, ane the right plot shows the eigenvalues on a log-scale.
+<img src="CSwR_files/figure-html/spline-gamma-1.png" alt="The eigenvalues $\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues, and the right plot shows the eigenvalues on a log-scale." width="49%"><img src="CSwR_files/figure-html/spline-gamma-2.png" alt="The eigenvalues $\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues, and the right plot shows the eigenvalues on a log-scale." width="49%"><p class="caption">
+Figure 3.17: The eigenvalues <span class="math inline">\(\gamma_i\)</span> that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues, and the right plot shows the eigenvalues on a log-scale.
 </p>
 </div>
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:spline-basis"></span>
-<img src="CSwR_files/figure-html/spline-basis-1.png" alt="The columns of $\widetilde{\mathbf{U}}$  that consitute an orthonormal basis known as the Demmler-Reinch basis for computing the spline based smoother." width="100%"><p class="caption">
-Figure 3.18: The columns of <span class="math inline">\(\widetilde{\mathbf{U}}\)</span> that consitute an orthonormal basis known as the Demmler-Reinch basis for computing the spline based smoother.
+<img src="CSwR_files/figure-html/spline-basis-1.png" alt="The columns of $\widetilde{\mathbf{U}}$  that consitute an orthonormal basis known as the Demmler-Reinsch basis for computing the spline based smoother." width="100%"><p class="caption">
+Figure 3.18: The columns of <span class="math inline">\(\widetilde{\mathbf{U}}\)</span> that consitute an orthonormal basis known as the Demmler-Reinsch basis for computing the spline based smoother.
 </p>
 </div>
 <p>We observe from Figures <a href="bivariate.html#fig:spline-gamma">3.17</a> and <a href="bivariate.html#fig:spline-basis">3.18</a>
@@ -1118,15 +1021,35 @@ which makes it possible to implement GCV without even computing the diagonal ent
 of <span class="math inline">\(\mathbf{S}_{\lambda}.\)</span></p>
 </div>
 </div>
-<div id="gaussian-processes" class="section level2" number="3.6">
+<div id="the-kalman-smoother" class="section level2" number="3.4">
 <h2>
-<span class="header-section-number">3.6</span> Gaussian processes<a class="anchor" aria-label="anchor" href="#gaussian-processes"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.4</span> The Kalman smoother<a class="anchor" aria-label="anchor" href="#the-kalman-smoother"><i class="fas fa-link"></i></a>
 </h2>
-<p>Suppose that <span class="math inline">\(X = X_{1:n} \sim \mathcal{N}(\xi_x, \Sigma_{x})\)</span> with
-<span class="math display">\[\mathrm{cov}(X_i, X_j) = K(t_i - t_j)\]</span>
-for a kernel function <span class="math inline">\(K\)</span>.</p>
+<p>The Kalman smoother is a classical algorithm
+used for smoothing time-indexed observations. It can be seen as an example
+of Gaussian prediction algorithms, where we imagine that<br><span class="math inline">\((X_1, Y_1), \ldots, (X_n,Y_n)\)</span> follow a joint Gaussian distribution,
+and where we observe only <span class="math inline">\(Y_1, \ldots, Y_n\)</span> but want to predict
+<span class="math inline">\(X_1, \ldots, X_n\)</span>. If the <span class="math inline">\(X\)</span>-s form a relatively smooth
+but unobserved Gaussian process and the <span class="math inline">\(Y\)</span>-s are noisy measurements
+of the <span class="math inline">\(X\)</span>-s, we see how the predictions of the <span class="math inline">\(X\)</span>-s from the
+<span class="math inline">\(Y\)</span>-s can be seen as a smoother. In contrast to the bivariate
+smoothers developed in the sections above, the approach taken
+in this section is fully probabilistic. That is, the algorithms and
+the parameters are justified and entirely determined by a
+probabilistic model of the data. That said, we will see some
+clear similarities with other smoothers.</p>
+<div id="gaussian-processes" class="section level3" number="3.4.1">
+<h3>
+<span class="header-section-number">3.4.1</span> Gaussian processes<a class="anchor" aria-label="anchor" href="#gaussian-processes"><i class="fas fa-link"></i></a>
+</h3>
+<p>We suppose that we have a time grid <span class="math inline">\(t_1 &lt; \ldots &lt; t_n\)</span> and observe
+<span class="math inline">\(Y_1, \ldots, Y_n\)</span> where <span class="math inline">\(Y_i\)</span> is observed at time <span class="math inline">\(t_i\)</span>. The
+distribution of the <span class="math inline">\(Y\)</span>-s is given in terms of <span class="math inline">\(X = (X_1, \ldots, X_n)\)</span>,
+where we suppose <span class="math inline">\(X \sim \mathcal{N}(\xi_x, \Sigma_{x})\)</span> with
+<span class="math display">\[(\Sigma_{x})_{i,j} = \mathrm{cov}(X_i, X_j) = K(t_i - t_j)\]</span>
+for a kernel function <span class="math inline">\(K : \mathbb{R} \to \mathbb{R}\)</span>.</p>
 <p>With the <em>observation equation</em> <span class="math inline">\(Y_i = X_i + \delta_i\)</span>
-for <span class="math inline">\(\delta = \delta_{1:n} \sim \mathcal{N}(0, \Omega)\)</span> and <span class="math inline">\(\delta \perp \! \! \perp X\)</span> we get</p>
+for <span class="math inline">\(\delta = (\delta_1, \ldots, \delta_n) \sim \mathcal{N}(0, \Omega)\)</span> and <span class="math inline">\(\delta \perp \! \! \perp X\)</span> we get</p>
 <p><span class="math display">\[(X, Y) \sim \mathcal{N}\left(\left(\begin{array}{c} \xi_x \\ \xi_x \end{array}\right),
 \left(\begin{array}{cc} \Sigma_x &amp; \Sigma_x \\ \Sigma_x &amp; \Sigma_x + \Omega \end{array} \right) \right).\]</span></p>
 <p>Hence
@@ -1137,33 +1060,43 @@ smoother matrix
 <p>This is also true if <span class="math inline">\(\Sigma_x (\Sigma_x + \Omega)^{-1} \xi_x = \xi_x\)</span>. If this
 identity holds approximately, we can argue that for computing <span class="math inline">\(E(X \mid Y)\)</span> we
 don’t need to know <span class="math inline">\(\xi_x\)</span>.</p>
-<p>If the observation variance is <span class="math inline">\(\Omega = \sigma^2 I\)</span> then the smoother matrix is
-<span class="math display">\[\Sigma_x (\Sigma_x + \sigma^2 I)^{-1} = (I + \sigma^2 \Sigma_x^{-1})^{-1}.\]</span></p>
+<p>If the observation variance is <span class="math inline">\(\Omega = \sigma^2 I\)</span> then the smoother matrix
+simplifies to
+<span class="math display">\[S = \Sigma_x (\Sigma_x + \sigma^2 I)^{-1} = (I + \sigma^2 \Sigma_x^{-1})^{-1}.\]</span>
+Thus knowing the observation variance <span class="math inline">\(\sigma^2\)</span> and the covariance matrix
+<span class="math inline">\(\Sigma_x\)</span>, which is determined entirely from the time-grid and the covariance
+kernel <span class="math inline">\(K\)</span>, we can compute the smoother matrix <span class="math inline">\(S\)</span>. Observing <span class="math inline">\(Y = y\)</span>, we can
+then compute the smoother as the solution to the equation
+<span class="math display">\[(I + \sigma^2 \Sigma_x^{-1})x = y.\]</span>
+Standard algorithms for matrix inversion,
+needed to compute <span class="math inline">\(S\)</span>, have time complexity <span class="math inline">\(O(n^3)\)</span>, and standard algorithms for solving
+the linear equation have time complexity <span class="math inline">\(O(n^2)\)</span>.</p>
+<p>The main point of the Kalman smoother is that
+its have time complexity is <span class="math inline">\(O(n)\)</span>, and its computation is thus very fast and
+scales well with <span class="math inline">\(n\)</span>. The tradeoff is that the Kalman smoother puts some
+restrictions on <span class="math inline">\(K\)</span> and thus <span class="math inline">\(\Sigma_x\)</span>. We consider the AR(1)-example
+in the section below, where we show that <span class="math inline">\(I + \sigma^2 \Sigma_x^{-1}\)</span>
+is a tridiagonal matrix, and the smoother can be computed as a solution
+to ?? in time that is linear in <span class="math inline">\(n\)</span>.</p>
 </div>
-<div id="the-kalman-filter" class="section level2" number="3.7">
-<h2>
-<span class="header-section-number">3.7</span> The Kalman filter<a class="anchor" aria-label="anchor" href="#the-kalman-filter"><i class="fas fa-link"></i></a>
-</h2>
-<div id="ar1-example" class="section level3" number="3.7.1">
+<div id="ar1-kalman-smoother" class="section level3" number="3.4.2">
 <h3>
-<span class="header-section-number">3.7.1</span> AR(1)-example<a class="anchor" aria-label="anchor" href="#ar1-example"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.4.2</span> AR(1) Kalman smoother<a class="anchor" aria-label="anchor" href="#ar1-kalman-smoother"><i class="fas fa-link"></i></a>
 </h3>
-<p>Suppose that <span class="math inline">\(|\alpha| &lt; 1\)</span>, <span class="math inline">\(X_1 = \epsilon_1 / \sqrt{1 - \alpha^2}\)</span> and
+<p>The simplest example with an efficient Kalman smoother is the AR(1)-model,
+where we assume an equidistant time grid (that is, <span class="math inline">\(t_i = i\)</span>). Suppose that <span class="math inline">\(|\alpha| &lt; 1\)</span>,
+<span class="math inline">\(X_1 = \epsilon_1 / \sqrt{1 - \alpha^2}\)</span> and
 <span class="math display">\[X_i = \alpha X_{i-1} + \epsilon_i\]</span>
-for <span class="math inline">\(i = 2, \ldots, n\)</span> with <span class="math inline">\(\epsilon = \epsilon_{1:n} \sim \mathcal{N}(0, \sigma^2 I)\)</span>.</p>
-<p>We have <span class="math inline">\(\mathrm{cov}(X_i, X_j) = \alpha^{|i-j|} / (1 - \alpha^2)\)</span>, thus we can find <span class="math inline">\(\Sigma_x\)</span> and compute
-<span class="math display">\[E(X_n \mid Y) = ((I + \sigma^2 \Sigma_x^{-1})^{-1} Y)_n\]</span></p>
+for <span class="math inline">\(i = 2, \ldots, n\)</span> with <span class="math inline">\(\epsilon = (\epsilon_1, \ldots, \epsilon_n) \sim \mathcal{N}(0, \sigma^2 I)\)</span>.</p>
+<p>We have <span class="math inline">\(\mathrm{cov}(X_i, X_j) = \alpha^{|i-j|} / (1 - \alpha^2)\)</span>, thus we can find
+<span class="math inline">\(\Sigma_x\)</span> and compute
+<span class="math display">\[E(X_i \mid Y) = ((I + \sigma^2 \Sigma_x^{-1})^{-1} Y)_i\]</span></p>
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:SmoothMat-fig"></span>
-<img src="CSwR_files/figure-html/SmoothMat-fig-1.png" alt="Smoothers" width="70%"><p class="caption">
-Figure 3.19: Smoothers
+<img src="CSwR_files/figure-html/SmoothMat-fig-1.png" alt="Gaussian smoother matrix $S_{25,j}$ with $\alpha = 0.3, 0.9$, $\sigma^2 = 2, 20$" width="70%"><p class="caption">
+Figure 3.19: Gaussian smoother matrix <span class="math inline">\(S_{25,j}\)</span> with <span class="math inline">\(\alpha = 0.3, 0.9\)</span>, <span class="math inline">\(\sigma^2 = 2, 20\)</span>
 </p>
 </div>
-</div>
-<div id="the-kalman-smoother" class="section level3" number="3.7.2">
-<h3>
-<span class="header-section-number">3.7.2</span> The Kalman smoother<a class="anchor" aria-label="anchor" href="#the-kalman-smoother"><i class="fas fa-link"></i></a>
-</h3>
 <p>From the identity <span class="math inline">\(\epsilon_i = X_i - \alpha X_{i-1}\)</span> it follows that
 <span class="math inline">\(\epsilon = A X\)</span> where</p>
 <p><span class="math display">\[A = \left( \begin{array}{cccccc}
@@ -1239,38 +1172,38 @@ y_1' \\ y_2' \\ y_3' \\ \vdots \\ y_{n-1}' \\ y_n'
 <p>which is then solved by backsubstitution from below; <span class="math inline">\(x_n = y_n'\)</span> and
 <span class="math display">\[x_{i} = y_i' - \rho_{i}' x_{i+1}, \quad i = n-1, \ldots, 1.\]</span></p>
 </div>
-<div id="implementation" class="section level3" number="3.7.3">
+<div id="implementation" class="section level3" number="3.4.3">
 <h3>
-<span class="header-section-number">3.7.3</span> Implementation<a class="anchor" aria-label="anchor" href="#implementation"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.4.3</span> Implementation<a class="anchor" aria-label="anchor" href="#implementation"><i class="fas fa-link"></i></a>
 </h3>
-<div class="sourceCode" id="cb119"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb119-1"><a href="bivariate.html#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
-<span id="cb119-2"><a href="bivariate.html#cb119-2" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</span>
-<span id="cb119-3"><a href="bivariate.html#cb119-3" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
-<span id="cb119-4"><a href="bivariate.html#cb119-4" aria-hidden="true" tabindex="-1"></a>NumericVector KalmanSmooth(NumericVector y, <span class="dt">double</span> alpha, <span class="dt">double</span> sigmasq) {</span>
-<span id="cb119-5"><a href="bivariate.html#cb119-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> tmp, gamma0 = <span class="dv">1</span> + sigmasq, rho = - sigmasq * alpha;</span>
-<span id="cb119-6"><a href="bivariate.html#cb119-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> gamma = <span class="dv">1</span> + sigmasq * (<span class="dv">1</span> + alpha * alpha);</span>
-<span id="cb119-7"><a href="bivariate.html#cb119-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> n = y.size();</span>
-<span id="cb119-8"><a href="bivariate.html#cb119-8" aria-hidden="true" tabindex="-1"></a>  NumericVector x(n), rhop(n - <span class="dv">1</span>);</span>
-<span id="cb119-9"><a href="bivariate.html#cb119-9" aria-hidden="true" tabindex="-1"></a>  rhop[<span class="dv">0</span>] = rho / gamma0;</span>
-<span id="cb119-10"><a href="bivariate.html#cb119-10" aria-hidden="true" tabindex="-1"></a>  x[<span class="dv">0</span>] = y[<span class="dv">0</span>] / gamma0;</span>
-<span id="cb119-11"><a href="bivariate.html#cb119-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">1</span>; i &lt; n - <span class="dv">1</span>; ++i) { <span class="co">/* Forward sweep */</span></span>
-<span id="cb119-12"><a href="bivariate.html#cb119-12" aria-hidden="true" tabindex="-1"></a>    tmp = (gamma - rho * rhop[i - <span class="dv">1</span>]);</span>
-<span id="cb119-13"><a href="bivariate.html#cb119-13" aria-hidden="true" tabindex="-1"></a>    rhop[i] = rho / tmp;</span>
-<span id="cb119-14"><a href="bivariate.html#cb119-14" aria-hidden="true" tabindex="-1"></a>    x[i] = (y[i] - rho * x[i - <span class="dv">1</span>]) / tmp;</span>
-<span id="cb119-15"><a href="bivariate.html#cb119-15" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb119-16"><a href="bivariate.html#cb119-16" aria-hidden="true" tabindex="-1"></a>  x[n - <span class="dv">1</span>] = (y[n - <span class="dv">1</span>] - rho * x[n - <span class="dv">2</span>]) / (gamma0 - rho * rhop[n - <span class="dv">2</span>]);</span>
-<span id="cb119-17"><a href="bivariate.html#cb119-17" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = n - <span class="dv">2</span>; i &gt;= <span class="dv">0</span>; --i) { <span class="co">/* Backsubstitution */</span></span>
-<span id="cb119-18"><a href="bivariate.html#cb119-18" aria-hidden="true" tabindex="-1"></a>    x[i] = x[i] - rhop[i] * x[i + <span class="dv">1</span>];</span>
-<span id="cb119-19"><a href="bivariate.html#cb119-19" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb119-20"><a href="bivariate.html#cb119-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> x;</span>
-<span id="cb119-21"><a href="bivariate.html#cb119-21" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb106"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb106-1"><a href="bivariate.html#cb106-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
+<span id="cb106-2"><a href="bivariate.html#cb106-2" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</span>
+<span id="cb106-3"><a href="bivariate.html#cb106-3" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb106-4"><a href="bivariate.html#cb106-4" aria-hidden="true" tabindex="-1"></a>NumericVector KalmanSmooth(NumericVector y, <span class="dt">double</span> alpha, <span class="dt">double</span> sigmasq) {</span>
+<span id="cb106-5"><a href="bivariate.html#cb106-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> tmp, gamma0 = <span class="dv">1</span> + sigmasq, rho = - sigmasq * alpha;</span>
+<span id="cb106-6"><a href="bivariate.html#cb106-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> gamma = <span class="dv">1</span> + sigmasq * (<span class="dv">1</span> + alpha * alpha);</span>
+<span id="cb106-7"><a href="bivariate.html#cb106-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> n = y.size();</span>
+<span id="cb106-8"><a href="bivariate.html#cb106-8" aria-hidden="true" tabindex="-1"></a>  NumericVector x(n), rhop(n - <span class="dv">1</span>);</span>
+<span id="cb106-9"><a href="bivariate.html#cb106-9" aria-hidden="true" tabindex="-1"></a>  rhop[<span class="dv">0</span>] = rho / gamma0;</span>
+<span id="cb106-10"><a href="bivariate.html#cb106-10" aria-hidden="true" tabindex="-1"></a>  x[<span class="dv">0</span>] = y[<span class="dv">0</span>] / gamma0;</span>
+<span id="cb106-11"><a href="bivariate.html#cb106-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">1</span>; i &lt; n - <span class="dv">1</span>; ++i) { <span class="co">/* Forward sweep */</span></span>
+<span id="cb106-12"><a href="bivariate.html#cb106-12" aria-hidden="true" tabindex="-1"></a>    tmp = (gamma - rho * rhop[i - <span class="dv">1</span>]);</span>
+<span id="cb106-13"><a href="bivariate.html#cb106-13" aria-hidden="true" tabindex="-1"></a>    rhop[i] = rho / tmp;</span>
+<span id="cb106-14"><a href="bivariate.html#cb106-14" aria-hidden="true" tabindex="-1"></a>    x[i] = (y[i] - rho * x[i - <span class="dv">1</span>]) / tmp;</span>
+<span id="cb106-15"><a href="bivariate.html#cb106-15" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb106-16"><a href="bivariate.html#cb106-16" aria-hidden="true" tabindex="-1"></a>  x[n - <span class="dv">1</span>] = (y[n - <span class="dv">1</span>] - rho * x[n - <span class="dv">2</span>]) / (gamma0 - rho * rhop[n - <span class="dv">2</span>]);</span>
+<span id="cb106-17"><a href="bivariate.html#cb106-17" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = n - <span class="dv">2</span>; i &gt;= <span class="dv">0</span>; --i) { <span class="co">/* Backsubstitution */</span></span>
+<span id="cb106-18"><a href="bivariate.html#cb106-18" aria-hidden="true" tabindex="-1"></a>    x[i] = x[i] - rhop[i] * x[i + <span class="dv">1</span>];</span>
+<span id="cb106-19"><a href="bivariate.html#cb106-19" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb106-20"><a href="bivariate.html#cb106-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> x;</span>
+<span id="cb106-21"><a href="bivariate.html#cb106-21" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Result, <span class="math inline">\(\alpha = 0.95\)</span>, <span class="math inline">\(\sigma^2 = 10\)</span></p>
 <div class="inline-figure"><img src="CSwR_files/figure-html/Nuuk_smooth-1.png" width="70%" style="display: block; margin: auto;"></div>
 <p>Comparing results</p>
-<div class="sourceCode" id="cb120"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb107"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">Sigma</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/outer.html">outer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">n</span>, <span class="fl">1</span><span class="op">:</span><span class="va">n</span>, 
                <span class="kw">function</span><span class="op">(</span><span class="va">i</span>, <span class="va">j</span><span class="op">)</span> <span class="va">alpha</span><span class="op">^</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span><span class="op">(</span><span class="va">i</span> <span class="op">-</span> <span class="va">j</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">alpha</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>  
-<span class="va">Smooth</span> <span class="op">&lt;-</span> <span class="va">Sigma</span> <span class="op">%*%</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/solve-methods.html">solve</a></span><span class="op">(</span><span class="va">Sigma</span> <span class="op">+</span> <span class="va">sigmasq</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html">diag</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span>
+<span class="va">Smooth</span> <span class="op">&lt;-</span> <span class="va">Sigma</span> <span class="op">%*%</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html">solve</a></span><span class="op">(</span><span class="va">Sigma</span> <span class="op">+</span> <span class="va">sigmasq</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html">diag</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/qplot.html">qplot</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">n</span>, <span class="va">Smooth</span> <span class="op">%*%</span> <span class="va">Nuuk_year</span><span class="op">$</span><span class="va">Temperature</span> <span class="op">-</span> <span class="va">ySmooth</span><span class="op">)</span> <span class="op">+</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ylab</a></span><span class="op">(</span><span class="st">"Difference"</span><span class="op">)</span></code></pre></div>
 <div class="inline-figure"><img src="CSwR_files/figure-html/Nuuk_smooth_accuracy-1.png" width="70%" style="display: block; margin: auto;"></div>
@@ -1282,37 +1215,37 @@ the smoothing of the data. This is related to the kernel function
 choice of kernel. Not all have a simple inverse covariance matrix and a Kalman
 filter algorithm.</p>
 </div>
-<div id="the-kalman-filter-1" class="section level3" number="3.7.4">
+<div id="the-kalman-filter" class="section level3" number="3.4.4">
 <h3>
-<span class="header-section-number">3.7.4</span> The Kalman filter<a class="anchor" aria-label="anchor" href="#the-kalman-filter-1"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.4.4</span> The Kalman filter<a class="anchor" aria-label="anchor" href="#the-kalman-filter"><i class="fas fa-link"></i></a>
 </h3>
-<div class="sourceCode" id="cb121"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb121-1"><a href="bivariate.html#cb121-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
-<span id="cb121-2"><a href="bivariate.html#cb121-2" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</span>
-<span id="cb121-3"><a href="bivariate.html#cb121-3" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
-<span id="cb121-4"><a href="bivariate.html#cb121-4" aria-hidden="true" tabindex="-1"></a>NumericVector KalmanFilt(NumericVector y, <span class="dt">double</span> alpha, <span class="dt">double</span> sigmasq) {</span>
-<span id="cb121-5"><a href="bivariate.html#cb121-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> tmp, gamma0 = <span class="dv">1</span> + sigmasq, rho = - sigmasq * alpha, yp;</span>
-<span id="cb121-6"><a href="bivariate.html#cb121-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> gamma = <span class="dv">1</span> + sigmasq * (<span class="dv">1</span> + alpha * alpha);</span>
-<span id="cb121-7"><a href="bivariate.html#cb121-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> n = y.size();</span>
-<span id="cb121-8"><a href="bivariate.html#cb121-8" aria-hidden="true" tabindex="-1"></a>  NumericVector x(n), rhop(n);</span>
-<span id="cb121-9"><a href="bivariate.html#cb121-9" aria-hidden="true" tabindex="-1"></a>  rhop[<span class="dv">0</span>] = rho / gamma0;</span>
-<span id="cb121-10"><a href="bivariate.html#cb121-10" aria-hidden="true" tabindex="-1"></a>  yp = y[<span class="dv">0</span>] / gamma0;</span>
-<span id="cb121-11"><a href="bivariate.html#cb121-11" aria-hidden="true" tabindex="-1"></a>  x[<span class="dv">0</span>] = y[<span class="dv">0</span>] / (<span class="dv">1</span> + sigmasq * (<span class="dv">1</span> - alpha * alpha));</span>
-<span id="cb121-12"><a href="bivariate.html#cb121-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">1</span>; i &lt; n; ++i) { </span>
-<span id="cb121-13"><a href="bivariate.html#cb121-13" aria-hidden="true" tabindex="-1"></a>    tmp = (gamma - rho * rhop[i - <span class="dv">1</span>]);</span>
-<span id="cb121-14"><a href="bivariate.html#cb121-14" aria-hidden="true" tabindex="-1"></a>    rhop[i] = rho / tmp;</span>
-<span id="cb121-15"><a href="bivariate.html#cb121-15" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* Note differences when compared to smoother */</span></span>
-<span id="cb121-16"><a href="bivariate.html#cb121-16" aria-hidden="true" tabindex="-1"></a>    x[i] = (y[i] - rho * yp) / (gamma0 - rho * rhop[i - <span class="dv">1</span>]); </span>
-<span id="cb121-17"><a href="bivariate.html#cb121-17" aria-hidden="true" tabindex="-1"></a>    yp = (y[i] - rho * yp) / tmp;         </span>
-<span id="cb121-18"><a href="bivariate.html#cb121-18" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb121-19"><a href="bivariate.html#cb121-19" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> x;</span>
-<span id="cb121-20"><a href="bivariate.html#cb121-20" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb108"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb108-1"><a href="bivariate.html#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
+<span id="cb108-2"><a href="bivariate.html#cb108-2" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</span>
+<span id="cb108-3"><a href="bivariate.html#cb108-3" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb108-4"><a href="bivariate.html#cb108-4" aria-hidden="true" tabindex="-1"></a>NumericVector KalmanFilt(NumericVector y, <span class="dt">double</span> alpha, <span class="dt">double</span> sigmasq) {</span>
+<span id="cb108-5"><a href="bivariate.html#cb108-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> tmp, gamma0 = <span class="dv">1</span> + sigmasq, rho = - sigmasq * alpha, yp;</span>
+<span id="cb108-6"><a href="bivariate.html#cb108-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> gamma = <span class="dv">1</span> + sigmasq * (<span class="dv">1</span> + alpha * alpha);</span>
+<span id="cb108-7"><a href="bivariate.html#cb108-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> n = y.size();</span>
+<span id="cb108-8"><a href="bivariate.html#cb108-8" aria-hidden="true" tabindex="-1"></a>  NumericVector x(n), rhop(n);</span>
+<span id="cb108-9"><a href="bivariate.html#cb108-9" aria-hidden="true" tabindex="-1"></a>  rhop[<span class="dv">0</span>] = rho / gamma0;</span>
+<span id="cb108-10"><a href="bivariate.html#cb108-10" aria-hidden="true" tabindex="-1"></a>  yp = y[<span class="dv">0</span>] / gamma0;</span>
+<span id="cb108-11"><a href="bivariate.html#cb108-11" aria-hidden="true" tabindex="-1"></a>  x[<span class="dv">0</span>] = y[<span class="dv">0</span>] / (<span class="dv">1</span> + sigmasq * (<span class="dv">1</span> - alpha * alpha));</span>
+<span id="cb108-12"><a href="bivariate.html#cb108-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">1</span>; i &lt; n; ++i) { </span>
+<span id="cb108-13"><a href="bivariate.html#cb108-13" aria-hidden="true" tabindex="-1"></a>    tmp = (gamma - rho * rhop[i - <span class="dv">1</span>]);</span>
+<span id="cb108-14"><a href="bivariate.html#cb108-14" aria-hidden="true" tabindex="-1"></a>    rhop[i] = rho / tmp;</span>
+<span id="cb108-15"><a href="bivariate.html#cb108-15" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* Note differences when compared to smoother */</span></span>
+<span id="cb108-16"><a href="bivariate.html#cb108-16" aria-hidden="true" tabindex="-1"></a>    x[i] = (y[i] - rho * yp) / (gamma0 - rho * rhop[i - <span class="dv">1</span>]); </span>
+<span id="cb108-17"><a href="bivariate.html#cb108-17" aria-hidden="true" tabindex="-1"></a>    yp = (y[i] - rho * yp) / tmp;         </span>
+<span id="cb108-18"><a href="bivariate.html#cb108-18" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb108-19"><a href="bivariate.html#cb108-19" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> x;</span>
+<span id="cb108-20"><a href="bivariate.html#cb108-20" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Result, <span class="math inline">\(\alpha = 0.95\)</span>, <span class="math inline">\(\sigma^2 = 10\)</span></p>
 <div class="inline-figure"><img src="CSwR_files/figure-html/Nuuk_filter-1.png" width="70%" style="display: block; margin: auto;"></div>
 </div>
 </div>
-<div id="bivariate:ex" class="section level2" number="3.8">
+<div id="bivariate:ex" class="section level2" number="3.5">
 <h2>
-<span class="header-section-number">3.8</span> Exercises<a class="anchor" aria-label="anchor" href="#bivariate:ex"><i class="fas fa-link"></i></a>
+<span class="header-section-number">3.5</span> Exercises<a class="anchor" aria-label="anchor" href="#bivariate:ex"><i class="fas fa-link"></i></a>
 </h2>
 <div id="nearest-neighbors" class="section level3 unnumbered">
 <h3>Nearest neighbors<a class="anchor" aria-label="anchor" href="#nearest-neighbors"><i class="fas fa-link"></i></a>
@@ -1357,43 +1290,36 @@ mean</em>.
       <ul class="nav navbar-nav">
 <li><a class="nav-link" href="#bivariate"><span class="header-section-number">3</span> Bivariate smoothing</a></li>
 <li>
-<a class="nav-link" href="#nearest-neighbor-smoothers"><span class="header-section-number">3.1</span> Nearest neighbor smoothers</a><ul class="nav navbar-nav">
+<a class="nav-link" href="#nearest-neighbor-and-kernel-smoothers"><span class="header-section-number">3.1</span> Nearest neighbor and kernel smoothers</a><ul class="nav navbar-nav">
 <li><a class="nav-link" href="#linear-smoothers"><span class="header-section-number">3.1.1</span> Linear smoothers</a></li>
 <li><a class="nav-link" href="#implementing-the-running-mean"><span class="header-section-number">3.1.2</span> Implementing the running mean</a></li>
 <li><a class="nav-link" href="#choose-k-by-cross-validation"><span class="header-section-number">3.1.3</span> Choose \(k\) by cross-validation</a></li>
+<li><a class="nav-link" href="#nadarayawatson-kernel-smoothing"><span class="header-section-number">3.1.4</span> Nadaraya–Watson kernel smoothing</a></li>
 </ul>
 </li>
 <li>
-<a class="nav-link" href="#kernel-methods"><span class="header-section-number">3.2</span> Kernel methods</a><ul class="nav navbar-nav">
-<li><a class="nav-link" href="#nadarayawatson-kernel-smoothing"><span class="header-section-number">3.2.1</span> Nadaraya–Watson kernel smoothing</a></li>
-<li><a class="nav-link" href="#local-regression-smoothers"><span class="header-section-number">3.2.2</span> Local regression smoothers</a></li>
-</ul>
-</li>
-<li><a class="nav-link" href="#sparse-linear-algebra"><span class="header-section-number">3.3</span> Sparse linear algebra</a></li>
-<li>
-<a class="nav-link" href="#onb"><span class="header-section-number">3.4</span> Orthogonal basis expansions</a><ul class="nav navbar-nav">
-<li><a class="nav-link" href="#polynomial-expansions"><span class="header-section-number">3.4.1</span> Polynomial expansions</a></li>
-<li><a class="nav-link" href="#fourier-expansions"><span class="header-section-number">3.4.2</span> Fourier expansions</a></li>
+<a class="nav-link" href="#onb"><span class="header-section-number">3.2</span> Orthogonal basis expansions</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#polynomial-expansions"><span class="header-section-number">3.2.1</span> Polynomial expansions</a></li>
+<li><a class="nav-link" href="#fourier-expansions"><span class="header-section-number">3.2.2</span> Fourier expansions</a></li>
 </ul>
 </li>
 <li>
-<a class="nav-link" href="#splines"><span class="header-section-number">3.5</span> Splines</a><ul class="nav navbar-nav">
-<li><a class="nav-link" href="#smoothing-splines"><span class="header-section-number">3.5.1</span> Smoothing splines</a></li>
-<li><a class="nav-link" href="#splines-in-r"><span class="header-section-number">3.5.2</span> Splines in R</a></li>
-<li><a class="nav-link" href="#efficient-splines"><span class="header-section-number">3.5.3</span> Efficient computation with splines</a></li>
-</ul>
-</li>
-<li><a class="nav-link" href="#gaussian-processes"><span class="header-section-number">3.6</span> Gaussian processes</a></li>
-<li>
-<a class="nav-link" href="#the-kalman-filter"><span class="header-section-number">3.7</span> The Kalman filter</a><ul class="nav navbar-nav">
-<li><a class="nav-link" href="#ar1-example"><span class="header-section-number">3.7.1</span> AR(1)-example</a></li>
-<li><a class="nav-link" href="#the-kalman-smoother"><span class="header-section-number">3.7.2</span> The Kalman smoother</a></li>
-<li><a class="nav-link" href="#implementation"><span class="header-section-number">3.7.3</span> Implementation</a></li>
-<li><a class="nav-link" href="#the-kalman-filter-1"><span class="header-section-number">3.7.4</span> The Kalman filter</a></li>
+<a class="nav-link" href="#splines"><span class="header-section-number">3.3</span> Splines</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#smoothing-splines"><span class="header-section-number">3.3.1</span> Smoothing splines</a></li>
+<li><a class="nav-link" href="#splines-in-r"><span class="header-section-number">3.3.2</span> Splines in R</a></li>
+<li><a class="nav-link" href="#efficient-splines"><span class="header-section-number">3.3.3</span> Efficient computation with splines</a></li>
 </ul>
 </li>
 <li>
-<a class="nav-link" href="#bivariate:ex"><span class="header-section-number">3.8</span> Exercises</a><ul class="nav navbar-nav">
+<a class="nav-link" href="#the-kalman-smoother"><span class="header-section-number">3.4</span> The Kalman smoother</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#gaussian-processes"><span class="header-section-number">3.4.1</span> Gaussian processes</a></li>
+<li><a class="nav-link" href="#ar1-kalman-smoother"><span class="header-section-number">3.4.2</span> AR(1) Kalman smoother</a></li>
+<li><a class="nav-link" href="#implementation"><span class="header-section-number">3.4.3</span> Implementation</a></li>
+<li><a class="nav-link" href="#the-kalman-filter"><span class="header-section-number">3.4.4</span> The Kalman filter</a></li>
+</ul>
+</li>
+<li>
+<a class="nav-link" href="#bivariate:ex"><span class="header-section-number">3.5</span> Exercises</a><ul class="nav navbar-nav">
 <li><a class="nav-link" href="#nearest-neighbors">Nearest neighbors</a></li>
 <li><a class="nav-link" href="#kernel-estimators">Kernel estimators</a></li>
 </ul>
@@ -1419,7 +1345,7 @@ mean</em>.
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2021-10-20, Git version: 86c4ccf.</p>
+    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2022-05-08, Git version: c532a37.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

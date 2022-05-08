@@ -1,14 +1,33 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Bivariate smoothing {#bivariate}
 
-The focus of this chapter is on estimating how one variable, $Y$, is smoothly 
-related to another, $X$. Thus we are directly aiming for an estimate of 
-(aspects of) the conditional distribution of $Y$ given $X$. If both variables
-are real valued, we can get a pretty good idea of their relation by simply 
-looking at a scatter plot, and what we are aiming for is also often referred to 
-as *scatter plot smoothing*. In some cases $X$ represents a random variable,
-while in other cases, as the temperature example below, $X$ represents a 
-deterministic variable. In the example below $X$ is time, and in other applications
-$X$ could be fixed by an experimental design. 
+This chapter is on the estimation of a smooth relation between two variables
+$(X, Y)$. We will focus on direct estimation of (aspects of) the 
+conditional distribution of $Y$ given $X$. Thus the variables are treated 
+asymmetrically. When both variables are real valued, we get a good idea 
+about their relation from a scatter plot of $Y$ against $X$,
+and the aim is basically to smooth the relation that the scatter plot shows. 
+
+For most of the methods considered, it does not matter if $X$ represents a 
+deterministic or a random variable. Thus $X$ could be fixed by an experimental 
+design, it could represent time or it could be an observed variable. 
+In Figure \@ref(fig:NuukSmooth) (left), 
+$Y$ is the annual average temperature in Nuuk, Greenland, and $X$ is 
+time in calendar years. In Figure \@ref(fig:NuukSmooth) (right), $Y$ is 
+the monthly average temperature in Nuuk, while $X$ is the monthly average
+temperature in Qaqortoq -- a town further south of Nuuk in Greenland. In 
+the former example, time is deterministic and we are interested in how 
+the temperature in Nuuk changes over time. Is there, for instance, a trend? 
+In the second example, we are interested in how the temperature in Qaqortoq
+is predictive of the temperature in Nuuk. We will use those two 
+temperature examples throughout, see @Vinther:2006. The raw data is available 
+from the site 
+[SW Greenland temperature data](https://crudata.uea.ac.uk/cru/data/greenland/),
+but is also available from the CSwR package.
 
 ```{r packages, echo=FALSE, warning=FALSE, message=FALSE, cache.extra=file.info("data/bivar.txt")$mtime}
 library("tidyverse")
@@ -19,35 +38,51 @@ library("Rcpp")
 library("microbenchmark")
 ```
 
-One of the examples that will be used throughout is the monthly and yearly 
-temperatures in Nuuk, Greenland, see @Vinther:2006. The updated data is available 
-from the site 
-[SW Greenland temperature data](https://crudata.uea.ac.uk/cru/data/greenland/).
-
 ```{r NuukData, echo=FALSE, message=FALSE}
-Nuuk <- read_table2("data/nuuk.dat.txt", 
+Nuuk <- read_table("data/nuuk.dat.txt", 
                     col_names = c("Year", 1:12), 
                     na = "-999", 
                     skip = 1) %>% 
-  gather(key = "Month", value = "Temperature", -Year, convert = TRUE) %>% 
-  mutate(Temperature = Temperature / 10) %>% 
+  gather(key = "Month", value = "Temp_Nuuk", -Year, convert = TRUE) %>% 
+  mutate(Temp_Nuuk = Temp_Nuuk / 10) %>% 
   filter(Year > 1866)
 
 Nuuk_year <- group_by(Nuuk, Year) %>% 
   summarise(
-    Temperature = mean(Temperature),
-    Median = median(Temperature),
-    High = max(Temperature), 
-    Low = min(Temperature)
+    Median = median(Temp_Nuuk),
+    High = max(Temp_Nuuk), 
+    Low = min(Temp_Nuuk),
+    Temperature = mean(Temp_Nuuk)
   )
+
+Qaqortoq <- read_table("data/qaqortoq.dat", 
+                    col_names = c("Year", 1:12), 
+                    na = "-999", 
+                    skip = 1) %>% 
+  gather(key = "Month", value = "Temp_Qaqortoq", -Year, convert = TRUE) %>% 
+  mutate(Temp_Qaqortoq = Temp_Qaqortoq / 10) %>% 
+  filter(Year > 1866)
+
+Qaqortoq_year <- group_by(Qaqortoq, Year) %>% 
+  summarise(
+    Median = median(Temp_Qaqortoq),
+    High = max(Temp_Qaqortoq), 
+    Low = min(Temp_Qaqortoq),
+    Temperature = mean(Temp_Qaqortoq)
+  )
+
+Nuuk_Qaqortoq <- left_join(Nuuk, Qaqortoq)
 n <- nrow(Nuuk_year)
 ```
 
-(ref:NuukSmooth) Nuuk average yearly temperature in degrees Celsius (left) smoothed using loess (black), a degree 10 polynomial (red) and a smooth spline (purple). Nuuk annual temperature cycles (right) smoothed using a spline. 
+(ref:NuukSmooth) Nuuk average yearly temperature in degrees Celsius (left) smoothed using loess (black), a degree 10 polynomial (red) and a smooth spline (purple). Nuuk average monthly temperature against Qaqortoq average montly temperature (right) smoothed using a straight line (red) and a smooth spline (purple).
 
-```{r NuukSmooth, dependson="NuukData", message=FALSE, fig.cap='(ref:NuukSmooth)', fig.show="hold", out.width="49%"}
-p_Nuuk <- ggplot(Nuuk_year, aes(x = Year, y = Temperature)) + geom_point()
-p_Nuuk + geom_smooth(se = FALSE) + 
+```{r NuukSmooth, dependson="NuukData", message=FALSE, warning=FALSE, fig.cap='(ref:NuukSmooth)', fig.show="hold", out.width="49%"}
+p_Nuuk <- ggplot(Nuuk_year, aes(x = Year, y = Temperature)) + 
+  geom_point()
+
+p_Nuuk + 
+  geom_smooth(se = FALSE) +         # A loess smoother
   geom_smooth(
     method = "lm", 
     formula = y ~ poly(x, 10),      # A degree-10 polynomial expansion
@@ -61,12 +96,23 @@ p_Nuuk + geom_smooth(se = FALSE) +
     se = FALSE
   )
 
-ggplot(Nuuk, aes(x = Month, y = Temperature)) + 
-  geom_line(aes(group = Year), alpha = 0.3) + 
-  geom_point(alpha = 0.3) +
-  geom_smooth(color = "red", se = FALSE)  # A spline smoother
-```
+p_Nuuk_Qaqortoq <- ggplot(Nuuk_Qaqortoq, aes(Temp_Qaqortoq, Temp_Nuuk)) + 
+  geom_point()
 
+p_Nuuk_Qaqortoq +
+  geom_smooth(
+    method = "lm", 
+    formula = y ~ x,                 # A straight line smoother
+    color = "red", 
+    se = FALSE
+  ) + 
+  geom_smooth(
+    method = "gam", 
+    formula = y ~ s(x, bs = "cr"),   # A spline smoother via 'mgcv::gam()'
+    color = "purple", 
+    se = FALSE
+  )
+```
 
 ```{r NuukSmoothStrat, dependson="NuukData", echo=FALSE, eval=FALSE}
 ggplot(Nuuk, aes(x = Year, y = Temperature)) + geom_point() + geom_smooth(se = FALSE) + 
@@ -79,10 +125,37 @@ ggplot(Nuuk, aes(x = Month, y = Temperature)) +
   geom_point() +
   geom_smooth(color = "red", se = FALSE) + 
   facet_wrap(~ ((Year %/% 10) * 10))
+
+
+ggplot(Nuuk, aes(x = Month, y = Temperature)) + 
+  geom_line(aes(group = Year), alpha = 0.3) + 
+  geom_point(alpha = 0.3) +
+  geom_smooth(color = "red", se = FALSE)  # A spline smoother
 ```
 
+```{r QaqortoqSmooth, dependson="NuukData", message=FALSE, eval=FALSE, echo=FALSE, fig.show="hold", out.width="49%"}
+p_Qaqortoq <- ggplot(Qaqortoq_year, aes(x = Year, y = Temperature)) + geom_point()
+p_Qaqortoq + geom_smooth(se = FALSE) + 
+  geom_smooth(
+    method = "lm", 
+    formula = y ~ poly(x, 10),      # A degree-10 polynomial expansion
+    color = "red", 
+    se = FALSE
+  ) + 
+  geom_smooth(
+    method = "gam", 
+    formula = y ~ s(x, bs = "cr"),   # A spline smoother via 'mgcv::gam()'
+    color = "purple", 
+    se = FALSE
+  )
 
-## Nearest neighbor smoothers
+ggplot(Qaqortoq, aes(x = Month, y = Temperature)) + 
+  geom_line(aes(group = Year), alpha = 0.3) + 
+  geom_point(alpha = 0.3) +
+  geom_smooth(color = "red", se = FALSE)  # A spline smoother
+```
+
+## Nearest neighbor and kernel smoothers
 
 One of the most basic ideas on smoothing bivariate data is to use a 
 running mean or moving average. This is particularly sensible when the 
@@ -100,7 +173,7 @@ regression functions, $f(x) = E(Y \mid X = x)$, under minimal assumptions.
 The practical problem is that $k$ must grow slowly in high dimensions, 
 and the estimator is not a panacea. 
 
-In this chapter we focus exclusively on $x$ being real valued with the 
+In this chapter we focus mostly on $x$ being real valued with the 
 ordinary metric used to define the nearest neighbors. The total ordering of the 
 real line adds a couple of extra possibilities to the definition of $N_i$. 
 When $k$ is odd, the *symmetric* nearest neighbor smoother takes $N_i$ to consist
@@ -284,7 +357,7 @@ prediction, that is, how $\hat{f}(x)$ is computed for $x$ not
 in the data. If so, it becomes possible to define 
 $$\hat{f}^{-i}_i = \hat{f}^{-i}(x_i)$$
 as the prediction at $x_i$ using the smoother computed from data 
-with $(x_i, y_i)$ excluded. However, here we derectly *define*
+with $(x_i, y_i)$ excluded. However, here we directly *define*
 $$\hat{f}^{-i}_i = \sum_{j \neq i} \frac{S_{ij}y_j}{1 - S_{ii}}$$
 for any linear smoother. This definition concurs with the 
 "out-of-sample" predictor in $x_i$ for most smoothers, 
@@ -338,8 +411,6 @@ p_Nuuk +
   geom_line(aes(y = run_mean(Nuuk_year$Temperature, k_opt)), color = "blue") +
   geom_line(aes(y = run_mean(Nuuk_year$Temperature, 25)), color = "purple")
 ```
-
-## Kernel methods
 
 ### Nadaraya–Watson kernel smoothing
 
@@ -474,189 +545,6 @@ p_Nuuk +
 Figure \@ref(fig:Nuuk-NN-plot4) shows the optimal kernel smoother, which is actually
 somewhat wiggly. It is locally more smooth than the $k$-nearest neighbor smoother
 but overall comparable to this smoother with $k = 9$.
-
-### Local regression smoothers
-
-
-## Sparse linear algebra 
-
-```{r bandSparse}
-library(Matrix)
-bandSparse(15, 15, seq(-2, 2))
-```
-
-```{r Nuuk_runmeans, warning=FALSE, dependson="NuukData"}
-K <- bandSparse(n, n, seq(-2, 2))
-weights <- c(1/3, 1/4, rep(1/5, n - 4), 1/4, 1/3)
-weights <- c(NA, NA, rep(1/5, n - 4), NA, NA)
-p_Nuuk <- ggplot(Nuuk_year, aes(Year, Temperature)) + geom_point()
-p_Nuuk + 
-  geom_line(aes(y = as.numeric(K %*% Nuuk_year$Temperature) * weights), 
-            color = "red")
-```
-
-When the smoother matrix is *sparse*, matrix multiplication can be much faster.
-
-We will present some benchmark comparisons below. First we compare the run time 
-for the matrix multiplication `as.numeric(K %*% Nuuk_year$Temperature) * weights` 
-using a sparse matrix (as above) with the run time 
-using a dense matrix. The dense matrix is given as `Kdense = as.matrix(K)`. These
-run times are compared to using `filter()`. In all computations, $k = 5$. 
-
-```{r runmean_bench, echo =FALSE}
-y <- rnorm(4096)
-K1 <- bandSparse(512, 512, seq(-5, 5), giveCsparse = TRUE)
-weights1 <- c(rep(NA, 5), rep(1/11, 512 - 10), rep(NA, 5))
-K2 <- bandSparse(1024, 1024, seq(-5, 5), giveCsparse = TRUE)
-weights2 <- c(rep(NA, 5), rep(1/11, 1024 - 10), rep(NA, 5))
-K3 <- bandSparse(2048, 2048, seq(-5, 5), giveCsparse = TRUE)
-weights3 <- c(rep(NA, 5), rep(1/11, 2048 - 10), rep(NA, 5))
-K4 <- bandSparse(256, 256, seq(-5, 5), giveCsparse = TRUE)
-weights4 <- c(rep(NA, 5), rep(1/11, 256 - 10), rep(NA, 5))
-K1dense <- as.matrix(K1)
-K2dense <- as.matrix(K2)
-K3dense <- as.matrix(K3)
-K4dense <- as.matrix(K4)
-
-tmp <- microbenchmark(
-  as.numeric(K1 %*% y[1:512]) * weights1,
-  as.numeric(K2 %*% y[1:1024]) * weights2,
-  as.numeric(K3 %*% y[1:2048]) * weights3,
-  as.numeric(K4 %*% y[1:256]) * weights4,
-  stats::filter(y[1:512], rep(1/11, 11)),
-  stats::filter(y[1:1024], rep(1/11, 11)),
-  stats::filter(y[1:2048], rep(1/11, 11)),
-  stats::filter(y[1:256], rep(1/11, 11)),
-  as.numeric(K1dense %*% y[1:512]) * weights1,
-  as.numeric(K2dense %*% y[1:1024]) * weights2,
-  as.numeric(K3dense %*% y[1:2048]) * weights3,
-  as.numeric(K4dense %*% y[1:256]) * weights4
-  )
-sumbench <- summary(tmp)
-sumbench$n <- rep(c(512, 1024, 2048, 256), 3)
-sumbench$method <- rep(c("Sparse mat.", "filter", "Dense mat."), each = 4)
-```
-
-```{r runmean_bench_fit, echo=FALSE, dependson="runmean_bench"}
-qplot(n, median, data = sumbench, color = method, size = I(4)) + 
-  scale_x_log10(breaks = c(256, 512, 1024, 2048)) + 
-  scale_y_log10(breaks = 4^(3:8), name = "microseconds") + 
-  geom_line(size = I(2))
-```
-
-The difference in slopes between dense and sparse matrix multiplication should be 
-noted. This is the difference between $O(n^2)$ and $O(n)$ run time. The run time for 
-the dense matrix multiplication will not change with $k$. For the 
-other two it will increase (linearly) with increasing $k$. 
-
-For smoothing only once with a given smoother matrix the time to construct the matrix 
-should also be taken into account for fair comparison with `filter()`. It turns out
-that the function `bandSparse` is not optimized for the specific running mean 
-banded matrix, and a faster C++ function for this job is given below.
-
-```{Rcpp, fastBand}
-#include <Rcpp.h>
-using namespace Rcpp;
-// [[Rcpp::export]]
-List fastBand(int n, int k) {
-  int N = (2 * k + 1) * (n - 2 * k) + 3 * k * k + k;
-  int iter = 0;
-  IntegerVector i(N), p(n + 1);
-  for(int col = 0; col < n; ++col) {
-    p[col] = iter;
-    for(int r = std::max(col - k, 0); r < std::min(col + k + 1, n); ++r) {
-      i[iter] = r;
-      ++iter;
-    }
-  }
-  p[n] = N;
-  return List::create(_["i"] = i, _["p"] = p);
-}
-```
-
-And then R function.
-
-```{r fastBand_R, dependson="fastBand"}
-bandSparseFast <- function(n, k) {
-  n <- as.integer(n)
-  k <- as.integer(k)
-  tmp <- fastBand(n, k)
-  new("ngCMatrix", 
-      i = tmp$i, 
-      p = tmp$p, 
-      Dim = c(n, n))
-}
-```
-
-
-```{r fast_runmean_bench, fig.cap="Benchmarking the different running mean implementations", echo=FALSE, dependson="fastBand_R"}
-weights4 <- c(rep(NA, 5), rep(1/11, 4096 - 10), rep(NA, 5))
-
-tmp <- microbenchmark(
-  run_mean(y[1:512], k = 11),
-  run_mean(y[1:1124], k = 11),
-  run_mean(y[1:2048], k = 11),
-  run_mean(y[1:4096], k = 11),
-  stats::filter(y[1:512], rep(1/11, 11)),
-  stats::filter(y[1:1024], rep(1/11, 11)),
-  stats::filter(y[1:2048], rep(1/11, 11)),
-  stats::filter(y[1:4096], rep(1/11, 11)),
-  {K1 <- bandSparseFast(512, 5); as.numeric(K1 %*% y[1:512]) * weights1},
-  {K2 <- bandSparseFast(1024, 5); as.numeric(K2 %*% y[1:1024]) * weights2},
-  {K3 <- bandSparseFast(2048, 5); as.numeric(K3 %*% y[1:2048]) * weights3},
-  {K4 <- bandSparseFast(4096, 5); as.numeric(K4 %*% y[1:4096]) * weights4},
-  {K1 <- bandSparse(512, k = seq(-5, 5)); as.numeric(K1 %*% y[1:512]) * weights1},
-  {K2 <- bandSparse(1024, k = seq(-5, 5)); as.numeric(K2 %*% y[1:1024]) * weights2},
-  {K3 <- bandSparse(2048, k = seq(-5, 5)); as.numeric(K3 %*% y[1:2048]) * weights3},
-  {K4 <- bandSparse(4096, k = seq(-5, 5)); as.numeric(K4 %*% y[1:4096]) * weights4}
-  )
-sumbench <- summary(tmp)
-sumbench$n <- rep(c(512, 1024, 2048, 4096), 4)
-sumbench$method <- rep(c("run-mean", "filter", "Sparse mat. fast", "Sparse mat."), each = 4)
-```
-
-```{r fast_runmean_bench_fig, echo=FALSE, dependson="fast_runmean_bench"}
-qplot(n, median, data = sumbench, color = method, size = I(4)) + 
-  scale_x_log10(breaks = c(512, 1024, 2048, 4096)) + 
-  scale_y_log10(breaks = 2^(7:13), name = "microseconds") + 
-  geom_line(size = I(2))
-```
-
-The construction of the sparse matrix turns out to take up much more time than the 
-matrix-vector multiplication. The run time is still $O(n)$, but the constant is of 
-the order of a factor 16 larger than for `filter()`. With the faster construction of 
-the sparse matrix, the constant is reduced to being
-of the order 5 larger than for `filter()`. For small $n$ there is some overhead 
-from the constructor of the sparse matrix object even for the faster algorithm.
-
-If you implement an algorithm (like a smoother) using linear algebra (e.g. a 
-matrix-vector product) then sparse matrix numerical methods can be useful 
-compared to dense matrix numerical methods. The Matrix package for R implements 
-sparse matrices, and you should always attempt to use methods for constructing 
-the sparse matrix that avoid dense intermediates. But even with a special 
-purpose constructor of a sparse band matrix, sparse linear algebra cannot 
-compete with optimized special purpose algorithms like `filter()` or a 
-C++ implementation of `run_mean()`. The `filter()` function even works more 
-generally for kernels (weights) with *equidistant* data. 
-
-We conclude this section by verifying that `filter()` actually computes
-the running mean up to numerical errors. 
-
-```{r runmean_accuracy_fig, warning=FALSE, dependson=c("NuukData", "Nuuk_runmeans")}
-qplot(1:n, 
-      as.numeric(K %*% Nuuk_year$Temperature) * weights - 
-        c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5)))) +
-  scale_y_continuous("Difference")
-```
-
-```{r runmean_accuracy, dependson="NuukData"}
-all(as.numeric(K %*% Nuuk_year$Temperature) * weights == 
-      c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5))))
-all.equal(as.numeric(K %*% Nuuk_year$Temperature) * weights, 
-          c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5))))
-identical(as.numeric(K %*% Nuuk_year$Temperature) * weights, 
-          c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5))))
-```
 
 ## Orthogonal basis expansions {#onb}
 
@@ -1213,7 +1101,7 @@ Thus the smoother works by shrinking the coefficients toward zero in the orthono
 given by the columns of $\widetilde{\mathbf{U}}$. The coefficients corresponding to the 
 largest eigenvalues $\gamma_i$ are shrunk relatively more toward zero 
 than those corresponding to the small eigenvalues. The basis formed by the 
-columns of $\widetilde{\mathbf{U}}$ is known as the Demmler-Reinch basis 
+columns of $\widetilde{\mathbf{U}}$ is known as the Demmler-Reinsch basis 
 with reference to @Demmler:1975.
 
 We implement the computation of the diagonalization for the Nuuk temperature 
@@ -1234,13 +1122,13 @@ Omega_tilde_svd <- svd(Omega_tilde)
 U_tilde <- Phi_svd$u %*% Omega_tilde_svd$u
 ```
 
-```{r spline-gamma, dependson="spline-diagonalization", fig.cap="The eigenvalues $\\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues, ane the right plot shows the eigenvalues on a log-scale.", echo=FALSE, out.width="49%", fig.show='hold', fig.height=3, fig.width=4}
+```{r spline-gamma, dependson="spline-diagonalization", fig.cap="The eigenvalues $\\gamma_i$ that determine how much the different basis coefficients in the orthonormal spline expansion are shrunk toward zero. Left plot shows the eigenvalues, and the right plot shows the eigenvalues on a log-scale.", echo=FALSE, out.width="49%", fig.show='hold', fig.height=3, fig.width=4}
 p <- qplot(1:20, Omega_tilde_svd$d) + xlab("i") + ylab("Eigenvalues") 
 p
 p + scale_y_log10() + ylab("")
 ```
 
-```{r spline-basis, echo=FALSE, dependson=c("NuukData", "spline-diagonalization"), fig.cap="The columns of $\\widetilde{\\mathbf{U}}$  that consitute an orthonormal basis known as the Demmler-Reinch basis for computing the spline based smoother.", out.width="100%"}
+```{r spline-basis, echo=FALSE, dependson=c("NuukData", "spline-diagonalization"), fig.cap="The columns of $\\widetilde{\\mathbf{U}}$  that consitute an orthonormal basis known as the Demmler-Reinsch basis for computing the spline based smoother.", out.width="100%"}
 colnames(U_tilde) <- paste(rep("u", 20), 1:20, sep = "")
 bind_cols(select(Nuuk_year, Year), as_tibble(U_tilde)) %>% 
   pivot_longer(-Year, names_to = "term", values_to = "value") %>% 
@@ -1266,14 +1154,35 @@ $$\mathrm{df}(\lambda) = \mathrm{trace}(\mathbf{S}_\lambda)
 which makes it possible to implement GCV without even computing the diagonal entries
 of $\mathbf{S}_{\lambda}.$
 
-## Gaussian processes
+## The Kalman smoother
 
-Suppose that $X = X_{1:n} \sim \mathcal{N}(\xi_x, \Sigma_{x})$ with 
-$$\mathrm{cov}(X_i, X_j) = K(t_i - t_j)$$
-for a kernel function $K$. 
+The Kalman smoother is a classical algorithm
+used for smoothing time-indexed observations. It can be seen as an example
+of Gaussian prediction algorithms, where we imagine that  
+$(X_1, Y_1), \ldots, (X_n,Y_n)$ follow a joint Gaussian distribution, 
+and where we observe only $Y_1, \ldots, Y_n$ but want to predict 
+$X_1, \ldots, X_n$. If the $X$-s form a relatively smooth 
+but unobserved Gaussian process and the $Y$-s are noisy measurements 
+of the $X$-s, we see how the predictions of the $X$-s from the 
+$Y$-s can be seen as a smoother. In contrast to the bivariate 
+smoothers developed in the sections above, the approach taken 
+in this section is fully probabilistic. That is, the algorithms and 
+the parameters are justified and entirely determined by a 
+probabilistic model of the data. That said, we will see some 
+clear similarities with other smoothers. 
+
+### Gaussian processes
+
+We suppose that we have a time grid $t_1 < \ldots < t_n$ and observe 
+$Y_1, \ldots, Y_n$ where $Y_i$ is observed at time $t_i$. The 
+distribution of the $Y$-s is given in terms of $X = (X_1, \ldots, X_n)$,
+where we suppose $X \sim \mathcal{N}(\xi_x, \Sigma_{x})$ with 
+$$(\Sigma_{x})_{i,j} = \mathrm{cov}(X_i, X_j) = K(t_i - t_j)$$
+for a kernel function $K : \mathbb{R} \to \mathbb{R}$. 
 
 With the *observation equation* $Y_i = X_i + \delta_i$
-for $\delta = \delta_{1:n} \sim \mathcal{N}(0, \Omega)$ and $\delta \perp \! \! \perp X$ we get 
+for $\delta = (\delta_1, \ldots, \delta_n) \sim 
+\mathcal{N}(0, \Omega)$ and $\delta \perp \! \! \perp X$ we get 
 
 $$(X, Y) \sim \mathcal{N}\left(\left(\begin{array}{c} \xi_x \\ \xi_x \end{array}\right),
 \left(\begin{array}{cc} \Sigma_x & \Sigma_x \\ \Sigma_x & \Sigma_x + \Omega \end{array} \right) \right).$$
@@ -1289,19 +1198,38 @@ This is also true if $\Sigma_x (\Sigma_x + \Omega)^{-1} \xi_x = \xi_x$. If this
 identity holds approximately, we can argue that for computing $E(X \mid Y)$ we 
 don't need to know $\xi_x$. 
 
-If the observation variance is $\Omega = \sigma^2 I$ then the smoother matrix is
-$$\Sigma_x (\Sigma_x + \sigma^2 I)^{-1} = (I + \sigma^2 \Sigma_x^{-1})^{-1}.$$
+If the observation variance is $\Omega = \sigma^2 I$ then the smoother matrix 
+simplifies to
+$$S = \Sigma_x (\Sigma_x + \sigma^2 I)^{-1} = (I + \sigma^2 \Sigma_x^{-1})^{-1}.$$
+Thus knowing the observation variance $\sigma^2$ and the covariance matrix 
+$\Sigma_x$, which is determined entirely from the time-grid and the covariance 
+kernel $K$, we can compute the smoother matrix $S$. Observing $Y = y$, we can 
+then compute the smoother as the solution to the equation 
+$$(I + \sigma^2 \Sigma_x^{-1})x = y.$$ 
+Standard algorithms for matrix inversion, 
+needed to compute $S$, have time complexity $O(n^3)$, and standard algorithms for solving 
+the linear equation have time complexity $O(n^2)$. 
 
-## The Kalman filter
+The main point of the Kalman smoother is that 
+its have time complexity is $O(n)$, and its computation is thus very fast and 
+scales well with $n$. The tradeoff is that the Kalman smoother puts some 
+restrictions on $K$ and thus $\Sigma_x$. We consider the AR(1)-example 
+in the section below, where we show that $I + \sigma^2 \Sigma_x^{-1}$ 
+is a tridiagonal matrix, and the smoother can be computed as a solution 
+to ?? in time that is linear in $n$. 
 
-### AR(1)-example
+### AR(1) Kalman smoothing
 
-Suppose that $|\alpha| < 1$, $X_1 = \epsilon_1 / \sqrt{1 - \alpha^2}$ and 
+The simplest example with an efficient Kalman smoother is the AR(1)-model,
+where we assume an equidistant time grid (that is, $t_i = i$). Suppose that $|\alpha| < 1$, 
+$X_1 = \epsilon_1 / \sqrt{1 - \alpha^2}$ and 
 $$X_i = \alpha X_{i-1} + \epsilon_i$$
-for $i = 2, \ldots, n$ with $\epsilon = \epsilon_{1:n} \sim \mathcal{N}(0, \sigma^2 I)$.
+for $i = 2, \ldots, n$ with $\epsilon = (\epsilon_1, \ldots, \epsilon_n) \sim 
+\mathcal{N}(0, \sigma^2 I)$.
 
-We have $\mathrm{cov}(X_i, X_j) = \alpha^{|i-j|} / (1 - \alpha^2)$, thus we can find $\Sigma_x$ and compute
-$$E(X_n \mid Y) = ((I + \sigma^2 \Sigma_x^{-1})^{-1} Y)_n$$
+We have $\mathrm{cov}(X_i, X_j) = \alpha^{|i-j|} / (1 - \alpha^2)$, thus we can find 
+$\Sigma_x$ and compute
+$$E(X_i \mid Y) = ((I + \sigma^2 \Sigma_x^{-1})^{-1} Y)_i$$
 
 ```{r smoothMat, echo=FALSE, fig.cap="Gaussian smoother matrix with $\\alpha = 0.3, 0.9$, $\\sigma^2 = 2, 20$", fig.show="hold", out.width="50%"}
 n <- 50
@@ -1326,7 +1254,7 @@ Smooth4 <- round(Sigma %*% solve(Sigma + sigmasq * diag(n)), 10)
 # image(Matrix(Smooth4), useAbs = FALSE)
 ```
 
-```{r SmoothMat-fig, echo=FALSE, dependson="SmoothMat", fig.cap="Smoothers"}
+```{r SmoothMat-fig, echo=FALSE, dependson="SmoothMat", fig.cap="Gaussian smoother matrix $S_{25,j}$ with $\\alpha = 0.3, 0.9$, $\\sigma^2 = 2, 20$"}
 smooths <- cbind(Smooth1[25, ], Smooth2[25, ], Smooth3[25, ], Smooth4[25, ])
 colnames(smooths) <- c("alpha: 0.3, sigma^2: 2", "alpha: 0.3, sigma^2: 20", 
                        "alpha: 0.9, sigma^2: 2", "alpha: 0.9, sigma^2: 20")
@@ -1335,8 +1263,6 @@ smooths <- melt(smooths)
 qplot(Var1, value, data = smooths, geom = "line", color = I("blue")) + 
   facet_wrap(~Var2, nrow = 2) + xlab("") + ylab("")
 ```
-
-### The Kalman smoother
 
 From the identity $\epsilon_i = X_i - \alpha X_{i-1}$ it follows that 
 $\epsilon = A X$ where 

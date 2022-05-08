@@ -53,6 +53,7 @@
 <li><a class="" href="numopt.html"><span class="header-section-number">7</span> Numerical optimization</a></li>
 <li><a class="" href="em.html"><span class="header-section-number">8</span> Expectation maximization algorithms</a></li>
 <li><a class="active" href="StochOpt.html"><span class="header-section-number">9</span> Stochastic Optimization</a></li>
+<li><a class="" href="the-stochastic-em-algorithm.html"><span class="header-section-number">10</span> The stochastic EM algorithm</a></li>
 <li class="book-part">Appendix</li>
 <li><a class="" href="app-R.html"><span class="header-section-number">A</span> R programming</a></li>
 <li><a class="" href="references.html">References</a></li>
@@ -261,7 +262,7 @@ and <span class="math inline">\(\gamma_1\)</span> over the range <span class="ma
 <p>We implement <code>decay_scheduler()</code> as a function that returns a particular
 decay schedule, with the possibility to determine <span class="math inline">\(K\)</span> automatically from a
 target rate.</p>
-<div class="sourceCode" id="cb387"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb374"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">decay_scheduler</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">gamma0</span> <span class="op">=</span> <span class="fl">1</span>, <span class="va">a</span> <span class="op">=</span> <span class="fl">1</span>, <span class="va">K</span> <span class="op">=</span> <span class="fl">1</span>, <span class="va">gamma1</span>, <span class="va">n1</span><span class="op">)</span> <span class="op">{</span>
   <span class="fu"><a href="https://rdrr.io/r/base/force.html">force</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span>
   <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/missing.html">missing</a></span><span class="op">(</span><span class="va">gamma1</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/missing.html">missing</a></span><span class="op">(</span><span class="va">n1</span><span class="op">)</span><span class="op">)</span>
@@ -287,7 +288,7 @@ which for the squared error loss results in the gradient
 <p>We simulate data and explore the learning algorithm in the special case
 with <span class="math inline">\(\varphi = \exp\)</span>. To clearly emulate the online nature of the algorithm,
 the implementation below generates the observations sequentially in the loop.</p>
-<div class="sourceCode" id="cb388"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb375"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">5000</span>
 <span class="va">beta_true</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>
 <span class="va">mu</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">z</span>, <span class="va">beta</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">beta</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">+</span> <span class="va">beta</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">*</span> <span class="va">z</span><span class="op">)</span>
@@ -329,7 +330,7 @@ In the implementation below with the
 gradient of the log-likelihood we therefore choose <span class="math inline">\(\gamma_0\)</span>
 a factor 25 larger than the <span class="math inline">\(\gamma_0 = 0.0004\)</span> that was used with the
 squared error gradient.</p>
-<div class="sourceCode" id="cb390"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb377"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rate</span> <span class="op">&lt;-</span> <span class="fu">decay_scheduler</span><span class="op">(</span>gamma0 <span class="op">=</span> <span class="fl">0.01</span>, K <span class="op">=</span> <span class="fl">100</span><span class="op">)</span> 
 <span class="va">beta</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>beta0 <span class="op">=</span> <span class="fl">1</span>, beta1 <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>
 
@@ -452,7 +453,7 @@ the decay schedule is applied on a per epoch basis.</p>
 instead of sampling with replacement (bootstrapping) we sample without
 replacement. Sampling <span class="math inline">\(N\)</span> indices from <span class="math inline">\(\{1, \ldots, N\}\)</span> without replacement
 is the same as sampling a permutation of the indices.</p>
-<div class="sourceCode" id="cb392"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb379"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span>
   <span class="va">par</span>, 
   <span class="va">grad</span>,              <span class="co"># Function of parameter and observation index</span>
@@ -501,7 +502,7 @@ to the convergence result for the online algorithm is lost.</p>
 of Poisson regression. We will only use the log-likelihood gradient, and we
 first simulate a small data set with <span class="math inline">\(N = 50\)</span> data points.</p>
 </div>
-<div class="sourceCode" id="cb393"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb380"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">50</span>
 <span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="va">N</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html">rpois</a></span><span class="op">(</span><span class="va">N</span>, <span class="fu">mu</span><span class="op">(</span><span class="va">z</span>, <span class="va">beta_true</span><span class="op">)</span><span class="op">)</span>
@@ -509,7 +510,7 @@ first simulate a small data set with <span class="math inline">\(N = 50\)</span>
 <p>Using the <code>grad_pois()</code> function above, we run the stochastic gradient
 algorithm for 1000 epochs with a decay schedule that
 interpolates between <span class="math inline">\(\gamma_0 = 0.02\)</span> and <span class="math inline">\(\gamma_1 = 0.001\)</span>.</p>
-<div class="sourceCode" id="cb394"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb381"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pois_SG_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="st">"par"</span>, N <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>
 <span class="fu">SG</span><span class="op">(</span>
   <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, 
@@ -522,7 +523,7 @@ interpolates between <span class="math inline">\(\gamma_0 = 0.02\)</span> and <s
 <pre><code>## [1] 1.905394 3.162559</code></pre>
 <p>The resulting parameter estimate should be compared to the maximum-likelihood
 estimate from an ordinary Poisson regression.</p>
-<div class="sourceCode" id="cb396"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb383"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">beta_hat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/glm.html">glm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">z</span>, family <span class="op">=</span> <span class="va">poisson</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## beta_hat: 1.898305 3.15986</code></pre>
 <p>The batch version of stochastic gradient
@@ -535,7 +536,7 @@ to <span class="math inline">\((2, 3)\)</span>. Figure <a href="StochOpt.html#fi
 shows clearly how the algorithms converge toward a limit that depends on the
 batch size, and for <span class="math inline">\(N = 500\)</span>, this limit is much closer to the theoretical
 minimizer.</p>
-<div class="sourceCode" id="cb398"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb385"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">500</span>
 <span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="va">N</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>
 <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html">rpois</a></span><span class="op">(</span><span class="va">N</span>, <span class="fu">mu</span><span class="op">(</span><span class="va">z</span>, <span class="va">beta_true</span><span class="op">)</span><span class="op">)</span>
@@ -548,7 +549,7 @@ minimizer.</p>
   cb <span class="op">=</span> <span class="va">pois_SG_tracer_2</span><span class="op">$</span><span class="va">tracer</span>
 <span class="op">)</span></code></pre></div>
 <pre><code>## [1] 1.994688 3.022137</code></pre>
-<div class="sourceCode" id="cb400"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb387"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">beta_hat_2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/glm.html">glm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">z</span>, family <span class="op">=</span> <span class="va">poisson</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## beta_hat_2: 1.98893 3.027715</code></pre>
 
@@ -597,7 +598,7 @@ loss function on the entire batch as well as the gradient in a single
 observation. The returned list also contains a parameter vector of
 the correct dimension, which can be used for initialization of optimization
 algorithms.</p>
-<div class="sourceCode" id="cb402"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb389"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ls_model</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">N</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span>
   <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html">unname</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span> <span class="co"># Strips X of names</span>
@@ -618,13 +619,13 @@ algorithms.</p>
 <a href="https://archive.ics.uci.edu/ml/datasets/online+news+popularity">UCI Machine Learning Repository</a>
 and contains 39,644 observations on 61 variables. One variable is the integer
 valued <code>shares</code>, which will be the target variable of our predictions.</p>
-<div class="sourceCode" id="cb403"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb390"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">News</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html">read_csv</a></span><span class="op">(</span><span class="st">"data/OnlineNewsPopularity.csv"</span><span class="op">)</span></code></pre></div>
 <p>Two of the variables, <code>timedelta</code> and <code>url</code>, are not relevant predictors, and
 <code>is_weekend</code> is redundant given the other weekday variables, so we exclude
 those three variables. Some of the predictors are also highly correlated,
 and we exclude four additional predictors before the model matrix is constructed.</p>
-<div class="sourceCode" id="cb404"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb391"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">News</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span>
   <span class="va">News</span>,
   <span class="op">-</span> <span class="va">url</span>, 
@@ -667,7 +668,7 @@ optimization algorithms based on gradients only, see also Exercise
 <a href="StochOpt.html#exr:news-cond-number">9.3</a>. After rescaling we
 initialize the linear model with a call to <code>ls_model()</code> and refit the
 model using the new parametrization.</p>
-<div class="sourceCode" id="cb405"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb392"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">X_raw</span> <span class="op">&lt;-</span> <span class="va">X</span>
 <span class="co"># Standardization and log-transforming the target variable</span>
 <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/scale.html">scale</a></span><span class="op">(</span><span class="va">X</span>, center <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
@@ -680,7 +681,7 @@ model using the new parametrization.</p>
 <p>We first run the stochastic gradient algorithm with a fixed learning rate of
 <span class="math inline">\(\gamma = 10^{-5}\)</span> for 50 epochs with a tracer that computes and
 stores the value of the objective function at each epoch.</p>
-<div class="sourceCode" id="cb406"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb393"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="st">"value"</span>, expr <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/substitute.html">quote</a></span><span class="op">(</span><span class="va">value</span> <span class="op">&lt;-</span> <span class="fu">H</span><span class="op">(</span><span class="va">par</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 <span class="fu">SG</span><span class="op">(</span>
   par <span class="op">=</span> <span class="va">par0</span>, 
@@ -693,7 +694,7 @@ stores the value of the objective function at each epoch.</p>
 <p>Using the trace from the last epochs, we can compare the objective function
 values to the minimum found using <code><a href="https://rdrr.io/r/stats/lmfit.html">lm.fit()</a></code> above. The minimum was
 not reached completely after the 50 epochs that took some time to compute.</p>
-<div class="sourceCode" id="cb407"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb394"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG_trace_low</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">SG_tracer</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">tail</a></span><span class="op">(</span><span class="va">SG_trace_low</span><span class="op">)</span></code></pre></div>
 <pre><code>##        value    .time
@@ -703,12 +704,12 @@ not reached completely after the 50 epochs that took some time to compute.</p>
 ## 48 0.4251088 18.61303
 ## 49 0.4245424 18.99180
 ## 50 0.4240064 19.37994</code></pre>
-<div class="sourceCode" id="cb409"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb396"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">H</span><span class="op">(</span><span class="va">par_hat</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 0.3781595</code></pre>
 <p>We will use profiling to investigate what most of the time was spent
 on in the stochastic gradient algorithm.</p>
-<div class="sourceCode" id="cb411"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb398"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/profvis/man/profvis.html">profvis</a></span><span class="op">(</span>
   <span class="fu">SG</span><span class="op">(</span>
     par <span class="op">=</span> <span class="va">par0</span>, 
@@ -733,7 +734,7 @@ we run it with a larger
 learning rate of <span class="math inline">\(\gamma = 5 \times 10^{-5}\)</span> and then with a power law decay
 schedule, which interpolates from an initial learning rate of <span class="math inline">\(10^{-3}\)</span> to
 a learning rate of <span class="math inline">\(10^{-5}\)</span> after 50 epochs.</p>
-<div class="sourceCode" id="cb412"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb399"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG_tracer</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span>
 <span class="fu">SG</span><span class="op">(</span>
   par <span class="op">=</span> <span class="va">par0</span>, 
@@ -762,7 +763,7 @@ steps and then all subsequent steps will use the step length
 optimization resulted in backtracking until a step length around <span class="math inline">\(8 \times 10^{-2}\)</span> was
 reached, thus this choice of <span class="math inline">\(\gamma\)</span> will use a minimal amount of time on
 the backtracking step of the algorithm.</p>
-<div class="sourceCode" id="cb413"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb400"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">grad_H</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">beta</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">X</span> <span class="op">%*%</span> <span class="va">beta</span> <span class="op">-</span> <span class="va">y</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>
 <span class="va">GD_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="st">"value"</span>, N <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>
 <span class="fu">GD</span><span class="op">(</span>
@@ -867,7 +868,7 @@ stochastic gradient algorithm, and we will therefore implement a more generic
 version of the algorithm. What is common to all the modifications is that they
 differ in the details of the epoch loop, thus we take out that loop as a separate
 function.</p>
-<div class="sourceCode" id="cb414"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb401"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span>
   <span class="va">par</span>, 
   <span class="va">N</span>,                 <span class="co"># Sample size</span>
@@ -893,7 +894,7 @@ loop through the mini-batches containing a call of <code><a href="https://rdrr.i
 for the computation of the average gradient for each mini-batch in the loop.
 Note that the <code>grad</code> argument to <code>batch()</code> will be captured by and passed on from
 a call of <code>SG()</code> via the <code>...</code> argument.</p>
-<div class="sourceCode" id="cb415"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb402"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">batch</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span>
     <span class="va">par</span>, 
     <span class="va">samp</span>,
@@ -915,7 +916,7 @@ for a vector <span class="math inline">\(i\)</span> a matrix containing the
 different gradients as columns. We therefore reimplement
 <code>ls_model()</code> so that <code><a href="https://rdrr.io/pkg/numDeriv/man/grad.html">grad()</a></code> computes the average of the gradients
 as it is supposed to for a mini-batch.</p>
-<div class="sourceCode" id="cb416"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb403"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ls_model</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">N</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span>
   <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html">unname</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>
@@ -931,7 +932,7 @@ as it is supposed to for a mini-batch.</p>
   <span class="op">)</span>
 <span class="op">}</span></code></pre></div>
 <p>We initialize the linear model using the new implementation of <code>ls_model()</code>.</p>
-<div class="sourceCode" id="cb417"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb404"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">par0</span>, <span class="va">H</span>, <span class="va">ls_grad</span><span class="op">)</span> <span class="op">%&lt;-%</span> <span class="fu">ls_model</span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span><span class="op">)</span></code></pre></div>
 <p>With increased flexibility of the algorithms comes more tuning parameters,
 and making a good choice of all of them becomes increasingly difficult. When
@@ -942,7 +943,7 @@ size of 1000 and a fixed learning rate are used in the subsequent applications.
 The learning rate will generally be chosen as large as
 possible without making the algorithms diverge, and with a mini-batch size of 1000
 it is possible to run the algorithm with a learning rate of <span class="math inline">\(\gamma = 0.05\)</span>.</p>
-<div class="sourceCode" id="cb418"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb405"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG_tracer</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span>
 <span class="fu">SG</span><span class="op">(</span>
   par <span class="op">=</span> <span class="va">par0</span>, 
@@ -968,8 +969,8 @@ fluctuate due to the fixed learning rate, but it quickly gets close to
 the minimum. We should not jump to conclusions from this assessment. It
 only really shows the improvement to the specific R implementation
 of using a mini-batch algorithm, and this implementation clearly benefits
-from the more vectorized computations with mini-batches of size 1000,
-and we will return to this discussion in Section <a href="StochOpt.html#Rcpp-grad-epoch">9.3.1</a>.</p>
+from the more vectorized computations with mini-batches of size 1000.
+We will return to this discussion in Section <a href="StochOpt.html#Rcpp-grad-epoch">9.3.1</a>.</p>
 </div>
 <div id="momentum" class="section level3" number="9.2.2">
 <h3>
@@ -1001,7 +1002,7 @@ clear how to achieve this between two epochs using the generic <code>SG()</code>
 implementation, but by implementing momentum epochs using a function factory,
 we can easily use an enclosing environment of the epoch function
 for storage.</p>
-<div class="sourceCode" id="cb419"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb406"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">momentum</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">rho</span> <span class="op">&lt;-</span> <span class="fl">0</span>
   <span class="kw">function</span><span class="op">(</span>
@@ -1027,7 +1028,7 @@ for storage.</p>
 of the function factory <code>momentum()</code> returns the momentum epoch function
 with is own local environment used to store <span class="math inline">\(\rho\)</span>. With momentum, we can
 increase the learning rate to <span class="math inline">\(\gamma = 7 \times 10^{-2}\)</span>.</p>
-<div class="sourceCode" id="cb420"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb407"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG_tracer</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span>
 <span class="fu">SG</span><span class="op">(</span>
   par <span class="op">=</span> <span class="va">par0</span>, 
@@ -1142,7 +1143,7 @@ the algorithm with <span class="math inline">\(q = 1/2\)</span>.</p>
 <p>The <code>adam()</code> function below is a function factory just as <code>momentum()</code>, which
 returns a function doing the Adam epoch update loop with an enclosing
 environment used for storage of <code>rho</code> and <code>v</code>.</p>
-<div class="sourceCode" id="cb421"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb408"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">adam</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">rho</span> <span class="op">&lt;-</span> <span class="va">v</span> <span class="op">&lt;-</span> <span class="fl">0</span>
   <span class="kw">function</span><span class="op">(</span>
@@ -1156,7 +1157,6 @@ environment used for storage of <code>rho</code> and <code>v</code>.</p>
     <span class="va">...</span>
   <span class="op">)</span> <span class="op">{</span>
     <span class="va">M</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">floor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span> <span class="op">/</span> <span class="va">m</span><span class="op">)</span>
-   
     <span class="kw">for</span><span class="op">(</span><span class="va">j</span> <span class="kw">in</span> <span class="fl">0</span><span class="op">:</span><span class="op">(</span><span class="va">M</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
       <span class="va">i</span> <span class="op">&lt;-</span> <span class="va">samp</span><span class="op">[</span><span class="op">(</span><span class="va">j</span> <span class="op">*</span> <span class="va">m</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="op">(</span><span class="va">j</span> <span class="op">*</span> <span class="va">m</span> <span class="op">+</span> <span class="va">m</span><span class="op">)</span><span class="op">]</span>
       <span class="va">gr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/numDeriv/man/grad.html">grad</a></span><span class="op">(</span><span class="va">par</span>, <span class="va">i</span>, <span class="va">...</span><span class="op">)</span> 
@@ -1172,7 +1172,7 @@ size 1000 with a fixed learning rate of <span class="math inline">\(0.01\)</span
 schedule interpolating between a learning rate of <span class="math inline">\(0.5\)</span> and <span class="math inline">\(0.002\)</span>.
 The theoretical results by <span class="citation"><a href="references.html#ref-kingma2014adam" role="doc-biblioref">Kingma and Ba</a> (<a href="references.html#ref-kingma2014adam" role="doc-biblioref">2014</a>)</span> support a decay schedule proportional
 to <span class="math inline">\(1/\sqrt{n}\)</span>, thus we take <span class="math inline">\(a = 0.5\)</span> below.</p>
-<div class="sourceCode" id="cb422"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb409"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">SG_tracer</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span>
 <span class="fu">SG</span><span class="op">(</span>
   par <span class="op">=</span> <span class="va">par0</span>, 
@@ -1254,30 +1254,30 @@ target variable <span class="math inline">\(y\)</span> as arguments in addition 
 the parameter and the subset of indices representing the mini-batch.
 The matrix-vector multiplications for computing predicted values,
 residuals and ultimately the gradient are replaced by two double for-loops.</p>
-<div class="sourceCode" id="cb423"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb423-1"><a href="StochOpt.html#cb423-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
-<span id="cb423-2"><a href="StochOpt.html#cb423-2" aria-hidden="true" tabindex="-1"></a>NumericVector lin_grad(</span>
-<span id="cb423-3"><a href="StochOpt.html#cb423-3" aria-hidden="true" tabindex="-1"></a>    NumericVector beta, </span>
-<span id="cb423-4"><a href="StochOpt.html#cb423-4" aria-hidden="true" tabindex="-1"></a>    IntegerVector ii, </span>
-<span id="cb423-5"><a href="StochOpt.html#cb423-5" aria-hidden="true" tabindex="-1"></a>    NumericMatrix X, </span>
-<span id="cb423-6"><a href="StochOpt.html#cb423-6" aria-hidden="true" tabindex="-1"></a>    NumericVector y</span>
-<span id="cb423-7"><a href="StochOpt.html#cb423-7" aria-hidden="true" tabindex="-1"></a>) {</span>
-<span id="cb423-8"><a href="StochOpt.html#cb423-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> m = ii.length(), p = beta.length();</span>
-<span id="cb423-9"><a href="StochOpt.html#cb423-9" aria-hidden="true" tabindex="-1"></a>  NumericVector grad(p), yhat(m);</span>
-<span id="cb423-10"><a href="StochOpt.html#cb423-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Shift indices one down due to zero-indexing in C++</span></span>
-<span id="cb423-11"><a href="StochOpt.html#cb423-11" aria-hidden="true" tabindex="-1"></a>  IntegerVector iii = clone(ii) - <span class="dv">1</span>;  </span>
-<span id="cb423-12"><a href="StochOpt.html#cb423-12" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb423-13"><a href="StochOpt.html#cb423-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; m; ++i) {</span>
-<span id="cb423-14"><a href="StochOpt.html#cb423-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; p; ++j) {</span>
-<span id="cb423-15"><a href="StochOpt.html#cb423-15" aria-hidden="true" tabindex="-1"></a>      yhat[i] += X(iii[i], j) * beta[j];</span>
-<span id="cb423-16"><a href="StochOpt.html#cb423-16" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb423-17"><a href="StochOpt.html#cb423-17" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb423-18"><a href="StochOpt.html#cb423-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; m; ++i) {</span>
-<span id="cb423-19"><a href="StochOpt.html#cb423-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; p; ++j) {</span>
-<span id="cb423-20"><a href="StochOpt.html#cb423-20" aria-hidden="true" tabindex="-1"></a>      grad[j] += X(iii[i], j) * (yhat[i]- y[iii[i]]);</span>
-<span id="cb423-21"><a href="StochOpt.html#cb423-21" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb423-22"><a href="StochOpt.html#cb423-22" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb423-23"><a href="StochOpt.html#cb423-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> grad / m;</span>
-<span id="cb423-24"><a href="StochOpt.html#cb423-24" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb410"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb410-1"><a href="StochOpt.html#cb410-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb410-2"><a href="StochOpt.html#cb410-2" aria-hidden="true" tabindex="-1"></a>NumericVector lin_grad(</span>
+<span id="cb410-3"><a href="StochOpt.html#cb410-3" aria-hidden="true" tabindex="-1"></a>    NumericVector beta, </span>
+<span id="cb410-4"><a href="StochOpt.html#cb410-4" aria-hidden="true" tabindex="-1"></a>    IntegerVector ii, </span>
+<span id="cb410-5"><a href="StochOpt.html#cb410-5" aria-hidden="true" tabindex="-1"></a>    NumericMatrix X, </span>
+<span id="cb410-6"><a href="StochOpt.html#cb410-6" aria-hidden="true" tabindex="-1"></a>    NumericVector y</span>
+<span id="cb410-7"><a href="StochOpt.html#cb410-7" aria-hidden="true" tabindex="-1"></a>) {</span>
+<span id="cb410-8"><a href="StochOpt.html#cb410-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> m = ii.length(), p = beta.length();</span>
+<span id="cb410-9"><a href="StochOpt.html#cb410-9" aria-hidden="true" tabindex="-1"></a>  NumericVector grad(p), yhat(m);</span>
+<span id="cb410-10"><a href="StochOpt.html#cb410-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Shift indices one down due to zero-indexing in C++</span></span>
+<span id="cb410-11"><a href="StochOpt.html#cb410-11" aria-hidden="true" tabindex="-1"></a>  IntegerVector iii = clone(ii) - <span class="dv">1</span>;  </span>
+<span id="cb410-12"><a href="StochOpt.html#cb410-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb410-13"><a href="StochOpt.html#cb410-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; m; ++i) {</span>
+<span id="cb410-14"><a href="StochOpt.html#cb410-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; p; ++j) {</span>
+<span id="cb410-15"><a href="StochOpt.html#cb410-15" aria-hidden="true" tabindex="-1"></a>      yhat[i] += X(iii[i], j) * beta[j];</span>
+<span id="cb410-16"><a href="StochOpt.html#cb410-16" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb410-17"><a href="StochOpt.html#cb410-17" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb410-18"><a href="StochOpt.html#cb410-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; m; ++i) {</span>
+<span id="cb410-19"><a href="StochOpt.html#cb410-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; p; ++j) {</span>
+<span id="cb410-20"><a href="StochOpt.html#cb410-20" aria-hidden="true" tabindex="-1"></a>      grad[j] += X(iii[i], j) * (yhat[i]- y[iii[i]]);</span>
+<span id="cb410-21"><a href="StochOpt.html#cb410-21" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb410-22"><a href="StochOpt.html#cb410-22" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb410-23"><a href="StochOpt.html#cb410-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> grad / m;</span>
+<span id="cb410-24"><a href="StochOpt.html#cb410-24" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Note how <code>clone(ii)</code> is used to create a copy of the index vector <code>ii</code> before
 it is shifted by one. When R objects like vectors and matrices are passed
 as arguments to a C++ function, only a pointer to the data in the object
@@ -1297,7 +1297,7 @@ choices of parameter vectors and indices. A simple way to achieve this is
 to run the mini-batch stochastic gradient algorithm with either implementation
 of the gradient for one epoch and compare the results. Note
 that we make sure the algorithms use the same mini-batches by setting the seed.</p>
-<div class="sourceCode" id="cb424"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb411"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>
 <span class="va">par1</span> <span class="op">&lt;-</span> <span class="fu">SG</span><span class="op">(</span>
   par <span class="op">=</span> <span class="va">par0</span>,
@@ -1324,42 +1324,42 @@ the same computation as <code>ls_grad()</code>.</p>
 R function by Rcpp function <code>lin_batch()</code> below. This is achieved simply by
 adding one outer loop to <code>lin_grad()</code> above, which loops over mini-batches and
 updates the parameter vector.</p>
-<div class="sourceCode" id="cb426"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb426-1"><a href="StochOpt.html#cb426-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
-<span id="cb426-2"><a href="StochOpt.html#cb426-2" aria-hidden="true" tabindex="-1"></a>NumericVector lin_batch(</span>
-<span id="cb426-3"><a href="StochOpt.html#cb426-3" aria-hidden="true" tabindex="-1"></a>    NumericVector par, </span>
-<span id="cb426-4"><a href="StochOpt.html#cb426-4" aria-hidden="true" tabindex="-1"></a>    IntegerVector ii, </span>
-<span id="cb426-5"><a href="StochOpt.html#cb426-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> gamma, </span>
-<span id="cb426-6"><a href="StochOpt.html#cb426-6" aria-hidden="true" tabindex="-1"></a>    NumericMatrix X, </span>
-<span id="cb426-7"><a href="StochOpt.html#cb426-7" aria-hidden="true" tabindex="-1"></a>    NumericVector y, </span>
-<span id="cb426-8"><a href="StochOpt.html#cb426-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> m = <span class="dv">50</span></span>
-<span id="cb426-9"><a href="StochOpt.html#cb426-9" aria-hidden="true" tabindex="-1"></a>) {</span>
-<span id="cb426-10"><a href="StochOpt.html#cb426-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> p = par.length(), N = ii.length();</span>
-<span id="cb426-11"><a href="StochOpt.html#cb426-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> M = floor(N / m);</span>
-<span id="cb426-12"><a href="StochOpt.html#cb426-12" aria-hidden="true" tabindex="-1"></a>  NumericVector grad(p), yhat(N), beta = clone(par);</span>
-<span id="cb426-13"><a href="StochOpt.html#cb426-13" aria-hidden="true" tabindex="-1"></a>  IntegerVector iii = clone(ii) - <span class="dv">1</span>;  </span>
-<span id="cb426-14"><a href="StochOpt.html#cb426-14" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb426-15"><a href="StochOpt.html#cb426-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; M; ++j) {</span>
-<span id="cb426-16"><a href="StochOpt.html#cb426-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
-<span id="cb426-17"><a href="StochOpt.html#cb426-17" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
-<span id="cb426-18"><a href="StochOpt.html#cb426-18" aria-hidden="true" tabindex="-1"></a>        yhat[i] += X(iii[i], k) * beta[k];</span>
-<span id="cb426-19"><a href="StochOpt.html#cb426-19" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb426-20"><a href="StochOpt.html#cb426-20" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb426-21"><a href="StochOpt.html#cb426-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
-<span id="cb426-22"><a href="StochOpt.html#cb426-22" aria-hidden="true" tabindex="-1"></a>      grad[k] = <span class="dv">0</span>;</span>
-<span id="cb426-23"><a href="StochOpt.html#cb426-23" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
-<span id="cb426-24"><a href="StochOpt.html#cb426-24" aria-hidden="true" tabindex="-1"></a>        grad[k] += X(iii[i], k) * (yhat[i] - y[iii[i]]);</span>
-<span id="cb426-25"><a href="StochOpt.html#cb426-25" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb426-26"><a href="StochOpt.html#cb426-26" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb426-27"><a href="StochOpt.html#cb426-27" aria-hidden="true" tabindex="-1"></a>    beta = beta - gamma * (grad / m);</span>
-<span id="cb426-28"><a href="StochOpt.html#cb426-28" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb426-29"><a href="StochOpt.html#cb426-29" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> beta;</span>
-<span id="cb426-30"><a href="StochOpt.html#cb426-30" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb413"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb413-1"><a href="StochOpt.html#cb413-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb413-2"><a href="StochOpt.html#cb413-2" aria-hidden="true" tabindex="-1"></a>NumericVector lin_batch(</span>
+<span id="cb413-3"><a href="StochOpt.html#cb413-3" aria-hidden="true" tabindex="-1"></a>    NumericVector par, </span>
+<span id="cb413-4"><a href="StochOpt.html#cb413-4" aria-hidden="true" tabindex="-1"></a>    IntegerVector ii, </span>
+<span id="cb413-5"><a href="StochOpt.html#cb413-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> gamma, </span>
+<span id="cb413-6"><a href="StochOpt.html#cb413-6" aria-hidden="true" tabindex="-1"></a>    NumericMatrix X, </span>
+<span id="cb413-7"><a href="StochOpt.html#cb413-7" aria-hidden="true" tabindex="-1"></a>    NumericVector y, </span>
+<span id="cb413-8"><a href="StochOpt.html#cb413-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> m = <span class="dv">50</span></span>
+<span id="cb413-9"><a href="StochOpt.html#cb413-9" aria-hidden="true" tabindex="-1"></a>) {</span>
+<span id="cb413-10"><a href="StochOpt.html#cb413-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> p = par.length(), N = ii.length();</span>
+<span id="cb413-11"><a href="StochOpt.html#cb413-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> M = floor(N / m);</span>
+<span id="cb413-12"><a href="StochOpt.html#cb413-12" aria-hidden="true" tabindex="-1"></a>  NumericVector grad(p), yhat(N), beta = clone(par);</span>
+<span id="cb413-13"><a href="StochOpt.html#cb413-13" aria-hidden="true" tabindex="-1"></a>  IntegerVector iii = clone(ii) - <span class="dv">1</span>;  </span>
+<span id="cb413-14"><a href="StochOpt.html#cb413-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb413-15"><a href="StochOpt.html#cb413-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; M; ++j) {</span>
+<span id="cb413-16"><a href="StochOpt.html#cb413-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
+<span id="cb413-17"><a href="StochOpt.html#cb413-17" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
+<span id="cb413-18"><a href="StochOpt.html#cb413-18" aria-hidden="true" tabindex="-1"></a>        yhat[i] += X(iii[i], k) * beta[k];</span>
+<span id="cb413-19"><a href="StochOpt.html#cb413-19" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb413-20"><a href="StochOpt.html#cb413-20" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb413-21"><a href="StochOpt.html#cb413-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
+<span id="cb413-22"><a href="StochOpt.html#cb413-22" aria-hidden="true" tabindex="-1"></a>      grad[k] = <span class="dv">0</span>;</span>
+<span id="cb413-23"><a href="StochOpt.html#cb413-23" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
+<span id="cb413-24"><a href="StochOpt.html#cb413-24" aria-hidden="true" tabindex="-1"></a>        grad[k] += X(iii[i], k) * (yhat[i] - y[iii[i]]);</span>
+<span id="cb413-25"><a href="StochOpt.html#cb413-25" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb413-26"><a href="StochOpt.html#cb413-26" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb413-27"><a href="StochOpt.html#cb413-27" aria-hidden="true" tabindex="-1"></a>    beta = beta - gamma * (grad / m);</span>
+<span id="cb413-28"><a href="StochOpt.html#cb413-28" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb413-29"><a href="StochOpt.html#cb413-29" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> beta;</span>
+<span id="cb413-30"><a href="StochOpt.html#cb413-30" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>We can test the implementation of <code>lin_batch()</code> just as <code>lin_grad()</code> by
 running the stochastic gradient algorithm for one epoch. We note that
 the <code>lin_batch()</code> function should be passed to <code>SG()</code> as the <code>epoch</code> argument,
 and that no <code>grad</code> argument is required. The gradient computations are hard
 coded into the implementation of this epoch function.</p>
-<div class="sourceCode" id="cb427"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb414"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>
 <span class="va">par1</span> <span class="op">&lt;-</span> <span class="fu">SG</span><span class="op">(</span>
   par <span class="op">=</span> <span class="va">par0</span>,
@@ -1392,7 +1392,7 @@ mini-batch size one and <span class="math inline">\(\gamma = 5 \times 10^{-5}\)<
 implementation of the epoch.</p>
 <div class="figure" style="text-align: center">
 <span style="display:block;" id="fig:SG-fig-4"></span>
-<img src="CSwR_files/figure-html/SG-fig-4-1.png" alt="Convergence of squared error loss on the news article data set for four algorithms: R implementation of mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (mini), the same mini-batch algorithm but with the gradient implemented in Rcpp (Rcpp_grad_mini) and with the entire epoch implemented in Rcpp (Rcpp_epoch_mini), and the basic stochastic gradient algorithm with the entire epoch implemented in Rcpp (Rcpp_epoch)." width="100%"><p class="caption">
+<img src="CSwR_files/figure-html/SG-fig-4-1.png" alt="Convergence of squared error loss on the news article data set for four algorithms: R implementation of mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (mini), the same mini-batch algorithm but with the gradient implemented in Rcpp (Rcpp\_grad\_mini) and with the entire epoch implemented in Rcpp (Rcpp\_epoch\_mini), and the basic stochastic gradient algorithm with the entire epoch implemented in Rcpp (Rcpp\_epoch)." width="100%"><p class="caption">
 Figure 9.9: Convergence of squared error loss on the news article data set for four algorithms: R implementation of mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (mini), the same mini-batch algorithm but with the gradient implemented in Rcpp (Rcpp_grad_mini) and with the entire epoch implemented in Rcpp (Rcpp_epoch_mini), and the basic stochastic gradient algorithm with the entire epoch implemented in Rcpp (Rcpp_epoch).
 </p>
 </div>
@@ -1458,45 +1458,45 @@ R’s RNG, and will not be considered any further.</p>
 a simple extension of <code>lin_batch()</code> with one additional outer loop over
 the epochs and a single line calling <code>dqsample_int()</code> to sample the
 random permutation.</p>
-<div class="sourceCode" id="cb429"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb429-1"><a href="StochOpt.html#cb429-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(dqrng)]]</span></span>
-<span id="cb429-2"><a href="StochOpt.html#cb429-2" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
-<span id="cb429-3"><a href="StochOpt.html#cb429-3" aria-hidden="true" tabindex="-1"></a>NumericVector SG_Rcpp(</span>
-<span id="cb429-4"><a href="StochOpt.html#cb429-4" aria-hidden="true" tabindex="-1"></a>    NumericVector par, </span>
-<span id="cb429-5"><a href="StochOpt.html#cb429-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> N, </span>
-<span id="cb429-6"><a href="StochOpt.html#cb429-6" aria-hidden="true" tabindex="-1"></a>    NumericVector gamma,</span>
-<span id="cb429-7"><a href="StochOpt.html#cb429-7" aria-hidden="true" tabindex="-1"></a>    NumericMatrix X, </span>
-<span id="cb429-8"><a href="StochOpt.html#cb429-8" aria-hidden="true" tabindex="-1"></a>    NumericVector y,</span>
-<span id="cb429-9"><a href="StochOpt.html#cb429-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> m = <span class="dv">50</span>, </span>
-<span id="cb429-10"><a href="StochOpt.html#cb429-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> maxiter = <span class="dv">100</span></span>
-<span id="cb429-11"><a href="StochOpt.html#cb429-11" aria-hidden="true" tabindex="-1"></a>) {</span>
-<span id="cb429-12"><a href="StochOpt.html#cb429-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> p = par.length(), M = floor(N / m);</span>
-<span id="cb429-13"><a href="StochOpt.html#cb429-13" aria-hidden="true" tabindex="-1"></a>  NumericVector grad(p), yhat(N), beta = clone(par);</span>
-<span id="cb429-14"><a href="StochOpt.html#cb429-14" aria-hidden="true" tabindex="-1"></a>  IntegerVector ii;</span>
-<span id="cb429-15"><a href="StochOpt.html#cb429-15" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb429-16"><a href="StochOpt.html#cb429-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> l = <span class="dv">0</span>; l &lt; maxiter; ++l) {</span>
-<span id="cb429-17"><a href="StochOpt.html#cb429-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Note that dqsample_int samples from {0, 1, ..., N - 1}</span></span>
-<span id="cb429-18"><a href="StochOpt.html#cb429-18" aria-hidden="true" tabindex="-1"></a>    ii = dqrng::dqsample_int(N, N); </span>
-<span id="cb429-19"><a href="StochOpt.html#cb429-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; M; ++j) {</span>
-<span id="cb429-20"><a href="StochOpt.html#cb429-20" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
-<span id="cb429-21"><a href="StochOpt.html#cb429-21" aria-hidden="true" tabindex="-1"></a>        yhat[i] = <span class="dv">0</span>;</span>
-<span id="cb429-22"><a href="StochOpt.html#cb429-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
-<span id="cb429-23"><a href="StochOpt.html#cb429-23" aria-hidden="true" tabindex="-1"></a>          yhat[i] += X(ii[i], k) * beta[k];</span>
-<span id="cb429-24"><a href="StochOpt.html#cb429-24" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb429-25"><a href="StochOpt.html#cb429-25" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb429-26"><a href="StochOpt.html#cb429-26" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
-<span id="cb429-27"><a href="StochOpt.html#cb429-27" aria-hidden="true" tabindex="-1"></a>        grad[k] = <span class="dv">0</span>;</span>
-<span id="cb429-28"><a href="StochOpt.html#cb429-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
-<span id="cb429-29"><a href="StochOpt.html#cb429-29" aria-hidden="true" tabindex="-1"></a>          grad[k] += X(ii[i], k) * (yhat[i] - y[ii[i]]);</span>
-<span id="cb429-30"><a href="StochOpt.html#cb429-30" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb429-31"><a href="StochOpt.html#cb429-31" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb429-32"><a href="StochOpt.html#cb429-32" aria-hidden="true" tabindex="-1"></a>      beta = beta - gamma[l] * (grad / m);</span>
-<span id="cb429-33"><a href="StochOpt.html#cb429-33" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb429-34"><a href="StochOpt.html#cb429-34" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb429-35"><a href="StochOpt.html#cb429-35" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> beta;</span>
-<span id="cb429-36"><a href="StochOpt.html#cb429-36" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb416"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb416-1"><a href="StochOpt.html#cb416-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(dqrng)]]</span></span>
+<span id="cb416-2"><a href="StochOpt.html#cb416-2" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb416-3"><a href="StochOpt.html#cb416-3" aria-hidden="true" tabindex="-1"></a>NumericVector SG_Rcpp(</span>
+<span id="cb416-4"><a href="StochOpt.html#cb416-4" aria-hidden="true" tabindex="-1"></a>    NumericVector par, </span>
+<span id="cb416-5"><a href="StochOpt.html#cb416-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> N, </span>
+<span id="cb416-6"><a href="StochOpt.html#cb416-6" aria-hidden="true" tabindex="-1"></a>    NumericVector gamma,</span>
+<span id="cb416-7"><a href="StochOpt.html#cb416-7" aria-hidden="true" tabindex="-1"></a>    NumericMatrix X, </span>
+<span id="cb416-8"><a href="StochOpt.html#cb416-8" aria-hidden="true" tabindex="-1"></a>    NumericVector y,</span>
+<span id="cb416-9"><a href="StochOpt.html#cb416-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> m = <span class="dv">50</span>, </span>
+<span id="cb416-10"><a href="StochOpt.html#cb416-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> maxiter = <span class="dv">100</span></span>
+<span id="cb416-11"><a href="StochOpt.html#cb416-11" aria-hidden="true" tabindex="-1"></a>) {</span>
+<span id="cb416-12"><a href="StochOpt.html#cb416-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> p = par.length(), M = floor(N / m);</span>
+<span id="cb416-13"><a href="StochOpt.html#cb416-13" aria-hidden="true" tabindex="-1"></a>  NumericVector grad(p), yhat(N), beta = clone(par);</span>
+<span id="cb416-14"><a href="StochOpt.html#cb416-14" aria-hidden="true" tabindex="-1"></a>  IntegerVector ii;</span>
+<span id="cb416-15"><a href="StochOpt.html#cb416-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb416-16"><a href="StochOpt.html#cb416-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> l = <span class="dv">0</span>; l &lt; maxiter; ++l) {</span>
+<span id="cb416-17"><a href="StochOpt.html#cb416-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Note that dqsample_int samples from {0, 1, ..., N - 1}</span></span>
+<span id="cb416-18"><a href="StochOpt.html#cb416-18" aria-hidden="true" tabindex="-1"></a>    ii = dqrng::dqsample_int(N, N); </span>
+<span id="cb416-19"><a href="StochOpt.html#cb416-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; M; ++j) {</span>
+<span id="cb416-20"><a href="StochOpt.html#cb416-20" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
+<span id="cb416-21"><a href="StochOpt.html#cb416-21" aria-hidden="true" tabindex="-1"></a>        yhat[i] = <span class="dv">0</span>;</span>
+<span id="cb416-22"><a href="StochOpt.html#cb416-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
+<span id="cb416-23"><a href="StochOpt.html#cb416-23" aria-hidden="true" tabindex="-1"></a>          yhat[i] += X(ii[i], k) * beta[k];</span>
+<span id="cb416-24"><a href="StochOpt.html#cb416-24" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb416-25"><a href="StochOpt.html#cb416-25" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb416-26"><a href="StochOpt.html#cb416-26" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span>(<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; p; ++k) {</span>
+<span id="cb416-27"><a href="StochOpt.html#cb416-27" aria-hidden="true" tabindex="-1"></a>        grad[k] = <span class="dv">0</span>;</span>
+<span id="cb416-28"><a href="StochOpt.html#cb416-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span>(<span class="dt">int</span> i = j * m; i &lt; (j + <span class="dv">1</span>) * m; ++i) {</span>
+<span id="cb416-29"><a href="StochOpt.html#cb416-29" aria-hidden="true" tabindex="-1"></a>          grad[k] += X(ii[i], k) * (yhat[i] - y[ii[i]]);</span>
+<span id="cb416-30"><a href="StochOpt.html#cb416-30" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb416-31"><a href="StochOpt.html#cb416-31" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb416-32"><a href="StochOpt.html#cb416-32" aria-hidden="true" tabindex="-1"></a>      beta = beta - gamma[l] * (grad / m);</span>
+<span id="cb416-33"><a href="StochOpt.html#cb416-33" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb416-34"><a href="StochOpt.html#cb416-34" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb416-35"><a href="StochOpt.html#cb416-35" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> beta;</span>
+<span id="cb416-36"><a href="StochOpt.html#cb416-36" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>We test the implementation by comparing it to the pure R implementation, but
 using <code>dqsample_int() / dqsample.int()</code> to sample the same permutations in both cases.</p>
-<div class="sourceCode" id="cb430"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb417"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://daqana.github.io/dqrng/reference/dqrng-functions.html">dqset.seed</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span> 
 <span class="va">par1</span> <span class="op">&lt;-</span> <span class="fu">SG</span><span class="op">(</span>
   par <span class="op">=</span> <span class="va">par0</span>, 
@@ -1532,30 +1532,30 @@ the R implementation but without excessive data copying. It is, however,
 necessary to use various data types from the Armadillo library, e.g. 
 matrices and column vectors, and it is also necessary to type
 cast the sequence of integers from <code>dqsample_int()</code> as a <code>uvec</code> data type.</p>
-<div class="sourceCode" id="cb432"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb432-1"><a href="StochOpt.html#cb432-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(RcppArmadillo)]]</span></span>
-<span id="cb432-2"><a href="StochOpt.html#cb432-2" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
-<span id="cb432-3"><a href="StochOpt.html#cb432-3" aria-hidden="true" tabindex="-1"></a>arma::colvec SG_arma(</span>
-<span id="cb432-4"><a href="StochOpt.html#cb432-4" aria-hidden="true" tabindex="-1"></a>    NumericVector par, </span>
-<span id="cb432-5"><a href="StochOpt.html#cb432-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> N, </span>
-<span id="cb432-6"><a href="StochOpt.html#cb432-6" aria-hidden="true" tabindex="-1"></a>    NumericVector gamma,</span>
-<span id="cb432-7"><a href="StochOpt.html#cb432-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> arma::mat&amp; X, </span>
-<span id="cb432-8"><a href="StochOpt.html#cb432-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> arma::colvec&amp; y, </span>
-<span id="cb432-9"><a href="StochOpt.html#cb432-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> m = <span class="dv">50</span>, </span>
-<span id="cb432-10"><a href="StochOpt.html#cb432-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> maxiter = <span class="dv">100</span></span>
-<span id="cb432-11"><a href="StochOpt.html#cb432-11" aria-hidden="true" tabindex="-1"></a>) {</span>
-<span id="cb432-12"><a href="StochOpt.html#cb432-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> p = par.length(), M = floor(N / m);</span>
-<span id="cb432-13"><a href="StochOpt.html#cb432-13" aria-hidden="true" tabindex="-1"></a>  arma::colvec grad(p), yhat(N), beta = clone(par);</span>
-<span id="cb432-14"><a href="StochOpt.html#cb432-14" aria-hidden="true" tabindex="-1"></a>  uvec ii, iii;</span>
-<span id="cb432-15"><a href="StochOpt.html#cb432-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb432-16"><a href="StochOpt.html#cb432-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> l = <span class="dv">0</span>; l &lt; maxiter; ++l) {</span>
-<span id="cb432-17"><a href="StochOpt.html#cb432-17" aria-hidden="true" tabindex="-1"></a>    ii = as&lt;arma::uvec&gt;(dqrng::dqsample_int(N, N));</span>
-<span id="cb432-18"><a href="StochOpt.html#cb432-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; M; ++j) {</span>
-<span id="cb432-19"><a href="StochOpt.html#cb432-19" aria-hidden="true" tabindex="-1"></a>      iii = ii.subvec(j * m, (j + <span class="dv">1</span>) * m - <span class="dv">1</span>);</span>
-<span id="cb432-20"><a href="StochOpt.html#cb432-20" aria-hidden="true" tabindex="-1"></a>      beta = beta - gamma[l] * (X.rows(iii).t() * (X.rows(iii) * beta - y(iii)) / m); </span>
-<span id="cb432-21"><a href="StochOpt.html#cb432-21" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb432-22"><a href="StochOpt.html#cb432-22" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb432-23"><a href="StochOpt.html#cb432-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> beta;</span>
-<span id="cb432-24"><a href="StochOpt.html#cb432-24" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb419"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb419-1"><a href="StochOpt.html#cb419-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(RcppArmadillo)]]</span></span>
+<span id="cb419-2"><a href="StochOpt.html#cb419-2" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb419-3"><a href="StochOpt.html#cb419-3" aria-hidden="true" tabindex="-1"></a>arma::colvec SG_arma(</span>
+<span id="cb419-4"><a href="StochOpt.html#cb419-4" aria-hidden="true" tabindex="-1"></a>    NumericVector par, </span>
+<span id="cb419-5"><a href="StochOpt.html#cb419-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> N, </span>
+<span id="cb419-6"><a href="StochOpt.html#cb419-6" aria-hidden="true" tabindex="-1"></a>    NumericVector gamma,</span>
+<span id="cb419-7"><a href="StochOpt.html#cb419-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> arma::mat&amp; X, </span>
+<span id="cb419-8"><a href="StochOpt.html#cb419-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> arma::colvec&amp; y, </span>
+<span id="cb419-9"><a href="StochOpt.html#cb419-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> m = <span class="dv">50</span>, </span>
+<span id="cb419-10"><a href="StochOpt.html#cb419-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> maxiter = <span class="dv">100</span></span>
+<span id="cb419-11"><a href="StochOpt.html#cb419-11" aria-hidden="true" tabindex="-1"></a>) {</span>
+<span id="cb419-12"><a href="StochOpt.html#cb419-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> p = par.length(), M = floor(N / m);</span>
+<span id="cb419-13"><a href="StochOpt.html#cb419-13" aria-hidden="true" tabindex="-1"></a>  arma::colvec grad(p), yhat(N), beta = clone(par);</span>
+<span id="cb419-14"><a href="StochOpt.html#cb419-14" aria-hidden="true" tabindex="-1"></a>  uvec ii, iii;</span>
+<span id="cb419-15"><a href="StochOpt.html#cb419-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb419-16"><a href="StochOpt.html#cb419-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="dt">int</span> l = <span class="dv">0</span>; l &lt; maxiter; ++l) {</span>
+<span id="cb419-17"><a href="StochOpt.html#cb419-17" aria-hidden="true" tabindex="-1"></a>    ii = as&lt;arma::uvec&gt;(dqrng::dqsample_int(N, N));</span>
+<span id="cb419-18"><a href="StochOpt.html#cb419-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(<span class="dt">int</span> j = <span class="dv">0</span>; j &lt; M; ++j) {</span>
+<span id="cb419-19"><a href="StochOpt.html#cb419-19" aria-hidden="true" tabindex="-1"></a>      iii = ii.subvec(j * m, (j + <span class="dv">1</span>) * m - <span class="dv">1</span>);</span>
+<span id="cb419-20"><a href="StochOpt.html#cb419-20" aria-hidden="true" tabindex="-1"></a>      beta = beta - gamma[l] * (X.rows(iii).t() * (X.rows(iii) * beta - y(iii)) / m); </span>
+<span id="cb419-21"><a href="StochOpt.html#cb419-21" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb419-22"><a href="StochOpt.html#cb419-22" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb419-23"><a href="StochOpt.html#cb419-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> beta;</span>
+<span id="cb419-24"><a href="StochOpt.html#cb419-24" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>The function returns a column vector, which R represents as a <span class="math inline">\(p \times 1\)</span>
 matrix, whereas all the other implementations return a vector. But besides this
 difference, a test will show that <code>SG_Rcpp()</code> computes the same updates as
@@ -1564,7 +1564,7 @@ all other implementations when <code>dqsample_int()</code> is used.</p>
 stochastic gradient algorithm by running them for 10 epoch iterations
 with a fixed learning rate of <span class="math inline">\(\gamma = 10^{-4}\)</span> and the default mini-batch size
 <span class="math inline">\(m = 50\)</span>.</p>
-<div class="sourceCode" id="cb433"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb420"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">bench</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/bench/man/mark.html">mark</a></span><span class="op">(</span>
   SG <span class="op">=</span> <span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fl">1e-4</span>, maxiter <span class="op">=</span> <span class="fl">10</span>, grad <span class="op">=</span> <span class="va">ls_grad</span><span class="op">)</span>,
   SG_lin_grad <span class="op">=</span> <span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fl">1e-4</span>, maxiter <span class="op">=</span> <span class="fl">10</span>, grad <span class="op">=</span> <span class="va">lin_grad</span>, X <span class="op">=</span> <span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span>,
@@ -1576,11 +1576,11 @@ with a fixed learning rate of <span class="math inline">\(\gamma = 10^{-4}\)</sp
 <pre><code>## # A tibble: 5 × 6
 ##   expression        min   median `itr/sec` mem_alloc `gc/sec`
 ##   &lt;bch:expr&gt;   &lt;bch:tm&gt; &lt;bch:tm&gt;     &lt;dbl&gt; &lt;bch:byt&gt;    &lt;dbl&gt;
-## 1 SG              814ms    872ms      1.12  183.18MB    5.15 
-## 2 SG_lin_grad     420ms    471ms      2.20    43.9MB    2.20 
-## 3 SG_lin_batch    348ms    352ms      2.80    9.13MB    0.559
-## 4 SG_Rcpp         301ms    304ms      3.25    1.82MB    0.651
-## 5 SG_arma         541ms    554ms      1.79    4.54MB    0</code></pre>
+## 1 SG              897ms    991ms      1.01  183.18MB    5.07 
+## 2 SG_lin_grad     461ms    493ms      2.03    43.9MB    2.44 
+## 3 SG_lin_batch    345ms    364ms      2.74    9.14MB    0.549
+## 4 SG_Rcpp         311ms    326ms      3.08    1.82MB    0    
+## 5 SG_arma         567ms    587ms      1.64    4.54MB    0.328</code></pre>
 <p>The pure R implementation (SG) is, unsurprisingly, the slowest, but the full
 Rcpp implementation (SG_Rcpp) is less then a factor 3 faster. The
 Armadillo based implementation is somewhat slower, though still faster than
@@ -1589,7 +1589,7 @@ the pure R implementation.</p>
 <code>SG()</code> allocates a lot of memory, the
 default memory tracking of <code>mark()</code> will become prohibitively slow,
 thus memory tracking is disabled.</p>
-<div class="sourceCode" id="cb435"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb422"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">bench</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/bench/man/mark.html">mark</a></span><span class="op">(</span>
   SG <span class="op">=</span> <span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fl">1e-4</span>, maxiter <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">1</span>, grad <span class="op">=</span> <span class="va">ls_grad</span><span class="op">)</span>,
   SG_lin_grad <span class="op">=</span> <span class="fu">SG</span><span class="op">(</span><span class="va">par0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fl">1e-4</span>, maxiter <span class="op">=</span> <span class="fl">10</span>, m <span class="op">=</span> <span class="fl">1</span>, grad <span class="op">=</span> <span class="va">lin_grad</span>, X <span class="op">=</span> <span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span>,
@@ -1601,11 +1601,11 @@ thus memory tracking is disabled.</p>
 <pre><code>## # A tibble: 5 × 6
 ##   expression        min   median `itr/sec` mem_alloc `gc/sec`
 ##   &lt;bch:expr&gt;   &lt;bch:tm&gt; &lt;bch:tm&gt;     &lt;dbl&gt; &lt;bch:byt&gt;    &lt;dbl&gt;
-## 1 SG              5.28s    5.33s     0.185        NA    3.23 
-## 2 SG_lin_grad     2.26s     2.4s     0.415        NA    7.30 
-## 3 SG_lin_batch 373.04ms 378.84ms     2.62         NA    0.523
-## 4 SG_Rcpp      363.37ms 367.44ms     2.66         NA    0    
-## 5 SG_arma      732.43ms 747.51ms     1.34         NA    0</code></pre>
+## 1 SG              5.49s    5.83s     0.169        NA    5.11 
+## 2 SG_lin_grad      2.3s    2.46s     0.401        NA    6.89 
+## 3 SG_lin_batch  418.5ms 421.59ms     2.35         NA    0.469
+## 4 SG_Rcpp      396.32ms 424.52ms     2.38         NA    0    
+## 5 SG_arma      748.43ms 802.69ms     1.22         NA    0</code></pre>
 <p>This reveals some bigger differences. With a fixed number of epoch iterations,
 the total amount of computations does not change substantially when
 changing the mini-batch size from 50 to 1, but the run times of <code>SG()</code>
@@ -1671,12 +1671,9 @@ choice of the tuning parameters.</p>
 
 </div>
 </div>
-
-
-
-<div class="chapter-nav">
+  <div class="chapter-nav">
 <div class="prev"><a href="em.html"><span class="header-section-number">8</span> Expectation maximization algorithms</a></div>
-<div class="next"><a href="app-R.html"><span class="header-section-number">A</span> R programming</a></div>
+<div class="next"><a href="the-stochastic-em-algorithm.html"><span class="header-section-number">10</span> The stochastic EM algorithm</a></div>
 </div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
     <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
       <ul class="nav navbar-nav">
@@ -1713,18 +1710,14 @@ choice of the tuning parameters.</p>
 </div>
     </nav>
 </div>
-</div>
-  
-
-  
 
 </div>
- <!-- .container -->
+</div> <!-- .container -->
 
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2021-10-20, Git version: 86c4ccf.</p>
+    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2022-05-08, Git version: c532a37.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

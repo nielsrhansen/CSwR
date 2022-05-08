@@ -53,6 +53,7 @@
 <li><a class="" href="numopt.html"><span class="header-section-number">7</span> Numerical optimization</a></li>
 <li><a class="" href="em.html"><span class="header-section-number">8</span> Expectation maximization algorithms</a></li>
 <li><a class="" href="StochOpt.html"><span class="header-section-number">9</span> Stochastic Optimization</a></li>
+<li><a class="" href="the-stochastic-em-algorithm.html"><span class="header-section-number">10</span> The stochastic EM algorithm</a></li>
 <li class="book-part">Appendix</li>
 <li><a class="" href="app-R.html"><span class="header-section-number">A</span> R programming</a></li>
 <li><a class="" href="references.html">References</a></li>
@@ -491,7 +492,7 @@ and
 \end{align}\]</span></p>
 <p>We can implement the log-likelihood in a very problem specific way.
 Note how the parameter constraints are encoded via the return value <span class="math inline">\(\infty\)</span>.</p>
-<div class="sourceCode" id="cb263"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb250"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## par = c(pC, pI), pT = 1 - pC - pI</span>
 <span class="co">## x is the data vector of length 3 of counts </span>
 <span class="va">loglik</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">par</span>, <span class="va">x</span><span class="op">)</span> <span class="op">{</span>
@@ -509,7 +510,7 @@ Note how the parameter constraints are encoded via the return value <span class=
 <span class="op">}</span></code></pre></div>
 <p>It is possible to use <code>optim</code> in R with just this implementation to
 compute the maximum-likelihood estimate of the allele parameters.</p>
-<div class="sourceCode" id="cb264"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb251"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.3</span><span class="op">)</span>, <span class="va">loglik</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## $par
 ## [1] 0.07084643 0.18871900
@@ -530,7 +531,7 @@ compute the maximum-likelihood estimate of the allele parameters.</p>
 as the default algorithm that relies on log-likelihood evaluations only. It
 is slow but fairly robust, though a bit of thought has to go into the initial
 parameter choice.</p>
-<div class="sourceCode" id="cb266"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb253"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, <span class="va">loglik</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## Error in optim(c(0, 0), loglik, x = c(85, 196, 341)): function cannot be evaluated
 at initial parameters```
@@ -555,7 +556,7 @@ parametrization that maps the parameter that we are optimizing over to the
 cell probabilities. In the implementation it is assumed
 that this <code>prob</code> function in addition encodes parameter constraints
 by returning <code>NULL</code> if parameter constraints are violated.</p>
-<div class="sourceCode" id="cb268"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb255"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">loglik</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">par</span>, <span class="va">x</span>, <span class="va">prob</span>, <span class="va">group</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">prob</span><span class="op">(</span><span class="va">par</span><span class="op">)</span>
   <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span> <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="cn">Inf</span><span class="op">)</span>
@@ -563,7 +564,7 @@ by returning <code>NULL</code> if parameter constraints are violated.</p>
 <span class="op">}</span></code></pre></div>
 <p>The function <code>prob</code> is implemented specifically for the peppered moths
 as follows.</p>
-<div class="sourceCode" id="cb269"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb256"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">prob</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">p</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>
   <span class="kw">if</span> <span class="op">(</span><span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">1</span> <span class="op">||</span> <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">0</span> <span class="op">||</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">1</span> <span class="op">||</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">0</span> <span class="op">||</span> <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">0</span><span class="op">)</span>
@@ -573,7 +574,7 @@ as follows.</p>
 <span class="op">}</span></code></pre></div>
 <p>We test that the new implementation gives the same result when
 optimized as using the more problem specific implementation.</p>
-<div class="sourceCode" id="cb270"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb257"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.3</span><span class="op">)</span>, <span class="va">loglik</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span>, 
       prob <span class="op">=</span> <span class="va">prob</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## $par
@@ -602,7 +603,7 @@ to a probability vector. Observe that this gives
 <span class="math display">\[E (Y_k \mid X = x) = \frac{x_j p_k}{M(p)_j}\]</span>
 for <span class="math inline">\(k \in A_j\)</span>. Using the estimated parameters and the <code>M</code> function implemented
 above, we can compute a prediction of the genotype counts as follows.</p>
-<div class="sourceCode" id="cb272"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb259"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span>
 <span class="va">group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>
 <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">prob</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.07084643</span>, <span class="fl">0.18871900</span><span class="op">)</span><span class="op">)</span>
@@ -659,9 +660,9 @@ under a marketing campaign. A predicted number of items sold in a normal week
 (without a campaign) based on historic sales is included. It is of interest to
 recalibrate this number to give a good prediction of the number of items
 actually sold.</p>
-<div class="sourceCode" id="cb274"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb261"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">vegetables</span> <span class="op">&lt;-</span> <span class="fu">read_csv</span><span class="op">(</span><span class="st">"data/vegetables.csv"</span>, col_types <span class="op">=</span> <span class="fu">cols</span><span class="op">(</span>store <span class="op">=</span> <span class="st">"c"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<div class="sourceCode" id="cb275"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb262"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">vegetables</span><span class="op">)</span></code></pre></div>
 <pre><code>##       sale          normalSale        store          
 ##  Min.   :  1.00   Min.   :  0.20   Length:1066       
@@ -679,14 +680,14 @@ be fitted to data using the <code>glm</code> function and using the formula inte
 to specify how the response should depend on the normal sale. The model is
 fitted by computing the maximum-likelihood estimate of the two parameters
 <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span>.</p>
-<div class="sourceCode" id="cb277"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb264"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># A Poisson regression model</span>
 <span class="va">pois_model_null</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html">glm</a></span><span class="op">(</span>
   <span class="va">sale</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">normalSale</span><span class="op">)</span>, 
   data <span class="op">=</span> <span class="va">vegetables</span>, 
   family <span class="op">=</span> <span class="va">poisson</span>
 <span class="op">)</span>  </code></pre></div>
-<div class="sourceCode" id="cb278"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb265"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">pois_model_null</span><span class="op">)</span></code></pre></div>
 <pre><code>## 
 ## Call:
@@ -720,7 +721,7 @@ stores in the data set, and it is not obvious that the same effect should
 apply across all stores. Thus we would like to fit a model of the form</p>
 <p><span class="math display">\[\log(E(\text{sale})) = \beta_{\text{store}} + \beta_1 \log(\text{normalSale})\]</span></p>
 <p>instead. Fortunately, this is also straightforward using <code>glm</code>.</p>
-<div class="sourceCode" id="cb280"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb267"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## Note, variable store is a factor! The 'intercept' is removed </span>
 <span class="co">## in the formula to obtain a parametrization as above. </span>
 <span class="va">pois_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html">glm</a></span><span class="op">(</span>
@@ -730,7 +731,7 @@ apply across all stores. Thus we would like to fit a model of the form</p>
 <span class="op">)</span></code></pre></div>
 <p>We will not print all the individual store effects as there are 352
 individual stores.</p>
-<div class="sourceCode" id="cb281"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb268"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">pois_model</span><span class="op">)</span><span class="op">$</span><span class="va">coefficients</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">353</span><span class="op">)</span>, <span class="op">]</span></code></pre></div>
 <pre><code>##                 Estimate Std. Error z value   Pr(&gt;|z|)
 ## store1            2.7182    0.12756  21.309 9.416e-101
@@ -816,7 +817,7 @@ the mixture weight <span class="math inline">\(p = P(Z = 1) \in (0, 1)\)</span>,
 and the two variances <span class="math inline">\(\sigma_1, \sigma_2 &gt; 0\)</span>. This is <em>not</em> the parametrization
 using canonical exponential family parameters, which we return to below. First
 we will simply simulate random variables from this model.</p>
-<div class="sourceCode" id="cb283"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb270"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">sigma1</span> <span class="op">&lt;-</span> <span class="fl">1</span>
 <span class="va">sigma2</span> <span class="op">&lt;-</span> <span class="fl">2</span>
 <span class="va">mu1</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="fl">0.5</span>
@@ -834,7 +835,7 @@ Gaussian mixture model with mixture distributions <span class="math inline">\(\m
 and <span class="math inline">\(\mathcal{N}(4, 4)\)</span>, and with each component having weight <span class="math inline">\(0.5\)</span>.
 This gives a bimodal distribution as illustrated by the histogram on Figure
 <a href="four-examples.html#fig:mixture-gaus-histogram">6.1</a>.</p>
-<div class="sourceCode" id="cb284"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb271"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">yy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">3</span>, <span class="fl">11</span>, <span class="fl">0.1</span><span class="op">)</span>
 <span class="va">dens</span> <span class="op">&lt;-</span> <span class="va">p</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">dnorm</a></span><span class="op">(</span><span class="va">yy</span>, <span class="va">mu1</span>, <span class="va">sigma1</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">p</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">dnorm</a></span><span class="op">(</span><span class="va">yy</span>, <span class="va">mu2</span>, <span class="va">sigma2</span><span class="op">)</span>
 <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span>mapping <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">..density..</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> 
@@ -897,7 +898,7 @@ We won’t be able to tell the difference from observing only <span class="math 
 implementations of ways to simulate from the mixture model. We compare empirical
 means and variances to the theoretical values to test if all the implementations
 actually simulate from the Gaussian mixture model.</p>
-<div class="sourceCode" id="cb285"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb272"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## Mean</span>
 <span class="va">mu</span> <span class="op">&lt;-</span> <span class="va">p</span> <span class="op">*</span> <span class="va">mu1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">p</span><span class="op">)</span> <span class="op">*</span> <span class="va">mu2</span>
 
@@ -1076,7 +1077,7 @@ that are themselves i.i.d. <span class="math inline">\(\mathcal{N}(0, \sigma^2)\
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2021-10-20, Git version: 86c4ccf.</p>
+    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2022-05-08, Git version: c532a37.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

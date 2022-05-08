@@ -1,0 +1,179 @@
+## Sparse linear algebra 
+
+```{r bandSparse}
+library(Matrix)
+bandSparse(15, 15, seq(-2, 2))
+```
+
+```{r Nuuk_runmeans, warning=FALSE, dependson="NuukData"}
+K <- bandSparse(n, n, seq(-2, 2))
+weights <- c(1/3, 1/4, rep(1/5, n - 4), 1/4, 1/3)
+weights <- c(NA, NA, rep(1/5, n - 4), NA, NA)
+p_Nuuk <- ggplot(Nuuk_year, aes(Year, Temperature)) + geom_point()
+p_Nuuk + 
+  geom_line(aes(y = as.numeric(K %*% Nuuk_year$Temperature) * weights), 
+            color = "red")
+```
+
+When the smoother matrix is *sparse*, matrix multiplication can be much faster.
+
+We will present some benchmark comparisons below. First we compare the run time 
+for the matrix multiplication `as.numeric(K %*% Nuuk_year$Temperature) * weights` 
+using a sparse matrix (as above) with the run time 
+using a dense matrix. The dense matrix is given as `Kdense = as.matrix(K)`. These
+run times are compared to using `filter()`. In all computations, $k = 5$. 
+
+```{r runmean_bench, echo =FALSE}
+y <- rnorm(4096)
+K1 <- bandSparse(512, 512, seq(-5, 5), giveCsparse = TRUE)
+weights1 <- c(rep(NA, 5), rep(1/11, 512 - 10), rep(NA, 5))
+K2 <- bandSparse(1024, 1024, seq(-5, 5), giveCsparse = TRUE)
+weights2 <- c(rep(NA, 5), rep(1/11, 1024 - 10), rep(NA, 5))
+K3 <- bandSparse(2048, 2048, seq(-5, 5), giveCsparse = TRUE)
+weights3 <- c(rep(NA, 5), rep(1/11, 2048 - 10), rep(NA, 5))
+K4 <- bandSparse(256, 256, seq(-5, 5), giveCsparse = TRUE)
+weights4 <- c(rep(NA, 5), rep(1/11, 256 - 10), rep(NA, 5))
+K1dense <- as.matrix(K1)
+K2dense <- as.matrix(K2)
+K3dense <- as.matrix(K3)
+K4dense <- as.matrix(K4)
+
+tmp <- microbenchmark(
+  as.numeric(K1 %*% y[1:512]) * weights1,
+  as.numeric(K2 %*% y[1:1024]) * weights2,
+  as.numeric(K3 %*% y[1:2048]) * weights3,
+  as.numeric(K4 %*% y[1:256]) * weights4,
+  stats::filter(y[1:512], rep(1/11, 11)),
+  stats::filter(y[1:1024], rep(1/11, 11)),
+  stats::filter(y[1:2048], rep(1/11, 11)),
+  stats::filter(y[1:256], rep(1/11, 11)),
+  as.numeric(K1dense %*% y[1:512]) * weights1,
+  as.numeric(K2dense %*% y[1:1024]) * weights2,
+  as.numeric(K3dense %*% y[1:2048]) * weights3,
+  as.numeric(K4dense %*% y[1:256]) * weights4
+)
+sumbench <- summary(tmp)
+sumbench$n <- rep(c(512, 1024, 2048, 256), 3)
+sumbench$method <- rep(c("Sparse mat.", "filter", "Dense mat."), each = 4)
+```
+
+```{r runmean_bench_fit, echo=FALSE, dependson="runmean_bench"}
+qplot(n, median, data = sumbench, color = method, size = I(4)) + 
+  scale_x_log10(breaks = c(256, 512, 1024, 2048)) + 
+  scale_y_log10(breaks = 4^(3:8), name = "microseconds") + 
+  geom_line(size = I(2))
+```
+
+The difference in slopes between dense and sparse matrix multiplication should be 
+noted. This is the difference between $O(n^2)$ and $O(n)$ run time. The run time for 
+the dense matrix multiplication will not change with $k$. For the 
+other two it will increase (linearly) with increasing $k$. 
+
+For smoothing only once with a given smoother matrix the time to construct the matrix 
+should also be taken into account for fair comparison with `filter()`. It turns out
+that the function `bandSparse` is not optimized for the specific running mean 
+banded matrix, and a faster C++ function for this job is given below.
+
+```{Rcpp, fastBand}
+#include <Rcpp.h>
+using namespace Rcpp;
+// [[Rcpp::export]]
+List fastBand(int n, int k) {
+  int N = (2 * k + 1) * (n - 2 * k) + 3 * k * k + k;
+  int iter = 0;
+  IntegerVector i(N), p(n + 1);
+  for(int col = 0; col < n; ++col) {
+    p[col] = iter;
+    for(int r = std::max(col - k, 0); r < std::min(col + k + 1, n); ++r) {
+      i[iter] = r;
+      ++iter;
+    }
+  }
+  p[n] = N;
+  return List::create(_["i"] = i, _["p"] = p);
+}
+```
+
+And then R function.
+
+```{r fastBand_R, dependson="fastBand"}
+bandSparseFast <- function(n, k) {
+  n <- as.integer(n)
+  k <- as.integer(k)
+  tmp <- fastBand(n, k)
+  new("ngCMatrix", 
+      i = tmp$i, 
+      p = tmp$p, 
+      Dim = c(n, n))
+}
+```
+
+
+```{r fast_runmean_bench, fig.cap="Benchmarking the different running mean implementations", echo=FALSE, dependson="fastBand_R"}
+weights4 <- c(rep(NA, 5), rep(1/11, 4096 - 10), rep(NA, 5))
+
+tmp <- microbenchmark(
+  run_mean(y[1:512], k = 11),
+  run_mean(y[1:1124], k = 11),
+  run_mean(y[1:2048], k = 11),
+  run_mean(y[1:4096], k = 11),
+  stats::filter(y[1:512], rep(1/11, 11)),
+  stats::filter(y[1:1024], rep(1/11, 11)),
+  stats::filter(y[1:2048], rep(1/11, 11)),
+  stats::filter(y[1:4096], rep(1/11, 11)),
+  {K1 <- bandSparseFast(512, 5); as.numeric(K1 %*% y[1:512]) * weights1},
+  {K2 <- bandSparseFast(1024, 5); as.numeric(K2 %*% y[1:1024]) * weights2},
+  {K3 <- bandSparseFast(2048, 5); as.numeric(K3 %*% y[1:2048]) * weights3},
+  {K4 <- bandSparseFast(4096, 5); as.numeric(K4 %*% y[1:4096]) * weights4},
+  {K1 <- bandSparse(512, k = seq(-5, 5)); as.numeric(K1 %*% y[1:512]) * weights1},
+  {K2 <- bandSparse(1024, k = seq(-5, 5)); as.numeric(K2 %*% y[1:1024]) * weights2},
+  {K3 <- bandSparse(2048, k = seq(-5, 5)); as.numeric(K3 %*% y[1:2048]) * weights3},
+  {K4 <- bandSparse(4096, k = seq(-5, 5)); as.numeric(K4 %*% y[1:4096]) * weights4}
+)
+sumbench <- summary(tmp)
+sumbench$n <- rep(c(512, 1024, 2048, 4096), 4)
+sumbench$method <- rep(c("run-mean", "filter", "Sparse mat. fast", "Sparse mat."), each = 4)
+```
+
+```{r fast_runmean_bench_fig, echo=FALSE, dependson="fast_runmean_bench"}
+qplot(n, median, data = sumbench, color = method, size = I(4)) + 
+  scale_x_log10(breaks = c(512, 1024, 2048, 4096)) + 
+  scale_y_log10(breaks = 2^(7:13), name = "microseconds") + 
+  geom_line(size = I(2))
+```
+
+The construction of the sparse matrix turns out to take up much more time than the 
+matrix-vector multiplication. The run time is still $O(n)$, but the constant is of 
+the order of a factor 16 larger than for `filter()`. With the faster construction of 
+the sparse matrix, the constant is reduced to being
+of the order 5 larger than for `filter()`. For small $n$ there is some overhead 
+from the constructor of the sparse matrix object even for the faster algorithm.
+
+If you implement an algorithm (like a smoother) using linear algebra (e.g. a 
+                                                                      matrix-vector product) then sparse matrix numerical methods can be useful 
+compared to dense matrix numerical methods. The Matrix package for R implements 
+sparse matrices, and you should always attempt to use methods for constructing 
+the sparse matrix that avoid dense intermediates. But even with a special 
+purpose constructor of a sparse band matrix, sparse linear algebra cannot 
+compete with optimized special purpose algorithms like `filter()` or a 
+C++ implementation of `run_mean()`. The `filter()` function even works more 
+generally for kernels (weights) with *equidistant* data. 
+
+We conclude this section by verifying that `filter()` actually computes
+the running mean up to numerical errors. 
+
+```{r runmean_accuracy_fig, warning=FALSE, dependson=c("NuukData", "Nuuk_runmeans")}
+qplot(1:n, 
+      as.numeric(K %*% Nuuk_year$Temperature) * weights - 
+        c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5)))) +
+  scale_y_continuous("Difference")
+```
+
+```{r runmean_accuracy, dependson="NuukData"}
+all(as.numeric(K %*% Nuuk_year$Temperature) * weights == 
+      c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5))))
+all.equal(as.numeric(K %*% Nuuk_year$Temperature) * weights, 
+          c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5))))
+identical(as.numeric(K %*% Nuuk_year$Temperature) * weights, 
+          c(stats::filter(Nuuk_year$Temperature, rep(1/5, 5))))
+```

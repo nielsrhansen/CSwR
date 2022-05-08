@@ -53,6 +53,7 @@
 <li><a class="" href="numopt.html"><span class="header-section-number">7</span> Numerical optimization</a></li>
 <li><a class="active" href="em.html"><span class="header-section-number">8</span> Expectation maximization algorithms</a></li>
 <li><a class="" href="StochOpt.html"><span class="header-section-number">9</span> Stochastic Optimization</a></li>
+<li><a class="" href="the-stochastic-em-algorithm.html"><span class="header-section-number">10</span> The stochastic EM algorithm</a></li>
 <li class="book-part">Appendix</li>
 <li><a class="" href="app-R.html"><span class="header-section-number">A</span> R programming</a></li>
 <li><a class="" href="references.html">References</a></li>
@@ -225,13 +226,13 @@ the EM algorithm for multinomial cell collapsing.</p>
 <p>The EM algorithm can be implemented by two simple functions that compute
 the conditional expectations (the E-step) and then maximization
 of the complete observation log-likelihood.</p>
-<div class="sourceCode" id="cb349"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb336"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">EStep0</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">p</span>, <span class="va">x</span>, <span class="va">group</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">x</span><span class="op">[</span><span class="va">group</span><span class="op">]</span> <span class="op">*</span> <span class="va">p</span> <span class="op">/</span> <span class="fu">M</span><span class="op">(</span><span class="va">p</span>, <span class="va">group</span><span class="op">)</span><span class="op">[</span><span class="va">group</span><span class="op">]</span>
 <span class="op">}</span></code></pre></div>
 <p>The MLE of the complete log-likelihood is a linear estimator,
 as is the case in many examples with explicit MLEs.</p>
-<div class="sourceCode" id="cb350"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb337"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">MStep0</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">X</span><span class="op">)</span>
   <span class="fu"><a href="https://rdrr.io/r/base/vector.html">as.vector</a></span><span class="op">(</span><span class="va">X</span> <span class="op">%*%</span> <span class="va">n</span> <span class="op">/</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>The <code>EStep0</code> and <code>MStep0</code> functions are abstract implementations. They require
@@ -239,7 +240,7 @@ specification of the arguments <code>group</code> and <code>X</code>, respective
 <p>The M-step is only implemented in the case where the complete-data MLE is a
 <em>linear estimator</em>, that is, a linear map of the complete data vector <span class="math inline">\(y\)</span>
 that can be expressed in terms of a matrix <span class="math inline">\(\mathbf{X}\)</span>.</p>
-<div class="sourceCode" id="cb351"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb338"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">EStep</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">par</span>, <span class="va">x</span><span class="op">)</span>
   <span class="fu">EStep0</span><span class="op">(</span><span class="fu">prob</span><span class="op">(</span><span class="va">par</span><span class="op">)</span>, <span class="va">x</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>
 
@@ -254,7 +255,7 @@ that can be expressed in terms of a matrix <span class="math inline">\(\mathbf{X
 <p>The EM algorithm is finally implemented as an iterative, alternating call
 of <code>EStep</code> and <code>MStep</code> until convergence as measured in terms of the relative
 change from iteration to iteration being sufficiently small.</p>
-<div class="sourceCode" id="cb352"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb339"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">EM</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">par</span>, <span class="va">x</span>, <span class="va">epsilon</span> <span class="op">=</span> <span class="fl">1e-6</span>, <span class="va">trace</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span>
   <span class="kw">repeat</span><span class="op">{</span>
     <span class="va">par0</span> <span class="op">&lt;-</span> <span class="va">par</span>
@@ -270,7 +271,7 @@ change from iteration to iteration being sufficiently small.</p>
 <span class="va">phat</span></code></pre></div>
 <pre><code>## [1] 0.07083693 0.18877365</code></pre>
 <p>We check what is going on in each step of the EM algorithm.</p>
-<div class="sourceCode" id="cb354"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb341"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">EM_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="st">"par"</span><span class="op">)</span>
 <span class="fu">EM</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span>, trace <span class="op">=</span> <span class="va">EM_tracer</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span></code></pre></div>
 <pre><code>## n = 1: par = 0.08038585, 0.22464192; 
@@ -279,11 +280,11 @@ change from iteration to iteration being sufficiently small.</p>
 ## n = 4: par = 0.07083738, 0.18894757; 
 ## n = 5: par = 0.07083693, 0.18877365;</code></pre>
 <pre><code>## [1] 0.07083693 0.18877365</code></pre>
-<div class="sourceCode" id="cb357"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb344"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">EM_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"par0"</span>, <span class="st">"par"</span><span class="op">)</span>, N <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>
 <span class="va">phat</span> <span class="op">&lt;-</span> <span class="fu">EM</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span>, epsilon <span class="op">=</span> <span class="fl">1e-20</span>, 
            trace <span class="op">=</span> <span class="va">EM_tracer</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span></code></pre></div>
-<div class="sourceCode" id="cb358"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb345"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">EM_trace</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">EM_tracer</span><span class="op">)</span>
   <span class="va">EM_trace</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/transform.html">transform</a></span><span class="op">(</span>
   <span class="va">EM_trace</span>, 
@@ -295,7 +296,7 @@ change from iteration to iteration being sufficiently small.</p>
 <p>Note the log-axis. The EM-algorithm converges linearly (this is the terminology,
 see <a href="numopt.html#algorithms-and-convergence">Algorithms and Convergence</a>). The log-rate of the convergence can be estimated
 by least-squares.</p>
-<div class="sourceCode" id="cb359"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb346"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">log_rate_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html">lm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">par_norm_diff</span><span class="op">)</span> <span class="op">~</span> <span class="va">n</span>,  data <span class="op">=</span> <span class="va">EM_trace</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="va">log_rate_fit</span><span class="op">)</span><span class="op">[</span><span class="st">"n"</span><span class="op">]</span><span class="op">)</span></code></pre></div>
 <pre><code>##         n 
@@ -437,7 +438,7 @@ three different possible terms in the sum. The implementation
 works directly on the tabulated data by computing all the three possible
 terms and then forming a weighted sum according to the number of times each
 term is present.</p>
-<div class="sourceCode" id="cb361"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb348"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">empFisher</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">par</span>, <span class="va">x</span>, <span class="va">grad</span>, <span class="va">center</span> <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">grad_MLE</span> <span class="op">&lt;-</span> <span class="fl">0</span> <span class="co">## is supposed to be 0 in the MLE</span>
   <span class="kw">if</span> <span class="op">(</span><span class="va">center</span><span class="op">)</span> 
@@ -453,7 +454,7 @@ term is present.</p>
 the result to a numerically computed hessian using <code>optimHess</code> (it is
 possible to get <code>optim</code> to compute the Hessian numerically in the minimizer
 as a final step, but <code>optimHess</code> does this computation separately).</p>
-<div class="sourceCode" id="cb362"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb349"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## The gradient of Q (equivalently the log-likelihood) was </span>
 <span class="co">## implemented earlier as 'grad_loglik'.</span>
 <span class="va">grad</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">par</span>, <span class="va">x</span><span class="op">)</span> <span class="fu">grad_loglik</span><span class="op">(</span><span class="va">par</span>, <span class="va">x</span>, <span class="va">prob</span>, <span class="va">Dprob</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>
@@ -461,12 +462,12 @@ as a final step, but <code>optimHess</code> does this computation separately).</
 <pre><code>##           [,1]     [,2]
 ## [1,] 18487.558 1384.626
 ## [2,]  1384.626 6816.612</code></pre>
-<div class="sourceCode" id="cb364"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb351"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">empFisher</span><span class="op">(</span><span class="va">phat</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span>, <span class="va">grad</span>, center <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <pre><code>##           [,1]     [,2]
 ## [1,] 18487.558 1384.626
 ## [2,]  1384.626 6816.612</code></pre>
-<div class="sourceCode" id="cb366"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb353"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optimHess</a></span><span class="op">(</span><span class="va">phat</span>, <span class="va">loglik</span>, <span class="va">grad_loglik</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span>, 
           prob <span class="op">=</span> <span class="va">prob</span>, Dprob <span class="op">=</span> <span class="va">Dprob</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>##           [,1]     [,2]
@@ -508,21 +509,21 @@ is not computable either. It can, however, be shown that</p>
 its Jacobian, <span class="math inline">\(D_{\theta} \Phi(\hat{\theta})\)</span>, can be computed via numerical
 differentiation once we have implemented <span class="math inline">\(\Phi\)</span>. We also need the
 hessian of the map <span class="math inline">\(Q\)</span>, which we implement as an R function as well.</p>
-<div class="sourceCode" id="cb368"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb355"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">Q</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">p</span>, <span class="va">pp</span>, <span class="va">x</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span>, <span class="va">group</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>
   <span class="va">pp</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="va">pp</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="va">pp</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>
   <span class="op">-</span> <span class="op">(</span><span class="va">x</span><span class="op">[</span><span class="va">group</span><span class="op">]</span> <span class="op">*</span> <span class="fu">prob</span><span class="op">(</span><span class="va">pp</span><span class="op">)</span> <span class="op">/</span> <span class="fu">M</span><span class="op">(</span><span class="fu">prob</span><span class="op">(</span><span class="va">pp</span><span class="op">)</span>, <span class="va">group</span><span class="op">)</span><span class="op">[</span><span class="va">group</span><span class="op">]</span><span class="op">)</span> <span class="op">%*%</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="fu">prob</span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span>
 <span class="op">}</span></code></pre></div>
 <p>The R package numDeriv contains functions that compute numerical derivatives.</p>
-<div class="sourceCode" id="cb369"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb356"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://optimizer.r-forge.r-project.org/">numDeriv</a></span><span class="op">)</span></code></pre></div>
 <p>The Hessian of <span class="math inline">\(Q\)</span> can be computed using this package.</p>
-<div class="sourceCode" id="cb370"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb357"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">iY</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/numDeriv/man/hessian.html">hessian</a></span><span class="op">(</span><span class="va">Q</span>, <span class="va">phat</span>, pp <span class="op">=</span> <span class="va">phat</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>Supplemented EM can then be implemented by computing the Jacobian of
 <span class="math inline">\(\Phi\)</span> using numDeriv as well.</p>
-<div class="sourceCode" id="cb371"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb358"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">Phi</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">pp</span><span class="op">)</span> <span class="fu">MStep</span><span class="op">(</span><span class="fu">EStep</span><span class="op">(</span><span class="va">pp</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 <span class="va">DPhi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/numDeriv/man/jacobian.html">jacobian</a></span><span class="op">(</span><span class="va">Phi</span>, <span class="va">phat</span><span class="op">)</span>  <span class="co">## Using numDeriv function 'jacobian'</span>
 <span class="va">iX</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diag.html">diag</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">DPhi</span><span class="op">)</span><span class="op">)</span> <span class="op">%*%</span> <span class="va">iY</span>
@@ -543,13 +544,13 @@ interesting identity</p>
 <p>The last formula above explicitly gives the asymptotic variance for the incomplete
 observation <span class="math inline">\(X\)</span> as the asymptotic variance for the complete observation <span class="math inline">\(Y\)</span> plus
 a correction term.</p>
-<div class="sourceCode" id="cb373"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb360"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">iYinv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/solve-methods.html">solve</a></span><span class="op">(</span><span class="va">iY</span><span class="op">)</span>
 <span class="va">iYinv</span> <span class="op">+</span> <span class="va">iYinv</span> <span class="op">%*%</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/solve-methods.html">solve</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diag.html">diag</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span> <span class="op">-</span> <span class="va">DPhi</span>, <span class="va">DPhi</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>##               [,1]          [,2]
 ## [1,]  5.492602e-05 -1.115686e-05
 ## [2,] -1.115686e-05  1.489667e-04</code></pre>
-<div class="sourceCode" id="cb375"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb362"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/solve-methods.html">solve</a></span><span class="op">(</span><span class="va">iX</span><span class="op">)</span> <span class="co">## SEM-based, but different use of inversion</span></code></pre></div>
 <pre><code>##               [,1]          [,2]
 ## [1,]  5.492602e-05 -1.115686e-05
@@ -576,7 +577,7 @@ distribution of <span class="math inline">\(Y\)</span> is
 <span class="math display">\[ f(y) = p \frac{1}{\sqrt{2 \pi \sigma_1^2}} e^{-\frac{(y - \mu_1)^2}{2 \sigma_1^2}} + 
 (1 - p)\frac{1}{\sqrt{2 \pi \sigma_2^2}}e^{-\frac{(y - \mu_2)^2}{2 \sigma_2^2}}.\]</span>
 The following is a simulation of data from such a mixture model.</p>
-<div class="sourceCode" id="cb377"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb364"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">sigma1</span> <span class="op">&lt;-</span> <span class="fl">1</span>
 <span class="va">sigma2</span> <span class="op">&lt;-</span> <span class="fl">2</span>
 <span class="va">mu1</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="fl">0.5</span>
@@ -593,7 +594,7 @@ that the implementation takes just one single parameter argument, which is
 then supposed to be a vector of all parameters in the model. Internally to
 the function one has to decide for each entry in the parameter vector what
 parameter in the model it corresponds to.</p>
-<div class="sourceCode" id="cb378"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb365"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">loglik</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">par</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">p</span> <span class="op">&lt;-</span> <span class="va">par</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>
   <span class="kw">if</span><span class="op">(</span><span class="va">p</span> <span class="op">&lt;</span> <span class="fl">0</span> <span class="op">||</span> <span class="va">p</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span>
@@ -609,7 +610,7 @@ maximum-likelihood estimate if we have a sensible initial parameter guess.
 In this case we use the true parameters, which can be used when
 algorithms are tested, but they are, of course, not available for
 real applications.</p>
-<div class="sourceCode" id="cb379"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb366"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="op">-</span><span class="fl">0.5</span>, <span class="fl">4</span><span class="op">)</span>, <span class="va">loglik</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">]</span></code></pre></div>
 <pre><code>## $par
 ## [1]  0.4934452 -0.5495679  4.0979106
@@ -618,7 +619,7 @@ real applications.</p>
 ## [1] 1384.334</code></pre>
 <p>However, if we initialize the optimization badly, it does not find the maximum
 but a local maximum instead.</p>
-<div class="sourceCode" id="cb381"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb368"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.9</span>, <span class="fl">3</span>, <span class="fl">1</span><span class="op">)</span>, <span class="va">loglik</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">]</span></code></pre></div>
 <pre><code>## $par
 ## [1] 0.2334382 5.6763596 0.6255516
@@ -634,7 +635,7 @@ The M-step becomes identical to the MLE, which can be found explicitly,
 but where the indicators <span class="math inline">\(1(Z_i = 1)\)</span> and <span class="math inline">\(1(Z_i = 2) = 1 - 1(Z_i = 1)\)</span> are
 replaced by the conditional probabilities <span class="math inline">\(p_i(\mathbf{y})\)</span> and
 <span class="math inline">\(1 - p_i(\mathbf{y})\)</span>, respectively.</p>
-<div class="sourceCode" id="cb383"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb370"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">EStep</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">par</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">p</span> <span class="op">&lt;-</span> <span class="va">par</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>
   <span class="va">mu1</span> <span class="op">&lt;-</span> <span class="va">par</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>
@@ -665,7 +666,7 @@ replaced by the conditional probabilities <span class="math inline">\(p_i(\mathb
 <pre><code>## [1]  0.4934443 -0.5497060  4.0982383</code></pre>
 <p>The EM algorithm may, just as any other optimization algorithm,
 end up in a <em>local</em> maximum, if it is started wrongly.</p>
-<div class="sourceCode" id="cb385"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb372"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">EM</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.9</span>, <span class="fl">3</span>, <span class="fl">1</span><span class="op">)</span>, <span class="va">y</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 0.2334722 5.6759456 0.6256279</code></pre>
 
@@ -705,7 +706,7 @@ end up in a <em>local</em> maximum, if it is started wrongly.</p>
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2021-10-20, Git version: 86c4ccf.</p>
+    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2022-05-08, Git version: c532a37.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

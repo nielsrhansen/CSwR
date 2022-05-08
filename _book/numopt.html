@@ -53,6 +53,7 @@
 <li><a class="active" href="numopt.html"><span class="header-section-number">7</span> Numerical optimization</a></li>
 <li><a class="" href="em.html"><span class="header-section-number">8</span> Expectation maximization algorithms</a></li>
 <li><a class="" href="StochOpt.html"><span class="header-section-number">9</span> Stochastic Optimization</a></li>
+<li><a class="" href="the-stochastic-em-algorithm.html"><span class="header-section-number">10</span> The stochastic EM algorithm</a></li>
 <li class="book-part">Appendix</li>
 <li><a class="" href="app-R.html"><span class="header-section-number">A</span> R programming</a></li>
 <li><a class="" href="references.html">References</a></li>
@@ -643,7 +644,7 @@ printing values of variables during evaluation, which can be highly useful
 for understanding the inner workings of the algorithm. Monitoring or logging
 intermediate values during the evaluation of code is referred to as
 <em>tracing</em>.</p>
-<div class="sourceCode" id="cb287"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb274"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">GD</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span>
   <span class="va">par</span>, 
   <span class="va">H</span>,
@@ -690,13 +691,13 @@ from the data via a formula, and the sufficient statistic is also
 computed. The implementations use linear algebra and vectorized computations
 relying on access to the model matrix and the sufficient statistics in
 their enclosing environment.</p>
-<div class="sourceCode" id="cb288"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb275"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">poisson_model</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">form</span>, <span class="va">data</span>, <span class="va">response</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/model.matrix.html">model.matrix</a></span><span class="op">(</span><span class="va">form</span>, <span class="va">data</span><span class="op">)</span>
   <span class="va">y</span> <span class="op">&lt;-</span> <span class="va">data</span><span class="op">[[</span><span class="va">response</span><span class="op">]</span><span class="op">]</span>
   <span class="co"># The function drop() drops the dim attribute and turns, for instance,</span>
   <span class="co"># a matrix with one column into a vector</span>
-  <span class="va">t_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span>  <span class="co"># More efficient than drop(t(X) %*% y)</span>
+  <span class="va">t_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/crossprod.html">crossprod</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span>  <span class="co"># More efficient than drop(t(X) %*% y)</span>
   <span class="va">n</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>
   <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>
   
@@ -704,10 +705,10 @@ their enclosing environment.</p>
     <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">X</span> <span class="op">%*%</span> <span class="va">beta</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="va">beta</span> <span class="op">%*%</span> <span class="va">t_map</span><span class="op">)</span> <span class="op">/</span><span class="va">n</span>
   
   <span class="va">grad_H</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">beta</span><span class="op">)</span> 
-    <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">X</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">X</span> <span class="op">%*%</span> <span class="va">beta</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="va">t_map</span><span class="op">)</span> <span class="op">/</span> <span class="va">n</span>
+    <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/crossprod.html">crossprod</a></span><span class="op">(</span><span class="va">X</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">X</span> <span class="op">%*%</span> <span class="va">beta</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="va">t_map</span><span class="op">)</span> <span class="op">/</span> <span class="va">n</span>
   
   <span class="va">Hessian_H</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">beta</span><span class="op">)</span>
-    <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/matrix-products.html">crossprod</a></span><span class="op">(</span><span class="va">X</span>, <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">X</span> <span class="op">%*%</span> <span class="va">beta</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="va">X</span><span class="op">)</span> <span class="op">/</span> <span class="va">n</span>
+    <span class="fu"><a href="https://rdrr.io/r/base/crossprod.html">crossprod</a></span><span class="op">(</span><span class="va">X</span>, <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">X</span> <span class="op">%*%</span> <span class="va">beta</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="va">X</span><span class="op">)</span> <span class="op">/</span> <span class="va">n</span>
   
   <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">p</span><span class="op">)</span>, H <span class="op">=</span> <span class="va">H</span>, grad_H <span class="op">=</span> <span class="va">grad_H</span>, Hessian_H <span class="op">=</span> <span class="va">Hessian_H</span><span class="op">)</span>
 <span class="op">}</span></code></pre></div>
@@ -718,13 +719,13 @@ upon <span class="math inline">\(n\)</span>, which makes it easier to choose sen
 of various parameters for the numerical optimization algorithms.
 Gradient descent is very slow for the large Poisson model with individual
 store effects, so we consider only the simple model with two parameters.</p>
-<div class="sourceCode" id="cb289"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb276"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">veg_pois</span> <span class="op">&lt;-</span> <span class="fu">poisson_model</span><span class="op">(</span><span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">normalSale</span><span class="op">)</span>, <span class="va">vegetables</span>, response <span class="op">=</span> <span class="st">"sale"</span><span class="op">)</span></code></pre></div>
-<div class="sourceCode" id="cb290"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb277"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pois_GD</span> <span class="op">&lt;-</span> <span class="fu">GD</span><span class="op">(</span><span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">grad_H</span><span class="op">)</span></code></pre></div>
 <p>The gradient descent implementation is tested by comparing the minimizer to
 the estimated parameters as computed by <code><a href="https://rdrr.io/r/stats/glm.html">glm()</a></code>.</p>
-<div class="sourceCode" id="cb291"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb278"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/cbind.html">rbind</a></span><span class="op">(</span>pois_glm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="va">pois_model_null</span><span class="op">)</span>, <span class="va">pois_GD</span><span class="op">)</span></code></pre></div>
 <pre><code>##          (Intercept) log(normalSale)
 ## pois_glm    1.461440       0.9215699
@@ -738,7 +739,7 @@ are at most of norm <span class="math inline">\(10^{-4}\)</span>.</p>
 <p>Comparing the resulting values of the negative log-likelihood shows agreement
 up to the first five decimals, but we notice that the negative log-likelihood
 for the parameters fitted using <code><a href="https://rdrr.io/r/stats/glm.html">glm()</a></code> is just slightly smaller.</p>
-<div class="sourceCode" id="cb293"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb280"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">veg_pois</span><span class="op">$</span><span class="fu">H</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="va">pois_model_null</span><span class="op">)</span><span class="op">)</span>
 <span class="va">veg_pois</span><span class="op">$</span><span class="fu">H</span><span class="op">(</span><span class="va">pois_GD</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] -124.406827879897
@@ -761,7 +762,7 @@ inject tracing code into any R function. Here, the tracer objects will
 only be used together with a callback argument.</p>
 <p>We use the tracer object with our gradient descent implementation
 and print trace information every 50th iteration.</p>
-<div class="sourceCode" id="cb295"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb282"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">GD_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"h_prime"</span>, <span class="st">"gamma"</span><span class="op">)</span>, N <span class="op">=</span> <span class="fl">50</span><span class="op">)</span>
 <span class="va">pois_GD</span> <span class="op">&lt;-</span> <span class="fu">GD</span><span class="op">(</span><span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">grad_H</span>, cb <span class="op">=</span> <span class="va">GD_tracer</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span></code></pre></div>
 <pre><code>## n = 1: value = 1; h_prime = 14268.59; gamma = NA; 
@@ -783,7 +784,7 @@ run time is measured for each iteration of the algorithm and the
 cumulative run time is of greater interest. This information
 can be computed and inspected after the algorithm has converged,
 and it is returned by the summary method for tracer objects.</p>
-<div class="sourceCode" id="cb297"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb284"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">tail</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">GD_tracer</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>##         value      h_prime    gamma      .time
 ## 372 -124.4068 1.125779e-04 0.005120 0.06706513
@@ -795,7 +796,7 @@ and it is returned by the summary method for tracer objects.</p>
 <p>The trace information is stored in a list. The summary method transforms
 the trace information into a data frame with one row per iteration. We can also access
 individual entries of the list of trace information via subsetting.</p>
-<div class="sourceCode" id="cb299"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb286"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">GD_tracer</span><span class="op">[</span><span class="fl">377</span><span class="op">]</span> </code></pre></div>
 <pre><code>## $value
 ## [1] -124.4068
@@ -843,7 +844,7 @@ of introducing the more advanced curvature condition, we simply reset the
 algorithm to use the gradient direction in any case where a non-descent direction
 has been chosen. Resets of descent direction every <span class="math inline">\(p\)</span>-th iteration is recommended
 anyway for the nonlinear conjugate gradient algorithm.</p>
-<div class="sourceCode" id="cb301"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb288"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">CG</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span>
   <span class="va">par</span>, 
   <span class="va">H</span>,
@@ -888,7 +889,7 @@ anyway for the nonlinear conjugate gradient algorithm.</p>
     <span class="kw"><a href="https://rdrr.io/r/base/warning.html">warning</a></span><span class="op">(</span><span class="st">"Maximal number, "</span>, <span class="va">maxiter</span>, <span class="st">", of iterations reached"</span><span class="op">)</span>
   <span class="va">par</span>
 <span class="op">}</span></code></pre></div>
-<div class="sourceCode" id="cb302"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb289"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">CG_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"gamma"</span>, <span class="st">"grad_norm_sq"</span><span class="op">)</span>, N <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>
 <span class="va">pois_CG</span> <span class="op">&lt;-</span> <span class="fu">CG</span><span class="op">(</span><span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">grad_H</span>, cb <span class="op">=</span> <span class="va">CG_tracer</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span></code></pre></div>
 <pre><code>## n = 1: value = 1; gamma = NA; grad_norm_sq = 14269; 
@@ -906,9 +907,9 @@ Figure 7.2: Gradient norms (top) and negative log-likelihoods (bottom) for gradi
 </p>
 </div>
 <p>This algorithm is fast enough to fit the large Poisson regression model.</p>
-<div class="sourceCode" id="cb304"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb291"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">veg_pois</span> <span class="op">&lt;-</span> <span class="fu">poisson_model</span><span class="op">(</span><span class="op">~</span> <span class="va">store</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">normalSale</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>, <span class="va">vegetables</span>, response <span class="op">=</span> <span class="st">"sale"</span><span class="op">)</span></code></pre></div>
-<div class="sourceCode" id="cb305"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb292"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">CG_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"gamma"</span>, <span class="st">"grad_norm_sq"</span><span class="op">)</span>, N <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>
 <span class="va">pois_CG</span> <span class="op">&lt;-</span> <span class="fu">CG</span><span class="op">(</span><span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span>, <span class="va">veg_pois</span><span class="op">$</span><span class="va">grad_H</span>, cb <span class="op">=</span> <span class="va">CG_tracer</span><span class="op">$</span><span class="va">tracer</span><span class="op">)</span></code></pre></div>
 <pre><code>## n = 1: value = 1; gamma = NA; grad_norm_sq = 12737; 
@@ -921,7 +922,7 @@ Figure 7.2: Gradient norms (top) and negative log-likelihoods (bottom) for gradi
 ## n = 700: value = -128.59; gamma = 0.0019343; grad_norm_sq = 5.3952e-06; 
 ## n = 800: value = -128.59; gamma = 0.005903; grad_norm_sq = 3.7118e-06; 
 ## n = 900: value = -128.59; gamma = 0.0037779; grad_norm_sq = 1.0621e-06;</code></pre>
-<div class="sourceCode" id="cb307"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb294"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">tail</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">CG_tracer</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>##         value       gamma grad_norm_sq    .time
 ## 899 -128.5894 0.005902958 5.214667e-06 12.26816
@@ -931,7 +932,7 @@ Figure 7.2: Gradient norms (top) and negative log-likelihoods (bottom) for gradi
 ## 903 -128.5894 0.004722366 7.056181e-06 12.31577
 ## 904 -128.5894 0.003777893 8.881615e-07 12.33146</code></pre>
 <p>Using <code><a href="https://rdrr.io/r/stats/optim.html">optim()</a></code> with the conjugate gradient method.</p>
-<div class="sourceCode" id="cb309"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb296"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/system.time.html">system.time</a></span><span class="op">(</span>
   <span class="va">pois_optim_CG</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span>
     <span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, 
@@ -945,7 +946,7 @@ Figure 7.2: Gradient norms (top) and negative log-likelihoods (bottom) for gradi
 ## control: maxiter</code></pre>
 <pre><code>##    user  system elapsed 
 ##   0.500   0.375   0.845</code></pre>
-<div class="sourceCode" id="cb312"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb299"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pois_optim_CG</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"counts"</span><span class="op">)</span><span class="op">]</span></code></pre></div>
 <pre><code>## $value
 ## [1] -127.3596
@@ -971,7 +972,7 @@ can also be written as
 where <span class="math inline">\(\mathrm{D}p(\theta)\)</span> is the Jacobian of the parametrization <span class="math inline">\(\theta \mapsto p(\theta)\)</span>,
 and <span class="math inline">\(\mathbf{\tilde{x}}(\theta)\)</span> is the vector with
 <span class="math display">\[\mathbf{\tilde{x}}(\theta)_k = \frac{ x_{j(k)}}{M(p(\theta))_{j(k)}}.\]</span></p>
-<div class="sourceCode" id="cb314"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb301"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">grad_loglik</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">par</span>, <span class="va">x</span>, <span class="va">prob</span>, <span class="va">Dprob</span>, <span class="va">group</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">prob</span><span class="op">(</span><span class="va">par</span><span class="op">)</span>
   <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span> <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">par</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
@@ -979,7 +980,7 @@ and <span class="math inline">\(\mathbf{\tilde{x}}(\theta)\)</span> is the vecto
 <span class="op">}</span></code></pre></div>
 <p>The Jacobian needs to be implemented for the specific example
 of peppered moths.</p>
-<div class="sourceCode" id="cb315"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb302"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">Dprob</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">p</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">p</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>
   <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span>
@@ -993,7 +994,7 @@ of peppered moths.</p>
 <span class="op">}</span></code></pre></div>
 <p>We can then use the conjugate gradient algorithm to compute the
 maximum-likelihood estimate.</p>
-<div class="sourceCode" id="cb316"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb303"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.3</span><span class="op">)</span>, <span class="va">loglik</span>, <span class="va">grad_loglik</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span>, 
       prob <span class="op">=</span> <span class="va">prob</span>, Dprob <span class="op">=</span> <span class="va">Dprob</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>, 
       method <span class="op">=</span> <span class="st">"CG"</span><span class="op">)</span></code></pre></div>
@@ -1022,7 +1023,7 @@ approach to implement the gradient above. The gradient could then
 be used for other optimization algorithms, still using <code>optim</code>, such as
 conjugate gradient. In fact, you can use conjugate gradient without
 computing and implementing the gradient.</p>
-<div class="sourceCode" id="cb318"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb305"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.3</span><span class="op">)</span>, <span class="va">loglik</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">85</span>, <span class="fl">196</span>, <span class="fl">341</span><span class="op">)</span>, 
       prob <span class="op">=</span> <span class="va">prob</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>, 
       method <span class="op">=</span> <span class="st">"CG"</span><span class="op">)</span></code></pre></div>
@@ -1077,7 +1078,7 @@ It should be noted that if we choose a matrix <span class="math inline">\(B_n\)<
 iteration, then <span class="math inline">\(- B_n \nabla H(\theta_n)\)</span>
 is a descent direction whenever <span class="math inline">\(B_n\)</span> is a positive definite matrix.</p>
 <p>Newton implementation (with trace).</p>
-<div class="sourceCode" id="cb320"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb307"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">Newton</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span>
   <span class="va">par</span>, 
   <span class="va">H</span>,
@@ -1096,7 +1097,7 @@ is a descent direction whenever <span class="math inline">\(B_n\)</span> is a po
     <span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">cb</span><span class="op">)</span><span class="op">)</span> <span class="fu">cb</span><span class="op">(</span><span class="op">)</span>
     <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">grad</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span> <span class="op">&lt;=</span> <span class="va">epsilon</span><span class="op">)</span> <span class="kw">break</span>
     <span class="va">Hessian</span> <span class="op">&lt;-</span> <span class="fu">hess</span><span class="op">(</span><span class="va">par</span><span class="op">)</span> 
-    <span class="va">rho</span> <span class="op">&lt;-</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/solve-methods.html">solve</a></span><span class="op">(</span><span class="va">Hessian</span>, <span class="va">grad</span><span class="op">)</span><span class="op">)</span> 
+    <span class="va">rho</span> <span class="op">&lt;-</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/drop.html">drop</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/solve.html">solve</a></span><span class="op">(</span><span class="va">Hessian</span>, <span class="va">grad</span><span class="op">)</span><span class="op">)</span> 
     <span class="va">gamma</span> <span class="op">&lt;-</span> <span class="va">gamma0</span>
     <span class="va">par1</span> <span class="op">&lt;-</span> <span class="va">par</span> <span class="op">+</span> <span class="va">gamma</span> <span class="op">*</span> <span class="va">rho</span>
     <span class="va">h_prime</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">grad</span><span class="op">)</span> <span class="op">%*%</span> <span class="va">rho</span> 
@@ -1115,7 +1116,7 @@ is a descent direction whenever <span class="math inline">\(B_n\)</span> is a po
 <span class="header-section-number">7.3.1</span> Poisson regression<a class="anchor" aria-label="anchor" href="#poisson-regression"><i class="fas fa-link"></i></a>
 </h3>
 <p>We use the implementation of the Hessian matrix.</p>
-<div class="sourceCode" id="cb321"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb308"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">Newton_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"h_prime"</span>, <span class="st">"gamma"</span><span class="op">)</span>, N <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>
 <span class="va">pois_Newton</span> <span class="op">&lt;-</span> <span class="fu">Newton</span><span class="op">(</span>
   <span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, 
@@ -1124,10 +1125,10 @@ is a descent direction whenever <span class="math inline">\(B_n\)</span> is a po
   <span class="va">veg_pois</span><span class="op">$</span><span class="va">Hessian_H</span>, 
   cb <span class="op">=</span> <span class="va">Newton_tracer</span><span class="op">$</span><span class="va">tracer</span>
 <span class="op">)</span></code></pre></div>
-<div class="sourceCode" id="cb322"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb309"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="va">pois_Newton</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="va">pois_model</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] -4.979266e-10  1.298776e-06</code></pre>
-<div class="sourceCode" id="cb324"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb311"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/cbind.html">rbind</a></span><span class="op">(</span>
   pois_Newton <span class="op">=</span> <span class="va">veg_pois</span><span class="op">$</span><span class="fu">H</span><span class="op">(</span><span class="va">pois_Newton</span><span class="op">)</span>,
   pois_glm <span class="op">=</span> <span class="va">veg_pois</span><span class="op">$</span><span class="fu">H</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="va">pois_model</span><span class="op">)</span><span class="op">)</span>
@@ -1135,7 +1136,7 @@ is a descent direction whenever <span class="math inline">\(B_n\)</span> is a po
 <pre><code>##                               [,1]
 ## pois_Newton -128.58945047446991339
 ## pois_glm    -128.58945047447093657</code></pre>
-<div class="sourceCode" id="cb326"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb313"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">Newton_tracer</span><span class="op">)</span></code></pre></div>
 <pre><code>##         value       h_prime    gamma     .time
 ## 1     1.00000            NA       NA 0.0000000
@@ -1150,7 +1151,7 @@ is a descent direction whenever <span class="math inline">\(B_n\)</span> is a po
 ## 10 -128.58945 -3.288913e-06 1.000000 1.5609791</code></pre>
 <p>The R function <code><a href="https://rdrr.io/r/stats/glm.html">glm.fit()</a></code> uses a Newton algorithm (without backtracking)
 and is about a factor five faster on this example.</p>
-<div class="sourceCode" id="cb328"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb315"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">env_pois</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">environment</a></span><span class="op">(</span><span class="va">veg_pois</span><span class="op">$</span><span class="va">H</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/system.time.html">system.time</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/glm.html">glm.fit</a></span><span class="op">(</span><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span>, <span class="va">env_pois</span><span class="op">$</span><span class="va">y</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">poisson</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>##    user  system elapsed 
@@ -1171,7 +1172,7 @@ algorithm that requires the computation of the full Hessian in each
 iteration.</p>
 <p>We will only consider the application of the BFGS algorithm via the
 implementation in the R function <code><a href="https://rdrr.io/r/stats/optim.html">optim()</a></code>.</p>
-<div class="sourceCode" id="cb330"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb317"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/system.time.html">system.time</a></span><span class="op">(</span>
   <span class="va">pois_BFGS</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span>
     <span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, 
@@ -1185,10 +1186,10 @@ implementation in the R function <code><a href="https://rdrr.io/r/stats/optim.ht
 ## control: maxiter</code></pre>
 <pre><code>##    user  system elapsed 
 ##   0.324   0.180   0.475</code></pre>
-<div class="sourceCode" id="cb333"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb320"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/range.html">range</a></span><span class="op">(</span><span class="va">pois_BFGS</span><span class="op">$</span><span class="va">par</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coefficients</a></span><span class="op">(</span><span class="va">pois_model</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] -0.2638641  0.6364195</code></pre>
-<div class="sourceCode" id="cb335"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb322"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pois_BFGS</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"counts"</span><span class="op">)</span><span class="op">]</span></code></pre></div>
 <pre><code>## $value
 ## [1] -128.5888
@@ -1210,9 +1211,9 @@ entries are zero),
 and if we convert it into a sparse matrix, all the matrix-vector products
 will be more run time efficient. Sparse matrices are implemented in the
 R package Matrix.</p>
-<div class="sourceCode" id="cb337"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb324"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://Matrix.R-forge.R-project.org/">Matrix</a></span><span class="op">)</span></code></pre></div>
-<div class="sourceCode" id="cb338"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb325"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/Matrix.html">Matrix</a></span><span class="op">(</span><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/class.html">class</a></span><span class="op">(</span><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] "dgCMatrix"
@@ -1220,7 +1221,7 @@ R package Matrix.</p>
 ## [1] "Matrix"</code></pre>
 <p>Without changing any other code, we get an immediate
 run time improvement using e.g. <code><a href="https://rdrr.io/r/stats/optim.html">optim()</a></code> and the BFGS algorithm.</p>
-<div class="sourceCode" id="cb340"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb327"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/system.time.html">system.time</a></span><span class="op">(</span>
   <span class="va">pois_BFGS_sparse</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span>
     <span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, 
@@ -1241,7 +1242,7 @@ a function from the R package MatrixModels. Ideally, we should reimplement
 <code>pois_model()</code> to support an option for using sparse matrices, but
 to focus on the run time benefits of sparse matrices, we simply
 change the matrix in the appropriate environment directly.</p>
-<div class="sourceCode" id="cb343"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb330"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu">MatrixModels</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/MatrixModels/man/model.Matrix.html">model.Matrix</a></span><span class="op">(</span>
   <span class="op">~</span> <span class="va">store</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">normalSale</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>, 
   data <span class="op">=</span> <span class="va">vegetables</span>, 
@@ -1253,7 +1254,7 @@ change the matrix in the appropriate environment directly.</p>
 ## [1] "MatrixModels"</code></pre>
 <p>The Newton implementation benefits enormously from using sparse matrices
 because the bottleneck is the computation of the Hessian.</p>
-<div class="sourceCode" id="cb345"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb332"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">Newton_tracer</span> <span class="op">&lt;-</span> <span class="fu">tracer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"h_prime"</span>, <span class="st">"gamma"</span><span class="op">)</span>, N <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>
   <span class="va">pois_Newton</span> <span class="op">&lt;-</span> <span class="fu">Newton</span><span class="op">(</span>
   <span class="va">veg_pois</span><span class="op">$</span><span class="va">par</span>, 
@@ -1290,7 +1291,7 @@ and for truly large scale problems impossible. Using sparse model matrices
 for regression models allows us to work with larger models that have
 more variables, more factor levels and more observations than if we use dense
 model matrices. For the Poisson regression model the memory used by either representation can be found.</p>
-<div class="sourceCode" id="cb347"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb334"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/object.size.html">object.size</a></span><span class="op">(</span><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/object.size.html">object.size</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html">as.matrix</a></span><span class="op">(</span><span class="va">env_pois</span><span class="op">$</span><span class="va">X</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## Sparse matrix memory usage:
@@ -1403,7 +1404,7 @@ of errors.</p>
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2021-10-20, Git version: 86c4ccf.</p>
+    <p>"<strong>Computational Statistics with R</strong>" was written by Niels Richard Hansen. It was last built on 2022-05-08, Git version: c532a37.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

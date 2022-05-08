@@ -59,6 +59,7 @@ NumericVector lin_batch(
   }
   return beta;
 }
+
 // [[Rcpp::depends(dqrng)]]
 // [[Rcpp::export]]
 NumericVector SG_Rcpp(
@@ -96,7 +97,6 @@ NumericVector SG_Rcpp(
   return beta;
 }
 
-// [[Rcpp::depends(dqrng)]]
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::export]]
 arma::colvec SG_arma(
