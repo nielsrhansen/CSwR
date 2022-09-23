@@ -15,14 +15,35 @@ bookdown::gitbook:
       before: |
         <li><a href="./">Computational Statistics with R</a></li>
 
+# Code to generate pdf using own preamble
+#
 # The highlight option ´pygments´ for pdf removes the background shading.
 # This is reverted in preamble.tex by redefining the shade environment and color
 # To get the output in the correct directory (_pdf_book), render the book 
 # via the code in serv.R 
 
+# bookdown::pdf_book:
+#   includes:
+#     in_header: preamble_own.tex
+#   citation_package: natbib
+#   keep_tex: yes
+#   highlight: pygments
+
+# Code to generate pdf using CRC preable and cls
+
 bookdown::pdf_book:
   includes:
-    in_header: preamble.tex
+    in_header: latex/preamble.tex
+    before_body: latex/before_body.tex
+    after_body: latex/after_body.tex
+  keep_tex: true
+  dev: "cairo_pdf"
+  latex_engine: xelatex
   citation_package: natbib
-  keep_tex: yes
-  highlight: pygments
+  template: null
+  pandoc_args: --top-level-division=chapter
+  toc_depth: 3
+  toc_unnumbered: false
+  toc_appendix: true
+  quote_footer: ["\\VA{", "}{}"]
+  highlight_bw: true
