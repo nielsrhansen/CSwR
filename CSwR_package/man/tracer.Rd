@@ -18,7 +18,7 @@ every \code{N}-th iteration. \code{N = 1} is the default.}
 
 \item{save}{a logical value. Determines if the trace information is stored.}
 
-\item{time}{a logical value. Determines if run time information is traced.}
+\item{time}{a logical value. Determines if runtime information is traced.}
 
 \item{expr}{an expression that will be evaluated in an environment that has
 the calling environment of the \code{tracer} function as parent.}
@@ -34,11 +34,12 @@ the evaluation environment of other functions during their evaluation.
 }
 \details{
 The function \code{tracer} constructs a tracer object containing a
-\code{tracer}, a \code{get} function and a \code{reset} function. A call of \code{tracer} can
+\code{tracer}, a \code{get} function and a \code{clear} function. A call of \code{tracer} can
 be inserted in other functions and used to collect and print trace information
 about the internals of that function during its evaluation. The \code{get}
 function can access that information afterwards, and \code{clear} deletes
 all stored values in the tracer object.
+
 The time between \code{tracer} calls can also be measured and stored using
 the \code{hires_time} function from the bench package. There are \code{print}
 and \code{summary} methods available for summarizing the trace information.

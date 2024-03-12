@@ -4,11 +4,12 @@
 #' the evaluation environment of other functions during their evaluation.
 #'
 #' The function \code{tracer} constructs a tracer object containing a
-#' \code{tracer}, a \code{get} function and a \code{reset} function. A call of \code{tracer} can
+#' \code{tracer}, a \code{get} function and a \code{clear} function. A call of \code{tracer} can
 #' be inserted in other functions and used to collect and print trace information
 #' about the internals of that function during its evaluation. The \code{get}
 #' function can access that information afterwards, and \code{clear} deletes
 #' all stored values in the tracer object.
+#'
 #' The time between \code{tracer} calls can also be measured and stored using
 #' the \code{hires_time} function from the bench package. There are \code{print}
 #' and \code{summary} methods available for summarizing the trace information.
@@ -24,7 +25,7 @@
 #'                \code{N = 0} means never, and otherwise trace information is printed
 #'                every \code{N}-th iteration. \code{N = 1} is the default.
 #' @param save    a logical value. Determines if the trace information is stored.
-#' @param time    a logical value. Determines if run time information is traced.
+#' @param time    a logical value. Determines if runtime information is traced.
 #' @param expr    an expression that will be evaluated in an environment that has
 #'                the calling environment of the \code{tracer} function as parent.
 #' @param ...     other arguments passed to \code{format} for printing.
@@ -59,18 +60,29 @@ tracer <- function(
   force(time)
   force(save)
   n <- 1
+  gc_last_time <- gc.time()[3]
   values_save <- list()
   last_time <- bench::hires_time()
   eval_expr <- is.call(expr) || is.expression(expr)
+  if (eval_expr) {
+    # Environment for evaluation of the expression
+    expr_envir <- new.env()
+  }
 
   tracer <- function() {
     time_diff <- bench::hires_time() - last_time
+    gc_time <- gc.time()[3]
+    gc_time_diff <- gc_time - gc_last_time
+    if (gc_time_diff > 0) {
+      time_diff <- max(time_diff - gc_time_diff, 0)
+    }
     envir <- parent.frame()
     if (eval_expr) {
-      # This construction ensures that the evaluation of the expression does
-      # not accidentally overwrite variables in the calling environment but
-      # still has access to it
-      expr_envir <- new.env(parent = envir)
+      # The expression is evaluated in its own environment to ensure that it
+      # does not accidentally overwrite variables in the calling environment.
+      # To give the expression access to the calling environment it is assigned
+      # as the enclosing environment.
+      parent.env(expr_envir) <- envir
       tryCatch(eval(expr, envir = expr_envir),
                error = function(e) warning(e))
     }
@@ -94,6 +106,7 @@ tracer <- function(
       values_save[[n]] <<- values
     }
     n <<- n + 1
+    gc_last_time <<- gc.time()[3]
     last_time <<- bench::hires_time()
     invisible(NULL)
   }
@@ -177,21 +190,22 @@ col_to_row <- function(x) {
 #' @return \code{summary} returns a data frame (of class trace) with columns
 #' containing the values
 #' of the traced objects, and if time is traced an additional column, \code{.time},
-#' containing the cumulative run time.
+#' containing the cumulative runtime.
 #' @export
 summary.tracer <- function(x, ...) {
   x <- suppressWarnings(x$get(simplify = TRUE))
-  x[, ".time"] <- c(0, cumsum(x[-1, ".time"]))
+  if (".time" %in% colnames(x))
+    x[, ".time"] <- c(0, cumsum(x[-1, ".time"]))
   structure(as.data.frame(x), class = c("trace", "data.frame"))
 }
 
 #' @rdname summary.tracer
 #' @export
-print.tracer <- function(x, ...) print(x$get(...))
+print.tracer <- function(x, ...) print(x$get(simplify = TRUE))
 
 #' Plot results from a trace
 #'
-#' Plots the value of a traced object on a log-scale against run time.
+#' Plots the value of a traced object on a log-scale against runtime.
 #'
 #' @param object a trace or tracer object
 #' @param y      the name of the traced object to plot

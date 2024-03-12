@@ -18,9 +18,6 @@
 
 \item{log}{logical. Should the y-axis be on a log-scale. Default is TRUE.}
 }
-\value{
-
-}
 \description{
-Plots the value of a traced object on a log-scale against run time.
+Plots the value of a traced object on a log-scale against runtime.
 }
