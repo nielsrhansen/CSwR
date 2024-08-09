@@ -1,0 +1,55 @@
+---
+title: "Univariate random variables: Exercise solutions"
+author: "Niels Richard Hansen"
+date: "September 15, 2019"
+output:
+  html_document: 
+    code_folding: show 
+---
+
+
+# 4.1
+
+# 4.2
+
+
+TURN THIS INTRO AN EXERCISE IN CHAP. 5.
+
+We can then reimplement `vMsim` using `rng_stream`. For later usage we add the 
+possibility of printing out some tracing information.
+
+```{r vM-rejection-fast, dependson="RNG-stream"}
+vMsim <- function(n, kappa) {
+  count <- 0
+  y <- numeric(n)
+  y0 <- runif_stream(n, - pi, pi)
+  u <- runif_stream(n)
+  for(i in 1:n) {
+    reject <- TRUE
+    while(reject) {
+      count <- count + 1
+      z <- y0()
+      reject <- u() > exp(kappa * (cos(z) - 1))
+    }
+    y[i] <- z
+  }
+ y
+}
+```
+
+Then we can compare the run time of this new implementation to the 
+run time of the first implementation. 
+
+```{r vMsim-fast-runtime, dependson="vM-rejection-fast", echo=2}
+tmp <- vMsim(100, kappa = 5)
+system.time(vMsim(100000, kappa = 5))
+```
+
+As we see from the time estimate above, using a vectorized call of `runif` 
+reduces the run time by a factor 4-5. It is possible to get a further factor 2-3 
+run time improvement (not shown) by implementing the computations done by
+`rng_stream` directly inside `vMsim`. However, we prioritize here to have 
+modular code so that we can reuse `rng_stream` for other rejection samplers without 
+repeating code. A pure R implementation based on a loop will never be able to 
+compete with a C++ implementation anyway when the accept-reject step is such a
+simple computation.
