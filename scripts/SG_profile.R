@@ -1,13 +1,4 @@
-SG <- function(
-  par, 
-  grad,              # Function of parameter and observation index
-  N,                 # Sample size
-  gamma,             # Decay schedule or a fixed learning rate
-  maxiter = 100,     # Max epoch iterations
-  sampler = sample,  # How data is resampled. Default is a random permutation
-  cb = NULL, 
-  ...
-) {
+stoch_grad <- function(par, grad, N, gamma, maxiter = 100, sampler = sample,  cb = NULL, ...) {
   gamma <- if (is.function(gamma)) gamma(1:maxiter) else rep(gamma, maxiter) 
   for(k in 1:maxiter) {
     if(!is.null(cb)) cb()
@@ -22,14 +13,31 @@ SG <- function(
 
 ls_model <- function(X, y) {
   N <- length(y)
+  X <- unname(X) 
+  list(
+    N = N,
+    X = X, 
+    y = y, 
+    par0 = rep(0, ncol(X)),
+    H = function(beta)
+      drop(crossprod(y - X %*% beta)) / (2 * N),
+    grad = function(beta, i, ...) {               
+      xi <- X[i, , drop = FALSE]
+      res <- xi %*% beta - y[i]
+      drop(crossprod(xi, res)) / length(res)
+    }
+  )
+}
+
+ls_model_old <- function(X, y) {
+  N <- length(y)
   X <- unname(X) # Strips X of names
   list(
-    # Initial parameter value
+    N = N,
+    y = y,
     par0 = rep(0, ncol(X)),
-    # Objective function
     H = function(beta) 
       drop(crossprod(y - X %*% beta)) / (2 * N),
-    # Gradient in a single observation
     grad = function(beta, i) {  
       xi <- X[i, ]
       xi * drop(xi %*% beta - y[i])

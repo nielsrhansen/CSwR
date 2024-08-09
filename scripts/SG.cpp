@@ -4,7 +4,7 @@ using namespace Rcpp;
 using namespace arma;
 
 // [[Rcpp::export]]
-NumericVector lin_grad(
+NumericVector grad_cpp(
     NumericVector beta, 
     IntegerVector ii, 
     NumericMatrix X, 
@@ -30,7 +30,7 @@ NumericVector lin_grad(
 
 
 // [[Rcpp::export]]
-NumericVector lin_batch(
+NumericVector batch_cpp(
     NumericVector par, 
     IntegerVector ii, 
     double gamma, 
@@ -62,20 +62,20 @@ NumericVector lin_batch(
 
 // [[Rcpp::depends(dqrng)]]
 // [[Rcpp::export]]
-NumericVector SG_Rcpp(
+NumericVector sg_cpp(
     NumericVector par, 
     int N, 
     NumericVector gamma,
     NumericMatrix X, 
     NumericVector y,
     int m = 50, 
-    int maxiter = 100
+    int maxit = 100
 ) {
   int p = par.length(), M = floor(N / m);
   NumericVector grad(p), yhat(N), beta = clone(par);
   IntegerVector ii;
   
-  for(int l = 0; l < maxiter; ++l) {
+  for(int l = 0; l < maxit; ++l) {
     // Note that dqsample_int samples from {0, 1, ..., N - 1}
     ii = dqrng::dqsample_int(N, N); 
     for(int j = 0; j < M; ++j) {
@@ -99,24 +99,25 @@ NumericVector SG_Rcpp(
 
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::export]]
-arma::colvec SG_arma(
+arma::colvec sg_arma(
     NumericVector par, 
     int N, 
     NumericVector gamma,
     const arma::mat& X, 
     const arma::colvec& y, 
     int m = 50, 
-    int maxiter = 100
+    int maxit = 100
 ) {
   int p = par.length(), M = floor(N / m);
-  arma::colvec grad(p), yhat(N), beta = clone(par);
+  arma::colvec grad(p), res(N), yhat(N), beta = clone(par);
   uvec ii, iii;
   
-  for(int l = 0; l < maxiter; ++l) {
+  for(int l = 0; l < maxit; ++l) {
     ii = as<arma::uvec>(dqrng::dqsample_int(N, N));
     for(int j = 0; j < M; ++j) {
       iii = ii.subvec(j * m, (j + 1) * m - 1);
-      beta = beta - gamma[l] * (X.rows(iii).t() * (X.rows(iii) * beta - y(iii)) / m); 
+      res = X.rows(iii) * beta - y(iii);
+      beta = beta - gamma[l] * (X.rows(iii).t() * res / m); 
     }
   }
   return beta;
