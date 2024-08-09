@@ -4,11 +4,12 @@
 #' a cache of random numbers that can then be used sequentially. Whenever the
 #' cache runs empty new numbers are generated automatically.
 #'
-#' @param m
-#' @param rng
-#' @param ...
+#' @param m initial cache size
+#' @param rng a random number generator
+#' @param ... additional arguments passed to the random number generator
 #'
-#' @return A function
+#' @return A function that extracts random numbers from the cache and
+#' fills the cache whenever it runs empty.
 #' @export
 #'
 #' @examples
@@ -22,8 +23,8 @@ rng_stream <- function(m, rng, ...) {
   fact <- 1
   next_rn <- function(r = m) {
     j <<- j + 1
-    if(j > m) {
-      if(fact == 1 && r < m) fact <<- m / (m - r)
+    if (j > m) {
+      if (fact == 1 && r < m) fact <<- m / (m - r)
       m <<- floor(fact * (r + 1))
       cache <<- do.call(rng, c(m, args))
       j <<- 1

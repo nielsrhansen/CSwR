@@ -5,20 +5,22 @@
 \alias{print.tracer}
 \title{Summarize and print trace information}
 \usage{
-\method{summary}{tracer}(x, ...)
+\method{summary}{tracer}(object, ...)
 
 \method{print}{tracer}(x, ...)
 }
 \arguments{
-\item{x}{a tracer object}
+\item{object}{a tracer object}
 
 \item{...}{other arguments (currently ignored)}
+
+\item{x}{a tracer object}
 }
 \value{
 \code{summary} returns a data frame (of class trace) with columns
 containing the values
 of the traced objects, and if time is traced an additional column, \code{.time},
-containing the cumulative runtime.
+containing the cumulative runtime in seconds.
 }
 \description{
 Summarize and print trace information

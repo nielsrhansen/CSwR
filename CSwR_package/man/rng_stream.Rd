@@ -7,10 +7,15 @@
 rng_stream(m, rng, ...)
 }
 \arguments{
-\item{...}{}
+\item{m}{initial cache size}
+
+\item{rng}{a random number generator}
+
+\item{...}{additional arguments passed to the random number generator}
 }
 \value{
-A function
+A function that extracts random numbers from the cache and
+fills the cache whenever it runs empty.
 }
 \description{
 A random number stream uses a vectorized random number generator to generate
