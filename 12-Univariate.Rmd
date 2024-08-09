@@ -1,30 +1,54 @@
-# Univariate random variables
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+# Random number generation
 
-This chapter will deal with algorithms for simulating observations from a 
-distribution on $\mathbb{R}$ or any subset thereof. There can be several 
-purposes of doing so, for instance:
+This chapter deals with algorithms for generating random numbers from a
+probability distribution on $\mathbb{R}$ or a subset thereof. Two applications
+of random number generation within statistics are: simulation studies and Monte
+Carlo integration. A simulation study investigates distributional properties of
+statistical procedures, and such studies have become an indispensable
+experimental part of the development of statistical methodology. Monte Carlo
+integration is a more specific application of random number generation as a way
+to numerically compute a probability or an integral.
 
-* We want to investigate properties of the distribution.
-* We want to simulate independent realizations of univariate random variables to 
-investigate the distribution of a transformation.
-* We want to use Monte Carlo integration to compute numerically an integral 
-(which could be a probability). 
+Random number generators are also used when implementing randomization protocols
+in randomized controlled trials, for resampling and subsampling based
+statistical methods, such as bootstrapping, and in other randomized algorithms,
+such as stochastic optimization algorithms. There are likewise important
+applications of random number generators outside of statistics, e.g., within
+cryptography. We will not pursue all these different applications, nor will we
+deal with the design and implementation of general simulation studies.
 
-In this chapter the focus is on the simulation of a single random variable 
-or an i.i.d. sequence of random variables primarily via various transformations 
-of pseudorandom numbers. The pseudo 
-random numbers themselves being approximate simulations of i.i.d. random 
-variables uniformly distributed on $(0, 1)$. 
+In this chapter the focus is on the generation of a single random number or an
+i.i.d. sequence of random numbers. In particular, how pseudorandom number
+generators are implemented and used to approximate sampling of i.i.d. random
+variables that are uniformly distributed on $(0, 1)$. Section \@ref(transform)
+illustrates how simulation from other distributions than the uniform can be
+obtained from pseudorandom number generators via transformations.
+
+Chapter \@ref(reject-samp) treats rejection sampling, in particular for
+distributions on $\mathbb{R}$. Chapter \@ref(mci) deals with Monte Carlo
+integration in greater detail, in particular how to assess the precision of
+computations based on random number generation. Chapters \@ref(stochopt) and
+\@ref(stochem) rely on (pseudo)random numbers as an integral part of any
+stochastic optimization algorithm.
 
 ## Pseudorandom number generators
 
 Most simulation algorithms are based on algorithms for generating 
-*pseudorandom* uniformly distributed variables in $(0, 1)$. They arise from 
-deterministic integer sequences initiated by a *seed*. A classical
+*pseudorandom* uniformly distributed variables in $(0, 1)$. Such pseudorandom
+variables all arise from deterministic sequences of numbers initiated by a *seed*. A classical
 example of a pseudorandom integer generator is the 
 linear congruential generator. A sequence of numbers from 
 this generator is computed iteratively by
-$$x_{n+1} = (a x_n + c)  \text{ mod m}$$
+
+\[
+x_{n+1} = (a x_n + c)  \text{ mod m}
+\]
+
 for integer parameters $a$, $c$ and $m$. The seed $x_1$ is a 
 number between $0$ and $m - 1$, and the resulting 
 sequence is in the set $\{0, \ldots, m - 1\}$. The ANSI C standard specifies 
@@ -36,39 +60,67 @@ Pseudorandom number generators are generally defined in terms of a finite state 
 $\mathcal{Z}$ and a one-to-one map $f : \mathcal{Z} \to \mathcal{Z}$. The 
 generator produces a sequence in $\mathcal{Z}$ iteratively from the 
 seed $\mathbf{z}_1 \in \mathcal{Z}$ by
-$$\mathbf{z}_n = f(\mathbf{z}_{n-1}).$$
+
+\[
+\mathbf{z}_n = f(\mathbf{z}_{n-1}).
+\]
+
 Pseudorandom integers are typically obtained as 
-$$x_n = h(\mathbf{z}_n)$$
-for a transformation $h : \mathcal{Z} \mapsto \mathbb{Z}$. If the 
+
+\[
+x_n = h(\mathbf{z}_n)
+\]
+
+for a map $h : \mathcal{Z} \mapsto \mathbb{Z}$. If the 
 image of $h$ is in the set $\{0, 1, \ldots, 2^{w} - 1\}$ of $w$-bit integers, 
 pseudorandom numbers in $[0, 1)$ are typically obtained as 
-$$x_n = 2^{-w} h(\mathbf{z}_n).$$
+
+\[
+x_n = 2^{-w} h(\mathbf{z}_n).
+\]
 
 In R, the default pseudorandom number generator is the 32-bit 
 *Mersenne Twister*, which generates integers in the range 
-$$\{0, 1, \ldots, 2^{32} -1\}.$$ The state space is 
-$$\mathcal{Z} =  \{0, 1, \ldots, 2^{32} -1\}^{624},$$
+
+\[
+\{0, 1, \ldots, 2^{32} -1\}.
+\]
+
+The state space is 
+
+\[
+\mathcal{Z} =  \{0, 1, \ldots, 2^{32} -1\}^{624},
+\]
+
 that is, a state is a 624 dimensional vector of 32-bit integers. 
 The function $f$ is of the form 
-$$f(\mathbf{z}) = (z_2, z_3, \ldots, z_{623}, f_{624}(z_1, z_2, z_{m + 1})),$$
+
+\[
+f(\mathbf{z}) = (z_2, z_3, \ldots, z_{623}, f_{624}(z_1, z_2, z_{m + 1})),
+\]
+
 for $1 \leq m < 624$, and $h$ is a function of $z_{624}$ only. 
 The standard choice $m = 397$ is used in the R implementation.
-The function $f_{624}$ is a bit complicated, it includes 
+The function $f_{624}$ is a bit complicated. It includes 
 what is known as the *twist transformation*, and it requires 
 additional parameters. The period of the generator 
 is the astronomical number 
-$$2^{32 \times 624 - 31} - 1 = 2^{19937} - 1,$$
+
+\[
+2^{32 \times 624 - 31} - 1 = 2^{19937} - 1,
+\]
+
 which is a Mersenne prime. 
 Moreover, all combinations of consecutive integers 
 up to dimension 623 occur equally often in a period, and empirical tests of the 
 generator demonstrate that it has good statistical properties, though it 
 is known to fail some tests.
 
-In R you can set the seed using the function `set.seed` that takes an 
+In R you can set the seed using the function `set.seed()` that takes an 
 integer argument and produces an element in the state space. The argument 
-given to `set.seed` is not the actual seed, and `set.seed` computes a 
+given to `set.seed()` is not the actual seed, and `set.seed()` computes a 
 valid seed for any pseudorandom number generator that R is using, 
-whether it is the Mersenne Twister or not. Thus the use of `set.seed` is 
+whether it is the Mersenne Twister or not. Thus the use of `set.seed()` is 
 the safe and recommended way of setting a seed. 
 
 The actual seed (together with some additional information) can be accessed 
@@ -87,28 +139,29 @@ For the Mersenne Twister,
 `.Random.seed[2]` contains the "current position" in the state vector. 
 The implementation needs a position variable because it does 624 updates of the 
 state vector at a time and then runs through those values sequentially 
-before the next update. This is equivalent to but more efficient than e.g.
+before the next update. This is equivalent to but more efficient than
 implementing the position shifts explicitly as in the definition of $f$ above. 
 
 
 ```{r seed}
-set.seed(27112015)           ## Computes a new seed from an integer
-oldseed <- .Random.seed[-1]  ## The actual seed
-.Random.seed[1]              ## Encoding of generators used, will stay fixed
-.Random.seed[2]              ## Start position after the seed has been set is 624
+set.seed(27112015)           # Computes a new seed from an integer
+oldseed <- .Random.seed[-1]  # The actual seed
+.Random.seed[1]              # Encoding of generators used (stays fixed)
+.Random.seed[2]              # Start position after new seed is 624
 tmp <- runif(1)
 tmp
 ```
 
-Every time a random number is generated, e.g. by `runif` above, the same underlying 
+Every time a random number is generated, by `runif()` as above or by any other 
+R function relying on the default pseudorandom number generator, the same underlying 
 sequence of pseudorandom numbers is used, and the state vector stored in 
 `.Random.seed` is updated accordingly.
 
 ```{r changeseed, dependson="seed"}
 head(oldseed, 5)
-head(.Random.seed[-1], 5)     ## The state vector and position has been updated
-c(tmp, runif(1))          
-head(.Random.seed[-1], 5)     ## The state vector has not changed, only the position
+head(.Random.seed[-1], 5)     # State vector and position updated
+c(tmp, runif(1))
+head(.Random.seed[-1], 5)     # State vector unchanged, position updated
 ```
 
 Resetting the seed will restart the pseudorandom number generator with the 
@@ -117,48 +170,44 @@ same seed and result in the same sequence of random numbers.
 ```{r newseed, dependson=c("changeseed", "seed")}
 set.seed(27112015)
 head(.Random.seed[-1], 5)
-head(oldseed, 5)             ## Same as current .Random.seed
-runif(1)                     ## Same as tmp
+head(oldseed, 5)             # Same as current .Random.seed
+runif(1)                     # Same as tmp
 ```
 
 Note that when using any of the standard R generators, any value of $0$ or $1$
 returned by the underlying pseudorandom uniform generator is 
-adjusted to be in $(0,1)$. Thus uniform random variables are guaranteed to be 
-in $(0, 1)$. 
+adjusted to be in $(0,1)$. Uniform random variables are thus 
+guaranteed to be in $(0, 1)$. 
 
 Some of the random number generators implemented in R use more than one 
 pseudorandom number per variable. This is, for instance, the case when we simulate 
-Gamma distributed random variables. 
+gamma distributed random variables. 
 
 ```{r gammaseed}
 set.seed(27112015)
-rgamma(1, 1)                 ## A single Gamma distributed random number
-head(.Random.seed[-1], 5)    ## Position changed to 2
-rgamma(1, 1)                 ## A single Gamma distributed random number
-head(.Random.seed[-1], 5)    ## Position changed to 5
+rgamma(1, 1)                 # A single gamma distributed random number
+head(.Random.seed[-1], 5)    # Position changed to 2
+rgamma(1, 1)                 # A single gamma distributed random number
+head(.Random.seed[-1], 5)    # Position changed to 5
 ```
 
-In the example above, the first Gamma variable required two pseudorandom 
+In the example above, the first gamma variable required two pseudorandom 
 numbers, while the second required three pseudorandom numbers. The detailed 
 explanation is given in Section \@ref(reject-samp), where it is shown 
-how to generate random variables from the Gamma distribution via 
+how to generate random variables from the gamma distribution via 
 rejection sampling. This requires as a minimum two pseudorandom numbers 
-for every Gamma variable generated. 
+for every gamma variable generated. 
 
-### Implementing a pseudorandom number generator
-
-The development of high quality pseudorandom number generators is a 
-research field in itself. This is particularly true if one needs
-theoretical guarantees for randomized algorithms or cryptographically 
-secure generators. For scientific computations and 
-simulations correct statistical properties, reproducibility and speed are 
-more important than cryptographic security, but even so, it is not trivial 
-to invent a good generator, and the field is still developing. For a 
-generator to be seriously considered, its mathematical properties should 
-be well understood, and it should pass (most) tests in standardized 
-test suites such as [TestU01](http://simul.iro.umontreal.ca/testu01/tu01.html),
-see @LEcuyer:2007.
-
+The development of high quality pseudorandom number generators is a research
+field in itself. This is particularly true if one needs theoretical guarantees
+for randomized algorithms or cryptographically secure generators. For scientific
+computations and simulations, reproducibility and speed are more important than
+cryptographic security---if the generator has acceptable statistical properties.
+It is, nevertheless, not easy to invent a good generator, and the field is still
+developing. For a generator to be seriously considered, its mathematical
+properties should be well understood, and it should pass (most) tests in
+standardized test suites such as
+[TestU01](http://simul.iro.umontreal.ca/testu01/tu01.html), see @LEcuyer:2007.
 
 R provides a couple of alternatives to the Mersenne Twister, 
 see `?RNG`, but there is no compelling reason to switch to any of those for ordinary 
@@ -167,10 +216,25 @@ One exception is the L'Ecuyer-CMRG generator, which is useful when
 independent pseudorandom sequences are needed for parallel computations. 
 
 Though the Mersenne Twister is a widely used pseudorandom number generator, 
-it has [well known shortcomings](http://www.pcg-random.org/other-rngs.html).
-There are high quality alternatives that are simpler and faster, such 
-as the family of [shift-register generators](https://en.wikipedia.org/wiki/Xorshift)
-and their variations, but they are not currently available from the base R package. 
+it has some [known shortcomings](http://www.pcg-random.org/other-rngs.html)
+[@Oneill:2018], see also [@Oneill:pcg2014]. 
+In the following two sections we discuss alternatives to the standard 
+pseudorandom number generators available in R. 
+
+### Implementing a pseudorandom number generator
+
+This section dives into low-level aspects of an efficient implementation 
+of a pseudorandom number generator via Rcpp. This involves turning the 
+generator into the default generator used by R. The implementation illustrates 
+bit-level C/C++ programming techniques, some aspects of R's interface to 
+compiled code, and how users can make compiled code available. However, 
+the section can safely be skipped in a first reading, and other parts 
+of the book do not rely explicitly on material in this section. 
+
+The family of [shift-register generators](https://en.wikipedia.org/wiki/Xorshift)
+and their variations are considered to be high quality alternatives to the 
+Mersenne Twister, and to be both simpler and faster. At the time of writing 
+such generators are, however, not available from the base R package. 
 
 Shift-register generators are based on linear transformations of the bit 
 representation of integers. Three particular transformations are typically 
@@ -179,50 +243,93 @@ bitwise $\mathrm{xor}$ operator. Let $z = [z_{31}, z_{30}, \ldots, z_0]$
 with $z_i \in \{0, 1\}$ denote the bit 
 representation of a 32-bit (unsigned) integer $z$ (ordered from most significant
 bit to least significant bit). That is, 
-$$z = z_{31} 2^{31} + z_{30} 2^{30} + \ldots + z_2 2^2 + z_1 2^{1} + z_0.$$
+
+\[
+z = z_{31} 2^{31} + z_{30} 2^{30} + \ldots + z_2 2^2 + z_1 2^{1} + z_0.
+\]
+
 Then the left shift operator is defined as 
-$$\mathrm{Lshift}(z) = [z_{30}, z_{29}, \ldots, z_0, 0],$$
+
+\[
+\mathrm{Lshift}(z) = [z_{30}, z_{29}, \ldots, z_0, 0],
+\]
+
 and the right shift operator is defined as 
-$$\mathrm{Rshift}(z) = [0, z_{31}, z_{30}, \ldots, z_1].$$
+
+\[
+\mathrm{Rshift}(z) = [0, z_{31}, z_{30}, \ldots, z_1].
+\]
+
 The bitwise xor operator is defined as 
-$$\mathrm{xor}(z, z') = [\mathrm{xor}(z_{31},z_{31}') , 
-\mathrm{xor}(z_{30}, z_{30}'), \ldots, \mathrm{xor}(z_0, z_0')]$$
+
+\[
+\mathrm{xor}(z, z') = [\mathrm{xor}(z_{31},z_{31}') , 
+\mathrm{xor}(z_{30}, z_{30}'), \ldots, \mathrm{xor}(z_0, z_0')]
+\]
+
 where $\mathrm{xor}(0, 0) = \mathrm{xor}(1, 1) = 0$ and 
 $\mathrm{xor}(1, 0) = \mathrm{xor}(0, 1) = 1$. Thus a transformation could 
 be of the form 
-$$\mathrm{xor}(z, \mathrm{Rshift}^2(z)) = [\mathrm{xor}(z_{31}, 0) , 
-\mathrm{xor}(z_{30}, 0), \mathrm{xor}(z_{29}, z_{31}), \ldots, \mathrm{xor}(z_0, z_2)].$$
+
+\[
+\mathrm{xor}(z, \mathrm{Rshift}^2(z)) = [\mathrm{xor}(z_{31}, 0) , 
+\mathrm{xor}(z_{30}, 0), \mathrm{xor}(z_{29}, z_{31}), \ldots, \mathrm{xor}(z_0, z_2)].
+\]
 
 One example of a shift-register based generator is Marsaglia's [xorwow](https://en.wikipedia.org/wiki/Xorshift#xorwow) 
 algorithm, @Marsaglia:2003. In addition to the shift and xor operations, the output of 
 this generator is perturbed by a sequence of integers with period $2^{32}$. 
 The state space of the generator is 
-$$\{0, 1, \ldots, 2^{32} -1\}^{5}$$
+
+\[
+\{0, 1, \ldots, 2^{32} -1\}^{5}
+\]
+
 with 
-$$f(\mathbf{z}) = (z_1 + 362437 \ (\mathrm{mod}\ 2^{32}),
-f_1(z_5, z_2), z_2, z_3, z_4),$$
+
+\[
+f(\mathbf{z}) = (z_1 + 362437 \ (\mathrm{mod}\ 2^{32}), f_1(z_5, z_2), z_2, z_3, z_4),
+\]
+
 and 
-$$h(\mathbf{z}) = 2^{-32} (z_1 + z_2).$$ 
+
+\[
+h(\mathbf{z}) = 2^{-32} (z_1 + z_2).
+\]
+
 The number 362437 is Marsaglia's choice for generating what he calls a
 Weyl sequence, but any odd number will do. The function $f_1$ is given as 
-$$f_1(z, z') = \mathrm{xor}(\mathrm{xor}(z, \mathrm{Rshift}^2(z)), \mathrm{xor}(z', \mathrm{xor}(\mathrm{Lshift}^4(z'), \mathrm{Lshift}(\mathrm{xor}(z, \mathrm{Rshift}^2(z)))))).$$
+
+\begin{align*}
+\overline{z} & = \mathrm{xor}(z, \mathrm{Rshift}^2(z)) \\
+f_1(z, z') & = \mathrm{xor}(\overline{z}, \mathrm{xor}(z', \mathrm{xor}(\mathrm{Lshift}^4(z'), \mathrm{Lshift}(\overline{z})))).
+\end{align*}
 
 This may look intimidating, but all the operations are very elementary. 
-Take the number $z = 123456$, say, then the intermediate value 
+Take the numbers $z = 123456$ and $z' = 87654321$, say. Then we can find their 
+binary representations in R, in the bit order as above, as follows:
+
+```{r inttobit}
+z <- intToBits(123456) |> as.integer() |> rev()
+zp <- intToBits(87654321) |> as.integer() |> rev()
+cat("z  = ", z, "\n", "z' = ", zp, sep = "")
+```
+
+The intermediate value 
 $\overline{z} = \mathrm{xor}(z, \mathrm{Rshift}^2(z))$ is computed as follows:
 
-$$
+\[
 \begin{array}{ll}
 z & \texttt{00000000 00000001 11100010 01000000} \\
 \mathrm{Rshift}^2(z) & \texttt{00000000 00000000 01111000 10010000} \\
 \hline
 \mathrm{xor} & \texttt{00000000 00000001 10011010 11010000}
 \end{array}
-$$
+\]
 
-And if $z' = 87654321$ the value of $f_1(z, z')$ is computed like this:
+The value of $f_1(z, z')$ is then computed like this:
 
-$$
+\[
 \begin{array}{ll}
 \mathrm{Lshift}^4(z') & \texttt{01010011 10010111 11111011 00010000} \\
 \mathrm{Lshift}(\overline{z}) & \texttt{00000000 00000011 00110101 10100000} \\
@@ -235,9 +342,18 @@ z' & \texttt{00000101 00111001 01111111 10110001} \\
 \hline
  \mathrm{xor} & \texttt{01010110 10101100 00101011 11010001}
 \end{array}
-$$
+\]
 
-Converted back to a 32-bit integer, the result is $f_1(z, z') = 1454123985$.
+We can convert back to a 32-bit integer using R,
+
+```{r fzzp, dependson="inttobit"}
+result <- "01010110101011000010101111010001" 
+result <- strsplit(result, "")[[1]] |> rev() %>% as.integer()
+packBits(result, "integer")
+```
+
+That is $f_1(123456, 87654321) = 1454123985$. 
+
 The shift and xor operations are tedious to do by hand but extremely fast on 
 modern computer architectures, and shift-register based generators are some 
 of the fastest generators with good statistical properties.  
@@ -245,25 +361,25 @@ of the fastest generators with good statistical properties.
 To make R use the xorwow generator we need to implement it as a user supplied 
 generator. This requires writing the C code that implements the generator, 
 compiling the code into a shared object file, loading it into 
-R with the `dyn.load` function, and finally calling `RNGkind("user")` 
+R with the `dyn.load()` function, and finally calling `RNGkind("user")` 
 to make R use this pseudorandom number generator. See `?Random.user`
 for some details and an example. 
 
-Using the Rcpp package, and `sourceCpp`, in particular, is usually much preferred
+Using the Rcpp package, and `sourceCpp()`, in particular, is usually much preferred
 over manual compiling and loading. However, in this case we need to make 
 functions available to the internals of R rather than exporting functions to be 
 callable from the R console. That is, nothing needs to be exported from C/C++. 
-If nothing is exported, `sourceCpp` will actually not load the shared object 
-file, so we need to trick `sourceCpp` to do so anyway. In the implementation
+If nothing is exported, `sourceCpp()` will actually not load the shared object 
+file, so we need to trick `sourceCpp()` to do so anyway. In the implementation
 below we achieve this by simply exporting a direct interface to the xorwow generator.
 
 ```{Rcpp xorwow}
 #include <Rcpp.h>
 #include <R_ext/Random.h>
 
-/* The Random.h header file contains the function declarations for the functions 
- that R rely on internally for a user defined generator, and it also defines 
- the type Int32 as an unsigned int. */
+// The Random.h header file contains the function declarations 
+// for the functions that R rely on internally for a user defined 
+// generator, and it also defines the type Int32 as an unsigned int.
 
 static Int32 z[5];     // The state vector 
 static double res;
@@ -273,7 +389,6 @@ static int nseed = 5;  // Length of the state vector
 // modified so as to return a double in [0, 1). The '>>' and '<<' 
 // operators in C are bitwise right and left shift operators, and 
 // the caret, '^', is the xor operator. 
-
 double * user_unif_rand()
 { 
   Int32 t = z[4];
@@ -292,7 +407,6 @@ double * user_unif_rand()
 }
 
 // A seed initializer using Marsaglia's congruential PRNG
-
 void  user_unif_init(Int32 seed_in) { 
   z[0] = seed_in;
   z[1] = 69069 * z[0] + 1;
@@ -302,22 +416,29 @@ void  user_unif_init(Int32 seed_in) {
 }
 
 // Two functions to make '.Random.seed' in R reflect the state vector
-
 int * user_unif_nseed() { return &nseed; }
 int * user_unif_seedloc() { return (int *) &z; }
 
-// Wrapper to make 'user_unif_rand' callable from R
+// Wrapper to make 'user_unif_rand()' callable from R
 double xor_runif() {
   return *user_unif_rand();
 }
 
-// This module will export two functions to be directly available from R.
-// Note: if nothing is exported, `sourceCpp` will not load the shared 
+// This module exports two functions to be directly available from R.
+// Note: if nothing is exported, `sourceCpp()` will not load the shared 
 // object file generated by the compilation of the code, and 
-// 'user_unif_rand' will not become available to the internals of R. 
+// 'user_unif_rand()' will not become available to the internals of R. 
 RCPP_MODULE(xorwow) {
-  Rcpp::function("xor_set.seed", &user_unif_init, "Seeds Marsaglia's xorwow");
-  Rcpp::function("xor_runif", &xor_runif, "A uniform from Marsaglia's xorwow");
+  Rcpp::function(
+    "xor_set.seed", 
+    &user_unif_init, 
+    "Seeds Marsaglia's xorwow"
+  );
+  Rcpp::function(
+    "xor_runif", 
+    &xor_runif, 
+    "A uniform from Marsaglia's xorwow"
+  );
 }
 ```
 
@@ -343,1072 +464,246 @@ scrambling turns 24102019 used below into 3573076633 used above.
 
 ```{r userRNGtest, dependson="xorwow"}
 set.seed(24102019)
-.Random.seed[-1]  ## The state vector as seeded 
-runif(1)          ## As above since same unscrambled seed is used
-.Random.seed[-1]  ## The state vector after one update
+.Random.seed[-1]  # The state vector as seeded
+runif(1)          # As above since same unscrambled seed is used
+.Random.seed[-1]  # The state vector after one update
 ```
 
 The code above shows the state vector of the xorwow algorithm when seeded 
-by the `user_unif_init` function, and it also shows the 
+by the `user_unif_init()` function, and it also shows the 
 update to the state vector after a single iteration of the xorwow algorithm. 
 
 Though the xorwow algorithm is fast and simple, a benchmark study (not shown) 
-reveals that using xorwow instead of the Mersenne Twister doesn't impact the 
-run time in a notable way when using e.g. `runif`. The generator is simply 
+reveals that using xorwow instead of the Mersenne Twister does not impact the 
+runtime in a notable way when using, e.g., `runif()`. The generator is simply 
 not the bottleneck. As the implementation 
 of xorwow above is experimental and has not been thoroughly tested, we will 
-not rely on it and quickly reset the random number generator to its default value. 
+not rely on it and thus reset the random number generator to its default value. 
 
 ```{r resetRNG, cache=FALSE}
-## Resetting the generator to the default
+# Resetting the generator to the default
 RNGkind(default_prng[1])
 ```
 
 ### Pseudorandom number packages {#rng-packages}
 
-To benefit from the recent developments in pseudorandom number generators 
-we can turn to R packages such as the [dqrng](https://CRAN.R-project.org/package=dqrng)
+Instead of implementing our own generator, as in the section above, we 
+can benefit from the recent developments in pseudorandom number generators 
+by turning to R packages such as the [dqrng](https://CRAN.R-project.org/package=dqrng)
 package. It implements pcg64 from the [PCG family](http://www.pcg-random.org) of
 generators as well as [Xoroshiro128+ and Xoshiro256+](http://prng.di.unimi.it)
 that are shift-register algorithms. Xoroshiro128+ is the default and other
 generators can be chosen using `dqRNGkind`. The usage of generators from dqrng 
 is similar to the usage of base R generators.
 
-```{r}
-library(dqrng)
-dqset.seed(24102019)
-dqrunif(1)
+```{r dqrng-test}
+dqrng::dqset.seed(24102019)
+dqrng::dqrunif(1)
 ```
 
 Using the generators from dqrng does not interfere with the base R generators
 as the state vectors are completely separated. 
 
-In addition to uniform pseudorandom variables generated by `dqrunif` the 
-dqrng package can generate exponential (`dqrexp`) and Gaussian (`dqrnorm`) 
-random variables as well as uniform discrete distributions (`dqsample` and 
-`dqsample.int`). All based on the fast pseudorandom integer generators that 
+In addition to uniform pseudorandom variables generated by `dqrunif()` the 
+dqrng package can generate exponential (`dqrexp()`) and Gaussian (`dqrnorm()`) 
+random variables as well as uniform discrete distributions (`dqsample()` and 
+`dqsample.int()`). All based on the fast pseudorandom integer generators that 
 the package includes. In addition, the package has a C++ interface that makes it 
 possible to use its generators in compiled code as well. 
 
+We benchmark some of the functions from the package against the base R alternatives. 
+
 ```{r dqrng_bench, echo=2}
 oldopt <- options(digits = 2)
-microbenchmark(
+bench::mark(
   runif(1e6),
-  dqrunif(1e6)
+  dqrng::dqrunif(1e6),
+  check = FALSE,
+  relative = TRUE
 )
 options(digits = oldopt$digits)
 ```
 
-As the benchmark above shows, `dqrunif` is about six times faster than 
-`runif` when generating one million variables. The other generators provided
-by the dqrng package show similar improvements over the base R generators. 
+As the benchmark above shows, `runif()` is about a factor $1.5$ slower 
+than `dqrunif()` when generating one million variables. Thus for uniformly 
+distributed random numbers there is not much of a runtime benefit to using 
+the dqrng package. The other generators provided by the package show 
+greater improvements over the base R generators. Generating a small subsample 
+from a large set is particularly fast.
 
 ```{r dqrng_bench_norm, echo=FALSE, eval=FALSE, dependson="dqrng_bench"}
-microbenchmark(
+bench::mark(
   rnorm(1e4, 1, 0.5),
-  dqrnorm(1e4, 1, 0.5)
+  dqrng::dqrnorm(1e4, 1, 0.5),
+  check = FALSE,
+  relative = TRUE
 )
 ```
 
 ```{r dqrng_bench_exp, echo=FALSE, eval=FALSE, dependson="dqrng_bench"}
-microbenchmark(
-  rexp(1e4, 2),
-  dqrexp(1e4, 2)
+bench::mark(
+  rexp(1e7, 2),
+  dqrng::dqrexp(1e7, 2),
+  check = FALSE,
+  relative = TRUE
 )
 ```
 
-```{r dqrng_bench_sample, echo=FALSE, eval=FALSE, dependson="dqrng_bench"}
-microbenchmark(
-  sample.int(1e4, 999),
-  dqsample.int(1e4, 999)
+```{r dqrng_bench_sample, echo=2, dependson="dqrng_bench"}
+oldopt <- options(digits = 2)
+bench::mark(
+  sample.int(1e6, 1000),
+  dqrng::dqsample.int(1e6, 1000),
+  check = FALSE,
+  relative = TRUE
 )
+options(digits = oldopt$digits)
 ```
 
+The benchmark shows that `sample.int()` is close to a factor $30$ slower 
+than `dqsample.int()` when sampling one thousand integers (without replacement) 
+from a million integers. We return to the use of `dqsample.int()` 
+in Section \@ref(full-Rcpp).
 
-## Transformation techniques
+## Transformation techniques {#transform}
 
-If $T : \mathcal{Z} \to \mathbb{R}$ is a map and $Z \in \mathcal{Z}$ is a random 
-variable we can simulate, then we can simulate $X = T(Z).$
+A widely used technique for simulating from a target distribution of interest is to 
+represent the distribution as a transformation of another, possibly simpler, 
+distribution. Mathematically, a transformation is a map $T : \mathcal{Z} \to \mathbb{R}$, 
+and if we can simulate the random variable $Z \in \mathcal{Z}$, 
+then we can also simulate $X = T(Z).$ The following 
+theorem gives one standard way of transforming uniformly distributed variables 
+to any target distribution on the real line via the inverse distribution 
+function. 
 
-\vskip 5mm
-
-```{theorem, inverse-distribution-function}
-If $F^{\leftarrow} : (0,1) \mapsto \mathbb{R}$
+::: {.theorem #inverse-distribution-function}
+If $F^{-1} : (0,1) \mapsto \mathbb{R}$
 is the (generalized) inverse of a distribution function and $U$ is uniformly distributed 
 on $(0, 1)$ then the distribution of
-$$F^{\leftarrow}(U)$$
-has distribution function $F$.
 
+\[
+  F^{-1}(U)
+\]
+
+has distribution function $F$.
+:::
+
+
+For a proof of Theorem \@ref(thm:inverse-distribution-function) see, e.g., 
+Lemma 8.7 in [@legall2022measure]. It is easiest to use this theorem if 
+we have an analytic formula for the inverse distribution function as 
+in the following example. 
+
+::: {.example #exponential-inverse .boxed}
+The exponential distribution with rate parameter $\lambda > 0$ has distribution 
+function $F(x) = 1 - e^{-\lambda x}$ for $x \geq 0$. To find its inverse we
+solve the equation $F(x) = u$ for $u \in (0, 1)$ and get
+
+\[
+  F^{-1}(u) = - \frac{1}{\lambda} \log (1 - u). 
+\]
+
+The function `r_exp()` below is a direct implementation of simulation of 
+exponential variables by transforming uniform variables by the inverse 
+distribution function. Figure \@ref(fig:sim-exponential) confirms that 
+the implementation simulates from the correct exponential distribution. 
+:::
+ 
+(ref:expsim) Left: Histogram of 1000 simulated data points from the exponential distribution with rate parameter $\lambda = 2$ and the corresponding density. Right: The empirical (black) and theoretical (blue) distribution functions. 
+
+```{r sim-exponential, fig.cap="(ref:expsim)", fig.show='hold', out.width="49%"}
+r_exp <- function(n, lambda) {
+  u <- runif(n)
+  - log(1 - u) / lambda
+}
+
+# Test
+x <- r_exp(1000, 2)
+hist(x, breaks = seq(0, 8, length.out = 30), prob = TRUE, xlim = c(0, 4))
+curve(dexp(x, 2), 0, 4, col = "blue", lwd = 2, add = TRUE)
+curve(pexp(x, 2), 0, 2, col = "blue", lwd = 2)
+plot(ecdf(x), xlim = c(0, 2), add = TRUE, lwd = 2)
 ```
 
-The proof of Theorem \@ref(thm:inverse-distribution-function) can be found in many 
-textbooks and will be skipped. It is easiest to use this theorem if 
-we have an analytic formula for the inverse distribution function. But even 
-in cases where we don't it might be useful for simulation anyway if we have
-a very accurate approximation that is fast to evaluate. 
+A curious detail is that if $U$ is uniformly distributed on $(0, 1)$, then $1 - U$ 
+is uniformly distributed on $(0, 1)$. It is therefore possible to slightly 
+simplify the implementation by replacing $F^{-1}$ by $- \log(u) / \lambda$, 
+see Exercise \@ref(exr:exponential-sim).
 
-The call `RNGkind()` in the previous section revealed that the [default in R](https://github.com/wch/r-source/blob/af7f52f70101960861e5d995d3a4bec010bc89e6/src/nmath/snorm.c#L265) for generating samples from $\mathcal{N}(0,1)$ is inversion. That is, 
-Theorem \@ref(thm:inverse-distribution-function) is used to transform 
-uniform random variables with the inverse distribution function $\Phi^{-1}$. 
-This function is, however, non-standard, and R implements a 
-[technical approximation](https://github.com/wch/r-source/blob/af7f52f70101960861e5d995d3a4bec010bc89e6/src/nmath/qnorm.c#L52) of $\Phi^{-1}$ via rational functions. 
+Even if we do not have a simple analytic expression for the inverse distribution
+function we might have an accurate approximation that is fast to evaluate, 
+which can then be used for simulation. An interesting example is the Gaussian
+distribution. The call `RNGkind()` in the previous section revealed that the
+[default in
+R](https://github.com/wch/r-source/blob/af7f52f70101960861e5d995d3a4bec010bc89e6/src/nmath/snorm.c#L265)
+for generating samples from $\mathcal{N}(0,1)$ is inversion. That is, Theorem
+\@ref(thm:inverse-distribution-function) is used to transform uniform random
+variables with the inverse distribution function $\Phi^{-1}$. This function is,
+however, non-standard, and R implements a [technical
+approximation](https://github.com/wch/r-source/blob/af7f52f70101960861e5d995d3a4bec010bc89e6/src/nmath/qnorm.c#L52)
+of $\Phi^{-1}$ via rational functions.
 
-### Sampling from a $t$-distribution 
-
-Let $Z = (Y, W) \in \mathbb{R} \times (0, \infty)$ with $Z \sim \mathcal{N}(0, 1)$ and 
+::: {.example #t-distribution .boxed}
+Another good example of a distribution that we can simulate by transformation 
+is the $t$-distribution. 
+Let $Z = (Y, W) \in \mathbb{R} \times (0, \infty)$ with $Y \sim \mathcal{N}(0, 1)$ and 
 $W \sim \chi^2_k$ independent. 
 
 Define $T : \mathbb{R} \times (0, \infty) \to \mathbb{R}$ by 
-$$T(z,w) = \frac{z}{\sqrt{w/k}},$$
-then 
-$$X = T(Z, W) = \frac{Z}{\sqrt{W/k}} \sim t_k.$$
+$T(y,w) = y / \sqrt{w/k},$ then 
 
-This is how R simulates from a $t$-distribution with $W$ generated from a 
+\[
+  X = T(Y, W) = \frac{Y}{\sqrt{W/k}}
+\]
+
+has a $t$-distribution with $k$ degress of freedom. Exercise \@ref(exr:t-distribution-sim)
+asks you to implement simulation from the $t$-distribution via the transformation 
+above. This requires an algorithm 
+that simulates from the Gaussian distribution
+and an algorithm that simulates from the $\chi^2_k$ distribution (which is 
+also a gamma distribution). 
+
+The R function `rt()` implements simulation from a $t$-distribution by the
+above transformation and by generating $W$ from a 
 gamma distribution with shape parameter $k / 2$ and scale parameter $2$.
-
-## Rejection sampling {#reject-samp}
-
-This section deals with a general algorithm for simulating variables 
-from a distribution with density $f$. We call $f$ the target density 
-and the corresponding distribution is called the target distribution. 
-The idea is to simulate *proposals* from a different distribution 
-with density $g$ (the proposal distribution) and then according to 
-a criterion decide to accept or reject the proposals. It is assumed
-throughout that the proposal density $g$ is a density fulfilling that 
-
-\begin{equation}
-g(x) = 0 \Rightarrow f(x) = 0.
-(\#eq:gfnull)
-\end{equation}
-
-Let $Y_1, Y_2, \ldots$ be i.i.d. with density $g$ on $\mathbb{R}$ and $U_1, U_2, \ldots$ 
-be i.i.d. uniformly distributed on $(0,1)$ and independent of the $Y_i$-s. Define
-$$T(\mathbf{Y}, \mathbf{U}) = Y_{\sigma}$$
-with 
-$$\sigma = \inf\{n \geq 1 \mid U_n \leq \alpha f(Y_n) / g(Y_n)\},$$
-for $\alpha \in (0, 1]$ and $f$ a density. Rejection sampling then consists 
-of simulating independent pairs $(Y_n, U_n)$ as long as we *reject* the 
-proposals $Y_n$ sampled from $g$, 
-that is, as long as 
-$$U_n > \alpha f(Y_n) / g(Y_n).$$
-The first time we *accept* a proposal is $\sigma$, and then we stop the 
-sampling and return the proposal $Y_{\sigma}$. The result is, indeed, 
-a sample from the distribution with density $f$ as the following theorem states. 
-
-\vskip 5mm
-
-```{theorem, label="reject"}
-If $\alpha f(y) \leq g(y)$ for all $y \in \mathbb{R}$ and $\alpha > 0$
-then the distribution of $Y_{\sigma}$ has density $f$. 
-
-```
-
-```{proof} 
-Note that $g$ automatically fulfills \@ref(eq:gfnull). The formal proof decomposes 
-the event $(Y_{\sigma} \leq y)$ according to the value of $\sigma$ as follows
-
-\begin{align}
-P(Y_{\sigma} \leq y) & = \sum_{n = 1}^{\infty} P(Y_{n} \leq y, \ \sigma = n) \\
-& = \sum_{n = 1}^{\infty} P(Y_{n} \leq y, \ U_n \leq \alpha f(Y_n) / g(Y_n)) P(\sigma > n - 1) \\
-& = P(Y_{1} \leq y, \ U_1 \leq \alpha f(Y_1) / g(Y_1)) \sum_{n = 1}^{\infty} P(\sigma > n - 1).
-\end{align}
-
-By independence of the pairs $(Y_n, U_n)$ we find that
-$$P(\sigma > n - 1) = p^{(n-1)}$$
-where $p = P(U_1 > \alpha f(Y_1) / g(Y_1))$, and 
-$$\sum_{n = 1}^{\infty} P(\sigma > n - 1) = \sum_{n = 1}^{\infty} p^{(n-1)} = \frac{1}{1 - p}.$$
-
-We further find using Tonelli's theorem that 
-
-\begin{align}
-P(Y_{1} \leq y, \ U_1 \leq \alpha f(Y_1) / g(Y_1)) & = \int_{-\infty}^y \alpha \frac{f(z)}{g(z)} g(z) \mathrm{d}z \\
-& = \alpha \int_{-\infty}^y f(z) \mathrm{d} z.
-\end{align}
-
-It also follows from this, by taking $y = \infty$, that $1 - p = \alpha$,
-and we conclude that 
-$$P(Y_{\sigma} \leq y) = \int_{-\infty}^y f(z) \mathrm{d} z,$$
-and the density for the distribution of $Y_{\sigma}$ is, indeed, $f$. 
-
-```
-
-Note that if $\alpha f \leq g$ for *densities* $f$ and $g$, then 
-$$\alpha = \int \alpha f(x) \mathrm{d}x \leq \int g(x) \mathrm{d}x = 1,$$
-whence it follows automatically that $\alpha \leq 1$ whenever $\alpha f$ is 
-dominated by $g$. The function $g/\alpha$ is called the *envelope* of $f$.
-The tighter the envelope, the smaller is the probability of rejecting 
-a sample from $g$, and this is quantified explicitly by $\alpha$ as $1 - \alpha$
-is the rejection probability. Thus $\alpha$ should preferably be as close to 
-one as possible. 
-
-If $f(y) = c q(y)$ and $g(y) = d p(y)$ for (unknown) normalizing constants 
-$c, d > 0$ and $\alpha' q \leq p$ for $\alpha' > 0$ then 
-$$\underbrace{\left(\frac{\alpha' d}{c}\right)}_{= \alpha} \ f \leq g.$$
-The constant $\alpha'$ may be larger than 1, but from the argument above
-we know that $\alpha \leq 1$, and Theorem \@ref(thm:reject) gives that 
-$Y_{\sigma}$ has distribution with density $f$. It appears that we need to 
-compute the normalizing constants to implement rejection sampling. However, 
-observe that
-$$u \leq \frac{\alpha f(y)}{g(y)} \Leftrightarrow u \leq \frac{\alpha' q(y)}{p(y)},$$
-whence rejection sampling can actually be implemented with knowledge 
-of the unnormalized densities and $\alpha'$ only and without computing $c$ or $d$. 
-This is one great advantage of rejection sampling. We should 
-note, though, that when we don't know the normalizing constants, $\alpha'$ does not tell 
-us anything about how tight the envelope is, and thus how small the rejection 
-probability is.  
-
-Given two functions $q$ and $p$, how do we then find $\alpha'$ so that 
-$\alpha' q \leq p$? Consider the function 
-$$y \mapsto \frac{p(y)}{q(y)}$$
-for $q(y) > 0$. If this function is lower bounded by a value strictly larger than
-zero, we can take 
-$$\alpha' = \inf_{y: q(y) > 0} \frac{p(y)}{q(y)} > 0.$$
-We can in practice often find this value by minimizing $p(y)/q(y)$. If 
-the minimum is zero, there is no $\alpha'$, and $p$ cannot be 
-used to construct an envelope. If the minimum is strictly positive
-it is the best possible choice of $\alpha'$. 
-
-
-### von Mises distribution {#vMsim}
-
-Recall the [von Mises distribution](#vM) from Section \@ref(vM). It is a
-distribution on $(-\pi, \pi]$ with density 
-$$f(x) \propto e^{\kappa \cos(x - \mu)}$$
-for parameters $\kappa > 0$ and $\mu \in (-\pi, \pi]$. Clearly, $\mu$ is a 
-location parameter, and we fix $\mu = 0$ in the following. Simulating random variables 
-with $\mu \neq 0$ can be achieved by (wrapped) translation of variables 
-with $\mu = 0$. 
-
-Thus the target density is $f(x)  \propto e^{\kappa \cos(x)}$. In this section
-we will use the uniform distribution on $(-\pi, \pi)$ as proposal distribution.
-It has constant density $g(x) = (2\pi)^{-1}$, but all we need is, in fact, that
-$g(x) \propto 1$. Since $x \mapsto 1 / \exp(\kappa \cos(x)) = \exp(-\kappa \cos(x))$ attains its
-minimum $\exp(-\kappa)$ for $x = 0$, we find that 
-$$\alpha' e^{\kappa \cos(x)} = e^{\kappa(\cos(x) - 1)} \leq 1,$$
-with $\alpha' = \exp(-\kappa)$. The rejection test of the 
-proposal $Y \sim g$ can therefore be carried out 
-by testing if a uniformly distributed random variable $U$ on $(0,1)$ 
-satisfies
-$$U > e^{\kappa(\cos(Y) - 1)}.$$
-
-```{r vM-rejection}
-vMsim_slow <- function(n, kappa) {
-  y <- numeric(n)
-  for(i in 1:n) {
-    reject <- TRUE
-    while(reject) {
-      y0 <- runif(1, - pi, pi)
-      u <- runif(1)
-      reject <- u > exp(kappa * (cos(y0) - 1))
-    }
-    y[i] <- y0
-  }
-  y
-}
-```
-
-```{r vMsim, fig.cap="(ref:vMsim)", dependson=c("vonMisesDens", "vM-rejection"), fig.pos="h", fig.show='hold', out.width="49%"}
-f <- function(x, k) exp(k * cos(x)) / (2 * pi * besselI(k, 0))
-x <- vMsim_slow(100000, 0.5)
-hist(x, breaks = seq(-pi, pi, length.out = 20), prob = TRUE)
-curve(f(x, 0.5), -pi, pi, col = "blue", lwd = 2, add = TRUE)
-x <- vMsim_slow(100000, 2)
-hist(x, breaks = seq(-pi, pi, length.out = 20), prob = TRUE)
-curve(f(x, 2), -pi, pi, col = "blue", lwd = 2, add = TRUE)
-```
-
-(ref:vMsim) Histograms of `r format(length(x), big.mark = ",")` simulated data points from von Mises distributions with parameters $\kappa = 0.5$ (left) and $\kappa = 2$ (right). The true densities (blue) are added to the plots.
-
-Figure \@ref(fig:vMsim) confirms that the implementation simulates
-from the von Mises distribution. 
-
-```{r vMsim-runtime, dependson="vM-rejection-fast", echo=2}
-tmp <- vMsim_slow(100, kappa = 5)
-system.time(vMsim_slow(100000, kappa = 5))
-```
-
-Though the implementation can easily simulate 100,000 variables in a couple of 
-seconds, it might still be possible to improve it. To investigate what most 
-of the run time is spent on we use the line profiling tool as implemented in 
-the profvis package.
-
-```{r profvis-vMsim, cache=FALSE, eval=FALSE}
-library(profvis)
-profvis(vMsim_slow(10000, 5))
-```
-
-```{r profvis-vMsim-image, out.width="90%", echo=FALSE}
-knitr::include_graphics("figures/vMsim-profile.png")
-```
-
-The [profiling result](https://cswr.nrhstat.org/figures/vMsim-profile.html) shows that almost all the time 
-is spent on simulating uniformly distributed random variables. It is, perhaps, 
-expected that this should take some time, but that it takes so much more time 
-than computing the ratio, say, used for the rejection test is a bit surprising. 
-What might be even more surprising is the large amount of memory allocation
-and deallocation associated with the simulation of the variables. 
-
-The culprit is `runif` that has some overhead associated with each call.
-The function performs much better if called once to return a vector than 
-if called repeatedly as above to return just single numbers. We could 
-rewrite the rejection sampler to make better use of `runif`, but it would 
-make the code a bit more complicated because we don't know upfront 
-how many uniform variables we need. This will introduce some bookkeeping 
-that it is possible to abstract away from the implementation of any 
-rejection sampler. Therefore we implement a generic
-wrapper of the random number generator that will cache a suitable amount
-of random variables. This function will take care of some bookkeeping 
-and variables can then be extracted as needed. This also nicely 
-illustrates the use of a [function factory](https://adv-r.hadley.nz/function-factories.html).
-
-
-```{r RNG-stream}
-rng_stream <- function(m, rng, ...) {
-  args <- list(...)
-  cache <- do.call(rng, c(m, args))
-  j <- 0
-  fact <- 1
-  next_rn <- function(r = m) {
-    j <<- j + 1
-    if(j > m) {
-      if(fact == 1 && r < m) fact <<- m / (m - r)
-      m <<- floor(fact * (r + 1))
-      cache <<- do.call(rng, c(m, args))
-      j <<- 1
-    }
-    cache[j] 
-  }
-  next_rn
-}
-```
-
-
-The implementation above is a function that returns a function. The returned
-function, `next_rn`  comes with its own environment, where it stores the 
-cached variables and extracts and returns one variable whenever called. 
-It generates a new vector of random variables 
-whenever it "runs out". The first time it does so, the function estimates a 
-factor of how many variables is needed in total based on the argument `r`, and 
-then it generates the estimated number of variables needed. This may be 
-repeated a couple of times.
-
-We can then reimplement `vMsim` using `rng_stream`. For later usage we add the 
-possibility of printing out some tracing information.
-
-```{r vM-rejection-fast, dependson="RNG-stream"}
-vMsim <- function(n, kappa, trace = FALSE) {
-  count <- 0
-  y <- numeric(n)
-  y0 <- rng_stream(n, runif, - pi, pi)
-  u <- rng_stream(n, runif)
-  for(i in 1:n) {
-    reject <- TRUE
-    while(reject) {
-      count <- count + 1
-      z <- y0(n - i)
-      reject <- u(n - i) > exp(kappa * (cos(z) - 1))
-    }
-    y[i] <- z
-  }
-  if(trace)
-    cat("kappa =", kappa, ":", (count - n)/ count, "\n")  ## Rejection frequency
-  y
-}
-```
-
-We should, of course, remember to test that the new implementation still 
-generates variables from the von Mises distribution. 
-
-```{r vMsim2, fig.cap="(ref:vMsim2)", dependson=c("vMsim", "vonMisesDens", "vM-rejection-fast"), fig.pos="h", fig.show='hold', out.width="49%"}
-x <- vMsim(100000, 0.5)
-hist(x, breaks = seq(-pi, pi, length.out = 20), prob = TRUE)
-curve(f(x, 0.5), -pi, pi, col = "blue", lwd = 2, add = TRUE)
-x <- vMsim(100000, 2)
-hist(x, breaks = seq(-pi, pi, length.out = 20), prob = TRUE)
-curve(f(x, 2), -pi, pi, col = "blue", lwd = 2, add = TRUE)
-```
-
-(ref:vMsim2) Histograms of `r format(length(x), big.mark = ",")` simulated data points from von Mises distributions with parameters $\kappa = 0.5$ (left) and $\kappa = 2$ (right), simulated using vectorized generation of random variables.
-
-Then we can compare the run time of this new implementation to the 
-run time of the first implementation. 
-
-```{r vMsim-fast-runtime, dependson="vM-rejection-fast", echo=2}
-tmp <- vMsim(100, kappa = 5)
-system.time(vMsim(100000, kappa = 5))
-```
-
-As we see from the time estimate above, using a vectorized call of `runif` 
-reduces the run time by a factor 4-5. It is possible to get a further factor 2-3 
-run time improvement (not shown) by implementing the computations done by
-`rng_stream` directly inside `vMsim`. However, we prioritize here to have 
-modular code so that we can reuse `rng_stream` for other rejection samplers without 
-repeating code. A pure R implementation based on a loop will never be able to 
-compete with a C++ implementation anyway when the accept-reject step is such a
-simple computation.
-
-In fact, to write a pure R function that is run time efficient, we need to 
-turn the entire rejection sampler into a vectorized computation. That is,
-it is not just the generation of random numbers that need to be vectorized.
-There is no way around some form of loop as we don't known upfront how many 
-rejections there will be. We can, however, benefit from the ideas in `rng_stream` 
-on how to estimate the fraction of acceptances from a first round, which can be 
-used for subsequent simulations. This is done in the following fully 
-vectorized R implementation.
-
-```{r vM-rejection-vec}
-vMsim_vec <- function(n, kappa) {
-  fact <- 1
-  j <- 1
-  l <- 0  ## The number of accepted samples
-  y <- list()
-  while(l < n) {
-    m <- floor(fact * (n - l))  ## equals n the first time
-    y0 <- runif(m, - pi, pi)
-    u <- runif(m)
-    accept <- u <= exp(kappa * (cos(y0) - 1))
-    l <- l + sum(accept)
-    y[[j]] <- y0[accept]
-    j <- j + 1
-    if(fact == 1) fact <- n / l
-  }
-  unlist(y)[1:n]
-}
-```
-
-The implementation above incrementally grows a list, whose entries contain 
-vectors of accepted samples. It is usually not advisable to dynamically 
-grow objects (vectors or list), as this will lead to a lot of memory 
-allocation, copying and deallocation. Thus it is better to initialize a vector
-of the correct size upfront. In this particular case the list will only contain 
-few entries, and it is inconsequential that it is grown dynamically. 
-
-Finally, a C++ implementation via Rcpp is given below where the random variables are 
-then again generated one at a time via the C-interface to R's random number 
-generators. There is no (substantial) overhead of doing so in C++. 
-
-```{Rcpp, vMsim-cpp}
-#include <Rcpp.h>
-using namespace Rcpp;
-// [[Rcpp::export]]
-NumericVector vMsim_cpp(int n, double kappa) {
-  NumericVector y(n);
-  double y0;
-  bool reject;
-  for(int i = 0; i < n; ++i) {
-    do {
-      y0 = R::runif(- M_PI, M_PI);
-      reject = R::runif(0, 1) > exp(kappa * (cos(y0) - 1));
-    } while(reject);
-    y[i] = y0;
-  }
-  return y;
-}
-```
-
-```{r vMsim3, fig.cap="(ref:vMsim3)", dependson=c("vMsim", "vonMisesDens", "vMsim-cpp", "vM-rejection-vec"), fig.pos="h", fig.show='hold', out.width="49%", echo = FALSE}
-x <- vMsim_cpp(100000, 0.5)
-hist(x, breaks = seq(-pi, pi, length.out = 20), prob = TRUE)
-curve(f(x, 0.5), -pi, pi, col = "blue", lwd = 2, add = TRUE)
-x <- vMsim_cpp(100000, 2)
-hist(x, breaks = seq(-pi, pi, length.out = 20), prob = TRUE)
-curve(f(x, 2), -pi, pi, col = "blue", lwd = 2, add = TRUE)
-x <- vMsim_vec(100000, 0.5)
-hist(x, breaks = seq(-pi, pi, length.out = 20), prob = TRUE)
-curve(f(x, 0.5), -pi, pi, col = "blue", lwd = 2, add = TRUE)
-x <- vMsim_vec(100000, 2)
-hist(x, breaks = seq(-pi, pi, length.out = 20), prob = TRUE)
-curve(f(x, 2), -pi, pi, col = "blue", lwd = 2, add = TRUE)
-```
-
-(ref:vMsim3) Histograms of `r format(length(x), big.mark = ",")` simulated data points from von Mises distributions with parameters $\kappa = 0.5$ (left) and $\kappa = 2$ (right), simulated using the Rcpp implementation (top) and the fully vectorized R implementation (bottom).
-
-Figure \@ref(fig:vMsim3) shows the results from testing the C++ implementation
-and the fast R implementation,
-and confirms that the implementations do simulate from the von Mises distribution.
-We conclude by measuring the run time of the implementations using 
-`system.time` and a combined microbenchmark of all four different implementations.
-
-```{r vMsim-cpp-runtime, dependson=c("vMsim-cpp", "vM-rejection-fast", "vM-rejection"), echo=c(1, 3)}
-system.time(vMsim_cpp(100000, kappa = 5))
-old_options <- options(digits = 3)
-microbenchmark(
-  vMsim_slow(1000, kappa = 5),
-  vMsim(1000, kappa = 5),
-  vMsim_vec(1000, kappa = 5),
-  vMsim_cpp(1000, kappa = 5)
-)
-options(digits = old_options$digits)
-```
-
-The C++ implementation is only a factor 1.5 faster than the fully 
-vectorized R implementation, while it is around a factor 15 faster 
-than the loop-based `vMsim` and a factor 85 or so faster than the
-first implementation `vMsim_slow`. Rejection sampling is a good example 
-of an algorithm for which a naive loop-based R implementation
-performs rather poorly in terms of run time, while a completely vectorized 
-implementation is competitive with an Rcpp implementation.
-
-### Gamma distribution
-
-It may be possible to find a suitable envelope of the density for the 
-gamma distribution on $(0, \infty)$, but it turns out that there is a 
-very efficient rejection sampler of a non-standard distribution that 
-can be transformed into a gamma distribution by a simple transformation. 
-
-Let $t(y) = a(1 + by)^3$ for $y \in (-b^{-1}, \infty)$, then $t(Y) \sim \Gamma(r,1)$ if $r \geq 1$
-and $Y$ has density 
-$$f(y) \propto t(y)^{r-1}t'(y) e^{-t(y)} = e^{(r-1)\log t(y) + \log t'(y) - t(y)}.$$
-
-The proof of this follows from a simple univariate density transformation theorem,
-but see also the original paper @Marsaglia:2000 that proposed the rejection
-sampler discussed in this section. The density $f$ will be the *target density* 
-for a rejection sampler. 
-
-With 
-$$f(y) \propto e^{(r-1)\log t(y) + \log t'(y) - t(y)},$$
-$a = r - 1/3$ and $b = 1/(3 \sqrt{a})$ 
-$$f(y) \propto e^{a \log t(y)/a - t(y) + a \log a} \propto \underbrace{e^{a \log t(y)/a - t(y) + a}}_{q(y)}.$$
-
-An analysis of $w(y) := - y^2/2 - \log q(y)$ shows that it is convex on $(-b^{-1}, \infty)$ 
-and it attains its minimum in $0$ with $w(0) = 0$, whence 
-$$q(y) \leq e^{-y^2/2}.$$
-This gives us an envelope expressed in terms of unnormalized densities 
-with $\alpha' = 1$. 
-
-The implementation of a rejection sampler based on this analysis is relatively 
-straightforward. The rejection sampler will simulate from the distribution 
-with density $f$ by simulating from the Gaussian distribution (the envelope). 
-For the rejection step we need to implement $q$. Finally, we also need 
-to implement $t$ to transform the result from the rejection sampler to be 
-gamma distributed. The rejection sampler is otherwise implemented as for 
-the non-vectorized von Mises distribution. To investigate rejection probabilities below
-we additionally implement the possibility of printing out some tracing 
-information. 
-
-```{r gammasim}
-## r >= 1 
-tfun <- function(y, a) {
-  b <- 1 / (3 * sqrt(a))
-  (y > -1/b) * a * (1 + b * y)^3  ## 0 when y <= -1/b
-}
-
-qfun <- function(y, r) {
-  a <- r - 1/3
-  tval <- tfun(y, a)
-  exp(a * log(tval / a) - tval + a)
-}
-
-gammasim <- function(n, r, trace = FALSE) {
-  count <- 0
-  y <- numeric(n)
-  y0 <- rng_stream(n, rnorm)
-  u <- rng_stream(n, runif)
-  for(i in 1:n) {
-    reject <- TRUE
-    while(reject) {
-      count <- count + 1
-      z <- y0(n - i)
-      reject <- u(n - i) > qfun(z, r) * exp(z^2/2)
-    }
-    y[i] <- z
-  }
-  if(trace)
-    cat("r =", r, ":", (count - n)/ count, "\n")  ## Rejection frequency
-  tfun(y, r - 1/3)
-}
-```
-
-We test the implementation by simulating $100,000$ values 
-with parameters $r = 8$ as well as $r = 1$ and compare the resulting histograms 
-to the respective theoretical densities. 
-
-```{r gammaBench, fig.cap="Histograms of simulated gamma distributed variables with shape parameters $r = 8$ (left) and $r = 1$ (right) with corresponding theoretical densities (blue).", echo=FALSE, dependson="gammasim", fig.pos="h", fig.show='hold', out.width="49%"}
-y <- gammasim(1, 8)
-y <- gammasim(100000, 8)
-hist(y, freq = FALSE, ylim = c(0, 0.18), main = "",
-     xlab = "y")
-curve(dgamma(x, 8), col = "blue", lwd = 2, add = TRUE)
-y <- gammasim(100000, 1)
-hist(y, freq = FALSE, ylim = c(0, 0.9), main = "",
-     xlab = "y")
-curve(dgamma(x, 1), col = "blue", lwd = 2, add = TRUE)
-```
-
-Though this is only a simple and informal test, it indicates that the implementation
-correctly simulates from the gamma distribution.
-
-Rejection sampling can be computationally expensive if many samples are rejected. 
-A very tight envelope will lead to fewer rejections, while a loose envelope will
-lead to many rejections. Using the tracing option as implemented we obtain
-estimates of the rejection probability and thus a quantification of
-how tight the envelope is. 
-
-```{r tracing, dependson="gammasim", results='hold'}
-y <- gammasim(100000, 16, trace = TRUE)
-y <- gammasim(100000, 8, trace = TRUE)
-y <- gammasim(100000, 4, trace = TRUE)
-y <- gammasim(100000, 1, trace = TRUE)
-```
-
-We observe that the rejection frequencies are small with $r = 1$ being the 
-worst case with around 5% rejections. For the other cases the rejection 
-frequencies are all below 1%, thus rejection is rare. 
-
-A visual comparison of $q$ to the (unnormalized) Gaussian density also 
-shows that the two (unnormalized) densities are very close except
-in the tails where there is very little probability mass. 
-
-```{r densComparison, fig.cap="Comparisons of the Gaussian proposal (red) and the target density (blue) used for eventually simulating gamma distributed variables via a transformation.", echo = FALSE, fig.show='hold', out.width="100%"}
-par(mfcol = c(2, 2), mex = 0.7, cex = 0.6, font.main = 1)
-curve(qfun(x, 1), - 3 * sqrt(1 - 1/3), 8, lwd = 1.5, 
-      main = "Target and proposal densities, shape = 1", 
-      col = "blue", ylab = "density", xlab = "y")
-curve(exp(-x^2 / 2), add= TRUE, col = "red", lwd = 1.5)
-curve(log(qfun(x, 2)), - 3 * sqrt(1 - 1/3), 8, lwd = 1.5, 
-      col = "blue", ylab = "log-density", ylim = c(-20, 0), xlab = "y")
-curve(-x^2 / 2, add= TRUE, col = "red", lwd = 1.5)
-legend(-2.5, -4, c("q", "Gaussian"), 
-       col = c("blue", "red"), 
-       lwd = 1.5, 
-       bty = "n", 
-       y.intersp = 1.2)
-curve(qfun(x, 8), - 3 * sqrt(8 - 1/3), 8, lwd = 1.5,
-      main = "Target and proposal densities, shape = 8",
-      col = "blue", ylab = "density", xlab = "y")
-curve(exp(-x^2 / 2), add= TRUE, col = "red", lwd = 1.5)
-curve(log(qfun(x, 8)), - 3 * sqrt(8 - 1/3), 8, lwd = 1.5, col = "blue", 
-      ylab = "log-density", ylim = c(-20, 0), xlab = "y")
-curve(-x^2 / 2, add= TRUE, col = "red", lwd = 1.5)
-legend(-8.5, -1, c("q", "Gaussian"), 
-       col = c("blue", "red"), 
-       lwd = 1.5, 
-       bty = "n", 
-       y.intersp = 1.2)
-```
-
-## Adaptive envelopes {#adaptive}
-
-A good envelope should be tight, meaning that $\alpha$ is close to one, 
-it should be fast to simulate from and have a density that is 
-fast to evaluate. It is not obvious how to find such an envelope 
-for an arbitrary target density $f$. 
-
-This section develops a general scheme for the construction of envelopes
-for all [log-concave target densities](https://en.wikipedia.org/wiki/Logarithmically_concave_function#Log-concave_distributions). This is a special class of densities,
-but it is not uncommon in practice. The scheme can also be extended to work 
-for some densities that have combinations of log-concave and log-convex 
-behaviors. The same idea used for constructing 
-envelopes can be used to bound $f$ from below. The accept-reject step 
-can then avoid many evaluations of $f$, which is beneficial if $f$ is 
-computationally expensive to evaluate.
-
-The key idea of the scheme is to bound the log-density by piecewise 
-affine functions. This is particularly easy to do if the density 
-is log-concave. The scheme leads to analytically manageable
-formulas for the envelope, its corresponding distribution function and its 
-inverse, and as a result it is fast to simulate proposals and 
-compute the envelope as needed in the accept-reject step. 
-
-The scheme requires the choice of a finite number of points to determine
-the affine bounds. For any given choice of points the scheme adapts the 
-envelope to the target density automatically. It is possible to implement 
-a *fully* adaptive scheme that doesn't even require the choice of points
-but initializes and updates the points dynamically as more and more rejection
-samples are computed. In this section the focus is on the scheme with 
-a given and fixed number of points. 
-
-For a continuously differentiable, strictly positive and
-log-concave target on an open interval $I \subseteq \mathbb{R}$ 
-it holds that 
-$$\log(f(x)) \leq \frac{f'(x_0)}{f(x_0)}(x - x_0) + \log(f(x_0))$$
-for any $x, x_0 \in I$. 
-
-Let $x_1 < x_2 < \ldots < x_{m} \in I$ and let $I_1, \ldots, I_m \subseteq I$ be 
-intervals that form a partition of $I$ such that $x_i \in I_i$. Defining 
-$$a_i = (\log(f(x_i)))' = \frac{f'(x_i)}{f(x_i)} \quad \text{and} \quad b_i = \log(f(x_i)) -  \alpha_i x_i$$
-we find the upper bound 
-$$\log(f(x)) \leq V(x) = \sum_{i=1}^m  (a_i x + b_i) 1_{I_i}(x),$$
-or 
-$$f(x) \leq e^{V(x)}.$$
-Note that by the log-concavity of $f$, $a_1 \geq a_2 \geq \ldots \geq a_m$. 
-The upper bound is integrable over $I$ if either $a_1 > 0$ and $a_m < 0$, 
-or $a_m < 0$ and $I$ is bounded to the left, or $a_1 > 0$ and $I$ is bounded 
-to the right. In any of these cases we define 
-$$c = \int_I e^{V(x)} \mathrm{d} x < \infty$$
-and $g(x) = c^{-1} \exp(V(x))$, and we find that with $\alpha = c^{-1}$ 
-then $\alpha f \leq g$ and $g$ is an envelope of $f$. Note that it is
-actually not necessary to compute $c$ (or $\alpha$) to implement the 
-rejection step in the rejection sampler, but that $c$ is needed for 
-simulating from $g$ as described below. We will assume in the following 
-that $c < \infty$. 
-
-The intervals $I_i$ have not been specified, and we could, in fact, implement 
-rejection sampling with any choice of intervals fulfilling the conditions
-above. But in the interest of maximizing 
-$\alpha$ (minimizing $c$) and thus minimizing the rejection frequency, we
-should choose $I_i$ so that $a_i x + b_i$ is minimal over $I_i$ among all the affine
-upper bounds. This will result in the tightest envelope. This means 
-that for $i = 1, \ldots, m - 1$,  $I_i = (z_{i-1}, z_i]$ with $z_i$ 
-the point where $a_i x + b_i$ and $a_{i+1} x + b_{i+1}$ intersect. We find 
-that the solution of 
-$$a_i x + b_i = a_{i+1} x + b_{i+1}$$
-is 
-$$z_i = \frac{b_{i+1} - b_i}{a_i - a_{i+1}}$$
-provided that $a_{i+1} > a_i$. The two extremes, $z_0$ and $z_m$, are chosen 
-as the endpoints of $I$ and may be $- \infty$ and $+ \infty$, respectively. 
-
-One way to simulate from such envelopes is by transformation
-of uniform random variables by the inverse distribution function. 
-It requires a little bookkeeping, but is otherwise straightforward.
-Define for $x \in I_i$
-$$F_i(x) = \int_{z_{i-1}}^x e^{a_i z + b_i} \mathrm{d} z,$$
-and let $R_i = F_i(z_i)$. Then $c = \sum_{i=1}^m R_i$, and 
-if we define $Q_i = \sum_{k=1}^{i} R_k$ for $i = 0, \ldots, m$
-the inverse of the distribution function in $q$ is given as the solution to 
-the equation
-$$F_i(x) = cq - Q_{i-1}, \qquad Q_{i-1} < cq \leq Q_{i}.$$
-That is, for a given $q \in (0, 1)$, first determine which interval 
-$(Q_{i-1}, Q_{i}]$ that $c q$ falls into, and then solve the corresponding 
-equation. Observe that when $a_i \neq 0$,
-$$F_i(x) = \frac{1}{a_i}e^{b_i}\left(e^{a_i x} - e^{a_i z_{i-1}}\right).$$
-
-
-### Beta distribution
-
-To illustrate the envelope construction above for a simple log-concave 
-density we consider the Beta distribution on $(0, 1)$ with shape parameters $\geq 1$.
-This distribution has density 
-$$f(x) \propto x^{\alpha - 1}(1-x)^{\beta - 1},$$
-which is log-concave (when the shape parameters are greater than one). 
-We implement the rejection sampling algorithm for this density with the adaptive 
-envelope using two points.
-
-```{r Beta-rejection}
-Betasim <- function(n, x1, x2, alpha, beta) {
-  lf <- function(x) (alpha - 1) * log(x) + (beta - 1) * log(1 - x) 
-  lf_deriv <- function(x) (alpha - 1)/x - (beta - 1)/(1 - x)
-  a1 <- lf_deriv(x1)
-  a2 <- lf_deriv(x2)
-  if(a1 == 0 || a2 == 0 || a1 - a2 == 0) 
-    stop("\nThe implementation requires a_1 and a_2 different 
-and both different from zero. Choose different values of x_1 and x_2.")
-  b1 <- lf(x1) - a1 * x1
-  b2 <- lf(x2) - a2 * x2
-  z1 <- (b2 - b1) / (a1 - a2)
-  Q1 <- exp(b1) * (exp(a1 * z1) - 1) / a1 
-  c <- Q1 + exp(b2) * (exp(a2 * 1) - exp(a2 * z1)) / a2
-
-  y <- numeric(n)
-  uy <- rng_stream(n, runif)
-  u <- rng_stream(n, runif)
-  for(i in 1:n) {
-    reject <- TRUE
-    while(reject) {
-      u0 <- c * uy(n - i)
-      if(u0 < Q1) {
-        z <- log(a1 * exp(-b1) * u0 + 1) / a1
-        reject <- u(n - i) > exp(lf(z) - a1 * z - b1)
-      } else {
-        z <- log(a2 * exp(-b2) * (u0 - Q1) + exp(a2 * z1)) / a2
-        reject <- u(n - i) > exp(lf(z) - a2 * z - b2)
-      }
-    }
-    y[i] <- z
-  }
-  y
-}
-```
-
-(ref:Beta-sim) Histograms of simulated variables from Beta distributions using the rejection sampler with the adaptive envelope based on log-concavity. The true density (blue) and the envelope (red) are added to the plots. 
-
-```{r Beta-sim, echo=FALSE, fig.cap="(ref:Beta-sim)", dependson="Beta-rejection", fig.show='hold', out.width="100%"}
-par(mfrow = c(2, 2), mex = 0.7, cex = 0.6, font.main = 1)
-envelope <- function(x, x1, x2, alpha, beta) {
-  lf <- function(x) (alpha - 1) * log(x) + (beta - 1) * log(1 - x) 
-  lf_deriv <- function(x) (alpha - 1)/x - (beta - 1)/(1 - x)
-  a1 <- lf_deriv(x1)
-  a2 <- lf_deriv(x2)
-  b1 <- lf(x1) - a1 * x1
-  b2 <- lf(x2) - a2 * x2
-  z1 <- (b2 - b1) / (a1 - a2)
-  ifelse(x < z1, exp(a1 * x + b1), exp(a2 * x + b2))
-}
-  
-hist(Betasim(100000, x1 = 0.3, x2 = 0.7, alpha = 4, beta = 2), 
-     prob = TRUE, main = "", ylim = c(0, 3))
-curve(x^3 * (1 - x) / beta(4, 2), col = "blue", lwd = 2, add = TRUE)
-curve(envelope(x, x1 = 0.3, x2 = 0.7, alpha = 4, beta = 2) / beta(4, 2), 
-      col = "red", lwd = 2, add = TRUE, n = 400)
-
-hist(Betasim(100000, x1 = 0.3, x2 = 0.7, alpha = 1.8, beta = 2.4), 
-     prob = TRUE, main = "", ylim = c(0, 3))
-curve(x^0.8 * (1 - x)^1.4 / beta(1.8, 2.4), col = "blue", lwd = 2, add = TRUE)
-curve(envelope(x, x1 = 0.3, x2 = 0.7, alpha = 1.8, beta = 2.4) / beta(1.8, 2.4), 
-      col = "red", lwd = 2, add = TRUE, n = 400)
-
-hist(Betasim(100000, x1 = 0.2, x2 = 0.5, alpha = 4, beta = 2), 
-     prob = TRUE, main = "", ylim = c(0, 3))
-curve(x^3 * (1 - x) / beta(4, 2), col = "blue", lwd = 2, add = TRUE)
-curve(envelope(x, x1 = 0.2, x2 = 0.5, alpha = 4, beta = 2) / beta(4, 2), 
-      col = "red", lwd = 2, add = TRUE, n = 400)
-
-hist(Betasim(100000, x1 = 0.2, x2 = 0.5, alpha = 1.8, beta = 2.4), 
-     prob = TRUE, main = "", ylim = c(0, 3))
-curve(x^0.8 * (1 - x)^1.4 / beta(1.8, 2.4), col = "blue", lwd = 2, add = TRUE)
-curve(envelope(x, x1 = 0.2, x2 = 0.5, alpha = 1.8, beta = 2.4) / beta(1.8, 2.4), 
-      col = "red", lwd = 2, add = TRUE, n = 400)
-```
-
-Note that as a safeguard we implemented a test on the $a_i$-s to check that 
-the formulas used are actually meaningful, specifically that there are no
-divisions by zero. 
-
-```{r Beta-test, error=TRUE}
-Betasim(1, x1 = 0.25, x2 = 0.75, alpha = 4, beta = 2)  
-Betasim(1, x1 = 0.2, x2 = 0.75, alpha = 4, beta = 2)   
-Betasim(1, x1 = 0.2, x2 = 0.8, alpha = 4, beta = 2)    
-```
-
-
-
-### von Mises distribution
-
-The [von Mises rejection sampler](#vMsim) in Section \@ref(vMsim) used the 
-uniform distribution as proposal distribution. As it turns out, the uniform 
-density is not a particularly tight envelope. We illustrate this by 
-studying the proportion of rejections for our previous implementation.
-
-```{r vM-reject-freq, dependson="vM-rejection-fast", results='hold'}
-y <- vMsim(10000, 0.1, trace = TRUE)
-y <- vMsim(10000, 0.5, trace = TRUE)
-y <- vMsim(10000, 2, trace = TRUE)
-y <- vMsim(10000, 5, trace = TRUE)
-```
-
-The rejection frequency is high and increases with $\kappa$. For $\kappa = 5$
-more than 80% of the proposals are rejected, and simulating $n = 10,000$ 
-von Mises distributed variables thus requires the simulation of around $50,000$
-variables from the proposal.
-
-The von Mises density is, unfortunately, not log-concave on $(-\pi, \pi)$, 
-but it is on $(-\pi/2, \pi/2)$. It is, furthermore, log-convex on $(-\pi, -\pi/2)$ 
-as well as $(\pi/2, \pi)$, which implies that on these two intervals the 
-log-density is below the corresponding chords. These chords can be 
-pieced together with tangents to give an envelope. 
-
-
-```{r vM-rejection-adaptive}
-vMsim_adapt <- function(n, x1, x2, kappa, trace = FALSE) {
-  lf <- function(x) kappa * cos(x) 
-  lf_deriv <- function(x) - kappa * sin(x)
-  a1 <- 2 * kappa / pi
-  a2 <- lf_deriv(x1)
-  a3 <- lf_deriv(x2)
-  a4 <- - a1
-  
-  b1 <- kappa
-  b2 <- lf(x1) - a2 * x1
-  b3 <- lf(x2) - a3 * x2
-  b4 <- kappa
-  
-  z0 <- -pi
-  z1 <- -pi/2
-  z2 <- (b3 - b2) / (a2 - a3)
-  z3 <- pi/2
-  z4 <- pi
-  
-  Q1 <- exp(b1) * (exp(a1 * z1) - exp(a1 * z0)) / a1 
-  Q2 <- Q1 + exp(b2) * (exp(a2 * z2) - exp(a2 * z1)) / a2
-  Q3 <- Q2 + exp(b3) * (exp(a3 * z3) - exp(a3 * z2)) / a3
-  c <- Q3 + exp(b4) * (exp(a4 * z4) - exp(a4 * z3)) / a4
-  
-  count <- 0
-  y <- numeric(n)
-  uy <- rng_stream(n, runif)
-  u <- rng_stream(n, runif)
-  for(i in 1:n) {
-    reject <- TRUE
-    while(reject) {
-      count <- count + 1
-      u0 <- c * uy(n - i)
-      if(u0 < Q1) {
-        z <- log(a1 * exp(-b1) * u0 + exp(a1 * z0)) / a1
-        reject <- u(n - i) > exp(lf(z) - a1 * z - b1)
-      } else if(u0 < Q2) {
-        z <- log(a2 * exp(-b2) * (u0 - Q1) + exp(a2 * z1)) / a2
-        reject <- u(n - i) > exp(lf(z) - a2 * z - b2)
-      } else if(u0 < Q3) {
-        z <- log(a3 * exp(-b3) * (u0 - Q2) + exp(a3 * z2)) / a3
-        reject <- u(n - i) > exp(lf(z) - a3 * z - b3)
-      } else {
-        z <- log(a4 * exp(-b4) * (u0 - Q3) + exp(a4 * z3)) / a4
-        reject <- u(n - i) > exp(lf(z) - a4 * z - b4)
-      }
-    }
-    y[i] <- z
-  }
-  if(trace)
-    cat("kappa =", kappa, ", x1 =", x1, 
-        ", x2 =", x2, ":", (count - n) / count, "\n")  
-  y
-}
-```
-
-(ref:vM-adaptive) Histograms of simulated variables from von Mises distributions using the rejection sampler with the adaptive envelope based on a combination of log-concavity and log-convexity. The true density (blue) and the envelope (red) are added to the plots. 
-
-```{r vM-adaptive-test, fig.cap="(ref:vM-adaptive)", dependson="vM-rejection-adaptive", echo=FALSE, fig.show='hold', out.width="100%"}
-par(mfrow = c(2, 2), mex = 0.7, cex = 0.6, font.main = 1)
-envelope <- function(x, x1, x2, kappa) {
-  lf <- function(x) kappa * cos(x) 
-  lf_deriv <- function(x) - kappa * sin(x)
-  a1 <- 2 * kappa / pi
-  a2 <- lf_deriv(x1)
-  a3 <- lf_deriv(x2)
-  a4 <- - a1
-  
-  b1 <- kappa
-  b2 <- lf(x1) - a2 * x1
-  b3 <- lf(x2) - a3 * x2
-  b4 <- kappa
-  
-  z0 <- -pi
-  z1 <- -pi/2
-  z2 <- (b3 - b2) / (a2 - a3)
-  z3 <- pi/2
-  z4 <- pi
-  
-  env <- numeric(length(x))
-  i1 <- x < z1
-  i2 <- x >= z1 & x < z2
-  i3 <- x >= z2 & x < z3
-  i4 <- x >= z3 
-  
-  env[i1] <- exp(a1 * x[i1] + b1)
-  env[i2] <- exp(a2 * x[i2] + b2)
-  env[i3] <- exp(a3 * x[i3] + b3)
-  env[i4] <- exp(a4 * x[i4] + b4)
-  
-  env
-}
-
-y <- vMsim_adapt(100000, -0.4, 0.4, 5)
-hist(y, breaks = seq(-pi, pi, length.out = 30), prob = TRUE, 
-     main = expression(paste(kappa == 5, ", ", x[1] == -0.4, ", ", x[2] == 0.4)), ylim = c(0, 1.5))
-curve(f(x, 5), -pi, pi, col = "blue", lwd = 2, add = TRUE, n = )
-curve(envelope(x, -0.4, 0.4, 5) / (2 * pi * besselI(5, 0)), -pi, pi, col = "red", 
-      lwd = 2, add = TRUE, n = 400)
-
-y <- vMsim_adapt(100000, -1, 1, 2)
-hist(y, breaks = seq(-pi, pi, length.out = 30), prob = TRUE,
-     main = expression(paste(kappa == 2, ", ", x[1] == -1, ", ", x[2] == 1)), ylim = c(0, 1.5))
-curve(f(x, 2), -pi, pi, col = "blue", lwd = 2, add = TRUE)
-curve(envelope(x, -1, 1, 2) / (2 * pi * besselI(2, 0)), -pi, pi, col = "red", 
-      lwd = 2, add = TRUE, n = 400)
-
-y <- vMsim_adapt(100000, -0.1, 0.1, 5)
-hist(y, breaks = seq(-pi, pi, length.out = 30), prob = TRUE, 
-     main = expression(paste(kappa == 5, ", ", x[1] == -0.1, ", ", x[2] == 0.1)), ylim = c(0, 1.5))
-curve(f(x, 5), -pi, pi, col = "blue", lwd = 2, add = TRUE, n = )
-curve(envelope(x, -0.1, 0.1, 5) / (2 * pi * besselI(5, 0)), -pi, pi, col = "red", 
-      lwd = 2, add = TRUE, n = 400)
-
-y <- vMsim_adapt(100000, -0.4, 0.4, 2)
-hist(y, breaks = seq(-pi, pi, length.out = 30), prob = TRUE,
-     main = expression(paste(kappa == 2, ", ", x[1] == -0.4, ", ", x[2] == 0.4)), ylim = c(0, 1.5))
-curve(f(x, 2), -pi, pi, col = "blue", lwd = 2, add = TRUE)
-curve(envelope(x, -0.4, 0.4, 2) / (2 * pi * besselI(2, 0)), -pi, pi, col = "red", 
-      lwd = 2, add = TRUE, n = 400)
-```
-
-
-```{r vM-adaptive-reject-test, dependson="vM-rejection-adaptive", results='hold'}
-y <- vMsim_adapt(100000, -0.4, 0.4, 5, trace = TRUE)
-y <- vMsim_adapt(100000, -1, 1, 2, trace = TRUE)
-y <- vMsim_adapt(100000, -0.1, 0.1, 5, trace = TRUE)
-y <- vMsim_adapt(100000, -0.4, 0.4, 2, trace = TRUE)
-```
-
-We see that compared to using the uniform density as envelope, these adaptive
-envelopes are generally tighter and leads to fewer rejections. Even tighter 
-envelopes are possible by using more than four intervals, but it is, of course,
-always a good question how the added complexity and bookkeeping induced by 
-using more advanced and adaptive envelopes affect run time. It is even a good question 
-if our current adaptive implementation will outperform our first, and 
-much simpler, implementation that used the uniform envelope. 
-
-```{r vM-bench, dependson=c("vM-rejection-adaptive", "vM-rejection-fast"), echo=2}
-old_options <- options(digits = 2)
-microbenchmark(vMsim_adapt(100, -1, 1, 5),
-               vMsim_adapt(100, -0.4, 0.4, 5),
-               vMsim_adapt(100, -0.2, 0.2, 5),
-               vMsim_adapt(100, -0.1, 0.1, 5),
-               vMsim(100, 5),
-               vMsim_vec(100, 5)
-               )
-options(digits = old_options$digits)
-
-```
-
-The results from the benchmark show that the adaptive implementation has 
-run time comparable to using the uniform proposal. 
-With $x_1 = -0.4$ and $x_2 = 0.4$ and $\kappa = 5$ 
-we found above that the rejection frequency was about 20% with 
-the adaptive envelope, while it was about 80% when using the uniform
-envelope. A naive computation would thus suggest a speedup of a 
-factor 4, but using the adaptive envelope there is actually only
-a speedup of a factor 2. And the vectorized solution is still 
-considerably faster. A completely vectorized solution using 
-the adaptive envelope is possible, but it is not entirely 
-straightforward how to implement the more complicated envelope 
-efficiently, and it may be a better option in this case to implement
-it using Rcpp. 
-
-Even if either implementation can be improved further in terms of run time, 
-it is an important point when comparing algorithms that we don't get too 
-focused on surrogate performance quantities. The probability of rejection 
-is a surrogate for actual run time, and it might be conceptually of interest 
-to bring this probability down. But if it is at the expense of additional
-computations it might not be worth the effort in terms of real run time. 
+The simulation from a gamma distribution via rejection sampling is 
+dealt with in Section \@ref(gammasim).
+:::
 
 ## Exercises {#univariate:ex}
 
-### Rejection sampling of Gaussian random variables
+::: {.exercise #exponential-sim}
+Implement simulation from the exponential distribution as in Example 
+\@ref(exm:exponential-inverse) but replacing $1 - U$ by $U$. Test your 
+implementation and benchmark it against the implementation in 
+Example \@ref(exm:exponential-inverse), against `rexp()` and 
+against `dqrng::dqrexp()` from the dqrng package.
+:::
 
-This exercise is on rejection sampling from the Gaussian distribution by 
-using the Laplace distribution as an envelope. Recall that the Laplace distribution has density 
-$$g(x) = \frac{1}{2} e^{-|x|}$$
-for $x \in \mathbb{R}$. 
+::: {.exercise #t-distribution-sim}
+Implement simulation from the $t$-distribution as in Example 
+\@ref(exm:t-distribution). Test your 
+implementation and benchmark it against against `rt()`.
+:::
 
-Note that if $X$ and $Y$ are independent and exponentially distributed with mean one, then $X - Y$ has a Laplace 
-distribution. This gives a way to easily sample from the Laplace distribution. 
+::: {.exercise #laplace-sim}
+Recall that the Laplace distribution has density 
 
+\[
+  g(x) = \frac{1}{2} e^{-|x|}
+\]
 
-```{exercise, reject-gaussian}
-Implement rejection sampling from the standard Gaussian distribution with density 
-$$f(x) = \frac{1}{\sqrt{2\pi}} e^{- x^2 / 2}$$
-by simulating Laplace random variables as differences of exponentially distributed random variables. 
-Test the implementation by computing the variance of the Gaussian distribution
-as an MC estimate and by comparing directly with the Gaussian distribution using 
-histograms and QQ-plots. 
+for $x \in \mathbb{R}$. Implement simulation from the Laplace distribution 
+by transforming a uniform random variable by the inverse distribution function.
+Test the implementation
+:::
 
-```
-
-```{exercise}
-Implement simulation from the Laplace distribution by transforming a uniform random variable by 
-the inverse distribution function. Use this method together with the rejection
-sampler you implemented in Exercise \@ref(exr:reject-gaussian) 
-
-```
-
-
-**Note:** The Laplace distribution can be seen as a simple version of the 
-adaptive envelopes suggested in Section \@ref(adaptive). 
-
-
-
-
-
+::: {.exercise #laplace-sim-2}
+If $X$ and $Y$ are independent and exponentially distributed with mean one, 
+then $X - Y$ has a Laplace distribution (why?). Use this to implement 
+simulation from the Laplace distribution. Benchmark this implementation 
+together with the implementation from Exercise \@ref(exm:laplace-sim). 
+:::
 
 
 

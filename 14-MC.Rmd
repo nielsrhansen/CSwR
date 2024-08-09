@@ -93,7 +93,8 @@ sigma_hat <- sd(x)
 mu_hat[n]  # Theoretical value 8
 sigma_hat  # Theoretical value sqrt(8) = 2.8284
 
-qplot(1:n, mu_hat) + 
+ggplot(mapping = aes(1:n, mu_hat)) +
+  geom_point() + 
   geom_ribbon(
   mapping = aes(
     ymin = mu_hat - 1.96 * sigma_hat / sqrt(1:n), 
@@ -228,10 +229,10 @@ and a 95% standard confidence interval is computed as
 $$\hat{\mu}^*_{\textrm{IS}} \pm 1.96 \frac{\hat{\sigma}^*_{\textrm{IS}}}{\sqrt{n}}.$$
 
 
-```{r gamma-IS-fig2, out.width=500, echo=1:2, fig.cap="Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution.", dependson="gamma-sim-IS"}
+```{r gamma-IS-fig2, echo=1:2, fig.cap="Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution.", dependson="gamma-sim-IS"}
 sigma_hat_IS <- sd(x * w_star)
 sigma_hat_IS  # Theoretical value ??
-qplot(1:n, mu_hat_IS) + 
+ggplot(mapping = aes(1:n, mu_hat_IS)) + 
   geom_line() + 
   geom_point() + 
   coord_cartesian(ylim = c(6, 10)) + 
@@ -326,8 +327,8 @@ sigma_hat_IS_w <- sqrt(sigma_hat_IS^2 + mu_hat_IS[n]^2 * sigma_hat_w_star^2 -
 sigma_hat_IS_w
 ```
 
-```{r gamma-IS-fig3, out.width=500, echo=1:2, fig.cap="Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution and using standardized weights.", dependson="gamma-sim-ISw", echo=FALSE}
-qplot(1:n, mu_hat_IS) + 
+```{r gamma-IS-fig3, echo=FALSE, fig.cap="Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution and using standardized weights.", dependson="gamma-sim-ISw"}
+ggplot(mapping = aes(1:n, mu_hat_IS)) + 
   geom_line() + 
   geom_point() + 
   coord_cartesian(ylim = c(6, 10)) + 
@@ -476,7 +477,7 @@ dimensions it can be difficult to choose a suitable distribution to sample
 from. 
 
 The difficulty for the specific integral is due to the exponent of the integrand,
-which can become large and positive if $x_i \simeq x_{i-1}$ for enough coordinates.
+which can become large and positive if $x_i \approx x_{i-1}$ for enough coordinates.
 This happens rarely for independent random variables, but large values of rare
 events can, nevertheless, contribute notably to the integral. The 
 larger $\alpha \in (0, 1)$ is, the more pronounced is the problem with occasional 
@@ -595,7 +596,7 @@ It is fairly fast to sample even a large number of random graphs this way.
 ```{r network_bench, dependson = c("network_simNet", "network_adj")}
 Aup <- A
 Aup[lower.tri(Aup)] <- 0
-system.time(replicate(1e5, {sim_net(Aup, 0.5); NULL}))
+bench::bench_time(replicate(1e5, {sim_net(Aup, 0.5); NULL}))
 ```
 
 The second function we implement checks network connectivity based on 
@@ -908,7 +909,7 @@ We find that these are the same numbers as computed above, thus the object
 oriented implementation concurs with the non-object oriented on this example.
 
 We benchmark the object oriented implementation to measure if there is 
-any run time loss or improvement due to using objects. 
+any runtime loss or improvement due to using objects. 
 One should expect a small computational overhead due to method dispatching, 
 that is, the procedure that R uses to look up the appropriate `sim()` method 
 for an object of class `network`. On the other hand, `sim()` does not recompute
@@ -916,17 +917,17 @@ for an object of class `network`. On the other hand, `sim()` does not recompute
 
 ```{r network_bench2, echo=2, dependson=c("network_simnet", "simnetwork", "network_bench", "network_constructor")}
 old_options <- options(digits = 3)
-microbenchmark(
-  sim_net(Aup, 0.05),
-  sim(my_net),
-  times = 1e4
+bench::mark(
+  sim_net = sim_net(Aup, 0.05),
+  sim = sim(my_net),
+  check = FALSE
 )
 options(digits = old_options$digits)
 ```
 
 From the benchmark, the object oriented solution using `sim()` appears to be 
 a bit slower than `sim_net()` despite the latter recomputing `ones`, and 
-this can be explained by method dispatching taking of the order of 1 microsecond
+this can be explained by method dispatching taking of the order of 300 nanoseconds
 during these benchmark computations.
 
 ```{r test-method-dispatch-time, echo=FALSE, eval=FALSE}
@@ -935,13 +936,11 @@ fun2 <- function(x)
   UseMethod("fun2")
 fun2.some <- function(x) x
 xx <- structure(1:10, class = "some")
-yy <- 1:10
-fun1(yy)
+fun1(xx)
 fun2(xx)
-microbenchmark(
-  fun1(yy),
-  fun2(xx),
-  times = 1e4
+bench::mark(
+  fun1(xx),
+  fun2(xx)
 )
 ```
 

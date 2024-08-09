@@ -1,578 +1,992 @@
-# Four Examples
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+# Likelihood and optimization
 
-This chapter treats four examples of non-trivial statistical models in some 
-detail. These are all parametric models, and a central computational
-challenge is to fit the models to data via (penalized) likelihood
-maximization. The actual optimization algorithms and implementations 
-are the topics of Chapters \@ref(numopt) and \@ref(em).
-The focus of this chapter is on the structure of the statistical models
-themselves to provide the necessary background for the later chapters. 
+This chapter introduces likelihood functions for parametrized statistical models
+and treats in some detail a collection of examples. For all parametric models, a
+central computational challenge is to fit the models to data via (penalized)
+likelihood maximization. Details about actual optimization algorithms and
+implementations are the topics of Chapters \@ref(numopt), \@ref(em) and
+\@ref(stochopt). The focus of this chapter is on the structure of the
+statistical models themselves to provide the necessary background for the later
+chapters.
 
-Statistical models come in all forms and shapes, and it is possible to 
-take a very general and abstract mathematical approach; statistical 
-models are parametrized families of probability distributions. To 
-say anything of interest, we need more structure such as structure 
-on the parameter set, properties of the parametrized distributions,
-and properties of the mapping from the parameter set to the 
-distributions. For any specific model we have ample of structure
-but often also an overwhelming amount of irrelevant details 
-that will be more distracting than clarifying. The intention is that 
-the four examples treated will illustrate the breath of 
-statistical models that share important 
-structures without getting lost in a wasteland of abstractions. 
+Statistical models come in many varieties. Mathematically, a statistical model
+is defined as a parametrized family of probability distributions. To say
+anything of interest, though, we need more structure on the model, such as
+structure on the parameter set, properties of the parametrized distributions,
+and properties of the mapping from the parameter set to the distributions. 
+Any specific model will have a lot of structure but often also an overwhelming
+amount of irrelevant details that will be more distracting than clarifying. The
+intention with this chapter, and the examples treated, is to illustrate
+how some quite different statistical models share important structures, 
+while we avoid getting lost in abstractions.
 
-If one should emphasize a single abstract idea that is of 
-theoretical value as well as of practical importance, it is 
-the idea of *exponential families*. Statistical models that 
-are exponential families have so much structure that the
-general theory provides a number of results and details 
-of practical value for individual models. Exponential 
-families are exemplary statistical models, that are widely 
-used as models of data, or as central building 
-blocks of more complicated models of data. For this reason, 
-the treatment of the examples is preceded by a treatment of 
-exponential families.
+In the first section we introduce the key idea of a parametrized 
+statistical model and give some simple examples. We give the definition
+of the (log-)likelihood function and touch on the phenomenon that 
+computationally important properties of the log-likelihood function 
+may depend on the chosen parametrization. In the subsequent sections 
+we cover multinomial models, regression models, mixture models and random 
+effects models as four main examples.
 
-## Exponential families {#exp-fam}
+## Parametrized models and the likelihood
 
-This section introduces exponential families in a concise way. The 
-crucial observation is that the log-likelihood is concave, and that 
-we can derive general formulas for derivatives. This 
-will be important for the optimization algorithms developed 
-later for computing maximum-likelihood estimates and 
-for answering standard asymptotic inference questions.
+In all our examples we will consider a parameter set $\Theta \subseteq \mathbb{R}^p$
+and a parametrized family of probability distributions on a common sample space 
+denoted $\mathcal{Y}$. The 
+distribution corresponding to $\theta \in \Theta$ is assumed to have a 
+density $f_{\theta}$ (w.r.t. a $\theta$-independent reference measure).
 
-The exponential families are extremely well behaved from 
-a mathematical as well as a computational viewpoint, but they may 
-be inadequate for modeling data in some cases. A 
-typical practical problem is that there is heterogeneous variation in data
-beyond what can be captured by any single exponential family. 
-A fairly common technique is then to build an exponential family 
-model of the observed variables *as well as some latent variables*.
-The latent variables then serve the purpose of modeling the 
-heterogeneity. The resulting model of the observed variables is 
-consequently the marginalization of an exponential family, which is
-generally not an exponential family and in many ways 
-less well behaved. It is nevertheless possible to exploit the exponential 
-family structure underlying the marginalized model for many 
-computations of statistical importance. The EM-algorithm as 
-treated in Chapter \@ref(em) is one particularly good example, but 
-Bayesian computations can in similar ways exploit the structure.
+In many applications, the sample space is a product space
 
-### Full exponential families
+\[
+  \mathcal{Y} = \mathcal{Y}_1 \times \ldots \times \mathcal{Y}_N
+\]
 
-In this section we consider statistical models on an abstract 
-product sample space 
-$$\mathcal{Y} = \mathcal{Y}_1 \times \ldots \times \mathcal{Y}_m.$$ 
-We will be interested in models of
-observations $y_1 \in \mathcal{Y}_1, \ldots, y_m \in \mathcal{Y}_m$ 
-that are independent but not necessarily identically distributed. 
+corresponding to observations $y_1 \in \mathcal{Y}_1, \ldots, y_N \in \mathcal{Y}_N$.
+We will in this case be  interested in modeling the observations 
+as independent but not necessarily identically distributed. Thus the joint 
+density is a product 
 
-An exponential family is defined in terms of two ingredients: 
+\[
+  f_{\theta}(y_1, \ldots, y_N) = \prod_{i=1}^N f_{i,\theta}(y_i). \
+\]
 
-  * maps $t_j : \mathcal{Y}_j \to \mathbb{R}^p$ for $j = 1, \ldots, m$,
-  * and non-trivial $\sigma$-finite measures $\nu_j$ on $\mathcal{Y}_j$ for $j = 1, \ldots, m$.
+Note that the density, $f_{i,\theta}$, is a density for a probability 
+distribution on $\mathcal{Y}_i$, and that all these densities are parametrized 
+by the same parameter $\theta \in \Theta$, but due to the $i$-index they 
+may differ. If all the densities are equal, data is modeled as 
+independent *and* identically distributed (i.i.d.).
+
+The likelihood function is, for fixed data $y = (y_1, \ldots, y_N)$, the function 
+\index{likelihood function}
+
+\[
+\mathcal{L}(\theta) = \prod_{i=1}^N f_{i,\theta}(y_i),
+\]
+
+as a function of the parameter $\theta$. The log-likelihood function is 
+\index{log-likelihood function}
+
+\[
+\ell(\theta) = \log (\mathcal{L}(\theta)) = \sum_{i=1}^N \log(f_{i,\theta}(y_i)),
+\]
+
+and the negative log-likelihood function is $-\ell$. In practice, we will 
+minimize the negative log-likelihood function over 
+the parameter set to find the model within the parametrized 
+family of distributions that best fits the data. The resulting parameter 
+estimate is known as the maximum-likelihood estimate. \index{maximum-likelihood!estimate}
 
 
-The maps $t_j$ are called *sufficient statistics*, and in terms 
-of these and the *base measures* $\nu_j$ we define 
-$$\varphi_j(\theta) = \int e^{\theta^T t_j(u)} \nu_j(\mathrm{d}u).$$
-These functions are well defined as functions
-$$\varphi_j : \mathbb{R}^p \to (0,\infty].$$
-We define 
-$$\Theta_j = \mathrm{int}(\{ \theta \in \mathbb{R}^p \mid \varphi_j(\theta) < \infty \}),$$
-which by definition is an open set as. It can be shown
-that $\Theta_j$ is convex and that $\varphi_j$ is a log-convex function. 
-Defining 
-$$\Theta = \bigcap_{j=1}^m \Theta_j,$$
-then $\Theta$ is likewise open and convex, and we define the *exponential family* 
-as the distributions parametrized by $\theta \in \Theta$ that have densities 
+::: {.example .boxed #poisson-exponential}
+Poisson distributions with sample space $\mathcal{Y} = \mathbb{N}_0 = \{0, 1, 2, \ldots \}$ 
+are used to model non-negative integer counts. The Poisson distributions
+are parametrized by the mean parameter $\mu > 0$, and the density is given 
+by the point probabilities 
 
-\begin{equation}
-f(\mathbf{y} \mid \theta) = \prod_{j=1}^m \frac{1}{\varphi_j(\theta)} e^{\theta^T t_j(y_j)} = e^{\theta^T \sum_{j=1}^m t_j(y_j) - \sum_{j=1}^m \log \varphi_j(\theta)}, \quad \mathbf{y} \in \mathcal{Y},
-(\#eq:exp-dens)
-\end{equation}
+\[
+f_{\mu}(y)= e^{-\mu} \frac{\mu^y}{y!}.
+\]
 
-w.r.t. $\otimes_{j=1}^m \nu_j$. The 
-case where $\Theta = \emptyset$ is of no interest, and we will thus assume
-that the parameter set $\Theta$ is non-empty. The parameter $\theta$ is called
-the *canonical parameter* and $\Theta$ is the canonical parameter space. 
-We may also say that the exponential family is canonically parametrized by 
-$\theta$. It is important to realize that an exponential family may come 
-with a non-canonical parametrization that doesn't reveal right away that 
-it is an exponential family. Thus a bit of work is then needed to show 
-that the parametrized family of distributions can, indeed, be reparametrized
-as an exponential family. In the non-canonical parametrization, the 
-family is then an example of a *curved exponential family* as defined below.  
+The parameter space is thus $\Theta = (0, \infty)$. 
 
-```{example, von-Mises-exponential} 
-The von Mises distributions on $\mathcal{Y} = (-\pi, \pi]$ form an exponential family
-with $m = 1$. The sufficient statistic $t_1 : (-\pi, \pi] \mapsto \mathbb{R}^2$ 
-is 
-$$t_1(y) = \left(\begin{array}{c} \cos(y) \\ \sin(y) \end{array}\right),$$
-and 
-$$\varphi(\theta) = \int_{-\pi}^{\pi} e^{\theta_1 \cos(u) + \theta_2 \sin(u)} \mathrm{d}u < \infty$$
-for all $\theta = (\theta_1, \theta_2)^T \in \mathbb{R}^2$. Thus 
-the canonical parameter space is $\Theta = \mathbb{R}^2$. 
+With i.i.d. observations $y_1, \ldots, y_N$ the negative log-likelihood is 
+given by 
 
-As mentioned in Section \@ref(vM), the function $\varphi(\theta)$ can be 
-expressed in terms of a modified Bessel function, but it doesn't have 
-an expression in terms of elementary functions. Likewise in Section \@ref(vM),
-an alternative parametrization (polar coordinates) was given;
-$$(\kappa, \mu) \mapsto \theta = \kappa \left(\begin{array}{c} \cos(\mu) \\ \sin(\mu) \end{array}\right)$$
-that maps $[0,\infty) \times (-\pi, \pi]$ onto $\Theta$. The von Mises 
-distributions form a curved exponential family in the 
-$(\kappa, \mu)$-parametrization, but this parametrization has several problems.
+\[
+- \ell(\mu) = \sum_{i=1}^N \left( \mu - y_i \log(\mu) + \log(y!) \right) = 
+  N \mu - \log(\mu) \sum_{i=1}^N y_i + N \log(y!).
+\]
+
+For this model we can find an analytic expression for the maximum-likelihood 
+estimate. By differentiating twice we see that 
+
+\begin{align*}
+- \ell'(\mu) & =  N - \frac{1}{\mu} \sum_{i=1}^N y_i \\
+- \ell''(\mu) & = \frac{1}{\mu^2} \sum_{i=1}^N y_i \geq 0
+\end{align*}
+
+Since the second derivative is non-negative, the negative log-likelihood is 
+convex, and a solution to $- \ell'(\mu) = 0$ will be a global minimizer. We 
+see that if $\sum_{i=1}^N y_i > 0$, the unique solution to this equation is 
+
+\[
+ \hat{\mu} =\frac{1}{N} \sum_{i=1}^N y_i,
+\]
+
+and this is thus the maximum-likelihood estimate. 
+
+If $\sum_{i=1}^N y_i = 0$ (which is equivalent to $y_1 = y_2 = \ldots = y_N = 0$)
+there is no minimizer in the open parameter set $(0, \infty)$. We could argue 
+that by extending the parameter space to include $0$, then $\hat{\mu} = 0$ 
+is the maximum-likelihood estimate when $\sum_{i=1}^N y_i = 0$. 
+
+Note that the (negative) log-likelihood depends on data only though the 
+data transformation $\sum_{i=1}^N y_i$. We call this sum a 
+*sufficient statistic* \index{sufficient statistic}
+since it is sufficient for the computation of the log-likelihood 
+and the maximum-likelihood estimate.
+:::
+
+The Poisson model with i.i.d. data is so simple that we can minimize the 
+negative log-likelihood analytically. This is not possible for many other 
+statistical models as the following example will illustrate. 
+
+::: {.example .boxed #von-Mises-exponential} 
+Recall the von Mises distributions on the sample space $\mathcal{Y} = (-\pi, \pi],$
+which were introduced in Section \@ref(vM). They were introduced as a parametrized 
+family of probability distributions with density \index{von Mises distribution!statistical model}
+
+\[
+  f_{\theta}(y) = \frac{1}{\varphi(\theta)} e^{\theta_1 \cos(y) + \theta_2 \sin(y)}
+\]
+
+for $\theta = (\theta_1, \theta_2) \in \mathbb{R}^2$. That is, $\Theta = \mathbb{R}^2$.
+The function
+
+\[
+  \varphi(\theta) = \int_{-\pi}^{\pi} e^{\theta_1 \cos(u) + \theta_2 \sin(u)} \mathrm{d}u < \infty
+\]
+
+for $\theta \in \Theta$ can be expressed in terms of a modified Bessel function, but 
+it cannot be expressed in terms of elementary functions.
+
+An alternative parametrization was also introduced in Section \@ref(vM)
+in terms of polar coordinates given by the reparametrization map
+
+\[
+  (\kappa, \mu) \mapsto \theta = \kappa \left(\begin{array}{c} \cos(\mu) \\ \sin(\mu) \end{array}\right)
+\]
+
+that maps $[0,\infty) \times (-\pi, \pi]$ onto $\Theta$. 
+This alternative $(\kappa, \mu)$-parametrization has several problems.
 First, the $\mu$ parameter is not identifiable if $\kappa = 0$, which is 
 reflected by the fact that the reparametrization is not a one-to-one map. 
 Second, the parameter space is not open, which can be quite a nuisance
-for e.g. maxmimum-likelihood estimation. We could circumvent these problems by restricting 
+for, e.g., maxmimum-likelihood estimation. We could circumvent these problems by restricting 
 attention to $(\kappa, \mu) \in (0,\infty) \times (-\pi, \pi)$, but 
-we would then miss some of the distributions in the exponential family -- 
-notably the uniform distribution corresponding to $\theta = 0$. In conclusion,
-the canonical parametrization of the family of distributions as an
-exponential family is preferable for mathematical and computational reasons.
+we would then miss some of the distributions parametrized by $\theta$---
+notably the uniform distribution corresponding to $\theta = 0$. 
 
-```
+With observations $y_1, \ldots, y_N$ the negative log-likelihood in the 
+$\theta$-parametrization becomes 
 
+\[
+ - \ell(\theta) = N \log \varphi(\theta) - \theta_1 \sum_{i=1}^N \cos(y_i) -  
+   \theta_2 \sum_{i=1}^N \sin(y_i).
+\]
 
-```{example, gaussian-exponential}
-The family of Gaussian distributions on $\mathbb{R}$ is an example of an exponential 
-family as defined above with $m = 1$ and $\mathcal{Y} = \mathbb{R}$. 
-The density of the $\mathcal{N}(\mu, \sigma^2)$ distribution is 
-$$\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(y - \mu)^2}{2\sigma^2}\right) = 
-  \frac{1}{\sqrt{\pi}} \exp\left(\frac{\mu}{\sigma^2} y - \frac{1}{2\sigma^2} y^2 - \frac{\mu^2}{2\sigma^2} - 
-                                     \frac{1}{2}\log (2\sigma^2) \right).$$
-Letting the base measure $\nu_1$ be Lebesgue measure scaled by $1/\sqrt{\pi}$,
-and $t_1 : \mathbb{R} \mapsto \mathbb{R}^2$ be 
-$$t_1(y) = \left(\begin{array}{c} y \\ - y^2 \end{array}\right)$$
-we identify this family of distributions as an exponential family with canonical
-parameter 
-$$\theta = \left(\begin{array}{c} \frac{\mu}{\sigma^2} \\ \frac{1}{2 \sigma^2} \end{array}\right).$$
+This function can be shown to be convex. Moreover, with this parametrization
+the log-likelihood only depends on data through the two statistics 
+$\sum_{i=1}^N \cos(y_i)$ and $\sum_{i=1}^N \sin(y_i)$, which are 
+thus sufficient statistics. 
+When minimizing the negative log-likelihood numerically, the sufficient statistics
+can be computed once upfront instead of repeatedly every time the 
+negative log-likelihood is evaluated.
 
-We can express the mean and variance in terms of $\theta$ as 
-$$\sigma^2 = \frac{1}{2\theta_2} \quad \text{and} \quad \mu = \frac{\theta_1}{2\theta_2},$$
-and we find that 
-$$\log \varphi_1(\theta) = \frac{\mu^2}{2\sigma^2} + \frac{1}{2} \log(2 \sigma^2) = 
-  \frac{\theta_1^2}{4\theta_2} - \frac{1}{2} \log \theta_2.$$
-  
-We note that the reparametrization $(\mu, \sigma^2) \mapsto \theta$ maps
-$\mathbb{R} \times (0,\infty)$ bijectively onto the open set $\mathbb{R} \times (0,\infty)$,
-and that the formula above for $\log \varphi_1(\theta)$ only holds on this set.
-It is natural to ask if the canonical parameter space is actually larger for this
-exponential family. That is, is $\varphi_1(\theta) < \infty$ for $\theta_2 \leq 0$?
-To this end observe that if $\theta_2 \leq 0$
-$$\varphi_1(\theta) = \frac{1}{\sqrt{2\pi}} \int e^{\theta_1 u - \theta_2 \frac{u^2}{2}} \mathrm{d}u
-\geq \frac{1}{\sqrt{2\pi}} \int e^{\theta_1 u} \mathrm{d} u = \infty,$$
-and we conclude that 
-$$\Theta = \mathbb{R} \times (0,\infty).$$
-  
-The family of Gaussian distributions is an example of a family of distributions
-whose commonly used parametrization in terms of mean and variance differs from 
-the canonical parametrization as an exponential family. The mean and 
-variance are easy to interpret, but in terms of mean 
-and variance, the Gaussian distributions form a curved exponential family. For 
-mathematical and computational purposes the canonical parametrization is preferable.
+Using the $(\kappa, \mu)$-parametrization the negative log-likelihood is
 
-```
+\[
+ - \ell(\kappa, \mu) = N \log \varphi(\kappa (\cos(\mu), \sin(\mu))^T) - 
+   \kappa \sum_{i=1}^N \cos(y_i - \mu),
+\]
 
+see also Section \@ref(vM). This function is not necessarily convex, and 
+without essentially reexpressing it in terms of the $\theta$-parametrization
+it does not reveal any sufficient statistics. 
 
+Irrespectively of the chosen parametrization, we will not be able to find an
+analytic formula for the maximum-likelihood estimate. We have to rely on
+numerical optimization procedures. When doing so, it can be beneficial to use an
+appropriate parametrization, e.g., one where the negative log-likelihood is
+convex and where computations of it and its gradient can be implemented
+efficiently.
+:::
 
-For general exponential families it may seem restrictive that all 
-the sufficient statistics, $t_j$, take values in the 
-same $p$-dimensional space, and that all marginal distributions share a common 
-parameter vector $\theta$. This is, however, not a restriction. Say we have 
-two distributions with sufficient statistics $\tilde{t}_1 : \mathcal{Y}_1 \to \mathbb{R}^{p_1}$
-and $\tilde{t}_2 : \mathcal{Y}_2 \to \mathbb{R}^{p_2}$ and corresponding 
-parameters $\theta_1$ and $\theta_2$, then we construct 
-$$t_1(y_1) = \left(\begin{array}{c} \tilde{t}_1(y_1) \\ 0 \end{array}\right) \quad 
-\text{and} \quad t_2(y_2) = \left(\begin{array}{c} 0 \\ \tilde{t}_2(y_2) \end{array}\right).$$
-Now $t_1$ and $t_2$ both map into $\mathbb{R}^{p}$ with $p = p_1 + p_2$, and 
-we can bundle the parameters together into the vector
-$$\theta = \left(\begin{array}{c} \theta_1 \\ \theta_2 \end{array}\right) \in \mathbb{R}^p.$$
-Clearly, this construction can be generalized to any number of distributions
-and allows us to always assume a common parameter space. The sufficient 
-statistics then take care of selecting 
-which of the coordinates in the parameter vector that is used for any 
-particular marginal distribution. 
+The example above with the von Mises distributions illustrates how the 
+log-likelihood is specified in terms of the densities and data 
+as a function of the parameters. The example also shows that the 
+precise form of the log-likelihood depends on the specific parametrization. 
+The parametrization determines, for instance, whether the negative 
+log-likelihood is convex, and it can also reveal or hide whether there
+exist sufficient statistics. 
 
-### Exponential family Bayesian networks {#bayes-net}
+::: {.example .boxed #gaussian-exponential}
+The family of Gaussian distributions on $\mathbb{R}$ is most often parametrized 
+by the mean $\mu \in \mathbb{R}$ and variance $\sigma^2 > 0$. The density for 
+the $\mathcal{N}(\mu, \sigma^2)$-distribution is 
 
-An exponential family is defined above as a parametrized family of distributions 
-on $\mathcal{Y}$ of *independent* variables. That is, the joint density 
-in \@ref(eq:exp-dens) factorizes w.r.t. a product measure. Without really 
-changing the notation this assumption can be relaxed considerably. 
+\begin{align*}
+f_{\mu, \sigma^2}(y) & = \frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(y - \mu)^2}{2\sigma^2}\right) \\
+& =   \frac{1}{\sqrt{\pi}} \exp\left(\frac{\mu}{\sigma^2} y - \frac{1}{2\sigma^2} y^2 - \frac{\mu^2}{2\sigma^2} - 
+                                     \frac{1}{2}\log (2\sigma^2) \right),
+\end{align*}
 
-If the sufficient statistic $t_j$, instead of being a fixed map, is 
-allowed to depend on $y_1, \ldots, y_{j-1}$, $f(\mathbf{y} \mid \theta)$ as 
-defined in \@ref(eq:exp-dens)
-is still a joint density. The only difference is that the factor 
-$$f_j(y_j \mid y_1, \ldots, y_{j-1}, \theta) = e^{\theta^T t_j(y_j) - \log \varphi_j(\theta)}$$
-is now the *conditional* density of $y_j$ given $y_1, \ldots, y_{j-1}$.
-In the notation we let the dependence of $t_j$ on $y_1, \ldots, y_{j-1}$ 
-be implicit as this will not affect the abstract theory. In any concrete 
-example though, it will be clear how $t_j$ actually depends upon all, some 
-or none of these variables. Note that $\varphi_j$ may now also depend 
-upon the data through $y_1, \ldots, y_{j-1}$.
+and the parameter space is $\mathbb{R} \times (0, \infty)$. 
 
-The observation above is powerful. It allows us to develop a unified 
-approach based on exponential families for a majority of all statistical 
-models that are applied in practice. The models we consider make two essential 
-assumptions 
+Up to the factor $1/{\sqrt{\pi}}$, the negative log-likelihood 
+with $N$ observations is 
 
-  1. the variables that we model can be ordered such that $y_j$ only 
-  depends on $y_1, \ldots, y_{j-1}$ for $j = 1, \ldots, m$,
-  2. all the conditional distributions form exponential families themselves,
-  with the conditioning variables entering through the $t_j$-maps.
+\[ 
+ - \ell(\mu, \sigma) =  \frac{\mu}{\sigma^2} \sum_{i=1}^N y_i - \frac{1}{2\sigma^2} 
+ \sum_{i=1}^N y^2_i - N \frac{\mu^2}{2\sigma^2} - 
+                                     N \frac{1}{2}\log (2\sigma^2).
+\]
 
-The first of these assumptions is equivalent to the joint distribution 
-being a Bayesian network, that is, a distribution whose density factorizes
-according to a directed acyclic graph. This includes time series models
-and hierarchical models. The second assumption is more restrictive, but 
-is a common practice in applied work. Moreover, as many standard statistical 
-models of univariate discrete and 
-continuous variables are, in fact, exponential families, building
-up a joint distribution as a Bayesian network via conditional 
-binomial, Poisson, beta, Gamma and Gaussian distributions among others 
-is a rather flexible framework, and yet it will 
-result in a model with a density that factorizes as in \@ref(eq:exp-dens). 
+We see that $\sum_{i=1}^N y_i$ and $\sum_{i=1}^N y_i^2$ constitute sufficient 
+statistics. It is possible to show that the unique maximum-likelihood estimate 
+(when at least two of the observations differ) equals 
 
-Bayesian networks is a large and interesting subject in itself, and it is unfair 
-to gloss over all the details. One of the main points is that for many 
-computations it is possible to develop efficient algorithms by exploiting the 
-graph structure. The seminal paper by @Lauritzen:1988 demonstrated this 
-for the computation of conditional distributions. The mere fact that 
-the variables can be ordered in a way that aligns with how 
-the variables depend on each other is useful, but there can be
-many ways to do this, and just specifying an ordering ignores
-important details of the graph. It is, however, beyond the scope of 
-this book to get into the graph algorithms required for a thorough 
-general treatment of Bayesian networks. 
+\begin{align*}
+\hat{\mu} & = \frac{1}{N} \sum_{i=1}^N y_i \\
+\hat{\sigma}^2 & = \frac{1}{N} \sum_{i=1}^N (y_i - \hat{\mu})^2. \\
+\end{align*}
 
-### Likelihood computations {#exp-fam-deriv}
+It is fairly straightforward to show that $(\hat{\mu}, \hat{\sigma}^2) \in 
+\mathbb{R} \times (0, \infty)$ is the unique stationary point, but 
+the negative log-likelihood is not convex in the $(\mu, \sigma^2)$-parametrization, 
+which makes it a bit tricky to show that the solution above is, indeed, 
+the global minimizer. 
 
-To simplify the notation we introduce 
-$$t(\mathbf{y}) = \sum_{j=1}^m t_j(y_j),$$
-which we refer to as the sufficient statistic, and
-$$\kappa(\theta) = \sum_{j=1}^m \log \varphi_j(\theta),$$
-which is a convex $C^{\infty}$-function on $\Theta$. 
+One possibility is to use the reparametrization 
 
-Having observed $\mathbf{y} \in \mathcal{Y}$ it is evident that the log-likelihood
-for the exponential family specified by \@ref(eq:exp-dens) is 
-$$\ell(\theta) = \log f(\mathbf{y} \mid \theta) = \theta^T t(\mathbf{y}) - \kappa(\theta).$$
-From this it follows that the gradient of the log-likelihood is
-$$\nabla \ell(\theta) = t(\mathbf{y}) - \nabla \kappa(\theta)$$
-and the Hessian is
-$$D^2 \ell(\theta) = - D^2 \kappa(\theta),$$
-which is always negative semidefinite. The maximum-likelihood estimator exists 
-if and only if there is a solution to the *score equation*
-$$t(\mathbf{y}) = \nabla \kappa(\theta),$$
-and it is unique if there is such a solution, $\hat{\theta}$, for which 
-$I(\hat{\theta}) = D^2 \kappa(\hat{\theta})$ is positive definite. We 
-call $I(\hat{\theta})$ the *observed Fisher information*.
+\[ 
+  \theta_1 = \frac{\mu}{\sigma^2} \quad \text{and} \quad \theta_2 = \frac{1}{2 \sigma^2},
+\]
 
-Note that under the independence assumption,
-$$\nabla \log \varphi_j(\theta) = \frac{1}{\varphi_j(\theta)} \int t_j(u) e^{\theta^T t_j(u)} \nu_i(\mathrm{d} u) = E_{\theta}(t_j(Y)), $$
-which means that the score equation can be expressed as 
-$$t(\mathbf{y}) = \sum_{j=1}^m E_{\theta}(t_j(Y)).$$
-In the Bayesian network setup $\nabla \log \varphi_j(\theta) = E_{\theta}(t_j(Y) \mid Y_1, \ldots, Y_{j-1}),$
-and the score equation is 
-$$t(\mathbf{y}) = \sum_{j=1}^m E_{\theta}(t_j(Y) \mid y_1, \ldots, y_{j-1}),$$
-which is a bit more complicated as the right-hand-side depends on the 
-observations. 
+which gives 
 
-The definition of an exponential family in Section \@ref(exp-fam) encompasses
-the situation where $y_1, \ldots, y_m$ are i.i.d. by taking $t_j$ to be 
-independent of $j$. In that case, $\kappa(\theta) = m \kappa_1(\theta)$,
-the score equation can be rewritten as 
-$$\frac{1}{m} \sum_{j=1}^m t_1(y_j) = \kappa_1(\theta),$$
-and the Fisher information becomes
-$$I(\hat{\theta}) = m D^2 \kappa_1(\hat{\theta}).$$ 
+\[ 
+ - \ell(\theta_1, \theta_2) =  \theta_1 \sum_{i=1}^N y_i - \theta_2 
+ \sum_{i=1}^N y^2_i - N \frac{\theta_1^2}{4\theta_2} + 
+                                     N \frac{1}{2}\log (\theta_2).
+\]
 
-However, the point of the general formulation is 
-that it includes regression models, and, via the Bayesian networks extension 
-above, models with dependence structures. We could, of course, then 
-have i.i.d. replications $\mathbf{y}_1, \ldots, \mathbf{y}_n$ of
-the entire $m$-dimensional vector $\mathbf{y}$, and we would get 
-the score equation 
-$$\frac{1}{n} \sum_{i=1}^n t(\mathbf{y}_i) = \kappa(\theta),$$
-and corresponding Fisher information
-$$I(\hat{\theta}) = n D^2 \kappa(\hat{\theta}).$$
+This function is convex in $\theta = (\theta_1, \theta_2)^T \in \mathbb{R} \times (0,\infty)$. If we 
+choose to minimize  $- \ell$ in this parametrization, we can return to the mean and variance 
+parameters via  
 
-### Curved exponential families
+\[
+  \mu = \frac{\theta_1}{2\theta_2} \quad \text{and} \quad  \sigma^2 = \frac{1}{2\theta_2}.
+\]
+:::
 
-A *curved exponential family* consists of an exponential family together with a
-$C^2$-map $\theta : \Psi \to \Theta$ from a set $\Psi \subseteq \mathbb{R}^q$.
-The set $\Psi$ provides a parametrization
-of the subset $\theta(\Psi) \subseteq \Theta$ of the full exponential family,
-and the log-likelihood in the $\psi$-parameter is 
-$$\ell(\psi) = \theta(\psi)^T t(\mathbf{y}) - \kappa(\theta(\psi)).$$
-It has gradient 
-$$\nabla \ell(\psi) = D \theta(\psi)^T t(\mathbf{y}) - \nabla \kappa(\theta(\psi)) D \theta(\psi)$$
-and Hessian
-$$D^2 \ell(\psi) =  \sum_{k=1}^p D^2\theta_k(\psi) (t(\mathbf{y})_k - \partial_k \kappa(\theta(\psi))) -   
-D \theta(\psi)^T D^2 \kappa(\theta(\psi)) D \theta(\psi).$$
+In all three examples above we found one parametrization where 
+
+* we could identify sufficient statistics
+* and where the negative log-likelihood is convex
+
+The examples are all *exponential families*\index{exponential families}, with
+their canonical parametrizations leading to the two desirable properties above.
+It is far from all statistical models that are exponential families, but even
+the more complicated models are often build from simpler components that are, in
+fact, exponential families. We will in several cases take advantage of such an
+underlying exponential family structure of the components---even though we will
+avoid a full fledged treatment of exponential families, see @Lauritzen:2023. For
+the implementation of computations and optimization algorithms, what matters
+most is the possibility to exploit sufficient statistics and convexity of the
+negative log-likelihood to yield fast computations and convergence guarantees of
+the algorithms.
 
 ## Multinomial models
 
 The multinomial model is the model of all probability distributions on 
-a finite set $\mathcal{Y} = \{1, \ldots, K\}$. The model is parametrized
-by the simplex 
-$$\Delta_K = \left\{(p_1, \ldots, p_K)^T \in \mathbb{R}^K \mid p_k \geq 0, \sum_{k=1}^K p_k = 1\right\}.$$
-The distributions parametrized by the relative interior of $\Delta_K$ form 
-an exponential family by the parametrization 
-$$p_k = \frac{e^{\theta_k}}{\sum_{l=1}^K e^{\theta_l}} \in (0,1)$$
-for $(\theta_1, \ldots, \theta_K)^T \in \mathbb{R}^K.$ That is,
-the sufficient statistic is $k \mapsto (\delta_{1k}, \ldots, \delta_{Kk})^T \in \mathbb{R}^{K-1}$
-(where $\delta_{lk} \in \{0, 1\}$ is the Kronecker delta being 1 if and only
-if $l = k$), and 
-$$\varphi(\theta_1, \ldots, \theta_K) = \sum_{l=1}^K e^{\theta_l}.$$
-We call this exponential family parametrization the *symmetric* parametrization. 
-The canonical parameter in the symmetric parametrization is not identifiable, 
-and to resolve the lack of identifiability
-there is a tradition of fixing the last parameter as $\theta_K = 0$. This 
-results in a canonical parameter $\theta = (\theta_1, \ldots, \theta_{K-1})^T \in \mathbb{R}^{K-1},$
-a sufficient statistic $t_1(k) = (\delta_{1k}, \ldots, \delta_{(K-1)k})^T \in \mathbb{R}^p$,
+a finite set $\mathcal{Y} = \{1, \ldots, K\}$. We refer to each individual 
+element of the sample space $\mathcal{Y}$ as a *category*, \index{category}
+and we say that there are $K$ categories. The full model is parametrized
+by the simplex \index{simplex}
 
-$$\varphi(\theta) = 1 + \sum_{l=1}^{K-1} e^{\theta_l}$$
+$$\Delta_K = \left\{(p_1, \ldots, p_K)^T \in \mathbb{R}^K \ \Biggm| \ p_y \geq 0, \ \sum_{y=1}^K p_y = 1\right\}.$$
 
-and probabilities 
+The distributions parametrized by the relative interior of $\Delta_K$ can be 
+reparametrized as 
 
-$$p_k = \left\{\begin{array}{ll} \frac{e^{\theta_k}}{1 + \sum_{l=1}^{K-1} e^{\theta_l}}  & \quad \text{if } k = 1, \ldots, K-1 \\  \frac{1}{1 + \sum_{l=1}^{K-1} e^{\theta_l}} & \quad \text{if } k = K. \end{array}\right.$$
+$$p_y = \frac{e^{\theta_y}}{\sum_{k=1}^K e^{\theta_l}} \in (0,1)$$
 
-We see that in this parametrization $p_k = e^{\theta_k}p_K$ for $k = 1, \ldots, K-1$,
-where the probability of the last element $K$ acts as a baseline or reference probability,
-and the factors $e^{\theta_k}$ act as multiplicative modifications of this 
-baseline. Moreover, 
-$$\frac{p_k}{p_l} = e^{\theta_k - \theta_l},$$
-which is independent of the chosen baseline.
+for $\theta = (\theta_1, \ldots, \theta_K)^T \in \mathbb{R}^K.$ The entries of a 
+probability vector $p \in \Delta_K$ can then be expressed as 
+
+$$p_y = \frac{e^{t(y)^T \theta}}{\varphi(\theta)}$$
+
+where $t(y) = (\delta_{1y}, \ldots, \delta_{Ky})^T \in \mathbb{R}^{K}$
+(where $\delta_{ky} \in \{0, 1\}$ is the Kronecker delta being 1 if and only
+if $k = y$), and 
+
+$$\varphi(\theta) = \sum_{k=1}^K e^{\theta_l}.$$
+
+With $N$ i.i.d. observations from a multinomial distribution we find 
+that the log-likelihood function is 
+
+\begin{align*}
+\ell(\theta) & = \sum_{i=1}^N \sum_{k=1}^K \delta_{k y_i} \log(p_k(\theta)) \\
+& = \sum_{k=1}^K \underbrace{\sum_{i=1}^N \delta_{k y_i}}_{= n_k} \log(p_k(\theta)) \\ 
+& = \sum_{k=1}^K  n_k \log(p_k(\theta)) \\ 
+& = \theta^T  \mathbf{N} - N \log \left(\varphi(\theta) \right) \\
+& = \theta^T  \mathbf{N} - N \log \left(\sum_{k=1}^{K} e^{\theta_k} \right).
+\end{align*}
+
+where $\mathbf{N} = (n_1, \ldots, n_K)^T = \sum_{i=1}^N t(y_i) \in \mathbb{N}_0^K$ is the sufficient 
+statistic, which is simply a tabulation of the times the different elements in 
+$\{1, \ldots, K\}$ were observed. The term $\log \left(\varphi(\theta) \right)$ 
+is a convex function, and since the other term is linear, $- \ell$ is 
+convex in the $\theta$-parametrization. 
+
+The distribution of the tabulated data, $\mathbf{N}$, is a 
+multinomial distribution\index{multinomial distribution} with parameters $(N, p)$,
+and we often write $\mathbf{N} \sim \textrm{Mult}(N, p)$.
+
+We call the $\theta$-parametrization above with $\theta \in \mathbb{R}^K$ 
+the *symmetric* parametrization. Unfortunately, this parameter is not 
+identifiable from the probability vector $p$---adding a constant to all entries of $\theta$ 
+will give the same probability vector. The lack of identifiability is 
+traditionally fixed by setting $\theta_K = 0$. This 
+results in the parameter $\theta = (\theta_1, \ldots, \theta_{K-1})^T \in \mathbb{R}^{K-1},$
+in the sufficient statistic $t(y) = (\delta_{1y}, \ldots, \delta_{(K-1)y})^T \in \mathbb{R}^{K-1}$,
+and 
+
+\[
+\varphi(\theta) = 1 + \sum_{k=1}^{K-1} e^{\theta_k}.
+\]
+
+With this parametrization, the category $K$ is called the reference category, 
+\index{reference category} and the parameter $\theta_y$ 
+now expresses the difference relative to the reference category:   
+
+$$p_y = \left\{\begin{array}{ll} \frac{e^{\theta_y}}{\varphi(\theta)}  & \quad \text{if } y = 1, \ldots, K-1 \\  \frac{1}{\varphi(\theta)} & \quad \text{if } y = K. \end{array}\right.$$
+
+We see that $p_y = e^{\theta_y}p_K$ for $y = 1, \ldots, K-1$,
+with the probability of the reference category $K$ acting as a baseline probability,
+and the factor $e^{\theta_y}$ acting as a multiplicative modification of this 
+baseline. Moreover, the ratios 
+
+$$\frac{p_y}{p_k} = e^{\theta_y - \theta_k},$$
+
+are independent of the chosen baseline. The log-likelihood becomes 
+\index{log-likelihood function!multinomial distribution}
+
+\begin{align*}
+\ell(\theta) & = \theta^T  \mathbf{N} - N \log \left(1 + \sum_{k=1}^{K - 1} e^{\theta_k} \right).
+\end{align*}
 
 In the special case of $K = 2$ the two elements $\mathcal{Y}$ are often given 
 other labels than $1$ and $2$. The most common labels are $\{0, 1\}$ and $\{-1, 1\}$.
 If we use the $0$-$1$-labels the convention is to use $p_0$ as the baseline and 
 thus 
-$$p_1 = \frac{e^{\theta}}{1 + e^{\theta}} = e^{\theta} p_0 = e^{\theta} (1 - p_1).$$
-parametrized by $\theta \in \mathbb{R}$. As this function of $\theta$ is 
-known as the *logistic function*, this parametrization of the probability 
-distributions on $\{0,1\}$ is often referred to as the logistic model. From the 
-above we see directly that 
-$$\theta = \log \frac{p_1}{1 - p_1}$$
+
+\[
+p_1 = \frac{e^{\theta}}{1 + e^{\theta}} = e^{\theta} p_0 = e^{\theta} (1 - p_1)
+\]
+
+is parametrized by $\theta \in \mathbb{R}$. As this function of $\theta$ is 
+known as the *logistic function*,\index{logistic function} this parametrization of the probability 
+distributions on $\{0,1\}$ is called the logistic model.\index{logistic model} 
+From the above we see that 
+
+\[
+\theta = \log \frac{p_1}{1 - p_1}
+\]
+
 is the log-odds. 
 
-If we use the $\pm 1$-labels, an alternative exponential family parametrization is 
-$$p_k = \frac{e^{k\theta}}{e^\theta + e^{-\theta}}$$
-for $\theta \in \mathbb{R}$ and $k \in \{-1, 1\}$. This gives a symmetric treatment of the two 
-labels while retaining the identifiability. 
+If we use the $\pm 1$-labels, an alternative parametrization is 
 
-With i.i.d. observations from a multinomial distribution we find 
-that the log-likelihood is 
+\[
+p_y = \frac{e^{y\theta}}{e^\theta + e^{-\theta}}
+\]
 
-\begin{align*}
-\ell(\theta) & = \sum_{i=1}^n \sum_{k=1}^K \delta_{k y_i} \log(p_k(\theta)) \\
-& = \sum_{k=1}^K \underbrace{\sum_{i=1}^n \delta_{k y_i}}_{= n_k} \log(p_k(\theta)) \\ 
-& = \theta^T  \mathbf{n} - n \log \left(1 + \sum_{l=1}^{K-1} e^{\theta_l} \right).
-\end{align*}
+for $\theta \in \mathbb{R}$ and $y \in \{-1, 1\}$. This gives a symmetric treatment 
+of the two labels while retaining the identifiability. 
 
-where $\mathbf{n} = (n_1, \ldots, n_K)^T = \sum_{i=1}^n t(y_i)$ is the sufficient 
-statistic, which is simply a tabulation of the times the different elements in 
-$\{1, \ldots, K\}$ were observed. 
+### Parametrizations and collapsing of categories {#mult-collapse}
 
-### Peppered Moths {#pep-moth}
+In this section we make two additions to the multinomial model. We 
+allow for a parametrization of the multinomial probability vector, 
+which is a map $\psi \mapsto p(\psi) = (p_1(\psi), \ldots, p_K(\psi))$, 
+and we allow for a certain type of incomplete observations from 
+the mutinomial distribution where some categories are collapsed. 
 
-This example is on the color of the peppered Moth (*Birkemåler* in Danish).
-The color of the moth is 
-primarily determined by one gene that occur in three different alleles denoted C,
-I and T. The alleles are ordered in terms of dominance as C > I > T. Moths with genotype 
-including C are dark. Moths 
-with genotype TT are light colored. Moths with genotypes II and IT are mottled. 
-Thus there a total of six different genotypes (CC, CI, CT, II, IT and TT) and
-three different phenotypes (black, mottled, light colored).
 
-```{r moth_figure, echo = FALSE, out.width="70%", fig.align='center'}
-knitr::include_graphics("figures/peppered-moth.jpg")
-```
+A collapse of categories is described by a partition \index{collapsing of categories} 
+$A_1 \cup \ldots \cup A_{K_0} = \{1, \ldots, K\}$ and a map
 
-The peppered moth provided an [early demonstration of evolution](https://en.wikipedia.org/wiki/Peppered_moth_evolution) 
-in the 19th century England, where the light colored moth was outnumbered by the dark 
-colored variety. The dark color became dominant due to the increased 
-pollution, where trees were darkened by soot, and had for that reason a selective 
-advantage. There is a nice collection 
-of moth in different colors at the Danish Zoological Museum, and further 
-explanation of the role it played in understanding evolution. 
+\[
+M : \mathbb{N}_0^K \to \mathbb{N}_0^{K_0}
+\]
 
-We denote the allele frequencies $p_C$, $p_I$, $p_T$ with $p_C + p_I + p_T = 1.$
-According to the [Hardy-Weinberg principle](https://en.wikipedia.org/wiki/Hardy–Weinberg_principle),
-the genotype frequencies are then
+given by
 
-$$p_C^2, 2p_Cp_I, 2p_Cp_T, p_I^2,  2p_Ip_T, p_T^2.$$
+\[
+M((n_1, \ldots, n_K))_j = \sum_{k \in A_j} n_k.
+\]
 
-If we could observe the genotypes, the complete multinomial log-likelihood would be 
+For a single observation $x \in \{1,\ldots,K\}$ we have a corresponding 
 
-\begin{align*}
- & 2n_{CC} \log(p_C) + n_{CI} \log (2 p_C p_I) + n_{CT} \log(2 p_C p_I) \\
-& \ \ + 2 n_{II} \log(p_I) + n_{IT} \log(2p_I p_T) + 2 n_{TT} \log(p_T) \\
-& = 2n_{CC} \log(p_C) + n_{CI} \log (2 p_C p_I) + n_{CT} \log(2 p_C p_I) \\
-& \ \ + 2 n_{II} \log(p_I) + n_{IT} \log(2p_I (1 - p_C - p_I)) + 2 n_{TT} \log(1 - p_C - p_I). 
-\end{align*}
+\[
+y = M(t(x)) = \left( \sum_{k \in A_1} \delta_{kx}, \ldots,
+ \sum_{k \in A_{K_0}} \delta_{kx} \right) \in \mathbb{N}_0^{K_0}
+\]
 
-The log-likelihood is given in terms of the genotype counts and the two probability parameters
-$p_C, p_I \geq 0$ with $p_C + p_I \leq 1$, and on the interior of this 
-parameter set the model is a curved exponential family. 
+indicating which of the $K_0$ collapsed categories the observation $y$
+falls into. 
 
-Collecting moths and determining their color will, however, only identify their phenotype, 
-not their genotype. Thus we observe $(n_C, n_T, n_I)$, where
-$$n = \underbrace{n_{CC} + n_{CI} + n_{CT}}_{= n_C} + 
-\underbrace{n_{IT} + n_{II}}_{=n_I} + \underbrace{n_{TT}}_{=n_T}.$$
+If $\mathbf{N}^x \sim \textrm{Mult}(N, p)$ with $p = (p_1, \ldots, p_K)$ then 
+the corresponding tabulation of $y$-values equals
 
-For maximum-likelihood estimation of the parameters in this model from 
-the observation $(n_C, n_T, n_I)$, we need the likelihood, 
-that is, the likelihood in the marginal distribution of the observed
-variables. 
+\[ 
+\mathbf{N} = M(\mathbf{N}^x) \sim \textrm{Mult}(N, M(p)).
+\]
 
-The peppered Moth example is an example of *cell collapsing* in a multinomial model.
-In general, let $A_1 \cup \ldots \cup A_{K_0} = \{1, \ldots, K\}$ be a partition and let 
-$$M : \mathbb{N}_0^K \to \mathbb{N}_0^{K_0}$$
-be the map given by
-$$M((n_1, \ldots, n_K))_j = \sum_{k \in A_j} n_k.$$
-
-If $Y \sim \textrm{Mult}(p, n)$ with $p = (p_1, \ldots, p_K)$ then 
-$$X = M(Y) \sim \textrm{Mult}(M(p), n).$$
-If $\theta \mapsto p(\theta)$ is a parametrization of the cell probabilities
+In terms of the parametrization $\psi \mapsto p(\psi)$ of the 
+multinomial probability vector,
+and having observed $\mathbf{N} = (n_1, \ldots, n_{K_0})$,
 the log-likelihood under the collapsed multinomial model is generally
 
 \begin{equation}
-\ell(\theta) = \sum_{j = 1}^{K_0} x_j \log (M(p(\theta))_j) = \sum_{j = 1}^{K_0} x_j \log \left(\sum_{k \in A_j} p_k(\theta)\right).
+\ell(\psi) = \sum_{j = 1}^{K_0} n_j \log (M(p(\psi))_j) = 
+\sum_{j = 1}^{K_0} n_j \log \left(\sum_{k \in A_j} p_k(\psi)\right).
 (\#eq:mult-col-loglik) 
 \end{equation}
 
-For the peppered Moths, $K = 6$ corresponding to the six genotypes, $K_0 = 3$ and 
-the partition corresponding to the phenotypes is
-$$\{1, 2, 3\} \cup \{4, 5\} \cup \{6\} = \{1, \ldots, 6\},$$
-and
-$$M(n_1, \ldots, n_6) = (n_1 + n_2 + n_3, n_4 + n_5, n_6).$$
 
-In terms of the $(p_C, p_I)$ parametrization, $p_T = 1 - p_C - p_I$ and 
-$$p = (p_C^2, 2p_Cp_I, 2p_Cp_T, p_I^2,  2p_Ip_T, p_T^2).$$
+### Peppered Moths {#pep-moth}
+
+The peppered moth (*Birkemåler* in Danish) is a moth species that is found 
+throughout the northern hemisphere. Its color can vary considereably from 
+very dark to very light. The light colored varieties can also have patterns 
+of darker spots. Figure \@ref(fig:moth-figure)
+shows examples of the color variation among individual moths. The peppered moth
+provided an [early demonstration of
+evolution](https://en.wikipedia.org/wiki/Peppered_moth_evolution) in the 19th
+century England, where the light colored moth was outnumbered by the dark
+colored variety. The dark color became dominant due to the increased pollution,
+where trees were darkened by soot, and the dark colored moths thus had a 
+selective advantage.
+
+The color is the directly observable phenotype of the moth, while the genetics
+is a little more complicated to observe. For the purpose of this example, a
+moth is classified into one of three color categories: dark, mottled, or light
+colored. The color of the moth is primarily determined by one gene that occurs
+in three different alleles denoted $C$, $I$ and $T$. The alleles are ordered in terms
+of dominance as $C > I > T$. Moths with a genotype including $C$ are dark. Moths 
+with genotype $TT$ are light colored. Moths with genotypes $II$ and $IT$ are 
+mottled. 
+Thus there a total of six different genotypes 
+($CC$, $CI$, $CT$, $II$, $IT$ and $TT$), which 
+results in three different color phenotypes.
+
+```{r moth-figure, echo = FALSE, out.width="100%", fig.align='center', fig.cap="Examples of the color variation of the peppered moth."}
+knitr::include_graphics("figures/moth.jpg")
+```
+
+If we sample $N$ moths and classify them according to color we have a sample
+from a multinomial distribution with three categories. If we could observe the
+genotypes, we would have a sample from a multinomial distribution with six
+categories. To make matters a little more complicated, the multinomial
+probability vector does not vary freely in the simplex but is in either case
+determined by the allele frequencies, which we denote $p_C$, $p_I$, $p_T$ with
+$p_C + p_I + p_T = 1.$ According to the [Hardy-Weinberg
+principle](https://en.wikipedia.org/wiki/Hardy–Weinberg_principle), the genotype
+frequencies are
+
+\begin{align*}
+  p_{CC} &= p_C^2, \ p_{CI} = 2p_Cp_I, \ p_{CT} = 2p_Cp_T \\
+  p_{II} &=  p_I^2, \ p_{IT} = 2p_Ip_T, \ p_{TT} = p_T^2.
+\end{align*}
+
+The parametrization in terms of allele frequencies maps out a subset of the 
+full parameter set for the multinomial distribution with six categories. 
+If we could observe the genotypes, the multinomial log-likelihood, 
+parametrized by allele frequencies, would be 
+
+\begin{align*}
+ \ell(p_C, p_I) & = 2N_{CC} \log(p_C) + N_{CI} \log (2 p_C p_I) + N_{CT} \log(2 p_C p_I)  \\
+& \ \ + 2 N_{II} \log(p_I) + N_{IT} \log(2p_I p_T) + 2 N_{TT} \log(p_T) \\
+& = 2N_{CC} \log(p_C) + N_{CI} \log (2 p_C p_I) + N_{CT} \log(2 p_C p_I)  \\
+& \ \ + 2 N_{II} \log(p_I) + N_{IT} \log(2p_I (1 - p_C - p_I)) + 2 N_{TT} \log(1 - p_C - p_I). 
+\end{align*}
+
+The log-likelihood is given in terms of the genotype counts and the two 
+probability parameters $p_C, p_I \geq 0$ with $p_C + p_I \leq 1$. By differentiation,
+it is possible to find an analytic expression for the maximum-likelihood estimate,
+but we will postpone this exercise to Section \@ref(peppered-moths), because
+collecting moths and determining their color will only identify their phenotype, 
+not their genotype. Thus we observe $(N_C, N_T, N_I)$, where
+
+\[
+N = \underbrace{N_{CC} + N_{CI} + N_{CT}}_{= N_C} + 
+\underbrace{N_{IT} + N_{II}}_{=N_I} + \underbrace{N_{TT}}_{=N_T}.
+\]
+
+For maximum-likelihood estimation of the parameters from 
+the observation $(N_C, N_T, N_I)$ we need the likelihood in the marginal 
+distribution of the observed variables. This is an example of 
+collapsing of categories as treated in Section \@ref(mult-collapse) 
+with $K = 6$, corresponding to the six genotypes, and $K_0 = 3$, 
+corresponding to the three phenotypes. The partition corresponding to 
+the phenotypes is
+
+\[
+\{CC, CI, CT\} \cup \{IT, II\} \cup \{TT\} = \{CC, \ldots, TT\},
+\]
+
+and
+
+\begin{align*}
+(N_C, N_I, N_T) & = M(N_{CC}, \ldots, N_{TT}) \\
+& = (N_{CC} + N_{CI} + N_{CT}, N_{IT} + N_{II}, N_{TT}).
+\end{align*}
+
+In terms of the $\psi = (p_C, p_I)$-parametrization, $p_T = 1 - p_C - p_I$ and 
+
+\[
+p = (p_C^2, 2p_Cp_I, 2p_Cp_T, p_I^2,  2p_Ip_T, p_T^2).
+\]
 
 Hence 
-$$M(p) = (p_C^2 + 2p_Cp_I + 2p_Cp_T, p_I^2 +2p_Ip_T, p_T^2).$$
 
-The log-likelihood is
+\[
+M(p) = (p_C^2 + 2p_Cp_I + 2p_Cp_T, p_I^2 +2p_Ip_T, p_T^2).
+\]
 
-\begin{align}
-\ell(p_C, p_I) & = n_C \log(p_C^2 + 2p_Cp_I + 2p_Cp_T) + n_I \log(p_I^2 +2p_Ip_T) + n_T \log (p_T^2).
-\end{align}
+The log-likelihood equals
 
-We can implement the log-likelihood in a very problem specific way.
-Note how the parameter constraints are encoded via the return value $\infty$. 
+\begin{align*}
+\ell(p_C, p_I) & = N_C \log(p_C^2 + 2p_Cp_I + 2p_Cp_T) + 
+N_I \log(p_I^2 +2p_Ip_T) + N_T \log (p_T^2).
+\end{align*}
 
+We first implement the (negative) log-likelihood in a very problem 
+specific way below.
+The implementation checks if the parameter constraints 
+are fulfilled, that is, if  $(p_C, p_I, p_T)$ is a probability vector.
+If the parameters are out of bounds the function returns the value 
+$+\infty$. It is fairly standard in optimization to encode constraints by 
+letting the function return the value $+\infty$ (for minimization) 
+when parameters are out of bounds.
 
-```{r moth_likelihood}
-## par = c(pC, pI), pT = 1 - pC - pI
-## x is the data vector of length 3 of counts 
-loglik <- function(par, x) {
-  pT <- 1 - par[1] - par[2]
-  
-  if (par[1] > 1 || par[1] < 0 || par[2] > 1 
-      || par[2] < 0 || pT < 0)
-    return(Inf)
-  
-  PC <- par[1]^2 + 2 * par[1] * par[2] + 2 * par[1] * pT
-  PI <- par[2]^2 + 2 * par[2] * pT
-  PT <- pT^2
-  ## The function returns the negative log-likelihood 
-  - (x[1] * log(PC) + x[2] * log(PI) + x[3]* log(PT))
+```{r moth-likelihood}
+# p = c(p_C, p_I), p_T = 1 - p_C - p_I
+# ny is the data vector of counts of length 3
+neg_loglik_pep <- function(p, ny) {
+  p_T <- 1 - p[1] - p[2]
+
+  out_of_bounds <-
+    p[1] > 1 || p[1] < 0 || p[2] > 1 || p[2] < 0 || p_T < 0
+  if (out_of_bounds) return(Inf)
+
+  p_dark <- p[1]^2 + 2 * p[1] * p[2] + 2 * p[1] * p_T
+  p_mott <- p[2]^2 + 2 * p[2] * p_T
+  p_light <- p_T^2
+  # The function returns the negative log-likelihood
+  - (ny[1] * log(p_dark) + ny[2] * log(p_mott) + ny[3] * log(p_light))
 }
 ```
 
-It is possible to use `optim` in R with just this implementation to 
+It is possible to use `optim()` in R with just this implementation to 
 compute the maximum-likelihood estimate of the allele parameters. 
 
-```{r moth_optim, dependson="moth_likelihood"}
-optim(c(0.3, 0.3), loglik, x = c(85, 196, 341))
+```{r moth-optim, dependson="moth-likelihood"}
+optim(c(0.3, 0.3), neg_loglik_pep, ny = c(85, 196, 341))
 ```
 
-The `optim` function uses an algorithm called [Nelder-Mead](https://en.wikipedia.org/wiki/Nelder–Mead_method) 
-as the default algorithm that relies on log-likelihood evaluations only. It
-is slow but fairly robust, though a bit of thought has to go into the initial 
-parameter choice.
+The `optim()` function uses an algorithm called [Nelder-Mead](https://en.wikipedia.org/wiki/Nelder–Mead_method) 
+as the default algorithm, which relies on log-likelihood evaluations only. It
+is slow but fairly robust. A bit of thought has to go into the initial 
+parameter choice, though. 
+Starting the algorithm at a boundary value, where the negative log-likelihood attains
+the value $\infty$, does not work. 
 
-```{r  moth_optim_error, error = TRUE, dependson="moth_likelihood"}
-optim(c(0, 0), loglik, x = c(85, 196, 341))
+```{r  moth-optim-error, error = TRUE, dependson="moth-likelihood"}
+optim(c(0, 0), neg_loglik_pep, ny = c(85, 196, 341))
 ```
 
-Starting the algorithm in a boundary value where the negative log-likelihood attains
-the value $\infty$ does not work. 
+The computations can beneficially be implemented in greater generality. The R
+function `mult_collapse()` below implements collapsing of categories for  
+multinomial data---the 
+map denoted $M$ in the mathematical formulas. The implementation 
+works by adding up the entries of all
+cells belonging to the same group as specified by the `group` argument.
 
-The computations can beneficially be implemented in greater 
-generality. The function `M` sums the cells that are collapsed, 
-which has to be specified by the `group` argument.
-
-```{r moth_M}
-M <- function(x, group)
-  as.vector(tapply(x, group, sum))
-```
-
-The log-likelihood is then implemented for multinomial cell 
-collapsing via `M` and two problem specific arguments to 
-the `loglik` function. One of these is a vector specifying 
-the grouping structure of the collapsing. The other is a function
-that determines the 
-parametrization that maps the parameter that we are optimizing over to the
-cell probabilities. In the implementation it is assumed 
-that this `prob` function in addition encodes parameter constraints 
-by returning `NULL` if parameter constraints are violated. 
-
-```{r moth_loglikelihood, dependson=c("moth_M", "moth_prob")}
-loglik <- function(par, x, prob, group, ...) {
-  p <- prob(par)
-  if(is.null(p)) return(Inf)
-  - sum(x * log(M(prob(par), group)))
+```{r moth-M}
+mult_collapse <- function(ny, group) {
+  as.vector(tapply(ny, group, sum))
 }
 ```
 
-The function `prob` is implemented specifically for the peppered moths
+The log-likelihood for possibly collapsed data, `loglik_mult()` below,
+is implemented via `mult_collapse()` and two problem specific arguments. 
+One argument, `prob`, is a function that determines the 
+parametrization mapping the parameter that we optimize over to the
+multinomial probability vector. The other argument is a vector specifying 
+the grouping structure of the collapsing. In the implementation it is assumed 
+that the function passed on `prob` encodes parameter constraints 
+by returning `NULL` if parameters are out of bounds. 
+
+```{r moth-loglikelihood, dependson=c("moth-M", "moth-prob")}
+neg_loglik_mult <- function(par, ny, prob, group) {
+  p <- prob(par)
+  if (is.null(p)) return(Inf)
+  - sum(ny * log(mult_collapse(p, group)))
+}
+```
+
+The function `prob()` is implemented specifically for the peppered moth example
 as follows. 
 
-```{r moth_prob}
-prob <- function(p) {
+```{r moth-prob}
+prob_pep <- function(p) {
   p[3] <- 1 - p[1] - p[2]
-  if (p[1] > 1 || p[1] < 0 || p[2] > 1 || p[2] < 0 || p[3] < 0)
-    return(NULL)
-  c(p[1]^2, 2 * p[1] * p[2], 2* p[1] * p[3], 
-    p[2]^2, 2 * p[2] * p[3], p[3]^2)
+
+  out_of_bounds <-
+    p[1] > 1 || p[1] < 0 || p[2] > 1 || p[2] < 0 || p[3] < 0
+  if (out_of_bounds) return(NULL)
+
+  c(p[1]^2, 2 * p[1] * p[2], 2 * p[1] * p[3],
+    p[2]^2, 2 * p[2] * p[3], p[3]^2
+  )
 }
 ```
 
-We test that the new implementation gives the same result when 
-optimized as using the more problem specific implementation.
+We test that the new implementation gives the same maximum-likelihood estimate 
+as the problem specific implementation above.
 
-```{r moth_optim2, dependson=c("moth_likelihood", "moth_prob", "moth_M")}
-optim(c(0.3, 0.3), loglik, x = c(85, 196, 341), 
-      prob = prob, group = c(1, 1, 1, 2, 2, 3))
+```{r moth-optim2, dependson=c("moth-likelihood", "moth-prob", "moth-M")}
+optim(c(0.3, 0.3), neg_loglik_mult,
+  ny = c(85, 196, 341),
+  prob = prob_pep,
+  group = c(1, 1, 1, 2, 2, 3)
+)
 ```
 
 Once we have found an estimate of the parameters, we can compute a prediction 
-of the unobserved genotype counts from the phenotype counts using 
+of the unobserved genotype counts from the phenotype counts, $\mathbf{N}^x$, using 
 the conditional distribution of the genotypes given the phenotypes. 
-This is straightforward as the conditional distribution of $Y_{A_j} = (Y_k)_{k \in A_j}$, 
-conditionally on $X$ is also a multinomial distribution;
-$$Y_{A_j} \mid X = x \sim \textrm{Mult}\left( \frac{p_{A_j}}{M(p)_j}, x_j \right).$$
+This is straightforward as the conditional distribution of $\mathbf{N}_{A_j}^x = (N_k^x)_{k \in A_j}$
+given $N_j = n_j$ is also a multinomial distribution;
+
+\[
+\mathbf{N}_{A_j}^x \mid N_j = n_j \sim \textrm{Mult}\left( n_j, \frac{p_{A_j}}{M(p)_j} \right).
+\]
+
 The probability parameters are simply $p$ restricted to $A_j$ and renormalized 
 to a probability vector. Observe that this gives
-$$E (Y_k \mid X = x) = \frac{x_j p_k}{M(p)_j}$$
-for $k \in A_j$. Using the estimated parameters and the `M` function implemented
-above, we can compute a prediction of the genotype counts as follows.
 
-```{r moth_predict, dependson=c("moth_M", "moth_prob")}
-x <- c(85, 196, 341)
+\[
+E (N_k^x \mid N_j = n_j) = \frac{n_j p_k}{M(p)_j}
+\]
+
+for $k \in A_j$. Using the estimated parameters and the `mult_collapse()` function implemented above, we can compute a prediction of the genotype counts as follows.
+
+```{r moth-predict, dependson=c("moth-M", "moth-prob")}
+ny <- c(85, 196, 341)
 group <- c(1, 1, 1, 2, 2, 3)
-p <- prob(c(0.07084643, 0.18871900))
-x[group] * p / M(p, group)[group]
+p <- prob_pep(c(0.07084643, 0.18871900))
+ny[group] * p / mult_collapse(p, group)[group]
 ```
 
 This is of interest in itself, but computing these conditional expectations
 will also be central for the EM algorithm in Chapter \@ref(em). 
+
+
+## Finite mixture models
+
+A finite mixture model is a model of a pair of random variables $(Y, Z)$
+with $Z \in \{1, \ldots, K\}$, $P(Z = k) = p_k$, and the conditional distribution 
+of $Y$ given $Z = k$ having density $f_k( \cdot \mid \theta_k)$. The joint 
+density is then 
+
+\[
+ (y, k) \mapsto f_k(y \mid \theta_k) p_k,
+\]
+
+and the marginal density for the distribution of $Y$ is
+
+\[ 
+f(y \mid \theta) =  \sum_{k=1}^K f_k(y \mid \theta_k) p_k
+\]
+
+where $\theta$ is the vector of all parameters. We say that the 
+model has $K$ mixture components and call $f_k( \cdot \mid \theta_k)$
+the mixture distributions and $p_k$ the mixture weights. 
+
+The main usage of mixture models is to situations where $Z$ is not observed. 
+In practice, only $Y$ is observed, and parameter estimation has to be 
+based on the marginal distribution of $Y$ with density $f(\cdot \mid \theta)$,
+which is a weighted sum of the mixture distributions.
+
+The set of all probability measures on $\{1, \ldots, K\}$ is an exponential 
+family with sufficient statistic
+
+\[
+\tilde{t}_0(k) = (\delta_{1k}, \delta_{2k}, \ldots, \delta_{(K-1)k}) \in \mathbb{R}^{K-1},
+\]
+
+canonical parameter $\alpha = (\alpha_1, \ldots, \alpha_{K-1}) \in \mathbb{R}^{K-1}$
+and 
+
+\[
+p_k = \frac{e^{\alpha_k}}{1 + \sum_{l=1}^{K-1} e^{\alpha_l}}.
+\]
+
+When $f_k$ is an exponential family as well with sufficient statistic
+$\tilde{t}_k : \mathcal{Y} \to \mathbb{R}^{p_k}$ and $\theta_k$ the 
+canonical parameter, we bundle $\alpha, \theta_1, \ldots, \theta_K$ 
+into $\theta$ and define
+
+\[
+t_1(y) = \left(\begin{array}{c}
+\tilde{t}_0 \\
+0 \\
+0 \\
+\vdots \\
+0
+\end{array}
+\right)
+\]
+
+together with 
+
+\[
+t_2(y \mid k) = \left(\begin{array}{c}
+0 \\
+\delta_{1k} \tilde{t}_1(y) \\
+\delta_{2k} \tilde{t}_2(y) \\
+\vdots \\
+\delta_{Kk} \tilde{t}_K(y)
+\end{array}
+\right)
+\]
+
+we see that we have an exponential family of the joint distribution of $(Y, Z)$
+with the $p = K-1 +  p_1 + \ldots + p_K$-dimensional canonical parameter $\theta$,
+with the sufficient statistic $t_1$ determining the marginal distribution of $Z$
+and with the sufficient statistic $t_2$ determining the *conditional* distribution
+of $Y$ given $Z$. We have here made the conditioning variable explicit.
+
+The marginal density of $Y$ in the exponential family parametrization then 
+becomes
+
+\[
+  f(y \mid \theta) = \sum_{k=1}^K  e^{\theta^T (t_1(k) + t_2(y \mid k)) - \log \varphi_1(\theta) - \log \varphi_2(\theta \mid k)}.
+\]
+
+For small $K$ it is usually unproblematic to implement the computation of 
+the marginal density using the formula above.
+
+### Gaussian mixtures {#Gauss-mix-ex}
+
+A Gaussian mixture model is a mixture model where all the  mixture distributions are  
+Gaussian distributions but potentially with different means and variances. In this 
+section we focus on the simplest Gaussian mixture model with $K = 2$ mixture 
+components. 
+
+When $K = 2$, the Gaussian mixture model is parametrized by the five parameters: 
+the mixture weight $p = \P(Z = 1) \in (0, 1)$, the two means $\mu_1, \mu_2 \in \mathbb{R}$, 
+and the two standard deviations $\sigma_1, \sigma_2 > 0$. First 
+we will simply simulate random variables from this model. 
+
+```{r mixture-gaus-sim}
+sigma1 <- 1
+sigma2 <- 2
+mu1 <- -0.5
+mu2 <- 4
+p <- 0.5
+N <- 5000
+z <- sample(c(TRUE, FALSE), N, replace = TRUE, prob = c(p, 1 - p))
+## Conditional simulation from the mixture components
+y <- numeric(N)
+N1 <- sum(z)
+y[z] <- rnorm(N1, mu1, sigma1)
+y[!z] <- rnorm(N - N1, mu2, sigma2)
+```
+
+The simulation above generated `r N` samples from a two-component
+Gaussian mixture model with mixture distributions $\mathcal{N}(-0.5, 1)$
+and $\mathcal{N}(4, 4)$, and with each component having weight $0.5$. 
+This gives a bimodal distribution as illustrated by the histogram on Figure 
+\@ref(fig:mixture-gaus-histogram). 
+
+```{r mixture-gaus-histogram, dependson="mixture-gaus-sim", fig.cap="Histogram and density estimate (red) of data simulated from a two-component Gaussian mixture distribution. The true mixture distribution has "}
+yy <- seq(-3, 11, 0.1)
+dens <- p * dnorm(yy, mu1, sigma1) + (1 - p) * dnorm(yy, mu2, sigma2)
+ggplot(mapping = aes(y, after_stat(density))) +
+  geom_histogram(bins = 20) +
+  geom_line(aes(yy, dens), color = "blue", size = 1) +
+  stat_density(bw = "sj", geom = "line", color = "red", size = 1)
+```
+
+It is possible to give a mathematically different representation of the 
+marginal distribution of $Y$ that is sometimes useful. Though it gives
+the same marginal distribution from the same components, it does provide a
+different interpretation of what a mixture model is a model of, and it does 
+provide a different way of simulating from a mixture distribution. 
+
+If we let $Y_1 \sim \mathcal{N}(\mu_1, \sigma_1^2)$ and $Y_2 \sim \mathcal{N}(\mu_2, \sigma_2^2)$ 
+be independent, and independent of $Z$, we can define 
+
+\begin{equation}
+Y = 1(Z = 1) Y_1 + 1(Z = 2) Y_2 = Y_{Z}.
+(\#eq:mixturerep)
+\end{equation}
+
+Clearly, the conditional distribution of $Y$ given $Z = k$ is $f_k$.
+From \@ref(eq:mixturerep) it follows directly that
+$$E(Y^N) = P(Z = 1) E(Y_1^N) + P(Z = 2) E(Y_2^N) = p m_1(n) + (1 - p) m_2(n)$$
+where $m_k(n)$ denotes the $N$th non-central moment of the $k$th mixture
+component. In particular,
+
+$$E(Y) = p \mu_1 + (1 - p) \mu_2.$$
+
+The variance can be found from the second moment as
+
+\begin{align}
+V(Y) & = p(\mu_1^2 + \sigma_1^2) + (1-p)(\mu_2^2 + \sigma_2^2) -  (p \mu_1 + (1 - p) \mu_2)^2 \\
+& = p\sigma_1^2 + (1 - p) \sigma_2^2 + p(1-p)(\mu_1^2 + \mu_2^2 - 2 \mu_1 \mu_2).
+\end{align}
+
+While it is certainly possible to derive this formula by other means, using 
+\@ref(eq:mixturerep) gives a simple argument based on 
+elementary properties of expectation and independence
+of $(Y_1, Y_2)$ and $Z$.  
+
+The construction via \@ref(eq:mixturerep) has an interpretation that differs 
+from how a mixture model was defined in the first place. Though $(Y, Z)$ has 
+the correct joint distribution, $Y$ is by \@ref(eq:mixturerep) the result of $Z$ *selecting* one 
+out of two possible observations. The difference is illustrated by 
+the following example. Suppose that we have a population of twins 
+with each pair of twins consisting of a male and a female. 
+We can draw a sample of individuals (ignoring the relations 
+between the twins) from this population and let $Z$ denote the sex and $Y$ the 
+height of the individual. Then $Y$ follows a mixture distribution with two 
+components corresponding to males and females according to the definition. 
+We could then also draw a sample
+of twins, and for each pair of twins flip a coin to decide whether to report
+the male's or the female's height. This corresponds to the construction 
+of $Y$ by \@ref(eq:mixturerep). We get the same marginal mixture 
+distribution of heights though. 
+
+Arguably the heights of two twins are not 
+independent, but this is actually immaterial. Any dependence structure between
+$Y_1$ and $Y_2$ is lost in the transformation  \@ref(eq:mixturerep), and we
+can just as well assume them independent for mathematical convenience. 
+We will not be able to tell the difference from observing only $Y$ (and $Z$) anyway. 
+
+We illustrate below how \@ref(eq:mixturerep) can be used for alternative
+implementations of ways to simulate from the mixture model. We compare empirical 
+means and variances to the theoretical values to test if all the implementations
+actually simulate from the Gaussian mixture model.
+
+```{r sim-gaus-mix, dependson="mixture-gaus-sim"}
+## Mean
+mu <- p * mu1 + (1 - p) * mu2
+
+## Variance
+sigmasq <- p * sigma1^2 + (1 - p) * sigma2^2 +
+  p * (1 - p) * (mu1^2 + mu2^2 - 2 * mu1 * mu2)
+
+## Simulation using the selection formulation via 'ifelse'
+y2 <- ifelse(z, rnorm(n, mu1, sigma1), rnorm(n, mu2, sigma2))
+
+## Yet another way of simulating from a mixture model
+## using arithmetic instead of 'ifelse' for the selection
+## and with Y_1 and Y_2 actually being dependent
+y3 <- rnorm(n)
+y3 <- z * (sigma1 * y3 + mu1) + (!z) * (sigma2 * y3 + mu2)
+
+## Returning to the definition again, this last method simulates conditionally
+## from the mixture components via transformation of an underlying Gaussian
+## variable with me an 0 and variance 1
+y4 <- rnorm(N)
+y4[z] <- sigma1 * y4[z] + mu1
+y4[!z] <- sigma2 * y4[!z] + mu2
+
+## Tests
+data.frame(
+  mean = c(mu, mean(y), mean(y2), mean(y3), mean(y4)),
+  variance = c(sigmasq, var(y), var(y2), var(y3), var(y4)),
+  row.names = c("true", "conditional", "ifelse",
+                "arithmetic", "conditional2")
+)
+```
+
+In terms of runtime there is not a big difference between three of 
+the ways of simulating from a mixture model. A benchmark study (not shown)  
+revealed that the first and third methods are comparable in terms of runtime
+and a bit faster than the fourth, while the second using `ifelse()` takes 
+about twice as long time as the two fastest. This is 
+unsurprising as the `ifelse()` method takes \@ref(eq:mixturerep) very literally 
+and generates twice the number of Gaussian variables actually needed. 
+
+
+```{r mix-sim-bench, eval = FALSE, include=FALSE}
+N <- 10000
+z <- sample(c(TRUE, FALSE), N, replace = TRUE, prob = c(p, 1 - p))
+bench::mark({
+  x <- numeric(N)
+  N1 <- sum(z)
+  x[z] <- rnorm(N1, mu1, sigma1)
+  x[!z] <- rnorm(N - N1, mu2, sigma2)
+},
+x <- ifelse(z, rnorm(N, mu1, sigma1), rnorm(N, mu2, sigma2)),
+{
+  x <- rnorm(N)
+  x <- z * (sigma1 * x + mu1) + (!z) * (sigma2 * x + mu2)
+},
+{
+  x <- rnorm(N)
+  x[z] <- sigma1 * x[z] + mu1
+  x[!z] <- sigma2 * x[!z] + mu2
+},
+  check = FALSE
+)
+```
+
+
+The marginal density of $Y$ is
+
+\[
+f(y) = p \frac{1}{\sqrt{2 \pi \sigma_1^2}} e^{-\frac{(y - \mu_1)^2}{2 \sigma_1^2}} + 
+(1 - p)\frac{1}{\sqrt{2 \pi \sigma_2^2}}e^{-\frac{(y - \mu_2)^2}{2 \sigma_2^2}}
+\]
+
+as given in terms of the parameters $p$, $\mu_1, \mu_2$, $\sigma_1^2$ and $\sigma_2^2$. 
+
+
+Returning to the canonical parameters we see that they are given as 
+follows: 
+
+\[
+\theta_1  = \log \frac{p}{1 - p}, \quad 
+\theta_2  = \frac{\mu_1}{2\sigma_1^2}, \quad
+\theta_3  = \frac{1}{2\sigma_1^2}, \quad
+\theta_4  = \frac{\mu_2}{\sigma_2^2}, \quad
+\theta_5  = \frac{1}{2\sigma_2^2}.
+\]
+
+The joint density in this parametrization then becomes 
+
+\[
+(y,k) \mapsto \left\{ \begin{array}{ll} 
+\exp\left(\theta_1 + \theta_2 y - \theta_3 y^2 - \log (1 + e^{\theta_1}) - \frac{ \theta_2^2}{4\theta_3}+ \frac{1}{2} \log(\theta_3) \right) & \quad \text{if } k = 1 \\
+\exp\left(\theta_4 y - \theta_5 y^2 - \log (1 + e^{\theta_1}) - \frac{\theta_4^2}{4\theta_5} + \frac{1}{2}\log(\theta_5) \right) &  \quad \text{if } k = 2 
+\end{array} \right. 
+\]
+
+and the marginal density for $Y$ is 
+
+\begin{align}
+f(y \mid \theta) & = \exp\left(\theta_1 + \theta_2 y - \theta_3 y^2 - \log (1 + e^{\theta_1}) - \frac{ \theta_2^2}{4\theta_3}+ \frac{1}{2} \log(\theta_3) \right) \\ 
+& + \exp\left(\theta_4 y - \theta_5 y^2 - \log (1 + e^{\theta_1}) - \frac{\theta_4^2}{4\theta_5} + \frac{1}{2}\log(\theta_5) \right).
+\end{align}
+
+There is no apparent benefit to the canonical parametrization when considering
+the marginal density. It is, however, of value when we need the logarithm of 
+the joint density as we will for the EM algorithm. 
 
 ## Regression models {#regression}
 
@@ -584,12 +998,20 @@ models is based on exponential families.
 
 If we let $y_i \in \mathbb{R}$ denote the $i$th response and $x_i \in \mathbb{R}^p$ 
 the $i$th predictor we can consider the exponential family of models with joint density
-$$f(\mathbf{y} \mid \mathbf{X}, \beta) = \prod_{i=1}^n e^{\theta^T t_i(y_i \mid x_i) - \log \varphi_i(\theta)}$$
+
+\[
+f(\mathbf{y} \mid \mathbf{X}, \beta) = \prod_{i=1}^N e^{\theta^T t_i(y_i \mid x_i) - \log \varphi_i(\theta)}
+\]
+
 for suitably chosen base measures. Here 
-$$\mathbf{X} = \left( \begin{array}{c} x_1^T \\ x_2^T \\ \vdots \\ x_{n-1}^T \\ x_n^T \end{array} \right)$$
+
+\[
+\mathbf{X} = \left( \begin{array}{c} x_1^T \\ x_2^T \\ \vdots \\ x_{n-1}^T \\ x_N^T \end{array} \right)
+\]
+
 is called the *model matrix* and is an $n \times p$ matrix. 
 
-```{example, poisson-regression} 
+::: {.example .boxed #poisson-regression} 
 If $y_i \in \mathbb{N}_0$ are counts we often use a Poisson regression model 
 with point probabilities (density w.r.t. counting measure)
 $$p_i(y_i \mid x_i) = e^{-\mu(x_i)} \frac{\mu(x_i)^{y_i}}{y_i!}.$$
@@ -604,17 +1026,16 @@ $$\log \varphi_i(\beta) =  \exp( x_i^T \beta).$$
 
 To implement numerical optimization algorithms for computing the 
 maximum-likelihood estimate we note that 
-$$t(\mathbf{y}) = \sum_{i=1}^n x_i y_i = \mathbf{X}^T \mathbf{y} \quad \text{and} \quad
-\kappa(\beta) = \sum_{i=1}^n e^{x_i^T \beta},$$
+$$t(\mathbf{y}) = \sum_{i=1}^N x_i y_i = \mathbf{X}^T \mathbf{y} \quad \text{and} \quad
+\kappa(\beta) = \sum_{i=1}^N e^{x_i^T \beta},$$
 that 
-$$\nabla \kappa(\beta) = \sum_{i=1}^n x_i e^{x_i^T \beta},$$
+$$\nabla \kappa(\beta) = \sum_{i=1}^N x_i e^{x_i^T \beta},$$
 and that
-$$D^2 \kappa(\beta) = \sum_{i=1}^n x_i x_i^T e^{x_i^T \beta} = \mathbf{X}^T \mathbf{W}(\beta) \mathbf{X}$$
+$$D^2 \kappa(\beta) = \sum_{i=1}^N x_i x_i^T e^{x_i^T \beta} = \mathbf{X}^T \mathbf{W}(\beta) \mathbf{X}$$
 where $\mathbf{W}(\beta)$ is a diagonal matrix with $\mathbf{W}(\beta)_{ii} = \exp(x_i^T \beta).$ 
 All these formulas follow directly from the general formulas for exponential 
 families.
-
-```
+:::
 
 To illustrate the use of a Poisson regression model we consider 
 the following data set from a major Swedish supermarket chain. It contains
@@ -624,12 +1045,8 @@ under a marketing campaign. A predicted number of items sold in a normal week
 recalibrate this number to give a good prediction of the number of items 
 actually sold.  
 
-```{r vegetables-data}
-vegetables <- read_csv("data/vegetables.csv", col_types = cols(store = "c"))
-```
-
-```{r vegetables-summary, dependson="vegetables-data"}
-summary(vegetables)
+```{r vegetables-summary}
+summary(CSwR::vegetables)
 ```
 
 It is natural to model the number of sold items using a Poisson regression 
@@ -644,17 +1061,17 @@ to specify how the response should depend on the normal sale. The model is
 fitted by computing the maximum-likelihood estimate of the two parameters 
 $\beta_0$ and $\beta_1$. 
 
-```{r pois-model-null, dependson="vegetables-data"}
+```{r pois-model-null}
 # A Poisson regression model
 pois_model_null <- glm(
-  sale ~ log(normalSale), 
-  data = vegetables, 
+  sale ~ log(normalSale),
+  data = CSwR::vegetables,
   family = poisson
-)  
+)
 ```
 
 ```{r pois-sum-null, echo=2, dependson="pois-model-null"}
-old_options = options(digits=4)
+old_options <- options(digits = 4)
 summary(pois_model_null)
 options(digits = old_options$digits)
 ```
@@ -675,11 +1092,11 @@ $$\log(E(\text{sale})) = \beta_{\text{store}} + \beta_1 \log(\text{normalSale})$
 instead. Fortunately, this is also straightforward using `glm`. 
 
 ```{r pois-model, dependson="data"}
-## Note, variable store is a factor! The 'intercept' is removed 
-## in the formula to obtain a parametrization as above. 
+## Note, variable store is a factor! The 'intercept' is removed
+## in the formula to obtain a parametrization as above.
 pois_model <- glm(
-  sale ~ store + log(normalSale) - 1, 
-  data = vegetables, 
+  sale ~ store + log(normalSale) - 1,
+  data = CSwR::vegetables,
   family = poisson
 )
 ```
@@ -688,7 +1105,7 @@ We will not print all the individual store effects as there are 352
 individual stores. 
 
 ```{r pois-sum, echo=2, dependson="pois-model"}
-old_options = options(digits=4)
+old_options <- options(digits = 4)
 summary(pois_model)$coefficients[c(1, 2, 3, 4, 353), ]
 options(digits = old_options$digits)
 ```
@@ -702,263 +1119,6 @@ that the number of parameters has increased a lot. In the first and simple
 model there are two parameters. In the second model there are 353 parameters. 
 Computing the maximum-likelihood estimate is a considerably more difficult
 problem in the second case. 
-
-## Finite mixture models
-
-A finite mixture model is a model of a pair of random variables $(Y, Z)$
-with $Z \in \{1, \ldots, K\}$, $P(Z = k) = p_k$, and the conditional distribution 
-of $Y$ given $Z = k$ having density $f_k( \cdot \mid \theta_k)$. The joint 
-density is then 
-$$(y, k) \mapsto f_k(y \mid \theta_k) p_k,$$
-and the marginal density for the distribution of $Y$ is
-$$f(y \mid \theta) =  \sum_{k=1}^K f_k(y \mid \theta_k) p_k$$
-where $\theta$ is the vector of all parameters. We say that the 
-model has $K$ mixture components and call $f_k( \cdot \mid \theta_k)$
-the mixture distributions and $p_k$ the mixture weights. 
-
-The main usage of mixture models is to situations where $Z$ is not observed. 
-In practice, only $Y$ is observed, and parameter estimation has to be 
-based on the marginal distribution of $Y$ with density $f(\cdot \mid \theta)$,
-which is a weighted sum of the mixture distributions.
-
-The set of all probability measures on $\{1, \ldots, K\}$ is an exponential 
-family with sufficient statistic
-$$\tilde{t}_0(k) = (\delta_{1k}, \delta_{2k}, \ldots, \delta_{(K-1)k}) \in \mathbb{R}^{K-1},$$
-canonical parameter $\alpha = (\alpha_1, \ldots, \alpha_{K-1}) \in \mathbb{R}^{K-1}$
-and 
-$$p_k = \frac{e^{\alpha_k}}{1 + \sum_{l=1}^{K-1} e^{\alpha_l}}.$$
-
-When $f_k$ is an exponential family as well with sufficient statistic
-$\tilde{t}_k : \mathcal{Y} \to \mathbb{R}^{p_k}$ and $\theta_k$ the 
-canonical parameter, we bundle $\alpha, \theta_1, \ldots, \theta_K$ 
-into $\theta$ and define
-$$t_1(y) = \left(\begin{array}{c}
-\tilde{t}_0 \\
-0 \\
-0 \\
-\vdots \\
-0
-\end{array}
-\right)$$
-together with 
-$$t_2(y \mid k) = \left(\begin{array}{c}
-0 \\
-\delta_{1k} \tilde{t}_1(y) \\
-\delta_{2k} \tilde{t}_2(y) \\
-\vdots \\
-\delta_{Kk} \tilde{t}_K(y)
-\end{array}
-\right)$$
-we see that we have an exponential family of the joint distribution of $(Y, Z)$
-with the $p = K-1 +  p_1 + \ldots + p_K$-dimensional canonical parameter $\theta$,
-with the sufficient statistic $t_1$ determining the marginal distribution of $Z$
-and with the sufficient statistic $t_2$ determining the *conditional* distribution
-of $Y$ given $Z$. We have here made the conditioning variable explicit.
-
-The marginal density of $Y$ in the exponential family parametrization then 
-becomes
-$$f(y \mid \theta) = \sum_{k=1}^K  e^{\theta^T (t_1(k) + t_2(y \mid k)) - \log \varphi_1(\theta) - \log \varphi_2(\theta \mid k)}.$$
-For small $K$ it is usually unproblematic to implement the computation of 
-the marginal density using the formula above, and the computation of derivatives 
-can likewise be implemented based on the formulas derived in Section \@ref(exp-fam-deriv).
-
-
-### Gaussian mixtures {#Gaus-mix-ex}
-
-A Gaussian mixture model is a mixture model where all the  mixture distributions are  
-Gaussian distributions but potentially with different means and variances. In this 
-section we focus on the simplest Gaussian mixture model with $K = 2$ mixture 
-components. 
-
-When $K = 2$, the Gaussian mixture model is parametrized by the five parameters: 
-the mixture weight $p = P(Z = 1) \in (0, 1)$, the two means $\mu_1, \mu_2 \in \mathbb{R}$, 
-and the two variances $\sigma_1, \sigma_2 > 0$. This is *not* the parametrization 
-using canonical exponential family parameters, which we return to below. First 
-we will simply simulate random variables from this model. 
-
-```{r mixture-gaus-sim}
-sigma1 <- 1
-sigma2 <- 2
-mu1 <- -0.5
-mu2 <- 4
-p <- 0.5
-n <- 5000
-z <- sample(c(TRUE, FALSE), n, replace = TRUE, prob = c(p, 1 - p))
-## Conditional simulation from the mixture components
-y <- numeric(n)
-n1 <- sum(z)
-y[z] <- rnorm(n1, mu1, sigma1)
-y[!z] <- rnorm(n - n1, mu2, sigma2)
-```
-
-The simulation above generated `r n` samples from a two-component
-Gaussian mixture model with mixture distributions $\mathcal{N}(-0.5, 1)$
-and $\mathcal{N}(4, 4)$, and with each component having weight $0.5$. 
-This gives a bimodal distribution as illustrated by the histogram on Figure 
-\@ref(fig:mixture-gaus-histogram). 
-
-```{r mixture-gaus-histogram, dependson="mixture-gaus-sim", fig.cap="Histogram and density estimate (red) of data simulated from a two-component Gaussian mixture distribution. The true mixture distribution has "}
-yy <- seq(-3, 11, 0.1)
-dens <- p * dnorm(yy, mu1, sigma1) + (1 - p) * dnorm(yy, mu2, sigma2)
-ggplot(mapping = aes(y, ..density..)) + 
-  geom_histogram(bins = 20) + 
-  geom_line(aes(yy, dens), color = "blue", size = 1) + 
-  stat_density(bw = "SJ", geom="line", color = "red", size = 1)
-```
-
-It is possible to give a mathematically different representation of the 
-marginal distribution of $Y$ that is sometimes useful. Though it gives
-the same marginal distribution from the same components, it does provide a
-different interpretation of what a mixture model is a model of, and it does 
-provide a different way of simulating from a mixture distribution. 
-
-If we let $Y_1 \sim \mathcal{N}(\mu_1, \sigma_1^2)$ and $Y_2 \sim \mathcal{N}(\mu_2, \sigma_2^2)$ 
-be independent, and independent of $Z$, we can define 
-
-\begin{equation}
-Y = 1(Z = 1) Y_1 + 1(Z = 2) Y_2 = Y_{Z}.
-(\#eq:mixturerep)
-\end{equation}
-
-Clearly, the conditional distribution of $Y$ given $Z = k$ is $f_k$.
-From \@ref(eq:mixturerep) it follows directly that
-$$E(Y^n) = P(Z = 1) E(Y_1^n) + P(Z = 2) E(Y_2^n) = p m_1(n) + (1 - p) m_2(n)$$
-where $m_k(n)$ denotes the $n$th non-central moment of the $k$th mixture
-component. In particular,
-
-$$E(Y) = p \mu_1 + (1 - p) \mu_2.$$
-
-The variance can be found from the second moment as
-
-\begin{align}
-V(Y) & = p(\mu_1^2 + \sigma_1^2) + (1-p)(\mu_2^2 + \sigma_2^2) -  (p \mu_1 + (1 - p) \mu_2)^2 \\
-& = p\sigma_1^2 + (1 - p) \sigma_2^2 + p(1-p)(\mu_1^2 + \mu_2^2 - 2 \mu_1 \mu_2).
-\end{align}
-
-While it is certainly possible to derive this formula by other means, using 
-\@ref(eq:mixturerep) gives a simple argument based on 
-elementary properties of expectation and independence
-of $(Y_1, Y_2)$ and $Z$.  
-
-The construction via \@ref(eq:mixturerep) has an interpretation that differs 
-from how a mixture model was defined in the first place. Though $(Y, Z)$ has 
-the correct joint distribution, $Y$ is by \@ref(eq:mixturerep) the result of $Z$ *selecting* one 
-out of two possible observations. The difference can best be illustrated by 
-an example. Suppose that we have a large population consisting of married couples entirely.
-We can draw a sample of individuals (ignoring the marriage relations 
-completely) from this population and let $Z$ denote the sex and $Y$ the 
-height of the individual. Then $Y$ follows a mixture distribution with two 
-components corresponding to males and females according to the definition. 
-At the risk of being heteronormative, suppose that all couples consist 
-of one male and one female. We could then also draw a sample
-of married couples, and for each couple flip a coin to decide whether to report
-the male's or the female's height. This corresponds to the construction 
-of $Y$ by \@ref(eq:mixturerep). We get the same marginal mixture 
-distribution of heights though. 
-
-Arguably the heights of individuals in a marriage are not 
-independent, but this is actually immaterial. Any dependence structure between
-$Y_1$ and $Y_2$ is lost in the transformation  \@ref(eq:mixturerep), and we
-can just as well assume them independent for mathematical convenience. 
-We won't be able to tell the difference from observing only $Y$ (and $Z$) anyway. 
-
-We illustrate below how \@ref(eq:mixturerep) can be used for alternative
-implementations of ways to simulate from the mixture model. We compare empirical 
-means and variances to the theoretical values to test if all the implementations
-actually simulate from the Gaussian mixture model.
-
-```{r sim-gaus-mix, dependson="mixture-gaus-sim"}
-## Mean
-mu <- p * mu1 + (1 - p) * mu2
-
-## Variance 
-sigmasq <- p * sigma1^2 + (1 - p) * sigma2^2 + 
-  p * (1-p)*(mu1^2 + mu2^2 - 2 * mu1 * mu2)
-
-## Simulation using the selection formulation via 'ifelse'
-y2 <- ifelse(z, rnorm(n, mu1, sigma1), rnorm(n, mu2, sigma2))
-
-## Yet another way of simulating from a mixture model
-## using arithmetic instead of 'ifelse' for the selection 
-## and with Y_1 and Y_2 actually being dependent
-y3 <- rnorm(n)
-y3 <- z * (sigma1 * y3 + mu1) + (!z) * (sigma2 * y3 + mu2)
-
-## Returning to the definition again, this last method simulates conditionally 
-## from the mixture components via transformation of an underlying Gaussian
-## variable with mean 0 and variance 1
-y4 <- rnorm(n)
-y4[z] <- sigma1 * y4[z] + mu1
-y4[!z] <- sigma2 * y4[!z] + mu2
-
-## Tests
-data.frame(mean = c(mu, mean(y), mean(y2), mean(y3), mean(y4)),
-      variance = c(sigmasq, var(y), var(y2), var(y3), var(y4)), 
-      row.names = c("true", "conditional", "ifelse", "arithmetic", 
-                    "conditional2" ))
-```
-
-In terms of run time there is not a big difference between three of 
-the ways of simulating from a mixture model. A benchmark study (not shown) will 
-reveal that the first and third methods are comparable in terms of run time
-and slightly faster than the fourth, while the second using `ifelse` takes more 
-than twice as much time as the others. This is 
-unsurprising as the `ifelse` method takes \@ref(eq:mixturerep) very literally 
-and generates twice the number of Gaussian variables actually needed. 
-
-
-```{r mix-sim-bench, include=FALSE}
-n <- 10000
-z <- sample(c(TRUE, FALSE), n, replace = TRUE, prob = c(p, 1 - p))
-microbenchmark({
-  x <- numeric(n)
-  n1 <- sum(z)
-  x[z] <- rnorm(n1, mu1, sigma1)
-  x[!z] <- rnorm(n - n1, mu2, sigma2)
-},
-x <- ifelse(z, rnorm(n, mu1, sigma1), rnorm(n, mu2, sigma2)),
-{
-  x <- rnorm(n)
-  x <- z * (sigma1 * x + mu1) + (!z) * (sigma2 * x + mu2)
-},
-{
-  x <- rnorm(n)
-  x[z] <- sigma1 * x[z] + mu1
-  x[!z] <- sigma2 * x[!z] + mu2
-}
-)
-```
-
-
-The marginal density of $Y$ is
-$$f(y) = p \frac{1}{\sqrt{2 \pi \sigma_1^2}} e^{-\frac{(y - \mu_1)^2}{2 \sigma_1^2}} + 
-(1 - p)\frac{1}{\sqrt{2 \pi \sigma_2^2}}e^{-\frac{(y - \mu_2)^2}{2 \sigma_2^2}}$$
-as given in terms of the parameters $p$, $\mu_1, \mu_2$, $\sigma_1^2$ and $\sigma_2^2$. 
-
-
-Returning to the canonical parameters we see that they are given as 
-follows: 
-$$\theta_1  = \log \frac{p}{1 - p}, \quad 
-\theta_2  = \frac{\mu_1}{2\sigma_1^2}, \quad
-\theta_3  = \frac{1}{2\sigma_1^2}, \quad
-\theta_4  = \frac{\mu_2}{\sigma_2^2}, \quad
-\theta_5  = \frac{1}{2\sigma_2^2}.$$
-
-The joint density in this parametrization then becomes 
-$$(y,k) \mapsto \left\{ \begin{array}{ll} 
-\exp\left(\theta_1 + \theta_2 y - \theta_3 y^2 - \log (1 + e^{\theta_1}) - \frac{ \theta_2^2}{4\theta_3}+ \frac{1}{2} \log(\theta_3) \right) & \quad \text{if } k = 1 \\
-\exp\left(\theta_4 y - \theta_5 y^2 - \log (1 + e^{\theta_1}) - \frac{\theta_4^2}{4\theta_5} + \frac{1}{2}\log(\theta_5) \right) &  \quad \text{if } k = 2 
-\end{array} \right. $$
-and the marginal density for $Y$ is 
-
-\begin{align}
-f(y \mid \theta) & = \exp\left(\theta_1 + \theta_2 y - \theta_3 y^2 - \log (1 + e^{\theta_1}) - \frac{ \theta_2^2}{4\theta_3}+ \frac{1}{2} \log(\theta_3) \right) \\ 
-& + \exp\left(\theta_4 y - \theta_5 y^2 - \log (1 + e^{\theta_1}) - \frac{\theta_4^2}{4\theta_5} + \frac{1}{2}\log(\theta_5) \right).
-\end{align}
-
-There is no apparent benefit to the canonical parametrization when considering
-the marginal density. It is, however, of value when we need the logarithm of 
-the joint density as we will for the EM-algorithm. 
 
 ## Mixed models
 
@@ -999,7 +1159,7 @@ are $\theta_0$ that enters into the distribution of the random effect,
 $\theta_1 \in \mathbb{R}^{p_1}$ and $\theta_2 \in \mathbb{R}^{p_2}$ that enter
 into the conditional distribution of $y_j$ given $z$. 
 
-```{example, gaussian-mixed}
+::: {.example .boxed #gaussian-mixed}
 The special case of a *Gaussian, linear* random effects model is the model where 
 $z$ is $\mathcal{N}(0, 1)$ distributed, $\mathcal{Y} = \mathbb{R}$ 
   (with base measure proportional to Lebesgue measure)
@@ -1025,9 +1185,9 @@ equivalently be stated as
 $$Y_{ij} = \beta_0 + \nu Z_i + \varepsilon_{ij}$$
 
 for $i = 1, \ldots, n$ and $j = 1, \ldots, m_i$ where 
-$Z_1, \ldots, Z_n$ are i.i.d. $\mathcal{N}(0, 1)$-distributed
+$Z_1, \ldots, Z_N$ are i.i.d. $\mathcal{N}(0, 1)$-distributed
 and independent of 
 $\varepsilon_{11}, \varepsilon_{12}, \ldots, \varepsilon_{1n_1}, \ldots, \varepsilon_{mn_m}$
 that are themselves i.i.d. $\mathcal{N}(0, \sigma^2)$-distributed. 
+:::
 
-```
