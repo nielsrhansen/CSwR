@@ -17,8 +17,8 @@ chapters.
 Statistical models come in many varieties. Mathematically, a statistical model
 is defined as a parametrized family of probability distributions. To say
 anything of interest, though, we need more structure on the model, such as
-structure on the parameter set, properties of the parametrized distributions,
-and properties of the mapping from the parameter set to the distributions. 
+structure on the parameter space, properties of the parametrized distributions,
+and properties of the mapping from the parameter space to the distributions. 
 Any specific model will have a lot of structure but often also an overwhelming
 amount of irrelevant details that will be more distracting than clarifying. The
 intention with this chapter, and the examples treated, is to illustrate
@@ -35,7 +35,7 @@ effects models as four main examples.
 
 ## Parametrized models and the likelihood
 
-In all our examples we will consider a parameter set $\Theta \subseteq \mathbb{R}^p$
+In all our examples we will consider a parameter space $\Theta \subseteq \mathbb{R}^p$
 and a parametrized family of probability distributions on a common sample space 
 denoted $\mathcal{Y}$. The 
 distribution corresponding to $\theta \in \Theta$ is assumed to have a 
@@ -78,7 +78,7 @@ as a function of the parameter $\theta$. The log-likelihood function is
 
 and the negative log-likelihood function is $-\ell$. In practice, we will 
 minimize the negative log-likelihood function over 
-the parameter set to find the model within the parametrized 
+the parameter space to find the model within the parametrized 
 family of distributions that best fits the data. The resulting parameter 
 estimate is known as the maximum-likelihood estimate. \index{maximum-likelihood!estimate}
 
@@ -122,9 +122,13 @@ see that if $\sum_{i=1}^N y_i > 0$, the unique solution to this equation is
 and this is thus the maximum-likelihood estimate. 
 
 If $\sum_{i=1}^N y_i = 0$ (which is equivalent to $y_1 = y_2 = \ldots = y_N = 0$)
-there is no minimizer in the open parameter set $(0, \infty)$. We could argue 
+there is no minimizer in the open parameter space $(0, \infty)$. We could argue 
 that by extending the parameter space to include $0$, then $\hat{\mu} = 0$ 
-is the maximum-likelihood estimate when $\sum_{i=1}^N y_i = 0$. 
+is the maximum-likelihood estimate when $\sum_{i=1}^N y_i = 0$. Working 
+with the closed parameter space $[0, \infty)$ may appear natural in this case.
+When we turn to numerical optimization algorithms we will, however, focus on the 
+case where the parameter space is open, and where a maximum-likelihood estimate
+is thus an interior point. 
 
 Note that the (negative) log-likelihood depends on data only though the 
 data transformation $\sum_{i=1}^N y_i$. We call this sum a 
@@ -499,14 +503,14 @@ frequencies are
 \end{align*}
 
 The parametrization in terms of allele frequencies maps out a subset of the 
-full parameter set for the multinomial distribution with six categories. 
+full parameter space for the multinomial distribution with six categories. 
 If we could observe the genotypes, the multinomial log-likelihood, 
 parametrized by allele frequencies, would be 
 
 \begin{align*}
- \ell(p_C, p_I) & = 2N_{CC} \log(p_C) + N_{CI} \log (2 p_C p_I) + N_{CT} \log(2 p_C p_I)  \\
+ \ell(p_C, p_I) & = 2N_{CC} \log(p_C) + N_{CI} \log (2 p_C p_I) + N_{CT} \log(2 p_C p_T)  \\
 & \ \ + 2 N_{II} \log(p_I) + N_{IT} \log(2p_I p_T) + 2 N_{TT} \log(p_T) \\
-& = 2N_{CC} \log(p_C) + N_{CI} \log (2 p_C p_I) + N_{CT} \log(2 p_C p_I)  \\
+& = 2N_{CC} \log(p_C) + N_{CI} \log (2 p_C p_I) + N_{CT} \log(2 p_C (1 - p_C - p_I))  \\
 & \ \ + 2 N_{II} \log(p_I) + N_{IT} \log(2p_I (1 - p_C - p_I)) + 2 N_{TT} \log(1 - p_C - p_I). 
 \end{align*}
 
