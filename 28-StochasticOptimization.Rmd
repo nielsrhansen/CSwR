@@ -165,7 +165,7 @@ up to an additive constant not depending on $\theta$, and the
 cross-entropy is
 
 \[
-  H(\theta) = E\big(\mu(X, \theta) - \E(Y \mid X) \log(\mu(X, \theta))\big),
+  H(\theta) = \E\big(\mu(X, \theta) - \E(Y \mid X) \log(\mu(X, \theta))\big),
 \]
 
 again up to an additive constant. This risk function quantifies how
@@ -180,7 +180,7 @@ The log-likelihood loss is an appropriate loss function if the
 parametrized family of distributions fits data well. For a Gaussian
 (conditional) mean value model the log-likelihood loss gives the same
 risk as the squared error loss---but the squared error loss can also be
-suitable even if data is not Gaussian. It can be a suitable loss
+suitable even if data is not Gaussian. It is a suitable loss function
 whenever we just want to fit a model of the conditional mean of $Y$. If
 we want to fit the (conditional) median instead, we can use the absolute
 deviation 
@@ -192,9 +192,9 @@ deviation
 This is a special case of the so-called check loss functions used for [quantile
 regression](https://en.wikipedia.org/wiki/Quantile_regression#Quantiles). Thus
 by choosing the loss function we decide which aspects of the distribution we
-model, that is, whether we want a good global fit as for the log-likelihood
-loss, a fit of the mean value as for the squared error loss, or a fit of the
-median or another quantile as for the check loss.
+model. The log-likelihood loss leads to a good global fit, the squared error 
+loss leads to a good fit of the mean value specifically, and a check loss
+leads to a good fit of a particular quantile, such as the median.
 
 ### Online stochastic gradient algorithm {#online-sg}
 
@@ -252,9 +252,10 @@ were the first to demonstrate convergence of an online learning
 algorithm under conditions as above on the learning rate. Following
 their terminology, much has since been written on online learning and
 adaptive control theory under the name *stochastic approximation*
-[@Lai:2003].
+[@Lai:2003]. A proof of Theorem \ref{sg-conv} based on martingale 
+theory can be found [here](https://nrhstat.org/post/robbins_siegmund/).
 
-The precise way that the learning rate decays is known as the *decay
+A procedure for determining how the learning rate dacays is known as a *decay
 schedule*, and a flexible three-parameter power law family of decay
 schedules is given by
 
@@ -397,7 +398,7 @@ for(i in 2:N) {
   mu_old <- mu(x, beta[[i - 1]])
   beta[[i]] <- beta[[i - 1]]  - rate(i) * mu_old * (mu_old - y) * c(1, x)
 }
-beta[[N]]  # This is close to beta_true; the algorithm works!
+beta[[N]]  # This is close to beta_true; the algorithm appears to works.
 ```
 
 For the log-likelihood loss we instead find the gradient
@@ -421,15 +422,15 @@ $\varphi'(\beta_0 + \beta_1 x_i) = \mu(x_i, \beta)$,
 
 and the
 log-likelihood gradient differs from the squared error gradient by
-lacking the factor $\mu(x_i, \beta)$. With $Z$ uniformly distributed on
-$(-1, 1$), the distribution of $\mu(Z, (2, 3))$ has range between
+lacking the factor $\mu(x_i, \beta)$. With $X$ uniformly distributed on
+$(-1, 1$), the distribution of $\mu(X, (2, 3))$ has range between
 $e^{-1} \approx 0.3679$ and $e^5 \approx 148.4$ and is right skewed, that
 is, it is concentrated toward the smaller values but with a long right
 tail. Its median is $e^2 \approx 7.389$, while its mean is
 $(e^5 - e) / 6 \approx 24.67$.
 
 The squared error gradient is typically longer---and sometimes by a large
-factor---than the log-likelihood gradient due to the mutiplication by $\mu(x_i,
+factor---than the log-likelihood gradient due to the factor $\mu(x_i,
 \beta)$. In the implementation below with the gradient of the log-likelihood we
 therefore choose $\gamma_0$ a factor 25 larger than the $\gamma_0 = 0.0004$ that
 was used with the squared error gradient.
@@ -450,7 +451,7 @@ for(i in 2:N) {
   mu_old <- mu(x, beta[[i - 1]])
   beta[[i]] <- beta[[i - 1]]  - rate(i) * (mu_old - y) * c(1, x)
 }
-beta[[N]]  # This is close to beta_true; this algorithm also works!
+beta[[N]]  # This is close to beta_true; this algorithm also appears to works.
 ```
 
 (ref:pois-sgd) Estimated parameter values for the two parameters $\beta_0$ (true value $2$) and $\beta_1$ (true value $3$) in the Poisson regression model as a function of the number of data points in the online stochastic gradient algorithm.
@@ -496,8 +497,8 @@ unstable, while decreasing $\gamma_0$ will make the convergence even
 slower, though the fluctuations will also be damped. Making the right
 choice---or even a suitable choice---of decay schedule depends heavily
 on the problem considered and the gradient used. It is a problem
-specific challenge to find a good schedule---and even just to choose
-the three parameters when we use the power law schedule.
+specific challenge to find a good schedule, e.g., by choosing
+the three parameters if we use a power law schedule.
 
 The example illustrates that the loss function not only determines what
 we model, but also how well the learning algorithm works. Both loss
@@ -543,9 +544,10 @@ It is not obvious that the computational costs of using the entire dataset to
 compute the gradient, say, is worth the effort compared to using only a fraction
 of the data. Thus we ask if there is a better tradeoff between runtime and
 precision by using a fraction of data points each time we compute the gradient?
-The stochastic gradient algorithm is one such algorithm that "cycles through the
-data" and uses only a random fraction of data points for each computation. In
-its basic version presented first, it uses only a single data point in each
+Stochastic gradient algorithms are examples of such algorithms that "cycle through the
+data" and use only a random fraction of data points for each computation. The 
+most basic version of a stochastic gradient algorithm is presented first, 
+which uses only a single data point in each
 iteration, and it is really the same algorithm as presented in Section
 \@ref(online-sg) except that the population risk is replaced by the empirical
 risk defined in terms of the batch data.
@@ -572,8 +574,8 @@ parameters as follows: given $\theta_{n}$
 
 Note that sampling the index $i$ is equivalent to sampling an
 observation from the empirical distribution $P_N$, which in turn is the same as
-nonparametric bootstrapping. Just as in the online setting, the sequence
-of learning rates, $\gamma_n$, is a tuning parameter of the algorithm.
+nonparametric bootstrapping. Just as in the online setting, the
+learning rate, $\gamma_n$, is a tuning parameter of the algorithm.
 
 We implement the basic stochastic gradient algorithm below, allowing for
 a user defined decay schedule of the learning rate. However, instead of
@@ -749,9 +751,8 @@ greater precision can be beneficial.
 
 In this section we will illustrate the use of the basic stochastic
 gradient algorithm for learning a model that predicts how many times a
-news article is shared on social media. The data will be subjected to
-transformations and normalizations to make the use of a linear model and
-the squared error loss reasonable.
+news article is shared on social media. We will use a simple linear 
+model and the squared error loss function. 
 
 The basic stochastic gradient algorithm for the linear model was
 introduced to the early machine learning community in 1960 via ADALINE
@@ -903,8 +904,8 @@ to illustrate a number of stochastic gradient algorithms even though we
 can compute the optimizer easily by other means. The real practical
 benefit of stochastic gradient algorithms comes when applied to large
 scale problems that are difficult to treat as textbook examples. But
-using a toy problem makes it easier to understand in detail how the
-different algorithms behave.
+using a toy problem makes it easier to investigate the behaviors of the 
+different algorithms.
 
 We will standardize all the columns of $X$ to have the same norm.
 Specifically to have non-central second moment 1. This does not change
@@ -942,7 +943,7 @@ stoch_grad(
 
 Using the trace from the last epochs, we can compare the objective
 function values to the minimum found using `lm.fit()` above. The minimum
-was not reached completely after the 50 epochs that took some time to
+was not reached completely after the 50 epochs that also took some time to
 compute.
 
 ```{r sg-tracer-sum, dependson="sg-tracer"}
@@ -973,8 +974,9 @@ setwd("..")
 
 ```{r sg-profivis-image, out.width="100%", echo=FALSE, dependson="sg-profiling"}
 pagedown::chrome_print(
-  "figures/sg_profile.html", 
+  "./figures/sg_profile.html", 
   format = "png",
+  wait = 10,
   options = list(clip = list(x = 0L, y=0L, width = 725L, height = 520L, scale = 4)),
   extra_args = c("--window-size=700,1150")
 )
@@ -989,9 +991,20 @@ subsetting `X[i, , drop = FALSE]` to the $i$-th row in line 25 is
 actually responsible for a large
 fraction of the runtime. We also see a substantial allocation and
 deallocation of memory associated with this line. It is a bottleneck of
-the R implementation that slicing out a row from a bigger matrix cannot
-be done without creating a copy of that row, and this is why this
+the R implementation that slicing out rows from a bigger matrix cannot
+be done without creating a copy of those rows, and this is why this
 particular line takes up so much time.
+
+A possible objection to the implementation by slicing out rows is that 
+R stores matrices in [column-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order), so 
+slicing out rows is not as efficient as slicing out columns. This is true, 
+and we could rewrite the gradient computation in `ls_model()` to 
+use a transposed model matrix. Exercise \@ref(exr:grad-transpose) 
+explores the runtime benefits of this approach. For the basic stochastic
+gradient algorithm above, the benefits are minor, but for the mini-batch 
+algorithms in Section \@ref(beyond) the transposition can lead to 
+some reduction of runtime. Slicing in R will, however, always result in a copy 
+of data, irrespectively of whether we slice out rows or columns.
 
 To further investigate the convergence of the basic stochastic gradient
 algorithm we run it with a larger learning rate of
@@ -1054,8 +1067,7 @@ stochastic gradient algorithm converges about as fast as gradient
 descent. For this particular run, the power law decay schedule shows
 marginally faster convergence than the fixed high learning rate, and
 this was ensured after some tuning of the decay schedule parameters.
-Despite\
-theoretical guarantees of convergence with the power law decay schedule,
+Despite theoretical guarantees of convergence with the power law decay schedule,
 the practical choice of a suitable learning rate or decay schedule is
 really an empirical art. With very large data, the tuning of learning
 rate parameters can be done on a small subset of data before the
@@ -1069,7 +1081,7 @@ dplyr::bind_rows(
   gd = gd_trace[seq(1, 800, 20), ], 
   .id = "Algorithm"
 ) |> 
-  dplyr::filter(.time < 10) |> 
+  dplyr::filter(.time < 5) |> 
 autoplot(y = value - ls_news$H(lm_news$coefficients )) + 
   ylab(expression(H(theta[n]) - H(theta[infinity]))) +
   aes(color = Algorithm, shape = Algorithm) + 
@@ -1100,13 +1112,13 @@ stochastic gradient algorithm---only the specific R implementation.
 
 In the subsequent section we will see alternatives to the basic
 stochastic gradient algorithm, which will diminish the shortcomings of a
-pure R implementation somewhat. Another way to circumvent some of the
+pure R implementation somewhat. Another way to potentially circumvent some 
 shortcomings of the R implementation is to rewrite the algorithm using
 Rcpp. We will pursue Rcpp implementations in Section \@ref(sg-Rcpp), but
 we will first consider some beneficial modifications of the basic
 algorithm.
 
-## Beyond basic stochastic gradient algorithms
+## Beyond basic stochastic gradient algorithms {#beyond}
 
 The gradient $\nabla_{\theta} L(y_i, x_i, \theta)$ for a single random data
 point is quickly computed, and though unbiased as an estimate of
@@ -1129,8 +1141,8 @@ empirically and applied in practice to the highly non-convex
 optimization problem of learning a neural network. A comprehensive
 coverage of all the different ideas will not be attempted, and only
 three of the most solidified variations will be treated. The use of
-mini-batches is ubiquitous, and momentum will be introduced to
-illustrate a variation with memory. Finally, the Adam algorithm uses
+mini-batches is ubiquitous, and momentum is a simple 
+illustration of an algorithm with memory. Finally, the Adam algorithm uses
 memory in combination with adaptive learning rates to achieve both speed
 and robustness.
 
@@ -1184,7 +1196,7 @@ stoch_grad <- function(
 }
 ```
 
-The implementation uses `batch()` as the default update function, and we
+The implementation uses `batch()` as the default epoch update function, and we
 implement this function below. It uses the random permutation to
 generate the $M$ mini-batches, and it contains a loop through the
 mini-batches containing a call of `grad()` for the computation of the
@@ -1211,11 +1223,8 @@ batch <- function(
 ```
 
 The `grad()` function implemented in `ls_model()` in Section \@ref(news)
-assumes that the index argument $i$ is a single number and not a vector.
-It computes for a vector $i$ a matrix containing the different gradients
-as columns. We therefore reimplement `ls_model()` so that `grad()`
-computes the average of the gradients as it is supposed to for a
-mini-batch.
+anticipated that we need to compute gradients for mini-batches, and it
+can thus be used directly with the `batch()` function. 
 
 With increased flexibility of the algorithms comes more tuning
 parameters, and making a good choice of all of them becomes increasingly
@@ -1228,7 +1237,8 @@ will generally be chosen as large as possible without making the
 algorithms diverge, and with a mini-batch size of 1000 it is possible to
 run the algorithm with a learning rate of $\gamma = 0.05$.
 
-```{r sg-mini-batch-run, echo = -3, results='hide', dependson=c("sg-tracer", "batch", "sg-mini-batch", "ls-grad-update")}
+```{r sg-mini-batch-run, echo = -c(1, 4), results='hide', dependson=c("sg-tracer", "batch", "sg-mini-batch", "ls-grad-update")}
+set.seed(20241110)
 sg_tracer$clear()
 stoch_grad(
   par = ls_news$par0, 
@@ -1331,7 +1341,8 @@ the function factory `momentum()` returns the momentum epoch function
 with is own local environment used to store $\rho$. With momentum, we
 can increase the learning rate to $\gamma = 7 \times 10^{-2}$.
 
-```{r sg-7, results='hide', echo=-3, dependson=c("sg-tracer", "momentum", "ls-grad-update")}
+```{r sg-7, results='hide', echo=-c(1, 4), dependson=c("sg-tracer", "momentum", "ls-grad-update")}
+set.seed(20241110)
 sg_tracer$clear()
 stoch_grad(
   par = ls_news$par0, 
@@ -1387,8 +1398,8 @@ easy to choose a parametrization with all parameters on comparable
 scales. And even when we can reparametrize so that all parameters are on
 a common scale, this common scale can change from problem to problem
 making it impossible to recommend a good default choice of learning
-rate. The practical implication is that a considerable amount of tuning
-is necessary, when the algorithms are applied.
+rate. One implication is that when the algorithms are 
+applied, a considerable amount of tuning is necessary.
 
 Algorithms that implement adaptive learning rates are alternatives to
 extensive tuning. They include schemes for adjusting the learning rate
@@ -1414,9 +1425,10 @@ With $\hat{\beta}$ the least squares estimate we also have that
   \frac{1}{N} \sum_{i=1}^N x_{ij} (y_i - \hat{\beta}{}^Tx_i) = 0
 \]
   
-for $j = 1, \ldots, p$. Thus if we sample a random index, $\iota$, from $\{1,
-\ldots, N\}$ it holds that $\\E(x_{\iota j} (y_{\iota} - \hat{\beta}{}^Tx_{\iota})) = 0$, 
-where the expectation is w.r.t. $\iota$. With
+for $j = 1, \ldots, p$. Thus if we sample a random index, $J$, 
+from $\{1, \ldots, N\}$ it holds that 
+$\E(x_{J j} (y_{J} - \hat{\beta}{}^Tx_{J})) = 0$, 
+where the expectation is w.r.t. $J$. With
 
 \[ 
   \hat{\sigma}^2 = \frac{1}{N} \sum_{i=1}^N (y_i - \hat{\beta}{}^Tx_i)^2
@@ -1425,14 +1437,14 @@ where the expectation is w.r.t. $\iota$. With
 denoting the residual variance, we also have that
 
 \[
-\V(x_{\iota j} (y_{\iota} - \hat{\beta}{}^Tx_{\iota})) = 
-\\E(x_{\iota j}^2 (y_{\iota} - \hat{\beta}{}^Tx_{\iota})^2) 
-\approx \zeta_j \hat{\sigma}^2
+\V(x_{J j} (y_{J} - \hat{\beta}{}^Tx_{J})) = 
+\E(x_{J j}^2 (y_{J} - \hat{\beta}{}^Tx_{J})^2) 
+\approx \zeta_j \hat{\sigma}^2.
 \]
 
 For the above approximation to hold, the squared residual,
-$(y_{\iota} - \hat{\beta}{}^Tx_{\iota})^2$, must be roughly independent
-of $x_{\iota}$, which is not guaranteed by the least squares fit alone,
+$(y_{J} - \hat{\beta}{}^Tx_{J})^2$, must be roughly independent
+of $x_{J}$, which is not guaranteed by the least squares fit alone,
 but holds approximately if data is from a population with homogeneous
 residual variance.
 
@@ -1446,17 +1458,17 @@ If $I \subseteq \{1,\ldots,N\}$ is a random subset of size $m$ sampled
 is an average of $m$ i.i.d. random variables with mean 0, thus
 
 \[
-  \\E(g_j^2) = \V(g_j) \approx \zeta_j \frac{\hat{\sigma}^2}{m}.
+  \E(g_j^2) = \V(g_j) \approx \zeta_j \frac{\hat{\sigma}^2}{m}.
 \]
 
 If $\odot$ denotes the coordinate wise product of vectors (aka the Hadamard
 product), this can also be written as
 
 \[
-  \\E(g \odot g) \approx  \zeta \frac{\hat{\sigma}^2}{m}.
+  \E(g \odot g) \approx  \zeta \frac{\hat{\sigma}^2}{m}.
 \]
 
-The computations suggest that by estimating $v = \\E(g \odot g)$ for a
+The computations suggest that by estimating $v = \E(g \odot g)$ for a
 mini-batch gradient evaluated in $\beta = \hat{\beta},$ we are in fact
 estimating $\zeta$ up to a scale factor. We extrapolate this insight to
 the general case and standardize the $j$-th coordinate of the descent
@@ -1676,10 +1688,9 @@ object---a so-called deep copy.
 Since only a pointer to a matrix is passed when calling a C++ function, no
 notable cost is associated with passing the entire model matrix as argument. On
 the contrary, if we were to pass a subset of the model matrix to the C++
-function from R, data would inevitably be copied. And since slicing of the
-matrix in C++ does not create a copy of data, the implementation of `grad_cpp()`
-avoids the data copying problem that matrix slicing in R incurred on the
-gradient computations.
+function from R, data would inevitably be copied. And since the C++ implementation
+never creates a submatrix corresponding to the slicing, the implementation of 
+`grad_cpp()` avoids the data copying incurred by matrix slicing in R.
 
 We can test `grad_cpp()` by comparing it to `ls_news$grad()` for different choices
 of parameter vectors and indices. A simple way to achieve this is to run the
@@ -1689,24 +1700,26 @@ algorithms use the same mini-batches by setting the seed.
 
 ```{r test_grad_cpp, dependson=c("LS-model", "grad-Rcpp", "ls-grad-update", "LS-model", "sg-mini-batch", "batch"), eval=TRUE}
 set.seed(10)
-par1 <- stoch_grad(
+par_R <- stoch_grad(
   par = ls_news$par0,
   grad = ls_news$grad,
   N = ls_news$N,
-  gamma = 0.01,
+  gamma = 5e-2,
+  m = 1000,
   maxit = 1
 )
 set.seed(10)
-par2 <- stoch_grad(
+par_grad_cpp <- stoch_grad(
   par = ls_news$par0, 
   grad = grad_cpp,
   N = ls_news$N,
-  gamma = 0.01,
+  gamma = 5e-2,
+  m = 1000,
   maxit = 1, 
   X = ls_news$X,
   y = ls_news$y
 )
-range(par1 - par2)
+range(par_R - par_grad_cpp)
 ```
 
 The differences are all 0, thus the test suggests that `grad_cpp()`
@@ -1714,8 +1727,8 @@ implements the same computation as `ls_news$grad()`.
 
 We can also move the entire epoch loop to C++, thus replacing the
 `batch()` R function by the Rcpp function `batch_cpp()` below. This is
-achieved simply by adding one outer loop to `grad_cpp()` above, which
-loops over mini-batches and updates the parameter vector.
+achieved by implementing the outer batch loop in C++ and calling
+the `grad_cpp()` function from within. 
 
 ```{Rcpp epoch-Rcpp, eval=FALSE}
 // [[Rcpp::export]]
@@ -1727,24 +1740,12 @@ NumericVector batch_cpp(
     NumericVector y, 
     int m = 50
 ) {
-  int p = par.length(), N = ii.length();
-  int M = floor(N / m);
-  NumericVector grad(p), yhat(N), beta = clone(par);
-  IntegerVector iii = clone(ii) - 1;  
-  
+  int M = floor(ii.length() / m);
+  NumericVector grad(par.length()), beta = clone(par);
+
   for(int j = 0; j < M; ++j) {
-    for(int i = j * m; i < (j + 1) * m; ++i) {
-      for(int k = 0; k < p; ++k) {
-        yhat[i] += X(iii[i], k) * beta[k];
-      }
-    }
-    for(int k = 0; k < p; ++k) {
-      grad[k] = 0;
-      for(int i = j * m; i < (j + 1) * m; ++i) {
-        grad[k] += X(iii[i], k) * (yhat[i] - y[iii[i]]);
-      }
-    }
-    beta = beta - gamma * (grad / m);
+      grad = grad_cpp(beta, ii[Range(j * m, (j + 1) * m - 1)], X, y);
+      beta = beta - gamma * grad;
   }
   return beta;
 }
@@ -1759,24 +1760,17 @@ function.
 
 ```{r test_batch_cpp, dependson=c("LS-model", "epoch-Rcpp", "ls-grad-update", "LS-model", "sg-mini-batch", "batch"), eval=TRUE}
 set.seed(10)
-par1 <- stoch_grad(
-  par = ls_news$par0,
-  grad = ls_news$grad,
-  N = ls_news$N,
-  gamma = 0.01,
-  maxit = 1
-)
-set.seed(10)
-par2 <- stoch_grad(
+par_batch_cpp <- stoch_grad(
   par = ls_news$par0, 
   epoch = batch_cpp,   
   N = ls_news$N,
-  gamma = 0.01,
+  gamma = 5e-2,
+  m = 1000,
   maxit = 1, 
   X = ls_news$X,
   y = ls_news$y
 )
-range(par1 - par2)
+range(par_R - par_batch_cpp)
 ```
 
 We see that these differences are also zero, and the test suggests that
@@ -1787,11 +1781,10 @@ To investigate the effect of the C++ implementation, the mini-batch
 stochastic gradient algorithm is run with the Rcpp implementations of
 either the gradient or the entire epoch using a mini-batch size of 1000
 and a constant learning rate $\gamma = 0.05$, which can be compared to
-the pure R implementation. In addition, we run the algorithm with
-mini-batch size one and $\gamma = 5 \times 10^{-5}$ using the Rcpp
-implementation of the epoch.
+the pure R implementation. 
 
 ```{r sg-6, results='hide', echo=FALSE, dependson=c("compile-sg", "sg")}
+set.seed(20241110)
 sg_tracer$clear()
 stoch_grad(
   par = ls_news$par0, 
@@ -1800,24 +1793,25 @@ stoch_grad(
   grad = grad_cpp, 
   X = ls_news$X, 
   y = ls_news$y, 
-  m = 1000, 
+  m = 1000,
   maxit = 200, 
   cb = sg_tracer$tracer
 )
 sg_trace_Rcpp_grad <- summary(sg_tracer)
-sg_tracer$clear()
-stoch_grad(
-  par = ls_news$par0, 
-  N = ls_news$N, 
-  gamma = 5e-5, 
-  epoch = batch_cpp,   
-  X = ls_news$X, 
-  y = ls_news$y, 
-  m = 1, 
-  maxit = 200, 
-  cb = sg_tracer$tracer
-)
-sg_trace_Rcpp_epoch <- summary(sg_tracer)
+#sg_tracer$clear()
+#stoch_grad(
+#  par = ls_news$par0, 
+#  N = ls_news$N, 
+#  gamma = 5e-5, 
+#  epoch = batch_cpp,   
+#  X = ls_news$X, 
+#  y = ls_news$y, 
+#  m = 1, 
+#  maxit = 200, 
+#  cb = sg_tracer$tracer
+#)
+#sg_trace_Rcpp_epoch <- summary(sg_tracer)
+set.seed(20241110)
 sg_tracer$clear()
 stoch_grad(
   par = ls_news$par0, 
@@ -1831,44 +1825,39 @@ stoch_grad(
   cb = sg_tracer$tracer
 )
 sg_trace_Rcpp_epoch_mini <- summary(sg_tracer)
+
 ```
 
-(ref:Rcpp-fig) Convergence of squared error loss on the news article dataset for four algorithms: R implementation of mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (`mini`), the same mini-batch algorithm but with the gradient implemented in Rcpp (`Rcpp_grad_mini`) and with the entire epoch implemented in Rcpp (`Rcpp_epoch_mini`), and the basic stochastic gradient algorithm with the entire epoch implemented in Rcpp (`Rcpp_epoch`).
+(ref:Rcpp-fig) Convergence of squared error loss on the news article dataset for three algorithms: the R implementation of mini-batch stochastic gradient with a batch size of 1000 and a fixed learning rate (`mini`), the same mini-batch algorithm but with the gradient implemented in Rcpp (`Rcpp_grad_mini`) and with the entire epoch implemented in Rcpp (`Rcpp_epoch_mini`).
 
 ```{r sg-fig-4, echo=FALSE, dependson=c("sg-basic", "sg-4", "sg-5", "sg-6", "sg-7", "sg-8"), fig.height=4, fig.width=8, out.width="100%", fig.cap='(ref:Rcpp-fig)'}
 dplyr::bind_rows(
   Rcpp_grad_mini = sg_trace_Rcpp_grad[seq(1, 200, 3), ],
-  Rcpp_epoch = sg_trace_Rcpp_epoch[seq(1, 200, 3), ],
+#  Rcpp_epoch = sg_trace_Rcpp_epoch[seq(1, 200, 3), ],
   Rcpp_epoch_mini = sg_trace_Rcpp_epoch_mini[seq(1, 200, 3), ],
   mini = sg_trace_mini[seq(1, 150, 2), ], 
 #  high = sg_trace_high,
   .id = "Algorithm"
 ) |> 
-  dplyr::filter(.time < 5) |> 
+  dplyr::filter(.time < 2) |> 
 autoplot(y = value - ls_news$H(lm_news$coefficients )) + 
   ylab(expression(H(theta[n]) - H(theta[infinity]))) +
   aes(color = Algorithm, shape = Algorithm) + 
   geom_line() +
   scale_color_brewer(limits = c("Rcpp_grad_mini", "high", "Rcpp_epoch_mini", "Rcpp_epoch", "mini", "Rcpp4", "adam", "adam_decay"), 
-                     breaks = c("mini", "Rcpp_grad_mini", "Rcpp_epoch_mini", "Rcpp_epoch"), type = "qual", palette = 2) +
+                     breaks = c("mini", "Rcpp_grad_mini", "Rcpp_epoch_mini"), type = "qual", palette = 2) +
   scale_shape_manual(limits = c("Rcpp_grad_mini", "high", "Rcpp_epoch_mini", "Rcpp_epoch", "mini", "Rcpp4", "adam", "adam_decay"), 
-                     breaks = c("mini", "Rcpp_grad_mini", "Rcpp_epoch_mini", "Rcpp_epoch"),
+                     breaks = c("mini", "Rcpp_grad_mini", "Rcpp_epoch_mini"),
                      values = c(0, 1, 2, 5, 15, 16, 17, 19))
 ```
 
-Figure \@ref(fig:sg-fig-4) shows, unsurprisingly, that implementing the
-gradient as a C++ function makes the convergence faster compared to the
-pure R implementation, but turning the entire epoch into a C++ function
-results in little if any further improvement. However, the figure also
-shows that the basic stochastic gradient algorithm (mini-batch size
-equal to one) converges at a rate comparable to that of the mini-batch
-algorithm with mini-batch size 1000 when the entire epoch is in C++.
-Thus any benefit of the mini-batch algorithm with mini-batch size 1000
-seems to be largely due to the inefficiency of the basic algorithm in
-pure R. Experiments using the `batch_cpp()` epoch implementation (not
-shown) suggest that the mini-batch algorithm does have a real edge over
-the basic algorithm, but with much smaller mini-batch sizes, e.g.
-$m = 20$, cf. Exercise \@ref(exr:mini-batch-size).
+Figure \@ref(fig:sg-fig-4) shows that there is virtually no differences 
+in the convergence of the C++ implementations and the pure R implementation.
+The relatively large mini-batch size of 1000 is one reason that the R 
+implementation, which relies on BLAS for the matrix operations, is not slower 
+than the C++ implementations. Exercise \@ref(exr:mini-batch-size) explores 
+the effect of the mini-batch size on the runtime of the algorithm
+in greater detail.
 
 ### Full Rcpp implementations {#full-Rcpp}
 
@@ -1929,10 +1918,12 @@ alternatives will also run on a stream of pseudo random numbers
 independent from base R's random number generator, and they will not be 
 considered any further.
 
-The full Rcpp implementation of the stochastic gradient algorithm is now
-a simple extension of `batch_cpp()` with one additional outer loop over
-the epochs and a single line calling `dqsample_int()` to sample the
-random permutation.
+The full Rcpp implementation of the stochastic gradient algorithm is 
+a simple outer loop over the epochs, and with each epoch consisting of 
+a call of `dqsample_int()` and then a call of `batch_cpp()`. Note that 
+to use our previous `batch_cpp()` implementation, the indices sampled need to 
+be 1-based, which is achieved by setting the offset argument of 
+`dqsample_int()` to 1.
 
 ```{Rcpp sg-Rcpp, eval=FALSE}
 // [[Rcpp::depends(dqrng)]]
@@ -1951,35 +1942,21 @@ NumericVector sg_cpp(
   IntegerVector ii;
   
   for(int l = 0; l < maxit; ++l) {
-    // Note that dqsample_int samples from {0, 1, ..., N - 1}
-    ii = dqrng::dqsample_int(N, N); 
-    for(int j = 0; j < M; ++j) {
-      for(int i = j * m; i < (j + 1) * m; ++i) {
-        yhat[i] = 0;
-        for(int k = 0; k < p; ++k) {
-          yhat[i] += X(ii[i], k) * beta[k];
-        }
-      }
-      for(int k = 0; k < p; ++k) {
-        grad[k] = 0;
-        for(int i = j * m; i < (j + 1) * m; ++i) {
-          grad[k] += X(ii[i], k) * (yhat[i] - y[ii[i]]);
-        }
-      }
-      beta = beta - gamma[l] * (grad / m);
-    }
+    // dqsample_int samples from {0, 1, ..., N - 1} by default. Setting 
+    // the fifth argument (offset) to 1 gives samples from {1, 2, ..., N}.
+    ii = dqrng::dqsample_int(N, N, false, R_NilValue, 1); 
+    beta = batch_cpp(beta, ii, gamma[l], X, y, m);
   }
   return beta;
 }
 ```
 
 We test the implementation by comparing it to the pure R implementation,
-but using `dqsample_int() / dqsample.int()` to sample the same
-permutations in both cases.
+using `dqsample.int()` to sample the same permutations as in C++.
 
 ```{r test_full_Rcpp, dependson=c("sg-Rcpp", "grad-Rcpp", "ls-grad-update", "LS-model", "sg-mini-batch", "batch"), eval=TRUE}
 dqrng::dqset.seed(10) 
-par1 <- stoch_grad(
+par_R <- stoch_grad(
   par = ls_news$par0, 
   grad = ls_news$grad,
   N = ls_news$N, 
@@ -1988,7 +1965,7 @@ par1 <- stoch_grad(
   sampler = dqrng::dqsample.int
 )
 dqrng::dqset.seed(10) 
-par2 <- sg_cpp(
+par_sg_cpp <- sg_cpp(
   par = ls_news$par0, 
   N = ls_news$N,
   gamma = rep(1e-3, 10),
@@ -1996,16 +1973,15 @@ par2 <- sg_cpp(
   y = ls_news$y,
   maxit = 10
 )
-range(par1 - par2)
+range(par_R - par_sg_cpp)
 ```
 
-The two most notable overall differences between `stoch_grad()` and `sg_cpp()`
-is that `sg_cpp()` is low level and very problem specific, while `stoch_grad()`
-is high level and generic. It is surely possible to refactor the C++
-code to write a more generic stochastic gradient algorithm, that would
-rely on other functions for computing e.g. the gradient. However, to
-retain performance those functions would need to be implemented in C++
-as well.
+The two main differences between `stoch_grad()` and `sg_cpp()`
+is that `sg_cpp()` is low level and problem specific, while `stoch_grad()`
+is high level and generic. It is definitely possible to write more generic C++
+code that would allow for different gradient computations for other models. 
+The `grad_cpp()` and `batch_cpp()` functions would then have to be reimplemented
+to support this. We will not pursue this any further. 
 
 To achieve a more high level implementation, we can use the
 RcppArmadillo package, which provides an interface to numerical linear
@@ -2052,16 +2028,7 @@ computes the same updates as all other implementations when
 
 ```{r test_Armadillo, dependson=c("sg-Armadillo", "grad-Rcpp", "ls-grad-update", "LS-model", "sg-mini-batch", "batch"), eval = FALSE, echo=FALSE}
 dqrng::dqset.seed(10) 
-par1 <- stoch_grad(
-  par = ls_news$par0, 
-  grad = ls_news$grad,
-  N = ls_news$N, 
-  gamma = 1e-3, 
-  maxit = 10,
-  sampler = dqrng::dqsample.int
-)
-dqrng::dqset.seed(10) 
-par2 <- sg_arma(
+par_sg_arma <- sg_arma(
   par = ls_news$par0, 
   N = ls_news$N,
   gamma = rep(1e-3, 10),
@@ -2069,13 +2036,13 @@ par2 <- sg_arma(
   y = ls_news$y,
   maxit = 10
 )
-range(par1 - par2)
+range(par_R - par_sg_arma)
 ```
 
 We benchmark and compare all five implementations of the mini-batch
 stochastic gradient algorithm by running them for 10 epoch iterations
 with a fixed learning rate of $\gamma = 10^{-4}$ and the default
-mini-batch size $m = 50$.
+mini-batch size $m = 50$. 
 
 ```{r mark-sg-batch, warning=FALSE, dependson=c("sg-Armadillo", "sg-Rcpp", "epoch-Rcpp", "grad-Rcpp", "ls-grad-update", "LS-model", "sg-mini-batch", "batch")}
 sg_bench <- function(sg = stoch_grad, ...) {
@@ -2099,10 +2066,11 @@ bench::mark(
 )
 ```
 
-The pure R implementation (`sg`) is, unsurprisingly, the slowest, but only about 
-a factor 3 slower than the full Rcpp implementation (`sg_cpp`). The
-Armadillo based implementation is somewhat slower, though still faster
-than the pure R implementation.
+The pure R implementation (`sg`) and the three different Rcpp-based implementations 
+(`grade_cpp`, `bathc_cpp` and `sg_cpp`) have about the same runtime, while the 
+pure R implementation uses by far the most memory. 
+The Armadillo based implementation is about twice as fast and also more memory efficient 
+than either of the other implementations. 
 
 We rerun all algorithms, but this time with the mini-batch size $m = 1$.
 Because `stoch_grad()` allocates a lot of memory, the default memory tracking of
@@ -2120,23 +2088,16 @@ bench::mark(
 )
 ```
 
-This reveals some bigger differences. With a fixed number of epoch
-iterations, the total amount of computations does not change
-substantially when changing the mini-batch size from 50 to 1, but the
-runtimes of `stoch_grad()` and `grad_cpp()` increase notably. The C++
-implementations `batch_cpp()` and `sg_cpp()` mostly retain the run
-time they had for $m = 50$. The runtime of the Armadillo implementation
-is not affected that much either, but it is still about a factor 2 
-slower than the two other C++ based implementations.
+This reveals some bigger differences. When changing the mini-batch size 
+from 50 to 1, the runtime of `stoch_grad()` increases by roughly a factor 
+10. The runtimes of the other implementations also increase, but not as much,
+and the Armadillo based implementation is still the fastest, and now by a 
+factor 3-4 compared to full Rcpp implementation. 
 
-In summary, when the mini-batches are not too small, the improvements on
-runtime by using Rcpp were relatively small---about a factor 2 to 3.
-However, when the mini-batch size is small or even one, the runtime of 
-the pure R implementation is a factor 20--30 slower than the full Rcpp implementation
-or the Rcpp implementation of the entire epoch update. Using
-`batch_cpp()` for the epoch updates strikes a good compromise in this
-particular example, by being runtime competitive but with the main
-control structures of the algorithm in R.
+Beware that the above benchmark results and conclusions are for the 
+specific implementations on a machine with a specific configuration. 
+We should thus be cautious and not draw general conclusions from 
+these specific results, see also Section \@ref(perils).
 
 ## Exercises {#stochopt:ex}
 
@@ -2199,6 +2160,15 @@ from Section \@ref(news) before and after standardization. What are the
 conditioning numbers of the matrices, and how do their values relate to
 convergence of gradient based methods? See also Section
 \@ref(grad-descent).
+:::
+
+
+::: {#grad-transpose .exercise}
+Rewrite the function `ls_model()` so that it stores the transposed 
+model matrix instead of the model matrix, and so that the gradient 
+computations are done by slicing out columns of the transposed model matrix.
+Benchmark the new mini-batch gradient computations against the old ones for 
+different values of the mini-batch size $m$.
 :::
 
 ::: {#mini-batch-size .exercise}
