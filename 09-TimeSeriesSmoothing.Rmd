@@ -596,15 +596,15 @@ p_Nuuk +
 ### AR(1) Kalman smoothing
 
 The simplest example with an efficient Kalman smoother is the AR(1)-model,
-where we assume an equidistant time grid (that is, $t_i = i$). Suppose that $|\alpha| < 1$, 
-$f_1 = \epsilon_1 / \sqrt{1 - \alpha^2}$ and 
+where we assume an equidistant time grid (that is, $x_i = i$). Suppose that $|\alpha| < 1$, 
+$f_1 = U_1 / \sqrt{1 - \alpha^2}$ and 
 
 \[
-  f_i = \alpha f_{i-1} + \epsilon_i
+  f_i = \alpha f_{i-1} + \tau U_i
 \]
 
-for $i = 2, \ldots, n$ with $\epsilon = (\epsilon_1, \ldots, \epsilon_N) \sim 
-\mathcal{N}(0, \tau^2 I)$.
+for $i = 2, \ldots, n$ with $U = (U_1, \ldots, U_N) \sim 
+\mathcal{N}(0, I)$.
 
 We have $\cov(f_i, f_j) = \tau^2 \alpha^{|i-j|} / (1 - \alpha^2)$, thus we can find 
 $\mathbf{K}$, and by \@ref(eq:Gauss-smoother) we have 
@@ -665,8 +665,8 @@ ggplot(data = smooths, aes(time, value, color = kernel)) +
   xlab("") + ylab("")
 ```
 
-From the identity $\epsilon_i = f_i - \alpha f_{i-1}$ it follows that 
-$\epsilon = A \mathbf{f}$ where 
+From the identity $U_i = f_i - \alpha f_{i-1}$ it follows that 
+$U = A \mathbf{f}$ where 
 
 \[
 A = \left( \begin{array}{cccccc}
@@ -680,7 +680,7 @@ A = \left( \begin{array}{cccccc}
 \]
 
 This gives 
-$\tau^2 I = V(\epsilon) = A \mathbf{K} A^T$, hence 
+$\tau^2 I = V(U) = A \mathbf{K} A^T$, hence 
 
 \[
   \mathbf{K}^{-1} = \frac{1}{\tau^2} (A^{-1}(A^T)^{-1})^{-1} = \frac{1}{\tau^2} A^T A.

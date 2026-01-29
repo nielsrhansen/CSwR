@@ -1,0 +1,58 @@
+
+Chebyshev's inequality is useful due to its minimal assumption of a finite 
+second moment. However, it typically does not give a very tight bound on the 
+probability $P(|X - \mu| > \varepsilon)$. Much better inequalities can be obtained
+under stronger assumptions, in particular finite exponential moments. 
+
+Assuming that the moment generating function of $X$ is finite, 
+$M(t) = \E(e^{tX}) < \infty$, for some suitable $t \in \mathbb{R}$, it follows from
+[Markov's inequality](https://en.wikipedia.org/wiki/Markov%27s_inequality) 
+that
+$$P(X - \mu > \varepsilon) = P(e^{tX} > e^{t(\varepsilon + \mu)}) \leq e^{-t(\varepsilon + \mu)}M(t),$$
+which can provide a very tight upper bound by minimizing the bound over $t$. This 
+requires some knowledge of the moment generating function. We illustrate the 
+usage of this inequality below by considering the gamma distribution where the 
+moment generating function is well known. 
+
+### Exponential tail bound for Gamma distributed variables
+
+If $X$ follows a Gamma distribution with shape parameter 
+$\lambda > 0$ and $t <1$, then
+$$M(t) = \frac{1}{\Gamma(\lambda)} \int_0^{\infty} x^{\lambda - 1} e^{-(1-t) x} \,
+\mathrm{d} x = \frac{1}{(1-t)^{\lambda}}.$$
+Whence
+$$P(X-\lambda > \varepsilon) \leq e^{-t(\varepsilon + \lambda)}
+\frac{1}{(1-t)^{\lambda}}.$$
+Minimization over $t$ of the right hand side gives the minimizer
+$t = \varepsilon/(\varepsilon + \lambda)$ and the upper bound
+$$P(X-\lambda > \varepsilon) \leq e^{-\varepsilon} \left(\frac{\varepsilon + \lambda}{\lambda
+    }\right)^{\lambda}.$$
+Compare this to the bound 
+$$P(|X-\lambda| > \varepsilon) \leq \frac{\lambda}{\varepsilon^2}$$
+from Chebychev's inequality.
+
+(ref:tail) Actual tail probabilities (left) for the gamma distribution, computed via the `pgamma` function, compared it to the tight bound (red) and the weaker bound from Chebychev's inequality (blue). The differences in the tail are more clearly seen for the log-probabilities (right)
+
+```{r tailbounds, fig.cap="(ref:tail)", fig.show="hold", out.width="49%", echo=FALSE}
+lambda <- 10
+
+curve(pgamma(x, lambda, lower.tail = FALSE), 
+      lambda, lambda + 30,
+      ylab = "probability",
+      main = "Gamma tail",
+      ylim = c(0, 1))
+curve(exp(lambda - x)*(x/lambda)^lambda, lambda, lambda + 30,
+      add = TRUE, col = "red")
+curve(lambda/(x-lambda)^2, lambda, lambda + 30,
+      add = TRUE, col = "blue")
+
+curve(pgamma(x, lambda, lower.tail = FALSE, log.p = TRUE), 
+      lambda, lambda + 30,
+      ylab = "log-probability",
+      main = "Logarithm of Gamma tail",
+      ylim = c(-20, 0))
+curve(lambda - x + lambda*log(x/lambda), lambda, lambda + 30,
+      add = TRUE, col = "red")
+curve(-2 * log(x-lambda) + log(lambda), lambda, lambda + 30,
+      add = TRUE, col = "blue")
+```

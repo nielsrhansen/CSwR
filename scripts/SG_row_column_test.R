@@ -183,9 +183,7 @@ p <- profvis::profvis(
     m = 500
   )
 )
-p
-
-<- profvis::profvis(
+p <- profvis::profvis(
   stoch_grad(
     par = ls_news_t$par0, 
     grad = ls_news_t$grad, 
