@@ -622,7 +622,7 @@ we call `stoch_grad()` with `sampler = function(N) sample(N, replace = TRUE)` we
 would get sampling with replacement, in which case an epoch would be a
 pass through $N$ data points sampled independently from the batch.
 Sampling with replacement will feed the stochastic gradient algorithm
-with i.i.d. samples from the empirical distribution. Sampling without
+with i.i.d. observations from the empirical distribution. Sampling without
 replacement introduces some dependence. Curiously, sampling without
 replacement has turned out to be empirically superior to sampling with
 replacement, and recent theoretical results, @Gurbuzbalaban:2019,
@@ -1882,14 +1882,14 @@ non-exhaustive list of ways to sample from discrete sets using Rcpp is:
     with calling R functions from C++, which we prefer to avoid.
 -   There is an [Rcpp
     sugar](https://dirk.eddelbuettel.com/code/rcpp/html/sample_8h_source.html)
-    implementation of `sample()`. It generates different samples than
+    implementation of `sample()`. It generates different values than
     the R function `sample()`.
 -   There is an
     [RcppArmadilloExtension](https://gallery.rcpp.org/articles/using-the-Rcpp-based-sample-implementation/)
     implementation of `sample()`. See also the blog post [Sampling
     Integers](https://barumpark.com/blog/2019/Sampling-Integers/). It
     requires the R package RcppArmadillo, and it also generates
-    different samples than the R function `sample()`.
+    different values than the R function `sample()`.
 -   There is the function `dqsample.int()` from the [dqrng
     package](https://www.daqana.org/dqrng/) dealt with in Section
     \@ref(rng-packages). It requires the R package dqrng and runs on a
@@ -1943,7 +1943,7 @@ NumericVector sg_cpp(
   
   for(int l = 0; l < maxit; ++l) {
     // dqsample_int samples from {0, 1, ..., N - 1} by default. Setting 
-    // the fifth argument (offset) to 1 gives samples from {1, 2, ..., N}.
+    // the fifth argument (offset) to 1 gives values from {1, 2, ..., N}.
     ii = dqrng::dqsample_int(N, N, false, R_NilValue, 1); 
     beta = batch_cpp(beta, ii, gamma[l], X, y, m);
   }

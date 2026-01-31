@@ -1,6 +1,6 @@
 # Rejection sampling {#reject-samp}
 
-This chapter deals with a general algorithm for simulating variables from a
+This chapter deals with a general algorithm for simulating observations from a
 distribution with density $f$. We call $f$ the target density and the
 corresponding distribution is called the target distribution. The idea is to
 simulate *proposals* from a different distribution with density $g$ (the
@@ -227,7 +227,7 @@ U > e^{\kappa(\cos(Y) - 1)}.
 \]
 
 We implement rejection sampling from the von Mises distribution with an 
-outer for-loop over the number of samples we want, and an inner while-loop
+outer for-loop over the number of observations we want, and an inner while-loop
 that keeps sampling new proposals as long as they are rejected. 
 
 ```{r vM-rejection}
@@ -253,7 +253,7 @@ to the corresponding theoretical densities.
 ```{r vMsim, fig.cap="(ref:vMsim)", dependson=c("vonMisesDens", "vM-rejection"), fig.pos="h", fig.show='hold', out.width="49%", echo=1:4}
 x1 <- von_mises_loop(100000, 0.5)
 x2 <- von_mises_loop(100000, 2)
-# Histograms of these samples should be compared to the density
+# Histograms of these observations should be compared to the density
 dvm <- function(x, k) exp(k * cos(x)) / (2 * pi * besselI(k, 0))
 hist(x1, breaks = seq(-pi, pi, length.out = 20), prob = TRUE)
 curve(dvm(x, 0.5), -pi, pi, col = "blue", lwd = 2, add = TRUE)
@@ -275,7 +275,7 @@ bench::system_time(von_mises_loop(100000, kappa = 5))
 ```
 
 Though the implementation can easily simulate 100,000 variables in less than 
-two seconds, it might still be possible to improve it. To investigate what most 
+one second, it might still be possible to improve it. To investigate what most 
 of the runtime is spent on we use the line profiling tool as implemented in 
 the profvis package, see also Section \@ref(profiling).
 
@@ -283,7 +283,7 @@ the profvis package, see also Section \@ref(profiling).
 source("scripts/vMsim.R", keep.source = TRUE)
 tmp <- von_mises_loop(100, 5) # Forces JIT
 
-p <- profvis::profvis(von_mises_loop(20000, 5))
+p <- profvis::profvis(von_mises_loop(200000, 5))
 setwd("./figures/") # Hack to make saveWidget() clean up
 htmlwidgets::saveWidget(p, "vMsim_profile.html")
 setwd("..")
@@ -337,13 +337,13 @@ von_mises_random <- function(N, kappa) {
 ```
 
 The only downside of the implementation above is that it returns a 
-random number of accepted samples instead of `n` samples. Since we do not 
+random number of accepted proposals instead of `n` observations. Since we do not 
 know upfront how many rejections there will be, there is no way around a 
 loop if we want to convert `von_mises_random()` into a function that returns 
-a fixed number of samples. We will need to solve this problem for 
+a fixed number of observations. We will need to solve this problem for 
 several other distributions, so we implement a general solution 
-that can convert any sampler generating a random number of samples into 
-a sampler that returns a fixed number of samples. 
+that can convert any sampler generating a random number of observations into 
+a sampler that returns a fixed number of observations. 
 The solution is a *function operator*, much like `Vectorize()`, 
 that takes a function and returns a function.
 
@@ -364,7 +364,7 @@ rng_vec <- function(rng, fact = 1.2, M_min = 100) {
   CSwR::force_all()
   function(N, ..., cb) {
     j <- 0
-    l <- 0     # The number of accepted samples
+    l <- 0     # The number of accepted proposals
     x <- list()
     while (l < N) {
       j <- j + 1
@@ -384,7 +384,7 @@ von_mises_vec <- rng_vec(von_mises_random)
 ```
 
 The implementation incrementally grows a list, whose entries contain 
-vectors of accepted samples. It is usually not bad practice to dynamically 
+vectors of accepted observations. It is usually not bad practice to dynamically 
 grow objects (vectors or list), as this will result in unnecessary memory 
 allocation, copying and deallocation. Thus it is better to initialize a vector
 of the correct size upfront. In this particular case the list will only contain 
@@ -576,7 +576,7 @@ curve(dgamma(x, 1), col = "blue", lwd = 2, add = TRUE)
 This is a simple and informal test, but it does indicate that the implementation
 correctly simulates from the gamma distribution.
 
-Rejection sampling can be computationally expensive if many samples are rejected. 
+Rejection sampling can be computationally expensive if many observations are rejected. 
 A very tight envelope will lead to fewer rejections, while a loose envelope will
 lead to many rejections. To investigate the acceptance rate we use the 
 the callback argument with a tracer. The tracer computes an 
@@ -1025,7 +1025,7 @@ von_mises_adapt_random <- function(N, x1, x2, kappa) {
 ```
 
 Then we turn the implementation into a function that returns a fixed number of
-samples, and using the tracer we estimate the acceptance rates for four 
+observations, and using the tracer we estimate the acceptance rates for four 
 different combinations of parameters and partition points. 
 
 ```{r vM-rejection-adaptive, dependson=c("vM-rejection-adaptive-random", "vM-rejection-vec")}

@@ -98,6 +98,7 @@ Exceptions are: All ggplot2 functions. phipsi data from CSwR
 * Code to be sourced for profiling is in the scripts directory
 * No pseudo-code
 * Dataset names are not capitalized
+* Do we want to avoid using `tmp` or similar generic variable names?
 
 ### Organization
 
@@ -122,9 +123,12 @@ Exceptions are: All ggplot2 functions. phipsi data from CSwR
 * $P$ is a distribution, $P_N$ the empirical distribution 
 * Use \P, \E, \V, \cov for probability, expectation, variance and covariance. These
   are defined for pdf in latex/preamble.tex, and for HTML in mathjax_header.html
-* Do we want to avoid using `tmp` or similar generic variable names?
 
 ### Terminology and grammar
+
+* Terminology conventions:
+  * Use values/observations for individual data points (not samples)
+  * A sample is a dataset
 
 * The following terms are one word: 
   * dataset
