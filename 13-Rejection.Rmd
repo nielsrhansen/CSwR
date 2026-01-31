@@ -301,17 +301,13 @@ pagedown::chrome_print(
 knitr::include_graphics("figures/vMsim_profile.png")
 ```
 
-The [profiling result](figures/vMsim_profile.html) shows that almost all the time 
-is spent on simulating uniformly distributed random variables. It is, perhaps, 
+The [profiling result](figures/vMsim_profile.html) shows that the majority
+of the time is spent on simulating uniformly distributed random variables. It is, perhaps, 
 expected that this should take some time, but that it takes so much more time 
 than computing the ratio, say, used for the rejection test is a bit surprising. 
-What might be even more surprising is the large amount of memory allocation
-and deallocation associated with the simulation of the variables. The flame 
-graph above shows that this has also triggered calls to the the 
-garbage collector (the `<GC>` in the flame graph).
 
 The culprit is `runif()` that has some overhead associated with each call.
-The function performs much better if called once to return a vector than 
+The function performs better if called once to return a vector than 
 if called repeatedly as above to return just single numbers. We could 
 rewrite the rejection sampler to make better use of `runif()`, but it would 
 make the code a bit more complicated because we do not know upfront 
@@ -384,13 +380,14 @@ von_mises_vec <- rng_vec(von_mises_random)
 ```
 
 The implementation incrementally grows a list, whose entries contain 
-vectors of accepted observations. It is usually not bad practice to dynamically 
+vectors of accepted observations. It is usually considered bad practice to dynamically 
 grow objects (vectors or list), as this will result in unnecessary memory 
-allocation, copying and deallocation. Thus it is better to initialize a vector
+allocation, copying and deallocation. If possible, it is better to initialize a vector
 of the correct size upfront. In this particular case the list will only contain 
 relatively few entries, and it is inconsequential that it is grown dynamically. 
 
-Finally, a C++ implementation via Rcpp is given below where the random variables are 
+In addition to the vectorized implementation, we give a C++ implementation via Rcpp 
+below, where the random variables are 
 then again generated one at a time via the C-interface to R's random number 
 generators. There is no (substantial) overhead of doing so in C++. 
 
@@ -469,7 +466,7 @@ options(digits = old_options$digits)
 
 The C++ implementation and the vectorized R implementation have about 
 the same runtime, while the implementation in `von_mises_loop()`, using a for-loop in R, 
-is a factor 70 or so slower than the two others. Rejection sampling is a good example 
+is a factor 40 or so slower than the two others. Rejection sampling is a good example 
 of an algorithm for which a naive loop-based R implementation
 performs rather poorly in terms of runtime, while a vectorized 
 implementation is competitive with an Rcpp implementation.

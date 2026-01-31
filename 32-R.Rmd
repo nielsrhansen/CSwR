@@ -1052,7 +1052,8 @@ bench::mark(
 ```
 
 The results of the benchmark above shows that the median runtime for sequential
-sampling is about 3 times larger when using `runif()` than if we use the stream.
+sampling is slightly smaller when using the stream than when using `runif()`, but 
+the speedup apears insignificant. 
 The table also provides additional information, e.g., the total amount of memory
 allocated.
 
@@ -1125,10 +1126,10 @@ p <- profvis::profvis(
 A screenshot of the HTML widget is shown below. From this we see that obtaining
 five million uniformly distributed numbers generated in batches of 1000 took
 about 1500 ms in total, and we see how the time is distributed among the
-different lines of code. The actual generation of the random numbers makes up
-only about 10% of the total runtime---the rest of the time was spent on things
-like incrementing the counter, `j <<- j + 1`, or extracting the $j$-th entry
-from the cache, `cache[j]`.
+different lines of code. The actual generation of the random numbers takes up 
+only a small fraction of the total runtime---the rest of the time was spent on 
+incrementing the counter, `j <<- j + 1`, on inequality testing `j > m`, or on extracting 
+the $j$-th entry from the cache, `cache[j]`.
 
 ```{r stream-profile-results, echo=FALSE, dependson="stream-profile", out.width="100%"}
 setwd("./figures/")
@@ -1209,9 +1210,9 @@ pagedown::chrome_print(
   "figures/gauss-kern_profile.html",
   format = "png",
   options = list(
-    clip = list(x = 0L, y = 0L, width = 800L, height = 400L, scale = 4)
+    clip = list(x = 0L, y = 0L, width = 800L, height = 390L, scale = 4)
   ),
-  extra_args = c("--window-size=800,800")
+  extra_args = c("--window-size=800,850")
 )
 knitr::include_graphics("figures/gauss-kern_profile.png")
 ```
@@ -1316,7 +1317,7 @@ in the tracer object, and it can be inspected and analyzed by converting it to
 a data frame using `summary()`.
 
 ```{r summary-mean-loop-tracer, dependson="mean-loop-tracer"}
-summary(mean_tracer) %>% 
+summary(mean_tracer) |> 
   head()
 ```
 
@@ -1341,7 +1342,7 @@ x_bar <- mean_loop(x, cb = mean_tracer$tracer)
 ```
 
 ```{r summary-mean-tracer-2, dependson="mean-loop-tracer-2"}
-summary(mean_tracer) %>% 
+summary(mean_tracer) |> 
   head()
 ```
 
