@@ -9,13 +9,13 @@ News <- readr::read_csv("data/OnlineNewsPopularity.csv")
 
 News <- dplyr::select(
   News,
-  - url, 
-  - timedelta,
-  - weekday_is_sunday,
-  - is_weekend
+  -url,
+  -timedelta,
+  -weekday_is_sunday,
+  -is_weekend
 )
 
-X <- model.matrix(shares ~ ., data = News)  
+X <- model.matrix(shares ~ ., data = News)
 
 sign_sqrt <- function(x) sign(x) * sqrt(abs(x))
 X[, -1] <- sign_sqrt(X[, -1])
@@ -39,14 +39,15 @@ mark(
   grad1t(beta, samp[i]),
   grad(beta, samp[i]),
   gradt(beta, samp[i]),
- # i <- i + 1,
+  # i <- i + 1,
   check = TRUE
-) %>% autoplot()
+) %>%
+  autoplot()
 
 i <- 1
 profvis(
   replicate(
-    1e5, 
+    1e5,
     {
       i <- i + 1
       grad1(beta, samp[i])
@@ -68,16 +69,26 @@ mark(
   X %*% beta,
   tbeta %*% tX,
   check = FALSE
-) %>% autoplot()
+) %>%
+  autoplot()
 
 samp <- sample(nrow(X))
 i <- 1:4
 
 mark(
-  {xi <- X[samp[i], ]; xi * as.vector(xi %*% beta - y[i])},
-  {xi <- X[samp[i], , drop = FALSE]; as.vector(crossprod(xi, xi %*% beta - y[i]))},
-  {xi <- X[samp[i], , drop = FALSE]; drop(crossprod(xi, xi %*% beta - y[i]))},
+  {
+    xi <- X[samp[i], ]
+    xi * as.vector(xi %*% beta - y[i])
+  },
+  {
+    xi <- X[samp[i], , drop = FALSE]
+    as.vector(crossprod(xi, xi %*% beta - y[i]))
+  },
+  {
+    xi <- X[samp[i], , drop = FALSE]
+    drop(crossprod(xi, xi %*% beta - y[i]))
+  },
   i <- i + 1,
   check = FALSE
-) %>% autoplot()
-
+) %>%
+  autoplot()
