@@ -195,7 +195,7 @@ p <- profvis::profvis(
 )
 p
 
-i <- sample(1:ls_news$N, 1000)
+i <- sample.int(ls_news$N, 1000)
 
 bench::mark(
   ls_news$X[i, ],
