@@ -57,4 +57,3 @@ ls_model_old <- function(X, y) {
     }
   )
 }
-
