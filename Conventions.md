@@ -146,6 +146,12 @@ Exceptions are: All ggplot2 functions. phipsi data from CSwR
 
 Which convention to follow on using contractions?
 
+#### Questions
+
+- Do we follow American English or British English?
+- Oxford comma or no Oxford comma?
+- En-dash (--) or em-dash (---) with no spacing for parenthetical statements?
+
 ### LaTeX details
 
 ## Book structure and code progression
