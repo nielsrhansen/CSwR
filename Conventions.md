@@ -142,6 +142,8 @@ Exceptions are: All ggplot2 functions. phipsi data from CSwR
   * data point
   * 
 
+**Johan's remark**: isn't it somewhat inconsistent to have "dataset" as one word but "data point" as two words?
+
 Which convention to follow on using contractions?
 
 ### LaTeX details
