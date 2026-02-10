@@ -245,13 +245,19 @@ We test if the implementation works as expected---in this
 case by comparing it to `density()`, which is thus used as a reference 
 implementation. 
 
-```{r kern-dens-fig, dependson=c( "kern-dens"), fig.cap = "Kernel density estimates with the Gaussian kernel (left) using R's implementation (black) and our implementation (red) together with differences of the estimates (right).", fig.show='hold', out.width="49%"}
+```{r kern-dens-fig, dependson=c("kern-dens"), fig.cap = "Kernel density estimates with the Gaussian kernel (left) using R's implementation (black) and our implementation (red) together with differences of the estimates (right).", fig.show='hold', out.width="49%"}
+#| fig-width: 3
+library(CSwR) # for the 'angle' dataset
+
 f_hat <- kern_dens_loop(angle$psi, 0.2)
 f_hat_dens <- density(angle$psi, 0.2)
+
 hist(angle$psi, prob = TRUE, border = NA)
 lines(f_hat, lwd = 4, ylab = "Density")
 lines(f_hat_dens, col = "red", lwd = 2)
-plot(f_hat$x, f_hat$y - f_hat_dens$y,
+
+plot(
+  f_hat$x, f_hat$y - f_hat_dens$y,
   type = "l",
   lwd = 2,
   xlab = "psi",
