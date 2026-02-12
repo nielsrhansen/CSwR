@@ -1458,31 +1458,29 @@ Something
 
 ### Functions {.unnumbered}
 
-```{exercise, numerics}
+:::{.exercise #numerics}
 Explain the result of evaluating the following R expression. 
-```
 
 ```{r ex-numerics}
 (0.1 + 0.1 + 0.1) > 0.3
 ```
+:::
 
-```{exercise, filter-function}
+:::{.exercise #filter-function}
 Write a function that takes a numeric vector `x` and a threshold value `h` 
 as arguments and returns the vector of all values in `x` greater than `h`.
 Test the function on `seq(0, 1, 0.1)` with threshold 0.3. Have the example 
 from Exercise \@ref(exr:numerics) in mind.
+:::
 
-```
-
-```{exercise, special-values}
+:::{.exercise #special-values}
 Investigate how your function from Exercise \@ref(exr:filter-function) 
 treats missing values (`NA`), infinite values
 (`Inf` and `-Inf`) and the special value "Not a Number" (`NaN`). Rewrite your
 function (if necessary) to exclude all or some of such values from `x`.
 
 *Hint: The functions `is.na`, `is.nan` and `is.finite` are useful.* 
-
-```
+:::
 
 ### Histograms with non-equidistant breaks {.unnumbered}
 
@@ -1500,26 +1498,32 @@ data and see how different choices of visualizations using histograms can affect
 your interpretation of the data. Second, you will learn more about how to write
 functions in R and gain a better understanding of how they work.
 
-```{exercise, plotHist}
-Plot a histogram of `log(F12)` using the default value of the argument `breaks`. Experiment with alternative values of `breaks`. 
+::: {.exercise #plotHist}
+Plot a histogram of `log(F12)` using the default value of the argument
+`breaks`. Experiment with alternative values of `breaks`.
+:::
 
-```
+::: {.exercise #my-breaks}
+Write your own function, called `my_breaks`, which takes two arguments, `x` (a
+vector) and `h` (a positive integer). Let `h` have default value `5`. The
+function should first sort `x` into increasing order and then return the vector
+that: starts with the smallest entry in `x`; contains every $h$th unique entry
+from the sorted `x`; ends with the largest entry in `x`.  
 
-```{exercise, my-breaks}
-Write your own function, called `my_breaks`, which takes two arguments, `x` (a vector) and `h` (a positive integer). Let `h` have default value `5`. The function should first sort
-`x` into increasing order and then return the vector that: starts with the smallest entry in `x`;
-contains every $h$th unique entry from the sorted `x`; ends with the largest entry in `x`.  
-
-For example, if `h = 2` and `x = c(1, 3, 2, 5, 10, 11, 1, 1, 3)` the function should return `c(1, 3, 10, 11)`. To see this, first sort `x`, which gives the vector `c(1, 1, 1, 2, 3, 3, 5, 10, 11)`, whose unique 
-values are `c(1, 2, 3, 5, 10, 11)`. Every second unique entry is `c(1, 3, 10)`, and then the largest entry `11` is concatenated.
+For example, if `h = 2` and `x = c(1, 3, 2, 5, 10, 11, 1, 1, 3)` the function
+should return `c(1, 3, 10, 11)`. To see this, first sort `x`, which gives the
+vector `c(1, 1, 1, 2, 3, 3, 5, 10, 11)`, whose unique values are `c(1, 2, 3, 5,
+10, 11)`. Every second unique entry is `c(1, 3, 10)`, and then the largest
+entry `11` is concatenated.
 
 *Hint: The functions `sort` and `unique` can be useful.* 
   
-Use your function to construct *breakpoints* for the histogram for different values of `h`, and compare with the histograms obtained in Exercise \@ref(exr:plotHist).  
+Use your function to construct *breakpoints* for the histogram for different
+values of `h`, and compare with the histograms obtained in Exercise
+\@ref(exr:plotHist).  
+:::
 
-```
-
-```{exercise, my-breaks-advanced}
+::: {.exercise #my-breaks-advanced}
 If there are no ties in the dataset, the function above will produce breakpoints 
 with `h` observations in the interval between two consecutive breakpoints 
 (except the last two perhaps). If there are ties, the function will by construction 
@@ -1535,8 +1539,7 @@ following properties:
 * All breakpoints must be unique.
 * The range of the breakpoints must cover the range of `x`.
 * For two subsequent breakpoints, $a$ and $b$, there must be at least `h` observations in the interval $(a,b],$ provided `h < length(x)`. (With the exception that for the first two breakpoints, the interval is $[a,b].$)
-
-```
+:::
 
 ### Functions and objects {.unnumbered}
 
@@ -1544,13 +1547,12 @@ The following exercises build on having implemented a function that computes
 breakpoints for a histogram either as in Exercise \@ref(exr:my-breaks) or as in
 Exercise \@ref(exr:my-breaks-advanced).
 
-```{exercise, my-hist}
+:::{.exercise #my-hist}
 Write a function called `my_hist`, which takes a single argument `h` and plots a 
 histogram of `log(F12)`. Extend 
 the implementation so that any additional argument specified when calling `my_hist` 
 is passed on to `hist`. Investigate and explain what happens when executing 
 the following function calls.
-```
 
 ```{r, eval = FALSE}
 my_hist()
@@ -1558,41 +1560,45 @@ my_hist(h = 5, freq = TRUE)
 my_hist(h = 0)
 ```
 
-```{exercise, my-hist-mod}
-Modify your `my_hist` function so that it returns an object of class `my_histogram`, 
-which is not plotted. Write a print method for objects of this class, 
-which prints just the number of cells. 
+:::
+
+:::{.exercise #my-hist-mod}
+Modify your `my_hist` function so that it returns an object of class
+`my_histogram`, which is not plotted. Write a print method for objects of this
+class, which prints just the number of cells.
 
 *Hint: It can be useful to know about the function `cat`.*
 
-How can you assign a class label to the returned object so that it is printed using your new print method, but it is still plotted as a histogram when given as argument to `plot`?
-  
-```
+How can you assign a class label to the returned object so that it is printed
+using your new print method, but it is still plotted as a histogram when given
+as argument to `plot`?
+::: 
 
-```{exercise, my-hist-summary}
-Write a `summary` method that returns a data frame with two columns containing the midpoints of the cells and the counts. 
-```
+:::{.exercise #my-hist-summary}
+Write a `summary` method that returns a data frame with two columns containing
+the midpoints of the cells and the counts. 
+:::
 
-```{exercise, my-hist-ggplot2}
-Write a new `plot` method for objects of class `my_histogram` that uses `ggplot2` for plotting the histogram.
-```
+:::{.exercise #my-hist-ggplot2}
+Write a new `plot` method for objects of class `my_histogram` that uses
+`ggplot2` for plotting the histogram.
+:::
 
 ### Functions and environments {.unnumbered}
 
 The following exercises assume that you have implemented a `my_hist` function as
 in Exercise \@ref(exr:my-hist).
 
-```{exercise, my-hist-env}
+:::{.exercise #my-hist-env}
 What happens if you remove that data and call `my_hist` subsequently? 
 What is the environment of `my_hist`? Change it to a new environment, and assign 
 (using the function `assign`) the data to a 
 variable with an appropriate name in that environment. Once this is done, 
 check what now happens when calling `my_hist` after
 the data is removed from the global environment. 
+:::
 
-```
-
-```{exercise, my-hist-funfact}
+:::{.exercise #my-hist-funfact}
 Write a function that takes an argument `x` (the data) and 
 returns a function, where the returned function 
 takes an argument `h` (just as `my_hist`) and plots a histogram (just as `my_hist`). 
@@ -1603,13 +1609,10 @@ What is the environment of the function created by the function factory? What
 is in the environment? 
 Does it have any effect when calling the function whether the data is altered 
 or removed from the global environment? 
+:::
 
-```
-
-```{exercise, }
+:::{.exercise #my-hist-eval}
 Evaluate the following function call:
-
-```
 
 ```{r, eval = FALSE}
 tmp <- my_hist(10, plot = FALSE)
@@ -1619,3 +1622,4 @@ What is the type and class of `tmp`? What happens when `plot(tmp, col = "red")`
 is executed? How can you find help on what `plot()` does with an object of this
 class? Specifically, how do you find the documentation for the argument `col`,
 which is not an argument of `plot()`?
+:::
