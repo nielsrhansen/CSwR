@@ -18,7 +18,8 @@
     - [5. Monte Carlo Integration](#5-monte-carlo-integration)
     - [6. Likelihood and optimization](#6-likelihood-and-optimization)
     - [8. Numerical optimization](#8-numerical-optimization)
-    - [9. Expectation maximization algorithms](#9-expectation-maximization-algorithms)
+    - [9. Expectation maximization
+      algorithms](#9-expectation-maximization-algorithms)
     - [10. Stochastic optimization](#10-stochastic-optimization)
     - [11. The stochastic EM algorithm](#11-the-stochastic-em-algorithm)
     - [Appendix A. R programming](#appendix-a-r-programming)
@@ -27,8 +28,8 @@
 # Protocols, Conventions and FAQ: CSwR
 
 The book Computational Statistics with R is written using
-[bookdown](https://bookdown.org/). It is (will be) published by Chapman &
-Hall/CRC Statistical Science series and is available
+[bookdown](https://bookdown.org/). It is (will be) published by
+Chapman & Hall/CRC Statistical Science series and is available
 [online](https://cswr.nrhstat.org).
 
 This document collects some protocols used for writing the book and developing
@@ -41,13 +42,13 @@ the code included in the book, and some conventions that the book adheres to.
 The book source resides in directory CSwR. This is the project directory of
 RStudio project CSwR. The project uses the renv package for maintaining the
 project library of packages used. The directory is under git version control
-with a remote _public_ [copy on GitHub](https://github.com/nielsrhansen/CSwR/).
+with a remote *public* [copy on GitHub](https://github.com/nielsrhansen/CSwR/).
 
 Compiled HTML and pdf versions of the book are in the CSwR_html and CSwR_pdf
 directories, respectively, both located in the parent directory of CSwR.
 
-CSwR_html is under git version control with a remote _private_ [copy on
-GitHub](https://github.com/nielsrhansen/CSwR_html). The
+CSwR*html is under git version control with a remote _private*
+[copy on GitHub](https://github.com/nielsrhansen/CSwR_html). The
 [online](https://cswr.nrhstat.org) version is published from this repository via
 [Netlify](https://app.netlify.com/teams/nielsrhansen).
 
@@ -69,13 +70,14 @@ install.packages(
 )
 ```
 
-The HTML version of the book is compiled by the shell script `build_html_book.sh`.
-Configuration is done by `output.yml` and by the included `style.css` file.
+The HTML version of the book is compiled by the shell script
+`build_html_book.sh`. Configuration is done by `output.yml` and by the included
+`style.css` file.
 
 To compile a pdf version you need the `build_pdf_book.sh` and various other
 files that are not shared on the GitHub repo. Within RStudio, "Build All"
-(SHIFT+CMD+B or click _Build All_ in the Build pane) will also compile
-the pdf book.
+(SHIFT+CMD+B or click *Build All* in the Build pane) will also compile the pdf
+book.
 
 ### The CSwR package
 
@@ -110,25 +112,27 @@ Uses roxygen2 for documentation.
 - $n$ and `n` denote iteration index/number or other integer variables/arguments
 - $i$, $j$, $k$, $l$ are data/parameter indices
 - $x$ and $X$ are (univariate) data variables: Chapters 1, 2, 5, 6, 7,
-- $y$ and $Y$ are (univariate) data variables, used when there is a need for $x$:
+- $y$ and $Y$ are (univariate) data variables, used when there is a need for
+  $x$:
   - Chapters 3 (bivariate data), 4 ($x$ is time)
   - Chapters 8 and 9 (regression on $x$)
-  - Chapter 10 ($x$ is unobserved, $y = M(x)$ is observed; potentially $x = (y, z)$)
+  - Chapter 10 ($x$ is unobserved, $y = M(x)$ is observed; potentially
+    $x = (y, z)$)
   - Chapter
 - $z$ and $Z$ are auxiliary data variables, typically latent/unobserved
 - $u$ and $U$ are uniformly distributed variable
 - $\ell$ denotes the log-likelihood, $-\ell$ the negative log-likelihood
 - $H$ is a generic objective function to be minimized
 - $P$ is a distribution, $P_N$ the empirical distribution
-- Use \P, \E, \V, \cov for probability, expectation, variance and covariance. These
-  are defined for pdf in latex/preamble.tex, and for HTML in mathjax_header.html
+- Use \P, \E, \V, \cov for probability, expectation, variance and covariance.
+  These are defined for pdf in latex/preamble.tex, and for HTML in
+  mathjax_header.html
 
 ### Terminology and grammar
 
 - Terminology conventions:
   - Use values/observations for individual data points (not samples)
   - A sample is a dataset
-
 - The following terms are one word:
   - dataset
   - nonparametric
@@ -139,9 +143,9 @@ Uses roxygen2 for documentation.
   - mini-batch
 - The following terms are in two words:
   - data point
-  -
 
-**Johan's remark**: isn't it somewhat inconsistent to have "dataset" as one word but "data point" as two words?
+**Johan's remark**: isn't it somewhat inconsistent to have "dataset" as one word
+but "data point" as two words?
 
 Which convention to follow on using contractions?
 
