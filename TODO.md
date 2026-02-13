@@ -14,5 +14,12 @@
 - [ ] Write last chapter on stochastic EM
 - [ ] Finish appendix on performance and objects
 - [ ] Add exercises throughout
+      - [ ] One or two more in Rejection Sampling chapter
+      - [ ] One or two more in MC chapter
+      - [ ] Add exercises for Time Series Smoothing chapter
+      - [ ] Add exercises for Likelihood Optimization chapter
+      - [ ] Add exercises for Numerical Optimization chapter
+      - [ ] Add exercises for EM chapter
+      - [ ] Add exercises for Stochastic EM chapter
 - [ ] Finish index
 - [ ] Talk about effectiveness and defensive importance sampling
