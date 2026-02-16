@@ -47,7 +47,7 @@ with a remote *public* [copy on GitHub](https://github.com/nielsrhansen/CSwR/).
 Compiled HTML and pdf versions of the book are in the CSwR_html and CSwR_pdf
 directories, respectively, both located in the parent directory of CSwR.
 
-CSwR*html is under git version control with a remote _private*
+`CSwR_html` is under git version control with a remote *private*
 [copy on GitHub](https://github.com/nielsrhansen/CSwR_html). The
 [online](https://cswr.nrhstat.org) version is published from this repository via
 [Netlify](https://app.netlify.com/teams/nielsrhansen).
