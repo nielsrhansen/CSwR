@@ -4,8 +4,6 @@ B_splines <- splineDesign(knots, xx)[, -c(1, 8)]
 matplot(xx, B_splines, type = "l", lty = 1)
 
 
-
-
 fourier <- function(x, p) {
   pp <- 1:p
   x_p <- outer(x, pp)
@@ -37,15 +35,14 @@ fourier_d2 <- function(x, p) {
 }
 
 
-
-# phipsi score matching with splines 
+# phipsi score matching with splines
 
 p <- 25
 delta <- 0.001
 knots <- c(rep(-pi, 3), seq(-pi, pi, length.out = p), rep(pi, 3))
 xx0 <- seq(-pi, pi, delta)
 
-B_splines <- splineDesign(knots, xx0)[, - c(1, p + 2)]
+B_splines <- splineDesign(knots, xx0)[, -c(1, p + 2)]
 matplot(xx0, B_splines, type = "l", lty = 1)
 B_splines_d <- splineDesign(knots, xx0, derivs = 1)[, -c(1, p + 2)]
 matplot(xx0, B_splines_d, type = "l", lty = 1)
@@ -58,7 +55,7 @@ B_splines_d <- splineDesign(knots, xx, derivs = 1)[, -c(1, p + 2)]
 B_splines_d2 <- splineDesign(knots, xx, derivs = 2)[, -c(1, p + 2)]
 
 W <- crossprod(B_splines_d)
-d <- - colSums(B_splines_d2)
+d <- -colSums(B_splines_d2)
 
 theta_hat <- solve(W, d)
 
@@ -76,7 +73,7 @@ four_d <- fourier_d(xx, p)
 four_d2 <- fourier_d2(xx, p)
 
 W <- crossprod(four_d)
-d <- - colSums(four_d2)
+d <- -colSums(four_d2)
 
 theta_hat <- solve(W, d)
 
@@ -86,5 +83,3 @@ f_hat <- f_hat / sum(f_hat * delta)
 hist(xx, prob = TRUE, border = NA)
 rug(xx)
 lines(xx0, f_hat, type = "l", lwd = 2)
-
-
