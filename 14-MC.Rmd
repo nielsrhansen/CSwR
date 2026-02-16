@@ -141,7 +141,7 @@ via the CLT by computing the mean of a Gamma distribution via
 Monte Carlo integration. 
 
 ```{r gammaMCCLT, fig.cap="Sample path with pointwise 95% confidence band for Monte Carlo integration of the mean of a gamma distributed random variable.", dependson="gammasim", echo=-1}
-set.seed(1234)
+set.seed(123)
 N <- 1000
 x <- rgamma(N, 8) # h(x) = x
 mu_hat <- (cumsum(x) / (1:N)) # Cumulative average
@@ -280,7 +280,7 @@ the gamma distribution via simulations from a Gaussian distribution, cf. also
 Section \@ref(CLT-gamma).
 
 ```{r gamma-sim-IS, dependson="gammaMCCLT", echo=-1}
-set.seed(1234)
+set.seed(123)
 x <- rnorm(N, 10, 3)
 w_star <- dgamma(x, 8) / dnorm(x, 10, 3) 
 mu_hat_IS <- (cumsum(x * w_star) / (1:N))
@@ -299,7 +299,7 @@ By the CLT
 where 
 
 \[
-  \sigma^{*2}_{\textrm{IS}} = V (h(X_1)w^*(X_1)) = \int (h(x) w^*(x) - \mu)^2 g(x) \ \mathrm{d}x.
+  \sigma^{*2}_{\textrm{IS}} = \V(h(X_1)w^*(X_1)) = \int (h(x) w^*(x) - \mu)^2 g(x) \ \mathrm{d}x.
 \]
 
 The importance sampling variance can be estimated similarly as the Monte Carlo variance
@@ -411,8 +411,8 @@ where
 
 \begin{align}
 \sigma^{*2}_{\textrm{IS}} & = \V(h(X_1)w^*(X_1)) \\
-\gamma & = \mathrm{cov}(h(X_1)w^*(X_1), w^*(X_1)) \\
-\sigma_{w^*}^2 & = V (w^*(X_1)).
+\gamma & = \cov(h(X_1)w^*(X_1), w^*(X_1)) \\
+\sigma_{w^*}^2 & = \V (w^*(X_1)).
 \end{align}
 
 We can then apply the $\Delta$-method with $t(x, y) = x / y$. Note that
@@ -501,37 +501,38 @@ into the function $h$.
 We now choose the specific function 
 
 \[
-  h_0(x) = \exp\left(-\frac{1}{2}\left(x_1^2 + \sum_{i=2}^p (x_k - \alpha x_{k-1})^2\right)\right).
+  h_0(x) = \exp\left(-\frac{1}{2}\left(x_1^2 + \sum_{k = 2}^p (x_k - \alpha x_{k-1})^2\right)\right).
 \]
 
-Since $x_1^2 + \sum_{i=2}^p (x_k - \alpha x_{k-1})^2
-= \|x\|_2^2 + \sum_{i = 2}^p \alpha^2 x_{k-1}^2 - 2\alpha x_k x_{k-1}$,
+Since $x_1^2 + \sum_{k = 2}^p (x_k - \alpha x_{k-1})^2
+= \|x\|_2^2 + \sum_{k = 2}^p (\alpha^2 x_{k-1}^2 - 2\alpha x_k x_{k-1})$,
 we have 
 
 \[
-  h(x) = \exp\left(- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
-x_{k-1}^2 - 2\alpha x_k x_{k-1}\right).
+  h(x) = \exp\left(- \frac{1}{2} \sum_{k = 2}^p (\alpha^2 x_{k-1}^2 - 2\alpha x_k x_{k-1})\right).
 \]
 
 Thus if $X \sim \mathcal{N}(0, I_p)$, we have
 
 \[ 
   \int h_0(x)  \mathrm{d} x =  (2 \pi)^{p/2} \E\left( h(X) \right) 
-  = (2 \pi)^{p/2}  \E\left( e^{- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
-X_{k-1}^2 - 2\alpha X_k X_{k-1}} \right).
+  = (2 \pi)^{p/2}  \E\left( e^{- \frac{1}{2} \sum_{k = 2}^p (\alpha^2 
+X_{k-1}^2 - 2\alpha X_k X_{k-1})} \right).
 \]
 
 In the Monte Carlo integration below we ignore the factor $(2 \pi)^{p/2}$ and 
 compute
 
 \[ 
-  \mu = \E\left( \exp\left(- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
-X_{k-1}^2 - 2\alpha X_k X_{k-1} \right) \right)
+  \mu = \E\left( \exp\left(- \frac{1}{2} \sum_{k = 2}^p (\alpha^2 
+X_{k-1}^2 - 2\alpha X_k X_{k-1}) \right) \right)
 \]
 
 by generating \(p\)-dimensional random 
 variables from \(\mathcal{N}(0, I_p)\). The value of the expectation can actually 
 be computed analytically to be $\mu = 1$, see Exercise \@ref(exr:mu).
+See also Exercise \@ref(exr:finvar) for a justification that the variance 
+is finite for $\alpha < 0.2929$.
 
 First, we implement the function we want to integrate.
 
@@ -601,13 +602,17 @@ CLT are typically more accurate estimates of the actual uncertainty
 than the upper bounds provided by Chebychev's inequality.
 
 To illustrate the limitations of Monte Carlo integration we increase $\alpha$ to
-\(\alpha = 0.4\). 
+\(\alpha = 0.25.\) Recall that for this choice of $\alpha$, the variance is still 
+finite.
 
-```{r MC-loop2, dependson=c("MC_hfun", "MC_par")}
-evaluations <- apply(x, 1, h, alpha = 0.4)
+```{r MC-loop2, dependson=c("MC_hfun", "MC_par"), echo=-(1:2)}
+set.seed(12345)
+x <- matrix(rnorm(N * p), N, p)
+alpha = 0.25
+evaluations <- apply(x, 1, h, alpha)
 ```
 
-```{r MC-CLT2, dependson=c("MC_par", "MC_loop2"), echo=FALSE, fig.cap="Histogram of the log-distribution and sample path for the Monte Carlo average ($\\alpha = 0.4$) and pointwise 95% confidence intervals based on the CLT.", out.width="100%", fig.height=3}
+```{r MC-CLT2, dependson=c("MC_par", "MC_loop2"), echo=FALSE, fig.cap="Histogram of the log-distribution and sample path for the Monte Carlo average $(\\alpha = 0.25)$ with pointwise 95% confidence intervals based on the CLT.", out.width="100%", fig.height=3}
 mu_hat <- cumsum(evaluations) / 1:N
 se <- sd(evaluations) / sqrt(1:N)
 
@@ -632,19 +637,20 @@ gridExtra::grid.arrange(p1, p2, ncol = 2)
 
 The sample path in Figure \@ref(fig:MC-CLT2) is not carefully selected to be pathological. Due to 
 occasional large values, the typical sample path will show occasional large jumps,
-and the variance may easily be grossly underestimated. The histogram of the log-distribution of the 
+and the variance may easily be grossly over- or underestimated. The histogram of the log-distribution of the 
 terms that enter into the Monte Carlo average also shows how there is several orders of magnitude differences
 between the typical values and the largest values. Figure \@ref(fig:MC-CLT3) shows four additional 
-sample paths where the confidence interval for $N = 1000$ for three of them completely misses the 
-actual value $\mu = 1$, while the last is extremely wide. In this example the Monte Carlo integration 
-technique does not perform well for $\alpha = 0.4$ (or larger), and the uncertainty quantification 
-via the CLT is highly unreliable. 
+sample paths where the confidence interval for $N = 1000$ with one of them completely missing the 
+actual value $\mu = 1$, and one producing an extremely wide confidence band due to a single large value. 
+In this example the Monte Carlo integration 
+technique does not perform well for $\alpha = 0.25$ (or larger), and the uncertainty quantification 
+via the CLT is unreliable, even though the variance is finite. 
 
-```{r MC-CLT3, fig.cap="Four sample paths of the cumulative average for $\\alpha = 0.4$.", dependson=c("MC_par", "MC_hfun"), echo=FALSE, results="hide", out.width="100%", fig.cap="Four sample paths for the Monte Carlo average ($\\alpha = 0.4$) and pointwise 95% confidence intervals based on the CLT."}
+```{r MC-CLT3, fig.cap="Four sample paths of the cumulative average for $\\alpha = 0.25$.", dependson=c("MC_par", "MC_hfun"), echo=FALSE, results="hide", out.width="100%", fig.cap="Four sample paths for the Monte Carlo average ($\\alpha = 0.4$) and pointwise 95% confidence intervals based on the CLT."}
 
 sim <- tibble::tibble(
   x = matrix(rnorm(N * p), N, p),
-  evaluations = apply(x, 1, h, alpha = 0.4),
+  evaluations = apply(x, 1, h, alpha = alpha),
   mu_hat = cumsum(evaluations) / 1:N,
   se = sd(evaluations) / sqrt(1:N)
 )
@@ -662,7 +668,7 @@ p1 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) +
 
 sim <- tibble::tibble(
   x = matrix(rnorm(N * p), N, p),
-  evaluations = apply(x, 1, h, alpha = 0.4),
+  evaluations = apply(x, 1, h, alpha = alpha),
   mu_hat = cumsum(evaluations) / 1:N,
   se = sd(evaluations) / sqrt(1:N)
 )
@@ -680,7 +686,7 @@ p2 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) +
 
 sim <- tibble::tibble(
   x = matrix(rnorm(N * p), N, p),
-  evaluations = apply(x, 1, h, alpha = 0.4),
+  evaluations = apply(x, 1, h, alpha = alpha),
   mu_hat = cumsum(evaluations) / 1:N,
   se = sd(evaluations) / sqrt(1:N)
 )
@@ -698,7 +704,7 @@ p3 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) +
 
 sim <- tibble::tibble(
   x = matrix(rnorm(N * p), N, p),
-  evaluations = apply(x, 1, h, alpha = 0.4),
+  evaluations = apply(x, 1, h, alpha = alpha),
   mu_hat = cumsum(evaluations) / 1:N,
   se = sd(evaluations) / sqrt(1:N)
 )
@@ -1527,4 +1533,29 @@ X_{k-1}^2 - 2\alpha X_k X_{k-1} \right) \right) = 1.
 \]
 
 if $X \sim \mathcal{N}(0, I_p)$.
+:::
+
+::: {#finvar .exercise}
+The purpose of this exercise is to show that the variance of $h(X_1)$ in 
+Section \@ref(hd-int) is finite for $\alpha < 0.2929$. 
+
+First use Cauchy-Schwarz's inequality to show that 
+
+\[
+   \sum_{k=2} x_k x_{k-1}  \leq \|x\|^2,
+\]
+
+and use this to conclude that 
+
+\[
+  h(x) \leq e^{(\alpha - \alpha^2/2) \|x\|^2}.
+\]
+
+Then use that if $X \sim \mathcal{N}(0, I_p)$ then $Z = \|X\| \sim \chi_p^2$
+and show that 
+
+\[
+  \E(h(X)^2) \leq \E\left( e^{(2 \alpha - \alpha^2) Z} \right) < \infty 
+\]
+for $\alpha < 1 - \sqrt{8} / 4 \approx 0.2929.$
 :::
