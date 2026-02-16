@@ -61,12 +61,13 @@ Install the following packages
 
 ```r
 install.packages(
-    c(
-        "renv",
-        "tidyverse",
-        "rbookdown",
-        "lintr",
-        "Rcpp",
+  c(
+    "renv",
+    "tidyverse",
+    "rbookdown",
+    "lintr",
+    "Rcpp"
+  )
 )
 ```
 
