@@ -464,14 +464,17 @@ ggplot(mapping = aes(x = 1:N, y = abs(betahat))) +
 
 The coefficients are not independent (remember the symmetry), and one can alternatively 
 consider 
-$$\hat{\gamma}_m = \sqrt{2} \mathrm{Re}(\hat{\beta}_m) \quad \text{and} \quad 
-\hat{\gamma}_{n' + m} = - \sqrt{2} \mathrm{Im}(\hat{\beta}_m)$$
+
+\[
+  \hat{\gamma}_m = \sqrt{2} \mathrm{Re}(\hat{\beta}_m) \quad \text{and} \quad 
+\hat{\gamma}_{n' + m} = - \sqrt{2} \mathrm{Im}(\hat{\beta}_m)
+\]
+
 for $1 \leq m  < n / 2$. Here $n' = \lfloor n / 2 \rfloor$. Here, $\hat{\gamma}_0 = \hat{\beta}_0$, and $\hat{\gamma}_{n/2} = \hat{\beta}_{n/2}$ for $n$ even.
 
 These coefficients are the coefficients in a real cosine, 
 $\sqrt{2} \cos(2\pi k m / n)$, and sine, $\sqrt{2} \sin(2\pi k m / n)$, basis
-expansion, and they are i.i.d. 
-$\mathcal{N}(0, \sigma^2)$ distributed. 
+expansion, and they are i.i.d. $\mathcal{N}(0, \sigma^2)$ distributed. 
 
 Thresholding Fourier:
 
@@ -503,116 +506,65 @@ fft(nuuk$Temperature)[1:4] / sqrt(N)
 betahat[1:4]
 ```
 
-## Kalman smoothing and filtering {#kalman}
+## Kalman smoothing {#kalman}
 
-```{r gauss-process}
-gauss_process_kernel <- function(N, alpha, eta) {
-  K <- function(x) alpha^(abs(x)) / (1 - alpha^2) 
-  eta * outer(1:N, 1:N, function(i, j) K(i - j))
-}
+Smoothing of time series can be based on Gaussian processes as presented 
+in Section \@ref(gauss-process). We identify in this case the indices 
+of the Gaussian random variabel $\mathbf{f}$ with the equidistant time points, 
+thus assuming that all variables are ordered according to time. We can 
+then implement the general formulas from Section \@ref(gauss-process) for 
+computing the Gaussian process smoother for any choice of kernel, but it 
+has computational complexity $O(N^2)$. 
 
-gauss_process_smoother <- function(y, Sigma_x, sigmasq, ...) {
-  N <- length(y)
-  if (missing(Sigma_x)) { 
-    Sigma_x <- gauss_process_kernel(N, ...)
-  }
-  Sigma_x %*% solve(Sigma_x + diag(rep(sigmasq, N)), y)
-} 
-```
-
-```{r}
-eta <- 1
-alpha <- 0.9
-sigmasq <- 20
-y <- nuuk$Temperature
-mx <- mean(y)
-f_smooth <- gauss_process_smoother(y - mx, sigmasq = sigmasq, alpha = alpha, eta = eta) + mx
-p_Nuuk + 
-  geom_line(aes(y = f_smooth), lwd = 1, color = "red")
-```
-
-```{r gauss-process-log-likelihood}
-gauss_process_loglik <- function(par, y) {
-  sigmasq <- par[1]
-  alpha <- par[2] 
-  eta <- par[3]
-  N <- length(y)
-  Sigma <- gauss_process_kernel(N, alpha, eta) + diag(rep(sigmasq, N)) 
-  d <- svd(Sigma, 0, 0)$d
-  drop(y %*% solve(Sigma, y) + sum(log(d)))
-}
-```
-
-```{r}
-gauss_process_loglik(c(1, 0.5, 1), y)
-
-optim(c(1, 0.5, 1), gauss_process_loglik, method = "L-BFGS-B", lower = c(0.01, 0.01, 0.01), upper = c(Inf, 0.99, Inf), y = y - mx)
-```
+For particular choices of Gaussian processes it is possible to reduce 
+the computational complexity to $O(N)$. This is possible when the Gaussian 
+process can be specified via a recursive update equation. The resulting 
+efficient algorithm for computing the corresponding Gaussian process 
+smoother is known as a *Kalman smoother*. We treat the simplest case 
+of an auto-regressive model with lag one---the AR(1)-model.
 
 
-```{r}
-gauss_process_loocv <- function(par, y) {
-  sigmasq <- par[1]
-  alpha <- par[2] 
-  eta <- par[3]
-  N <- length(y)
-  Sigma_x <- gauss_process_kernel(N, alpha, eta)
-  S <- Sigma_x %*% solve(Sigma_x  + diag(rep(sigmasq, N)))
-  f_hat <- S %*% y
-  sum(((y - f_hat) / (1- diag(S)))^2)
-}
-```
+Suppose that $|\alpha| < 1$, $\tau > 0$, $f_1 = \tau U_1 / \sqrt{1 - \alpha^2}$ and 
 
-```{r}
-gauss_process_loocv(c(1, 0.5, 1), y)
-
-optim(c(1, 0.5, 1), gauss_process_loocv, method = "L-BFGS-B", lower = c(0.01, 0.01, 0.01), upper = c(Inf, 0.99, Inf), y = y - mx)
-```
-
-
-```{r}
-sigmasq <- 0.8
-alpha <- 0.89
-eta <- 0.14
-
-# sigmasq <- 0.88
-# alpha <- 0.98
-# eta <- 0.06
-
-y <- nuuk$Temperature
-# mx <- mean(y)
-mx <- 0
-f_smooth <- gauss_process_smoother(y - mx, sigmasq = sigmasq, alpha = alpha, eta = eta) + mx
-p_Nuuk + 
-  geom_line(aes(y = f_smooth), lwd = 1, color = "red") +
-  geom_line(aes(y = run_mean(nuuk$Temperature, k_opt)), color = "blue", lwd = 1)
-```
-
-
-
-### AR(1) Kalman smoothing
-
-The simplest example with an efficient Kalman smoother is the AR(1)-model,
-where we assume an equidistant time grid (that is, $x_i = i$). Suppose that $|\alpha| < 1$, 
-$f_1 = U_1 / \sqrt{1 - \alpha^2}$ and 
-
-\[
+\begin{equation}
   f_i = \alpha f_{i-1} + \tau U_i
-\]
+  (\#eq:ar-update)
+\end{equation}
 
 for $i = 2, \ldots, n$ with $U = (U_1, \ldots, U_N) \sim 
 \mathcal{N}(0, I)$.
 
-We have $\cov(f_i, f_j) = \tau^2 \alpha^{|i-j|} / (1 - \alpha^2)$, thus we can find 
-$\mathbf{K}$, and by \@ref(eq:Gauss-smoother) we have 
+By recursively solving \@ref(eq:ar-update) we see that 
+$f_{i-1}$ is a function of $U_1, \ldots, U_{i-1}$. 
+Therefore, $U_i$ is independent of $f_{i-1}$, and we have from \@ref(eq:ar-update) that 
+
+\begin{align*}
+  \V(f_i) & = \alpha^2 \V(f_{i-1}) + \tau^2 \\
+  \cov(f_i, f_{i-1}) & = \alpha \cov(f_{i-1}, f_{i-1}) = \alpha \V(f_{i-1}).
+\end{align*}
+
+It now follows by induction that $\V(f_i) = \tau^2 / (1 - \alpha^2)$ for all $i$. Thus 
+$\cov(f_i, f_{i-1}) = \tau^2 \alpha / (1 - \alpha^2)$. By induction it follows that 
+the kernel matrix is given by
 
 \[
-  \E(\mathbf{f} \mid \mathbf{Y} = \mathbf{y}) = (I + \sigma^2 \mathbf{K}^{-1})^{-1} \mathbf{y}
+  \mathbf{K}_{i,j} = \cov(f_i, f_j) = \tau^2 \alpha^{|i-j|} / (1 - \alpha^2),
 \]
 
+and with $\sigma^2 > 0$ the observation variance, we can find the Gaussian process smoother in terms of 
+$\mathbf{K}$ by \@ref(eq:Gauss-smoother) as 
 
+\[
+  \E(\mathbf{f} \mid \mathbf{Y} = \mathbf{y}) = (I + \sigma^2 \mathbf{K}^{-1})^{-1} \mathbf{y}.
+\]
 
-```{r smoothMat, echo=FALSE, fig.cap="Gaussian smoother matrix with $\\alpha = 0.3, 0.9$, $\\sigma^2 = 2, 20$", fig.show="hold", out.width="50%"}
+Figure \@ref(fig:SmoothMat-fig) shows one row of the smoother matrix 
+$S = (I + \sigma^2 \mathbf{K}^{-1})^{-1}$
+for different values of $\alpha$ and $\sigma^2$ and $\tau = 1$. 
+This smoother is compared to the Nadaraya-Watson kernel smoother with kernel 
+$K(x) = \alpha^{|x|} / (1 - \alpha^2)$.
+
+```{r smoothMat, echo=FALSE, fig.cap="Gaussian smoother matrix with $\\alpha = 0.3, 0.9$, $\\sigma^2 = 2, 20$", fig.show="hold"}
 N <- nrow(nuuk)
 alpha <- 0.8; sigmasq <- 10
 Sigma1 <- outer(1:N, 1:N, function(i, j) alpha^(abs(i - j)))  / (1 - alpha^2)  
@@ -635,7 +587,7 @@ Smooth4 <- round(Sigma4 %*% solve(Sigma4 + sigmasq * diag(N)), 10)
 # image(Matrix(Smooth4), useAbs = FALSE)
 ```
 
-```{r SmoothMat-fig, echo=FALSE, dependson="SmoothMat", fig.cap="Gaussian smoother matrix $S_{25,j}$ with $\\alpha = 0.3, 0.9$, $\\sigma^2 = 2, 20$"}
+```{r SmoothMat-fig, echo=FALSE, dependson="SmoothMat", fig.cap="Smoother matrix $S_{75,j}$ for the Nuuk temperature data using the Gaussian process kernel (AR(1)) and the Nadaraya-Watson kernel (NW)."}
 smooths <- cbind(1:N, Smooth1[75, ], Smooth2[75, ], Smooth3[75, ], Smooth4[75, ])
 labels <-  c("time", 'list(alpha == 0.8, sigma^2 == 10)', 'list(alpha == 0.8, sigma^2 == 100)', 
                        'list(alpha == 0.95, sigma^2 == 10)', 'list(alpha == 0.95, sigma^2 == 100)')
@@ -662,6 +614,47 @@ ggplot(data = smooths, aes(time, value, color = kernel)) +
   xlab("") + ylab("")
 ```
 
+We first implement the computation of the Gaussian process smoother 
+using the computations described in Section \@ref(gauss-process), which do
+not exploit the special structure of the kernel matrix. 
+
+```{r gauss-process}
+gauss_process_kernel <- function(N, alpha, tau) {
+  K <- function(x) alpha^(abs(x)) / (1 - alpha^2) 
+  tau * outer(1:N, 1:N, function(i, j) K(i - j))
+}
+
+gauss_process_smoother <- function(y, Sigma_x, sigmasq, ...) {
+  N <- length(y)
+  if (missing(Sigma_x)) { 
+    Sigma_x <- gauss_process_kernel(N, ...)
+  }
+  Sigma_x %*% solve(Sigma_x + diag(rep(sigmasq, N)), y)
+} 
+```
+
+We have anticipated above that for optimizing over the $\sigma^2$
+parameter, we might want to call the smoother several times without 
+having to reconstruct $\mathbf{K}$ each time.
+
+```{r}
+tau <- 1
+alpha <- 0.9
+sigmasq <- 20
+y <- nuuk$Temperature
+mx <- mean(y)
+f_smooth <- gauss_process_smoother(
+  y - mx, 
+  sigmasq = sigmasq, 
+  alpha = alpha, 
+  tau = tau
+  ) + mx
+p_Nuuk + geom_line(aes(y = f_smooth), lwd = 1, color = "red")
+```
+
+
+### Efficient computation of the Kalman smoother
+
 From the identity $U_i = f_i - \alpha f_{i-1}$ it follows that 
 $U = A \mathbf{f}$ where 
 
@@ -676,8 +669,7 @@ A = \left( \begin{array}{cccccc}
 \end{array}\right),
 \]
 
-This gives 
-$\tau^2 I = V(U) = A \mathbf{K} A^T$, hence 
+This gives $\tau^2 I = \V(U) = A \mathbf{K} A^T$, hence 
 
 \[
   \mathbf{K}^{-1} = \frac{1}{\tau^2} (A^{-1}(A^T)^{-1})^{-1} = \frac{1}{\tau^2} A^T A.
@@ -765,7 +757,7 @@ which is then solved by backsubstitution from below; $f_N = y_N'$ and
   f_{i} = y_i' - \rho_{i}' f_{i+1}, \quad i = N-1, \ldots, 1.
 \]
 
-### Implementation
+### Efficient implementation of Kalman smoothing  
 
 ```{Rcpp, KalmanSmooth}
 #include <Rcpp.h>
@@ -833,34 +825,72 @@ filter algorithm.
 
 ### The Kalman filter 
 
-```{Rcpp, KalmanFilt}
-#include <Rcpp.h>
-using namespace Rcpp;
-// [[Rcpp::export]]
-NumericVector kalman_filter(NumericVector y, double alpha, double eta) {
-  double tmp, gamma0 = 1 + eta, rho = - eta * alpha, yp;
-  double gamma = 1 + eta * (1 + alpha * alpha);
-  int N = y.size();
-  NumericVector f(N), rhop(N);
-  rhop[0] = rho / gamma0;
-  yp = y[0] / gamma0;
-  f[0] = y[0] / (1 + eta * (1 - alpha * alpha));
-  for(int i = 1; i < N; ++i) { 
-    tmp = (gamma - rho * rhop[i - 1]);
-    rhop[i] = rho / tmp;
-    /* Note differences when compared to smoother */
-    f[i] = (y[i] - rho * yp) / (gamma0 - rho * rhop[i - 1]); 
-    yp = (y[i] - rho * yp) / tmp;         
-  }
-  return f;
-}
-```
+Currently moved to particle filter section.
 
 Result, $\alpha = 0.95$, $\sigma^2 = 10$
 
 ```{r Nuuk_filter, echo=FALSE, dependson=c("KalmanFilt", "NuukData", "Nuuk_runmeans")}
-f_filt <- kalman_filter(nuuk$Temperature - xi, alpha, eta) + xi
-p_Nuuk + geom_line(aes(y = f_smooth), lwd = 1, color = "red") + 
-  geom_line(aes(y = f_filt), lwd = 1, color = "blue")
+#f_filt <- kalman_filter(nuuk$Temperature - xi, alpha, eta) + xi
+#p_Nuuk + geom_line(aes(y = f_smooth), lwd = 1, color = "red") + 
+#  geom_line(aes(y = f_filt), lwd = 1, color = "blue")
 ```
 
+
+### Optimizing the Kalman smoother
+
+```{r gauss-process-log-likelihood}
+gauss_process_loglik <- function(par, y) {
+  sigmasq <- par[1]
+  alpha <- par[2] 
+  eta <- par[3]
+  N <- length(y)
+  Sigma <- gauss_process_kernel(N, alpha, eta) + diag(rep(sigmasq, N)) 
+  d <- svd(Sigma, 0, 0)$d
+  drop(y %*% solve(Sigma, y) + sum(log(d)))
+}
+```
+
+```{r}
+gauss_process_loglik(c(1, 0.5, 1), y)
+
+optim(c(1, 0.5, 1), gauss_process_loglik, method = "L-BFGS-B", lower = c(0.01, 0.01, 0.01), upper = c(Inf, 0.99, Inf), y = y - mx)
+```
+
+
+```{r}
+gauss_process_loocv <- function(par, y) {
+  sigmasq <- par[1]
+  alpha <- par[2] 
+  eta <- par[3]
+  N <- length(y)
+  Sigma_x <- gauss_process_kernel(N, alpha, eta)
+  S <- Sigma_x %*% solve(Sigma_x  + diag(rep(sigmasq, N)))
+  f_hat <- S %*% y
+  sum(((y - f_hat) / (1- diag(S)))^2)
+}
+```
+
+```{r}
+gauss_process_loocv(c(1, 0.5, 1), y)
+
+optim(c(1, 0.5, 1), gauss_process_loocv, method = "L-BFGS-B", lower = c(0.01, 0.01, 0.01), upper = c(Inf, 0.99, Inf), y = y - mx)
+```
+
+
+```{r}
+sigmasq <- 0.8
+alpha <- 0.89
+eta <- 0.14
+
+# sigmasq <- 0.88
+# alpha <- 0.98
+# eta <- 0.06
+
+y <- nuuk$Temperature
+# mx <- mean(y)
+mx <- 0
+f_smooth <- gauss_process_smoother(y - mx, sigmasq = sigmasq, alpha = alpha, eta = eta) + mx
+p_Nuuk + 
+  geom_line(aes(y = f_smooth), lwd = 1, color = "red") +
+  geom_line(aes(y = run_mean(nuuk$Temperature, k_opt)), color = "blue", lwd = 1)
+```
