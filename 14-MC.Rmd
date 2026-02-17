@@ -1345,7 +1345,7 @@ where $U_1, \ldots, U_N$ and $V_1, \ldots, V_N$ are independent and
 identically distributed random variables, and where $F_k$ and $G_k$ are 
 some fixed maps. By convention, we let $Z_0 = z_0$ take some fixed value.
 The equation \@ref(eq:HMM-update) is a recursive update equation, which makes 
-the $X$-s form a Markov chain. The equation \@ref(eq:HMM-observation) is 
+the $Z$-s form a Markov chain. The equation \@ref(eq:HMM-observation) is 
 known as the observation equation, and we generally suppose that we 
 only observe the $Y$-s.
 
@@ -1392,7 +1392,7 @@ f_{1:k}(z_{1:k}) & = f_1(z_1 \mid z_0) \cdot \ldots \cdot f_k(z_k \mid z_{k-1}) 
 & = f_{1:(k-1)}(z_{1:(t-1)}) \cdot f_k(z_k \mid z_{k-1}),
 \end{align}
 
-is the density of $Z_{0:i}$ w.r.t. Lebesgue measure in $\mathbb{R}^i$. 
+is the density of $Z_{0:k}$ w.r.t. Lebesgue measure in $\mathbb{R}^k$. 
 Likewise, 
 
 \[
@@ -1407,7 +1407,7 @@ that the joint distribution of $(Y_1, Z_1), \ldots, (Y_k, Z_k)$ has density
   k_{1:k}(y_{1:k}, z_{1:k}) = g_{1:k}(y_{1:k} \mid z_{1:k}) f_{1:k}(z_{1:k}) 
 \]
 
-w.r.t. Lebesgue measure in $\mathbb{R}^{2i}$. By Bayes' theorem, the conditional 
+w.r.t. Lebesgue measure in $\mathbb{R}^{2k}$. By Bayes' theorem, the conditional 
 density of $Z_{1:k}$ given $Y_{1:k} = y_{1:k}$ is 
 
 \[
@@ -1468,10 +1468,13 @@ Likewise, the conditional smoothing expectation can be approximated by
   \sum_{i=1}^N  h(Z_k^{(i)}) w(Z_{1:N}^{(i)}).
 \]
 
-::: {#AR1-importance .example .boxed}
-We revisit the AR(1) model from Section \@ref(kalman) with the small 
-notational difference that $Z_k$ denotes the $k$-th 
-unobserved variable instead of $f_k$. Thus the update equation is linear 
+
+### AR(1) sequential importance sampling {#AR1-importance}
+
+We revisit the AR(1) model from Section \@ref(kalman) with a small 
+notational difference. In Section \@ref(kalman) we used $f_k$ to 
+denote the $k$-th value of the unobserved Gaussian process, while 
+we will use $Z_k$ in this section. Thus the update equation is linear 
 and given as  
 
 \[
@@ -1501,9 +1504,35 @@ that the unstandardized weights become
   w^*(Z_{k}) = \exp\left( - \frac{\left( y_k - Z_k \right)^2}{2 \sigma^2} \right).
 \]
 
+### Particle filters for the AR(1) process
 
-:::
 
+
+
+
+
+```{Rcpp, KalmanFilt}
+#include <Rcpp.h>
+using namespace Rcpp;
+// [[Rcpp::export]]
+NumericVector kalman_filter(NumericVector y, double alpha, double eta) {
+  double tmp, gamma0 = 1 + eta, rho = - eta * alpha, yp;
+  double gamma = 1 + eta * (1 + alpha * alpha);
+  int N = y.size();
+  NumericVector f(N), rhop(N);
+  rhop[0] = rho / gamma0;
+  yp = y[0] / gamma0;
+  f[0] = y[0] / (1 + eta * (1 - alpha * alpha));
+  for(int i = 1; i < N; ++i) { 
+    tmp = (gamma - rho * rhop[i - 1]);
+    rhop[i] = rho / tmp;
+    /* Note differences when compared to smoother */
+    f[i] = (y[i] - rho * yp) / (gamma0 - rho * rhop[i - 1]); 
+    yp = (y[i] - rho * yp) / tmp;         
+  }
+  return f;
+}
+```
 
 
 
