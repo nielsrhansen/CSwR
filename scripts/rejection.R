@@ -63,7 +63,7 @@ vMsim_adapt <- function(n, x1, x2, kappa, trace = FALSE) {
   Q1 <- exp(b1) * (exp(a1 * z1) - exp(a1 * z0)) / a1
   Q2 <- Q1 + exp(b2) * (exp(a2 * z2) - exp(a2 * z1)) / a2
   Q3 <- Q2 + exp(b3) * (exp(a3 * z3) - exp(a3 * z2)) / a3
-  c = Q3 + exp(b4) * (exp(a4 * z4) - exp(a4 * z3)) / a4
+  c <- Q3 + exp(b4) * (exp(a4 * z4) - exp(a4 * z3)) / a4
 
   m <- n
   fact <- 1
