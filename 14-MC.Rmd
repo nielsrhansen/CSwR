@@ -3,97 +3,95 @@
 Suppose that we are interested in numerically computing the integral
 
 \[
-    \int h_0(x) \mathrm{d} x
+\int h_0(x) \mathrm{d} x
 \]
 
-for some real valued function $h_0$. How should we then proceed?
-A classical approach is to approximate the integral by a sum of the form 
+for some real valued function $h_0$. How should we then proceed? A classical
+approach is to approximate the integral by a sum of the form
 
 \[
-  \sum_{i=1}^N h_0(x_i) w_i.
+\sum_{i=1}^N h_0(x_i) w_i.
 \]
 
-Here, the $x_i$-s are some, potentially carefully chosen, points in the $x$-space
-and $w_i$ is the magnitude of the $x$-space where the values of $h_0$ are well
-approximated by the value $h_0(x_i)$. But how should we then in practice 
-choose the $x_i$-s, and how should we compute the $w_i$-s?
+Here, the $x_i$-s are some, potentially carefully chosen, points in the
+$x$-space and $w_i$ is the magnitude of the $x$-space where the values of
+$h_0$ are well approximated by the value $h_0(x_i)$. But how should we then in
+practice choose the $x_i$-s, and how should we compute the $w_i$-s?
 
-If $h_0(x) = h(x) f(x)$ for a probability 
-density $f$, we can get the idea of choosing the $x_i$-s randomly and 
-simply take $w_i = 1/N$. With $X_1, \ldots, X_N$ i.i.d. with density $f$, the *Monte Carlo* average 
-satisfies that
+If $h_0(x) = h(x) f(x)$ for a probability density $f$, we can get the
+idea of choosing the $x_i$-s randomly and simply take $w_i = 1/N$. With
+$X_1, \ldots, X_N$ i.i.d. with density $f$, the *Monte Carlo* average satisfies
+that
 
 \[
-  \hat{\mu}_{\textrm{MC}} := \frac{1}{N} \sum_{i=1}^N h(X_i) 
-          \rightarrow \mu := \E(h(X_1)) = \int h(x) f(x) \ \mathrm{d}x
+\hat{\mu}_{\textrm{MC}}   := \frac{1}{N} \sum_{i=1}^N h(X_i)
+          \rightarrow \mu := \E(h(X_1))
+                           = \int h(x) f(x) \ \mathrm{d}x
 \]
 
 for $N \to \infty$ by the law of large numbers (LLN).
 
-Monte Carlo integration is a clever idea, where we use the computer 
-to simulate i.i.d. random variables and compute an average as
-an approximation of an integral. The idea may be applied in a statistical 
-context, but it also has applications outside of statistics and can be 
-a direct competitor to more standard numerical integration techniques. 
-By increasing $N$ the LLN
-tells us that the average will eventually become a good approximation
-of the integral. However, the LLN does not quantify how large $N$ should 
-be, and a fundamental question of Monte Carlo integration is therefore 
-to quantify the precision of the average. 
+Monte Carlo integration is a clever idea, where we use the computer to simulate
+i.i.d. random variables and compute an average as an approximation of an
+integral. The idea may be applied in a statistical context, but it also has
+applications outside of statistics and can be a direct competitor to more
+standard numerical integration techniques. By increasing $N$ the LLN tells us
+that the average will eventually become a good approximation of the integral.
+However, the LLN does not quantify how large $N$ should be, and a fundamental
+question of Monte Carlo integration is therefore to quantify the precision of
+the average.
 
-In this chapter, we we will first deal with the quantification of the precision---primarily 
-via the asymptotic variance in the central limit theorem. This will provide 
-both a quantification of precision for any 
-specific Monte Carlo approximation as well as a way to compare different Monte Carlo integration techniques. 
+In this chapter, we we will first deal with the quantification of the
+precision---primarily via the asymptotic variance in the central limit
+theorem. This will provide both a quantification of precision for any specific
+Monte Carlo approximation as well as a way to compare different Monte Carlo
+integration techniques.
 
 The direct usage of the average above as an approximation of the integral
 requires that we can simulate directly from the distribution with density $f$.
-This might be difficult or impossible, or it might just lead to 
-Monte Carlo averages of very low precision. To remedy these challenges 
-the subsequent sections treat importance
-sampling and variations thereof, which are techniques for simulating from a different distribution
-and use a *weighted* average to obtain the approximation of the integral. 
-
+This might be difficult or impossible, or it might just lead to Monte Carlo
+averages of very low precision. To remedy these challenges the subsequent
+sections treat importance sampling and variations thereof, which are techniques
+for simulating from a different distribution and use a *weighted* average to
+obtain the approximation of the integral.
 
 ## Assessment
 
-The error analysis of Monte Carlo integration differs from that of 
-ordinary (deterministic) numerical integration methods. For the latter, 
-error analysis provides bounds on the error of the computable 
-approximation in terms of properties of the function to be integrated. Such
-bounds provide a guarantee on what the error at most can be. It 
-is generally impossible to provide such a guarantee when using Monte 
-Carlo integration because the computed approximation is by construction 
-(pseudo)random. Thus the error analysis and assessment of the precision of 
-$\hat{\mu}_{\textrm{MC}}$ as an approximation of $\mu$ will be probabilistic. 
+The error analysis of Monte Carlo integration differs from that of ordinary
+(deterministic) numerical integration methods. For the latter, error analysis
+provides bounds on the error of the computable approximation in terms of
+properties of the function to be integrated. Such bounds provide a guarantee
+on what the error at most can be. It is generally impossible to provide such a
+guarantee when using Monte Carlo integration because the computed approximation
+is by construction (pseudo)random. Thus the error analysis and assessment of
+the precision of $\hat{\mu}_{\textrm{MC}}$ as an approximation of $\mu$ will
+be probabilistic.
 
 There are two main approaches. We can use approximations of the distribution
-of $\hat{\mu}_{\textrm{MC}}$ to assess the precision by computing a confidence 
-interval, say. Or we can provide finite sample upper bounds, known as 
-concentration inequalities, on the probability
-that the error of $\hat{\mu}_{\textrm{MC}}$ is larger than a given $\varepsilon$. 
-A concentration inequality can be turned into a confidence interval, if needed, 
-or it can be used directly 
-to answer a question such as: if I want the approximation to have an error 
-smaller than $\varepsilon = 10^{-3}$, how large does $N$ need to be 
-to guarantee this error bound with probability at least $99.99$%?
+of $\hat{\mu}_{\textrm{MC}}$ to assess the precision by computing a
+confidence interval, say. Or we can provide finite sample upper bounds,
+known as concentration inequalities, on the probability that the error of
+$\hat{\mu}_{\textrm{MC}}$ is larger than a given $\varepsilon$. A concentration
+inequality can be turned into a confidence interval, if needed, or it can be
+used directly to answer a question such as: if I want the approximation to have
+an error smaller than $\varepsilon = 10^{-3}$, how large does $N$ need to be to
+guarantee this error bound with probability at least $99.99$%?
 
-Confidence intervals are typically computed using the central limit theorem and 
-an estimated value of the asymptotic variance. A major deficit of this method is 
-that the central limit theorem does not provide bounds -- only approximations
-whose precision for a finite $N$ is often unclear. Thus without further analysis, we 
-cannot really be certain that the results from the central limit theorem 
-reflect the accuracy of $\hat{\mu}_{\textrm{MC}}$. 
+Confidence intervals are typically computed using the central limit theorem and
+an estimated value of the asymptotic variance. A major deficit of this method
+is that the central limit theorem does not provide bounds -- only approximations
+whose precision for a finite $N$ is often unclear. Thus without further
+analysis, we cannot really be certain that the results from the central limit
+theorem reflect the accuracy of $\hat{\mu}_{\textrm{MC}}$.
 
-Concentration inequalities provide actual guarantees, albeit probabilistic. 
-They are, however, typically problem specific and harder to derive, they involve 
-constants that are difficult to compute or bound, and they tend to be pessimistic
-in real applications.
+Concentration inequalities provide actual guarantees, albeit probabilistic.
+They are, however, typically problem specific and harder to derive, they
+involve constants that are difficult to compute or bound, and they tend to be
+pessimistic in real applications.
 
-An intermediate approach is to use a simple and universal concentration 
-inequality, such as Chebyshev's inequality, and estimate the distribution 
-specific constant (the variance) that enter into the bound it 
-provides. 
+An intermediate approach is to use a simple and universal concentration
+inequality, such as Chebyshev's inequality, and estimate the distribution
+specific constant (the variance) that enter into the bound it provides.
 
 We will illustrate the use of both the central limit theorem and 
 Chebyshev's inequality for computing confidence intervals for Monte 
@@ -102,309 +100,324 @@ central limit theorem. We do, however, emphasize the example in Section \@ref(hd
 that shows how potentially misleading confidence intervals can be 
 when the convergence is slow. The most notable practical 
 challenge is estimation of the asymptotic variance, which can be 
-quite poorly estimated for heavy tailed distributions.  
-
+quite poorly estimated for heavy tailed distributions.\
 
 ### Using the central limit theorem {#CLT-gamma}
 
-The central limit theorem (CLT) gives that 
+The central limit theorem (CLT) gives that
 
 \[
-  \hat{\mu}_{\textrm{MC}} = \frac{1}{N} \sum_{i=1}^N h(X_i) 
+\hat{\mu}_{\textrm{MC}} = \frac{1}{N} \sum_{i=1}^N h(X_i) 
   \overset{\textrm{approx}} \sim \mathcal{N}(\mu, \sigma^2_{\textrm{MC}} / n)
 \]
 
-where 
+where
 
 \[
-  \sigma^2_{\textrm{MC}} = \V(h(X_1)) = \int (h(x) - \mu)^2 f(x) \ \mathrm{d}x.
+\sigma^2_{\textrm{MC}} = \V(h(X_1)) = \int (h(x) - \mu)^2 f(x) \ \mathrm{d}x.
 \]
 
 We can estimate $\sigma^2_{\textrm{MC}}$ using the empirical variance
 
 \[
-    \hat{\sigma}^2_{\textrm{MC}} = \frac{1}{N - 1} \sum_{i=1}^N (h(X_i) - 
+\hat{\sigma}^2_{\textrm{MC}} = \frac{1}{N - 1} \sum_{i=1}^N (h(X_i) - 
     \hat{\mu}_{\textrm{MC}})^2.
 \]
 
-Then the variance of $\hat{\mu}_{\textrm{MC}}$ is estimated as 
-$\hat{\sigma}^2_{\textrm{MC}} / N$ and a standard *nominal* 95% 
-confidence interval for $\mu$ is 
+Then the variance of $\hat{\mu}_{\textrm{MC}}$ is estimated as
+$\hat{\sigma}^2_{\textrm{MC}} / N$ and a standard *nominal* 95% confidence
+interval for $\mu$ is
 
 \[
-  \hat{\mu}_{\textrm{MC}} \pm 1.96 \frac{\hat{\sigma}_{\textrm{MC}}}{\sqrt{N}}.
+\hat{\mu}_{\textrm{MC}} \pm 1.96 \frac{\hat{\sigma}_{\textrm{MC}}}{\sqrt{N}}.
 \]
 
-We illustrate the use of Monte Carlo integration and uncertainty quantification 
-via the CLT by computing the mean of a Gamma distribution via 
-Monte Carlo integration. 
+We illustrate the use of Monte Carlo integration and uncertainty quantification
+via the CLT by computing the mean of a Gamma distribution via Monte Carlo
+integration.
 
-```{r gammaMCCLT, fig.cap="Sample path with pointwise 95% confidence band for Monte Carlo integration of the mean of a gamma distributed random variable.", dependson="gammasim", echo=-1}
+```{r, dependson="gammasim", echo=-1}
+#| label: gammaMCCLT
+#| fig-cap: "Sample path with pointwise 95% confidence band for Monte Carlo
+#|  integration of the mean of a gamma distributed random variable."
 set.seed(123)
 N <- 1000
 x <- rgamma(N, 8) # h(x) = x
 mu_hat <- (cumsum(x) / (1:N)) # Cumulative average
 sigma_hat <- sd(x)
-mu_hat[N]  # Theoretical value 8
-sigma_hat  # Theoretical value sqrt(8) = 2.8284
+mu_hat[N] # Theoretical value 8
+sigma_hat # Theoretical value sqrt(8) = 2.8284
 
 ggplot(mapping = aes(1:N, mu_hat)) +
-  geom_point() + 
+  geom_point() +
   geom_ribbon(
-  mapping = aes(
-    ymin = mu_hat - 1.96 * sigma_hat / sqrt(1:N), 
-    ymax = mu_hat + 1.96 * sigma_hat / sqrt(1:N)
-  ), fill = "gray") +
+    mapping = aes(
+      ymin = mu_hat - 1.96 * sigma_hat / sqrt(1:N),
+      ymax = mu_hat + 1.96 * sigma_hat / sqrt(1:N)
+    ),
+    fill = "gray"
+  ) +
   coord_cartesian(ylim = c(6, 10)) +
   geom_hline(yintercept = 8, color = "blue") +
-  geom_line() + 
-  geom_point() 
+  geom_line() +
+  geom_point()
 ```
 
-Figure \@ref(fig:gammaMCCLT) shows the pointwise 95% confidence band for the Monte Carlo 
-average. The CLT states in this particular case that 
+Figure \@ref(fig:gammaMCCLT) shows the pointwise 95% confidence band for the
+Monte Carlo average. The CLT states in this particular case that
 
 \[
-  \P\left( \hat{\mu}_{\textrm{MC}} - 1.96 \frac{\hat{\sigma}_{\textrm{MC}}}{\sqrt{N}} 
+\P\left( \hat{\mu}_{\textrm{MC}} - 1.96 \frac{\hat{\sigma}_{\textrm{MC}}}{\sqrt{N}} 
   \leq 8 \leq 
   \hat{\mu}_{\textrm{MC}} + 1.96 \frac{\hat{\sigma}_{\textrm{MC}}}{\sqrt{N}}
   \right) \to 0.95
 \]
 
-for $N \to \infty$. This means that for $N$ sufficiently large (but we do not know how 
-large), the interval will cover the value $\mu = 8$ of the integral with 
-probability approximately 0.95. The actual coverage probability, that is, the probability 
-on the left hand side above, may thus not be exactly 0.95, and for small $N$ 
-it can sometimes be much smaller. 
+for $N \to \infty$. This means that for $N$ sufficiently large (but we do not
+know how large), the interval will cover the value $\mu = 8$ of the integral
+with probability approximately 0.95. The actual coverage probability, that is,
+the probability on the left hand side above, may thus not be exactly 0.95, and
+for small $N$ it can sometimes be much smaller.
 
 ### Concentration inequalities
 
-Since $h(X_1)$ is a real valued random variable with finite second moment, $\mu = \E(h(X_1))$ 
-and $\sigma^2 = \V(h(X_1))$, Chebychev's inequality holds:
+Since $h(X_1)$ is a real valued random variable with finite second moment,
+$\mu = \E(h(X_1))$ and $\sigma^2 = \V(h(X_1))$, Chebychev's inequality holds:
 
 \[
-    \P(|h(X_1) - \mu| > \varepsilon) \leq \frac {\sigma^2}{\varepsilon^2}
+\P(|h(X_1) - \mu| > \varepsilon) \leq \frac {\sigma^2}{\varepsilon^2}
 \]
 
-for all $\varepsilon > 0$. This inequality implies, for instance, that for 
-the simple Monte Carlo average we have the inequality 
+for all $\varepsilon > 0$. This inequality implies, for instance, that for the
+simple Monte Carlo average we have the inequality
 
 \[
-  \P(|\hat{\mu}_{\textrm{MC}} - \mu| > \varepsilon) \leq \frac{\sigma^2_{\textrm{MC}}}{n\varepsilon^2}.
+\P(|\hat{\mu}_{\textrm{MC}} - \mu| > \varepsilon)
+  \leq \frac{\sigma^2_{\textrm{MC}}}{n\varepsilon^2}.
 \]
 
-A common usage of this inequality is to actually prove the *Law of Large Numbers*: 
-for any $\varepsilon > 0$
+A common usage of this inequality is to actually prove the *Law of Large
+Numbers*: for any $\varepsilon > 0$
 
 \[
-  \P(|\hat{\mu}_{\textrm{MC}} - \mu| > \varepsilon) \rightarrow 0
+\P(|\hat{\mu}_{\textrm{MC}} - \mu| > \varepsilon) \rightarrow 0
 \]
 
-for $N \to \infty$. Or $\hat{\mu}_{\textrm{MC}}$ *converges in probability* towards
-$\mu$ as $N$ tends to infinity. 
+for $N \to \infty$. Or $\hat{\mu}_{\textrm{MC}}$ *converges in probability*
+towards $\mu$ as $N$ tends to infinity.
 
-The above convergence statement is a mathematical assurance 
-that the Monte Carlo average $\hat{\mu}_{\textrm{MC}}$ does, indeed, 
-approximate $\mu$ for $N$ large. We can interpret this as a
-proof that Monte Carlo integration is, at least qualitatively, 
-a sensible approach for numerical computation of an integral. 
+The above convergence statement is a mathematical assurance that the Monte Carlo
+average $\hat{\mu}_{\textrm{MC}}$ does, indeed, approximate $\mu$ for $N$ large.
+We can interpret this as a proof that Monte Carlo integration is, at least
+qualitatively, a sensible approach for numerical computation of an integral.
 
-Chebychev's inequality does, additionally, give a
-a quantitative statement about how accurate $\hat{\mu}_{\textrm{MC}}$ is as an 
-approximation of $\mu$. Reorganizing the inequality above, we can write it as
+Chebychev's inequality does, additionally, give a a quantitative statement
+about how accurate $\hat{\mu}_{\textrm{MC}}$ is as an approximation of $\mu$.
+Reorganizing the inequality above, we can write it as
 
 \[
-  \P\left( \hat{\mu}_{\textrm{MC}} - \varepsilon \frac{\sigma_{\textrm{MC}}}{\sqrt{N}} 
+\P\left( \hat{\mu}_{\textrm{MC}} - \varepsilon \frac{\sigma_{\textrm{MC}}}{\sqrt{N}} 
   \leq \mu \leq 
   \hat{\mu}_{\textrm{MC}} + \varepsilon \frac{\sigma_{\textrm{MC}}}{\sqrt{N}}
   \right) > 1 - \frac{1}{\varepsilon^2}
 \]
 
-Solving for $1/\varepsilon^2 = 0.05$, say, gives $\epsilon = \sqrt{1 / 0.05} = 4.47$, 
-so if we knew $\sigma_{\textrm{MC}}$ the confidence interval 
+Solving for $1/\varepsilon^2 = 0.05$, say, gives
+$\epsilon = \sqrt{1 / 0.05} = 4.47$, so if we knew $\sigma_{\textrm{MC}}$ the
+confidence interval
 
 \[
-    \hat{\mu}_{\textrm{MC}} \pm 4.47 \frac{\sigma_{\textrm{MC}}}{\sqrt{N}}
+\hat{\mu}_{\textrm{MC}} \pm 4.47 \frac{\sigma_{\textrm{MC}}}{\sqrt{N}}
 \]
 
-would have guaranteed coverage larger than 95% for all $N$. In practice, we would 
-have to estimate $\sigma_{\textrm{MC}}$, e.g., by the empirical 
-standard deviation $\hat{\sigma}_{\textrm{MC}}$, and we would effectively get the 
-same confidence interval as obtained by the CLT, except that the 
-$0.975$ quantile $1.96$ for the normal distribution is replaced by $4.47$. This gives 
-a wider interval---with some support from theory of having actual finite sample coverage
-being at least 95%. However, due to using the plug-in estimate $\hat{\sigma}_{\textrm{MC}}$ 
-of the standard deviation, any finite sample guarantees are, in fact, lost.
+would have guaranteed coverage larger than 95% for all $N$. In practice,
+we would have to estimate $\sigma_{\textrm{MC}}$, e.g., by the empirical
+standard deviation $\hat{\sigma}_{\textrm{MC}}$, and we would effectively get
+the same confidence interval as obtained by the CLT, except that the $0.975$
+quantile $1.96$ for the normal distribution is replaced by $4.47$. This gives
+a wider interval---with some support from theory of having actual finite
+sample coverage being at least 95%. However, due to using the plug-in estimate
+$\hat{\sigma}_{\textrm{MC}}$ of the standard deviation, any finite sample
+guarantees are, in fact, lost.
 
-There are various strategies to obtain other concentration inequalities that do 
-not contain unknown and distribution dependent constants, which can give actual 
+There are various strategies to obtain other concentration inequalities that do
+not contain unknown and distribution dependent constants, which can give actual
 finite sample guarantees of coverage. These are beyond the scope of this book
-and we will use confidence intervals based on the CLT throughout. 
-They are easy to use and practically useful, but just remember that they do not 
-come with guarantees---and for heavy tailed distributions they can be misleading
-as we show in Section \@ref(hd-int).
+and we will use confidence intervals based on the CLT throughout. They are easy
+to use and practically useful, but just remember that they do not come with
+guarantees---and for heavy tailed distributions they can be misleading as we
+show in Section \@ref(hd-int).
 
 ## Importance sampling
 
-When we are only interested in Monte Carlo integration, we do, in fact, not 
-need to sample from the target distribution. We can sample from another 
-distribution and use reweighting to compute the integral of interest. 
+When we are only interested in Monte Carlo integration, we do, in fact, not need
+to sample from the target distribution. We can sample from another distribution
+and use reweighting to compute the integral of interest.
 
-We first observe that 
+We first observe that
 
 \begin{align}
 \mu = \int h(x) f(x) \ \mathrm{d}x & = \int h(x) \frac{f(x)}{g(x)} g(x) \ \mathrm{d}x \\
 & = \int h(x) w^*(x) g(x) \ \mathrm{d}x
 \end{align}
 
-whenever $g$ is a density fulfilling that 
+whenever $g$ is a density fulfilling that
 
 \[
-  g(x) = 0 \Rightarrow f(x) = 0.
+g(x) = 0 \Rightarrow f(x) = 0.
 \]
 
 With $X_1, \ldots, X_N$ i.i.d. with density $g$ we define the *weights* as
 
 \[
-  w^*(X_i) = f(X_i) / g(X_i).
+w^*(X_i) = f(X_i) / g(X_i).
 \]
 
 The *importance sampling* estimator is then
 
 \[
-  \hat{\mu}_{\textrm{IS}}^* := \frac{1}{N} \sum_{i=1}^N h(X_i)w^*(X_i).
+\hat{\mu}_{\textrm{IS}}^* := \frac{1}{N} \sum_{i=1}^N h(X_i)w^*(X_i).
 \]
 
 It has mean $\mu$, and it follows again by the LLN that
 
 \[
-  \hat{\mu}_{\textrm{IS}}^* \rightarrow \E(h(X_1) w^*(X_1)) = \mu.
+\hat{\mu}_{\textrm{IS}}^* \rightarrow \E(h(X_1) w^*(X_1)) = \mu.
 \]
 
-We will illustrate the use of importance sampling by computing the mean in 
-the gamma distribution via simulations from a Gaussian distribution, cf. also 
+We will illustrate the use of importance sampling by computing the mean in
+the gamma distribution via simulations from a Gaussian distribution, cf. also
 Section \@ref(CLT-gamma).
 
-```{r gamma-sim-IS, dependson="gammaMCCLT", echo=-1}
+```{r, dependson="gammaMCCLT", echo=-1}
+#| label: gamma-sim-IS
 set.seed(123)
 x <- rnorm(N, 10, 3)
-w_star <- dgamma(x, 8) / dnorm(x, 10, 3) 
+w_star <- dgamma(x, 8) / dnorm(x, 10, 3)
 mu_hat_IS <- (cumsum(x * w_star) / (1:N))
-mu_hat_IS[N]  # Theoretical value 8
+mu_hat_IS[N] # Theoretical value 8
 ```
 
-To assess the precision of the importance sampling estimate via the CLT we 
-need the variance of the average just as for plain Monte Carlo integration.
-By the CLT 
+To assess the precision of the importance sampling estimate via the CLT we need
+the variance of the average just as for plain Monte Carlo integration. By the
+CLT
 
 \[
-  \hat{\mu}_{\textrm{IS}}^* \overset{\textrm{approx}} \sim 
+\hat{\mu}_{\textrm{IS}}^* \overset{\textrm{approx}} \sim 
 \mathcal{N}(\mu, \sigma^{*2}_{\textrm{IS}} / n)
 \]
 
-where 
+where
 
 \[
-  \sigma^{*2}_{\textrm{IS}} = \V(h(X_1)w^*(X_1)) = \int (h(x) w^*(x) - \mu)^2 g(x) \ \mathrm{d}x.
+\sigma^{*2}_{\textrm{IS}} = \V(h(X_1)w^*(X_1)) = \int (h(x) w^*(x) - \mu)^2 g(x) \ \mathrm{d}x.
 \]
 
-The importance sampling variance can be estimated similarly as the Monte Carlo variance:
+The importance sampling variance can be estimated similarly as the Monte Carlo
+variance:
 
 \[
-  \hat{\sigma}^{*2}_{\textrm{IS}} = \frac{1}{N - 1} \sum_{i=1}^N (h(X_i)w^*(X_i) - \hat{\mu}_{\textrm{IS}}^*)^2,
+\hat{\sigma}^{*2}_{\textrm{IS}} = \frac{1}{N - 1} \sum_{i=1}^N (h(X_i)w^*(X_i) - \hat{\mu}_{\textrm{IS}}^*)^2,
 \]
 
-and a 95% standard confidence interval is computed as 
+and a 95% standard confidence interval is computed as
 
 \[
-  \hat{\mu}^*_{\textrm{IS}} \pm 1.96 \frac{\hat{\sigma}^*_{\textrm{IS}}}{\sqrt{N}}.
+\hat{\mu}^*_{\textrm{IS}} \pm 1.96 \frac{\hat{\sigma}^*_{\textrm{IS}}}{\sqrt{N}}.
 \]
 
-
-```{r gamma-IS-fig2, echo=1:2, fig.cap="Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution.", dependson="gamma-sim-IS"}
+```{r, echo=1:2, dependson="gamma-sim-IS"}
+#| label: gamma-IS-fig2
+#| fig-cap: "Sample path with confidence band for importance sampling Monte
+#|  Carlo integration of the mean of a gamma distributed random variable via
+#|  simulations from a Gaussian distribution."
 sigma_hat_IS <- sd(x * w_star)
-sigma_hat_IS  # Theoretical value ??
-ggplot(mapping = aes(1:N, mu_hat_IS)) + 
-  geom_line() + 
-  geom_point() + 
-  coord_cartesian(ylim = c(6, 10)) + 
+sigma_hat_IS # Theoretical value ??
+ggplot(mapping = aes(1:N, mu_hat_IS)) +
+  geom_line() +
+  geom_point() +
+  coord_cartesian(ylim = c(6, 10)) +
   geom_ribbon(
-  mapping = aes(
-    ymin = mu_hat_IS - 1.96 * sigma_hat_IS / sqrt(1:N), 
-    ymax = mu_hat_IS + 1.96 * sigma_hat_IS / sqrt(1:N)
-  ), fill = "gray") + 
-    geom_hline(yintercept = 8, color = "blue") +
-    geom_line() + geom_point()
+    mapping = aes(
+      ymin = mu_hat_IS - 1.96 * sigma_hat_IS / sqrt(1:N),
+      ymax = mu_hat_IS + 1.96 * sigma_hat_IS / sqrt(1:N)
+    ),
+    fill = "gray"
+  ) +
+  geom_hline(yintercept = 8, color = "blue") +
+  geom_line() +
+  geom_point()
 ```
 
-It may happen that $\sigma^{*2}_{\textrm{IS}} > \sigma^2_{\textrm{MC}}$ or 
-$\sigma^{*2}_{\textrm{IS}} < \sigma^2_{\textrm{MC}}$ depending on $h$ and $g$, but 
-by choosing $g$ cleverly, so that $h(x) w^*(x)$ becomes as constant as possible, 
-importance sampling can often reduce the variance compared to plain 
-Monte Carlo integration. 
+It may happen that $\sigma^{*2}_{\textrm{IS}} > \sigma^2_{\textrm{MC}}$ or
+$\sigma^{*2}_{\textrm{IS}} < \sigma^2_{\textrm{MC}}$ depending on $h$ and $g$,
+but by choosing $g$ cleverly, so that $h(x) w^*(x)$ becomes as constant as
+possible, importance sampling can often reduce the variance compared to plain
+Monte Carlo integration.
 
-For the mean of the gamma distribution above, $\sigma^{*2}_{\textrm{IS}}$
-is about 50% larger than $\sigma^2_{\textrm{MC}}$, so we loose precision
-by using importance sampling this way when compared to plain Monte Carlo integration.
-In Section \@ref(network) we consider a different example where we achieve 
-a considerable variance reduction by using importance sampling.
+For the mean of the gamma distribution above, $\sigma^{*2}_{\textrm{IS}}$ is
+about 50% larger than $\sigma^2_{\textrm{MC}}$, so we loose precision by using
+importance sampling this way when compared to plain Monte Carlo integration.
+In Section \@ref(network) we consider a different example where we achieve a
+considerable variance reduction by using importance sampling.
 
 ### Standardized weights
 
 A slight modification of the importance sampling estimator consists of
-standardizing the weights so that they take values in $[0, 1]$ and sum to $1$. 
-This can sometimes be beneficial in itself, but it also 
-allows for the use of importance sampling 
-when the target density is only known up to a normalization constant.
+standardizing the weights so that they take values in $[0, 1]$ and sum to $1$.
+This can sometimes be beneficial in itself, but it also allows for the use of
+importance sampling when the target density is only known up to a normalization
+constant.
 
-Suppose that the target density is $f = c^{-1} q$ with $c$ unknown. Then 
+Suppose that the target density is $f = c^{-1} q$ with $c$ unknown. Then
 
 \[
-  c = \int q(x) \ \mathrm{d}x = \int \frac{q(x)}{g(x)} g(x) \ d x,
+c = \int q(x) \ \mathrm{d}x = \int \frac{q(x)}{g(x)} g(x) \ d x,
 \]
 
 and
 
-\[ 
-  \mu = \frac{\int h(x) w^*(x) g(x) \ d x}{\int w^*(x) g(x) \ d x},
+\[
+\mu = \frac{\int h(x) w^*(x) g(x) \ d x}{\int w^*(x) g(x) \ d x},
 \]
 
 where $w^*(x) = q(x) / g(x).$
 
-If $X_1, \ldots, X_N$ are i.i.d. from the distribution with density $g$, 
-an importance sampling estimate of $\mu$ can be computed as
+If $X_1, \ldots, X_N$ are i.i.d. from the distribution with density $g$, an
+importance sampling estimate of $\mu$ can be computed as
 
 \[
-  \hat{\mu}_{\textrm{IS}} = \frac{\sum_{i=1}^N h(X_i) w^*(X_i)}{\sum_{i=1}^N w^*(X_i)} = \sum_{i=1}^N h(X_i) w(X_i),
+\hat{\mu}_{\textrm{IS}} = \frac{\sum_{i=1}^N h(X_i) w^*(X_i)}{\sum_{i=1}^N w^*(X_i)} = \sum_{i=1}^N h(X_i) w(X_i),
 \]
 
 where $w^*(X_i) = q(X_i) / g(X_i)$ and
 
 \[
-  w(X_i) = \frac{w^*(X_i)}{\sum_{i=1}^N w^*(X_i)}
+w(X_i) = \frac{w^*(X_i)}{\sum_{i=1}^N w^*(X_i)}
 \]
 
-are the *standardized weights*. This works irrespectively of the value of the 
+are the *standardized weights*. This works irrespectively of the value of the
 normalizing constant $c$, and it actually works if also $g$ is unnormalized.
 
-Revisiting the mean of the gamma distribution, we can implement importance 
+Revisiting the mean of the gamma distribution, we can implement importance
 sampling via sampling from a Gaussian distribution but using weights computed
 without the normalization constants.
 
-```{r gamma-sim-ISw, dependson="gamma-sim-IS"}
+```{r, dependson="gamma-sim-IS"}
+#| label: gamma-sim-ISw
 w_star <- numeric(N)
 x_pos <- x[x > 0]
 w_star[x > 0] <- exp((x_pos - 10)^2 / 18 - x_pos + 7 * log(x_pos))
 mu_hat_IS <- cumsum(x * w_star) / cumsum(w_star)
-mu_hat_IS[N]  # Theoretical value 8
+mu_hat_IS[N] # Theoretical value 8
 ```
 
-The variance of the IS estimator with standardized weights is a little more 
-complicated, because the estimator is a ratio of random variables. From the 
-multivariate CLT 
+The variance of the IS estimator with standardized weights is a little more
+complicated, because the estimator is a ratio of random variables. From the
+multivariate CLT
 
 \[
-  \frac{1}{N} \sum_{i=1}^N \left(\begin{array}{c}
+\frac{1}{N} \sum_{i=1}^N \left(\begin{array}{c}
  h(X_i) w^*(X_i) \\
  w^*(X_i) 
 \end{array}\right) \overset{\textrm{approx}}{\sim} 
@@ -413,7 +426,7 @@ multivariate CLT
 \end{array} \right)\right),
 \]
 
-where 
+where
 
 \begin{align}
 \sigma^{*2}_{\textrm{IS}} & = \V(h(X_1)w^*(X_1)) \\
@@ -422,82 +435,90 @@ where
 \end{align}
 
 We can then apply the $\Delta$-method with $t(x, y) = x / y$. Note that
-$Dt(x, y) = (1 / y, - x / y^2)$, whence 
+$Dt(x, y) = (1 / y, - x / y^2)$, whence
 
-\[    
+\[
 Dt(c\mu, c)   \left(\begin{array}{cc} \hat{\sigma}^{*2}_{\textrm{IS}} & \gamma \\ \gamma & \sigma^2_{w^*}
 \end{array} \right) Dt(c\mu, c)^T = c^{-2} (\sigma^{*2}_{\textrm{IS}} + \mu^2 \sigma_{w^*}^2 - 2 \mu \gamma).
 \]
 
-By the $\Delta$-method 
+By the $\Delta$-method
 
 \[
-  \hat{\mu}_{\textrm{IS}} \overset{\textrm{approx}}{\sim} 
+\hat{\mu}_{\textrm{IS}} \overset{\textrm{approx}}{\sim} 
 \mathcal{N}(\mu, c^{-2} (\sigma^{*2}_{\textrm{IS}} + \mu^2 \sigma_{w^*}^2 - 2 \mu \gamma) / n).
 \]
 
-The unknown quantities in the asymptotic variance must be estimated using, e.g., 
-their empirical equivalents, and if $c \neq 1$ (we have used unnormalized densities) 
-it is necessary to estimate $c$ as
-$\hat{c} = \frac{1}{N} \sum_{i=1}^N w^*(X_i)$
-to compute an estimate of the variance.
+The unknown quantities in the asymptotic variance must be estimated
+using, e.g., their empirical equivalents, and if $c \neq 1$ (we
+have used unnormalized densities) it is necessary to estimate $c$ as
+$\hat{c} = \frac{1}{N} \sum_{i=1}^N w^*(X_i)$ to compute an estimate of the
+variance.
 
 For the example with the mean of the gamma distribution, we find the following
 estimate of the variance.
 
-```{r ISw-emp-estimates, dependson="gamma-sim-ISw"}
+```{r, dependson="gamma-sim-ISw"}
+#| label: ISw-emp-estimates
 c_hat <- mean(w_star)
 sigma_hat_IS <- sd(x * w_star)
 sigma_hat_w_star <- sd(w_star)
 gamma_hat <- cov(x * w_star, w_star)
 sigma_hat_IS_w <- sqrt(
-  sigma_hat_IS^2 + 
-  mu_hat_IS[N]^2 * sigma_hat_w_star^2 - 
-  2 * mu_hat_IS[N] * gamma_hat
-  ) / c_hat
+  sigma_hat_IS^2 +
+    mu_hat_IS[N]^2 * sigma_hat_w_star^2 -
+    2 * mu_hat_IS[N] * gamma_hat
+) /
+  c_hat
 sigma_hat_IS_w
 ```
 
-```{r gamma-IS-fig3, echo=FALSE, fig.cap="Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution and using standardized weights.", dependson="gamma-sim-ISw"}
-ggplot(mapping = aes(1:N, mu_hat_IS)) + 
-  geom_line() + 
-  geom_point() + 
-  coord_cartesian(ylim = c(6, 10)) + 
+```{r, dependson="gamma-sim-ISw"}
+#| label: gamma-IS-fig3
+#| echo: false
+#| fig-cap: "Sample path with confidence band for importance sampling Monte
+#|  Carlo integration of the mean of a gamma distributed random variable via
+#|  simulations from a Gaussian distribution and using standardized weights."
+ggplot(mapping = aes(1:N, mu_hat_IS)) +
+  geom_line() +
+  geom_point() +
+  coord_cartesian(ylim = c(6, 10)) +
   geom_ribbon(
-  mapping = aes(
-    ymin = mu_hat_IS - 1.96 * sigma_hat_IS_w / sqrt(1:N), 
-    ymax = mu_hat_IS + 1.96 * sigma_hat_IS_w / sqrt(1:N)
-  ), fill = "gray") + 
-    geom_hline(yintercept = 8, color = "blue") +
-    geom_line() + geom_point()
+    mapping = aes(
+      ymin = mu_hat_IS - 1.96 * sigma_hat_IS_w / sqrt(1:N),
+      ymax = mu_hat_IS + 1.96 * sigma_hat_IS_w / sqrt(1:N)
+    ),
+    fill = "gray"
+  ) +
+  geom_hline(yintercept = 8, color = "blue") +
+  geom_line() +
+  geom_point()
 ```
 
 In this example, the variance when using standardized weights is a little lower
-than when using unstandardized weights, but still larger than the variance for 
-the plain Monte Carlo average. 
+than when using unstandardized weights, but still larger than the variance for
+the plain Monte Carlo average.
 
 ## How to choose the proposal distribution?
 
-The choice of the proposal distribution $g$ is crucial for the performance of importance sampling.
-So far, we have offered some 
-
+The choice of the proposal distribution $g$ is crucial for the performance of
+importance sampling. So far, we have offered some
 
 ### Computing a high-dimensional integral {#hd-int}
 
-To further illustrate the usage, but also the limitations, of Monte Carlo 
-integration and importance sampling, suppose we want to compute the 
+To further illustrate the usage, but also the limitations, of Monte
+Carlo integration and importance sampling, suppose we want to compute the
 $p$-dimensional integral
 
 \[
-  \int h_0(x) \mathrm{d} x
+\int h_0(x) \mathrm{d} x
 \]
 
 w.r.t. Lebesgue measure in $\mathbb{R}^p$ for some integrable function $h_0$.
-We use the same idea as in importance sampling to rewrite the integral 
-as an expectation w.r.t. a probability distribution. For simplicity, let us 
-focus on sampling from a standard Gaussian distribution
-$\mathcal{N}(0, I_p)$, with density
-$g(x) = (2\pi)^{-p/2} \exp(-\|x\|_2^2/2)$. Then 
+We use the same idea as in importance sampling to rewrite the integral as an
+expectation w.r.t. a probability distribution. For simplicity, let us focus
+on sampling from a standard Gaussian distribution $\mathcal{N}(0, I_p)$, with
+density $g(x) = (2\pi)^{-p/2} \exp(-\|x\|_2^2/2)$. Then
 
 \begin{align*}
   \int h_0(x) \mathrm{d} x & = \int h_0(x) \frac{g(x)}{g(x)} \mathrm{d} x \\
@@ -505,159 +526,210 @@ $g(x) = (2\pi)^{-p/2} \exp(-\|x\|_2^2/2)$. Then
    & =  (2\pi)^{p/2} \E( h(X)),
 \end{align*}
 
-where $h(x) = h_0(x) \exp( \|x\|_2^2/2)$ and $X \sim \mathcal{N}(0, I_p)$.
-Here we have incorporated the weights $w^*(x) = \exp( \|x\|_2^2/2)$ 
-into the function $h$.
+where $h(x) = h_0(x) \exp( \|x\|_2^2/2)$ and $X \sim \mathcal{N}(0, I_p)$. Here
+we have incorporated the weights $w^*(x) = \exp( \|x\|_2^2/2)$ into the function
+$h$.
 
-We now choose the specific function 
+We now choose the specific function
 
 \[
-  h_0(x) = \exp\left(-\frac{1}{2}\left(x_1^2 + \sum_{k = 2}^p (x_k - \alpha x_{k-1})^2\right)\right).
+h_0(x) = \exp\left(-\frac{1}{2}\left(x_1^2 + \sum_{k = 2}^p (x_k - \alpha x_{k-1})^2\right)\right).
 \]
 
 Since $x_1^2 + \sum_{k = 2}^p (x_k - \alpha x_{k-1})^2
-= \|x\|_2^2 + \sum_{k = 2}^p (\alpha^2 x_{k-1}^2 - 2\alpha x_k x_{k-1})$,
-we have 
+= \|x\|_2^2 + \sum\_{k =
+2}^p (\alpha^2 x_{k-1}^2 - 2\alpha x_k x_{k-1})$, we have
 
 \[
-  h(x) = \exp\left(- \frac{1}{2} \sum_{k = 2}^p (\alpha^2 x_{k-1}^2 - 2\alpha x_k x_{k-1})\right).
+h(x) = \exp\left(- \frac{1}{2} \sum_{k = 2}^p (\alpha^2 x_{k-1}^2 - 2\alpha x_k x_{k-1})\right).
 \]
 
 Thus if $X \sim \mathcal{N}(0, I_p)$, we have
 
-\[ 
-  \int h_0(x)  \mathrm{d} x =  (2 \pi)^{p/2} \E\left( h(X) \right) 
+\[
+\int h_0(x)  \mathrm{d} x =  (2 \pi)^{p/2} \E\left( h(X) \right) 
   = (2 \pi)^{p/2}  \E\left( e^{- \frac{1}{2} \sum_{k = 2}^p (\alpha^2 
 X_{k-1}^2 - 2\alpha X_k X_{k-1})} \right).
 \]
 
-In the Monte Carlo integration below we ignore the factor $(2 \pi)^{p/2}$ and 
+In the Monte Carlo integration below we ignore the factor $(2 \pi)^{p/2}$ and
 compute
 
-\[ 
-  \mu = \E\left( \exp\left(- \frac{1}{2} \sum_{k = 2}^p (\alpha^2 
+\[
+\mu = \E\left( \exp\left(- \frac{1}{2} \sum_{k = 2}^p (\alpha^2 
 X_{k-1}^2 - 2\alpha X_k X_{k-1}) \right) \right)
 \]
 
-by generating \(p\)-dimensional random 
-variables from \(\mathcal{N}(0, I_p)\). The value of the expectation can actually 
-be computed analytically to be $\mu = 1$, see Exercise \@ref(exr:mu).
-See also Exercise \@ref(exr:finvar) for a justification that the variance 
-is finite for $\alpha < 0.2929$.
+by generating \(p\)-dimensional random variables from \(\mathcal{N}(0, I_p)\).
+The value of the expectation can actually be computed analytically to be
+$\mu = 1$, see Exercise \@ref(exr:mu). See also Exercise \@ref(exr:finvar) for a
+justification that the variance is finite for $\alpha < 0.2929$.
 
 First, we implement the function we want to integrate.
 
-```{r MC_hfun}
-h <- function(x, alpha = 0.1){ 
+```{r}
+#| label: MC_hfun
+h <- function(x, alpha = 0.1) {
   p <- length(x)
-  tmp <- alpha * x[1:(p - 1)] 
-  exp( - sum((tmp / 2 - x[2:p]) * tmp))
+  tmp <- alpha * x[1:(p - 1)]
+  exp(-sum((tmp / 2 - x[2:p]) * tmp))
 }
 ```
 
 Then we specify various parameters.
 
-```{r MC_par}
+```{r}
+#| label: MC_par
 N <- 10000 # The number of random variables to generate
-p <- 100   # The dimension of each random variable
+p <- 100 # The dimension of each random variable
 ```
 
-The actual computation is implemented using the `apply` function. We 
-first look at the case with $\alpha = 0.1$. 
+The actual computation is implemented using the `apply` function. We first look
+at the case with $\alpha = 0.1$.
 
-```{r MC_loop, dependson=c("MC_hfun", "MC_par"), echo=-1}
+```{r, dependson=c("MC_hfun", "MC_par"), echo=-1}
+#| label: MC_loop
 set.seed(123)
 x <- matrix(rnorm(N * p), N, p)
 evaluations <- apply(x, 1, h)
 mean(evaluations)
 ```
 
-We plot the cumulative average in Figure \@ref(fig:MC-path-intervals) and compare it to the 
-actual value of the integral that we know is 1. We add pointwise 
-95% confidence intervals to the plot---using either Chebychev's inequality 
-or the CLT. 
+We plot the cumulative average in Figure \@ref(fig:MC-path-intervals) and
+compare it to the actual value of the integral that we know is 1. We add
+pointwise 95% confidence intervals to the plot---using either Chebychev's
+inequality or the CLT.
 
-```{r MC-path-intervals, dependson=c("MC_par", "MC_loop"), echo=FALSE, fig.cap="Sample path for the Monte Carlo average ($\\alpha = 0.1$) and pointwise 95% confidence intervals using either Chebychev's inequality or the CLT.", out.width="100%", fig.height=3}
+```{r, dependson=c("MC_par", "MC_loop")}
+#| label: MC-path-intervals
+#| echo: false
+#| fig-cap: "Sample path for the Monte Carlo average ($\\alpha = 0.1$) and
+#|  pointwise 95% confidence intervals using either Chebychev's inequality or
+#|  the CLT."
+#| out-width: "100%"
+#| fig-height: 3
 mu_hat <- cumsum(evaluations) / 1:N
 se <- sd(evaluations) / sqrt((1:N))
 
-p1 <- ggplot(mapping = aes(x = 1:N, y = mu_hat)) + 
+p1 <- ggplot(mapping = aes(x = 1:N, y = mu_hat)) +
   geom_ribbon(
-  mapping = aes(
-    ymin = mu_hat - 4.47 * se, 
-    ymax = mu_hat + 4.47 * se
-  ), fill = "gray") + 
-  geom_hline(yintercept = 1, color = "blue") + 
+    mapping = aes(
+      ymin = mu_hat - 4.47 * se,
+      ymax = mu_hat + 4.47 * se
+    ),
+    fill = "gray"
+  ) +
+  geom_hline(yintercept = 1, color = "blue") +
   geom_line() +
-  geom_point() + 
+  geom_point() +
   coord_cartesian(ylim = c(0, 2)) +
   ggtitle("With Chebychev confidence intervals")
 
-p2 <- ggplot(mapping = aes(x = 1:N, y = mu_hat)) + 
+p2 <- ggplot(mapping = aes(x = 1:N, y = mu_hat)) +
   geom_ribbon(
-  mapping = aes(
-    ymin = mu_hat - 1.96 * se, 
-    ymax = mu_hat + 1.96 * se
-  ), fill = "gray") + 
-  geom_hline(yintercept = 1, color = "blue") + 
+    mapping = aes(
+      ymin = mu_hat - 1.96 * se,
+      ymax = mu_hat + 1.96 * se
+    ),
+    fill = "gray"
+  ) +
+  geom_hline(yintercept = 1, color = "blue") +
   geom_line() +
-  geom_point() + 
-  coord_cartesian(ylim = c(0, 2)) + 
+  geom_point() +
+  coord_cartesian(ylim = c(0, 2)) +
   ggtitle("With CLT confidence intervals")
 
 gridExtra::grid.arrange(p1, p2, ncol = 2)
 ```
 
-The confidence bands provided by the 
-CLT are typically more accurate estimates of the actual uncertainty 
-than the upper bounds provided by Chebychev's inequality.
+The confidence bands provided by the CLT are typically more accurate estimates
+of the actual uncertainty than the upper bounds provided by Chebychev's
+inequality.
 
-To illustrate the limitations of Monte Carlo integration we increase $\alpha$ to
-\(\alpha = 0.25.\) Recall that for this choice of $\alpha$, the variance is still 
-finite.
+To illustrate the limitations of Monte Carlo integration we increase $\alpha$
+to \(\alpha = 0.25.\) Recall that for this choice of $\alpha$, the variance is
+still finite.
 
-```{r MC-loop2, dependson=c("MC_hfun", "MC_par"), echo=-(1:2)}
+```{r, dependson=c("MC_hfun", "MC_par"), echo=-(1:2)}
+#| label: MC-loop2
 set.seed(12345)
 x <- matrix(rnorm(N * p), N, p)
-alpha = 0.25
+alpha <- 0.25
 evaluations <- apply(x, 1, h, alpha)
 ```
 
-```{r MC-CLT2, dependson=c("MC_par", "MC_loop2"), echo=FALSE, fig.cap="Histogram of the log-distribution and sample path for the Monte Carlo average $(\\alpha = 0.25)$ with pointwise 95% confidence intervals based on the CLT.", out.width="100%", fig.height=3}
+```{r, dependson=c("MC_par", "MC_loop2")}
+#| label: MC-CLT2
+#| echo: false
+#| fig-cap: "Histogram of the log-distribution and sample path for the Monte
+#|  Carlo average $(\\alpha = 0.25)$ with pointwise 95% confidence intervals
+#|  based on the CLT."
+#| out-width: "100%"
+#| fig-height: 3
 mu_hat <- cumsum(evaluations) / 1:N
 se <- sd(evaluations) / sqrt(1:N)
 
 p1 <- ggplot(mapping = aes(x = log(evaluations))) +
-  geom_histogram(color = "white", bins = 40) +  
+  geom_histogram(color = "white", bins = 40) +
   ggtitle("Histogram of log-distribution")
 
-p2 <- ggplot(mapping = aes(x = 1:N, y = mu_hat)) + 
+p2 <- ggplot(mapping = aes(x = 1:N, y = mu_hat)) +
   geom_ribbon(
-  mapping = aes(
-    ymin = mu_hat - 1.96 * se, 
-    ymax = mu_hat + 1.96 * se
-  ), fill = "gray") + 
-  geom_hline(yintercept = 1, color = "blue") + 
+    mapping = aes(
+      ymin = mu_hat - 1.96 * se,
+      ymax = mu_hat + 1.96 * se
+    ),
+    fill = "gray"
+  ) +
+  geom_hline(yintercept = 1, color = "blue") +
   geom_line() +
-  geom_point() + 
-  coord_cartesian(ylim = c(0, 2)) + 
+  geom_point() +
+  coord_cartesian(ylim = c(0, 2)) +
   ggtitle("CLT confidence intervals")
 
 gridExtra::grid.arrange(p1, p2, ncol = 2)
 ```
 
-The sample path in Figure \@ref(fig:MC-CLT2) is not carefully selected to be pathological. Due to 
-occasional large values, the typical sample path will show occasional large jumps,
-and the variance may easily be grossly over- or underestimated. The histogram of the log-distribution of the 
-terms that enter into the Monte Carlo average also shows how there is several orders of magnitude differences
-between the typical values and the largest values. Figure \@ref(fig:MC-CLT3) shows four additional 
-sample paths where the confidence interval for $N = 1000$ with one of them completely missing the 
-actual value $\mu = 1$, and one producing an extremely wide confidence band due to a single large value. 
-In this example the Monte Carlo integration 
-technique does not perform well for $\alpha = 0.25$ (or larger), and the uncertainty quantification 
-via the CLT is unreliable, even though the variance is finite. 
+The sample path in Figure \@ref(fig:MC-CLT2) is not carefully selected to be
+pathological. Due to occasional large values, the typical sample path will
+show occasional large jumps, and the variance may easily be grossly over-
+or underestimated. The histogram of the log-distribution of the terms that
+enter into the Monte Carlo average also shows how there is several orders of
+magnitude differences between the typical values and the largest values. Figure
+\@ref(fig:MC-CLT3) shows four additional sample paths where the confidence
+interval for $N = 1000$ with one of them completely missing the actual value
+$\mu = 1$, and one producing an extremely wide confidence band due to a single
+large value. In this example the Monte Carlo integration technique does not
+perform well for $\alpha = 0.25$ (or larger), and the uncertainty quantification
+via the CLT is unreliable, even though the variance is finite.
 
-```{r MC-CLT3, fig.cap="Four sample paths of the cumulative average for $\\alpha = 0.25$.", dependson=c("MC_par", "MC_hfun"), echo=FALSE, results="hide", out.width="100%", fig.cap="Four sample paths for the Monte Carlo average ($\\alpha = 0.4$) and pointwise 95% confidence intervals based on the CLT."}
+```{r, dependson=c("MC_par", "MC_hfun")}
+#| label: MC-CLT3
+#| fig-cap: "Four sample paths of the cumulative average for $\\alpha = 0.25$."
+#| echo: false
+#| results: "hide"
+#| out-width: "100%"
+#| fig-cap: "Four sample paths for the Monte Carlo average ($\\alpha = 0.4$) and
+#|  pointwise 95% confidence intervals based on the CLT."
+sim <- tibble::tibble(
+  x = matrix(rnorm(N * p), N, p),
+  evaluations = apply(x, 1, h, alpha = alpha),
+  mu_hat = cumsum(evaluations) / 1:N,
+  se = sd(evaluations) / sqrt(1:N)
+)
+
+p1 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) +
+  geom_ribbon(
+    mapping = aes(
+      ymin = mu_hat - 1.96 * se,
+      ymax = mu_hat + 1.96 * se
+    ),
+    fill = "gray"
+  ) +
+  geom_hline(yintercept = 1, color = "blue") +
+  geom_line() +
+  geom_point() +
+  coord_cartesian(ylim = c(-1, 3))
 
 sim <- tibble::tibble(
   x = matrix(rnorm(N * p), N, p),
@@ -666,16 +738,18 @@ sim <- tibble::tibble(
   se = sd(evaluations) / sqrt(1:N)
 )
 
-p1 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) + 
+p2 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) +
   geom_ribbon(
-  mapping = aes(
-    ymin = mu_hat - 1.96 * se, 
-    ymax = mu_hat + 1.96 * se
-  ), fill = "gray") + 
-  geom_hline(yintercept = 1, color = "blue") + 
+    mapping = aes(
+      ymin = mu_hat - 1.96 * se,
+      ymax = mu_hat + 1.96 * se
+    ),
+    fill = "gray"
+  ) +
+  geom_hline(yintercept = 1, color = "blue") +
   geom_line() +
-  geom_point() + 
-  coord_cartesian(ylim = c(-1, 3)) 
+  geom_point() +
+  coord_cartesian(ylim = c(-1, 3))
 
 sim <- tibble::tibble(
   x = matrix(rnorm(N * p), N, p),
@@ -684,16 +758,18 @@ sim <- tibble::tibble(
   se = sd(evaluations) / sqrt(1:N)
 )
 
-p2 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) + 
+p3 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) +
   geom_ribbon(
-  mapping = aes(
-    ymin = mu_hat - 1.96 * se, 
-    ymax = mu_hat + 1.96 * se
-  ), fill = "gray") + 
-  geom_hline(yintercept = 1, color = "blue") + 
+    mapping = aes(
+      ymin = mu_hat - 1.96 * se,
+      ymax = mu_hat + 1.96 * se
+    ),
+    fill = "gray"
+  ) +
+  geom_hline(yintercept = 1, color = "blue") +
   geom_line() +
-  geom_point() + 
-  coord_cartesian(ylim = c(-1, 3)) 
+  geom_point() +
+  coord_cartesian(ylim = c(-1, 3))
 
 sim <- tibble::tibble(
   x = matrix(rnorm(N * p), N, p),
@@ -702,57 +778,42 @@ sim <- tibble::tibble(
   se = sd(evaluations) / sqrt(1:N)
 )
 
-p3 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) + 
+p4 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) +
   geom_ribbon(
-  mapping = aes(
-    ymin = mu_hat - 1.96 * se, 
-    ymax = mu_hat + 1.96 * se
-  ), fill = "gray") + 
-  geom_hline(yintercept = 1, color = "blue") + 
+    mapping = aes(
+      ymin = mu_hat - 1.96 * se,
+      ymax = mu_hat + 1.96 * se
+    ),
+    fill = "gray"
+  ) +
+  geom_hline(yintercept = 1, color = "blue") +
   geom_line() +
-  geom_point() + 
-  coord_cartesian(ylim = c(-1, 3)) 
-
-sim <- tibble::tibble(
-  x = matrix(rnorm(N * p), N, p),
-  evaluations = apply(x, 1, h, alpha = alpha),
-  mu_hat = cumsum(evaluations) / 1:N,
-  se = sd(evaluations) / sqrt(1:N)
-)
-
-p4 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) + 
-  geom_ribbon(
-  mapping = aes(
-    ymin = mu_hat - 1.96 * se, 
-    ymax = mu_hat + 1.96 * se
-  ), fill = "gray") + 
-  geom_hline(yintercept = 1, color = "blue") + 
-  geom_line() +
-  geom_point() + 
-  coord_cartesian(ylim = c(-1, 3)) 
+  geom_point() +
+  coord_cartesian(ylim = c(-1, 3))
 
 gridExtra::grid.arrange(p1, p2, p3, p4, ncol = 2)
-
 ```
 
-To be fair, it is the choice of a standard multivariate normal distribution as 
-the reference distribution for large \(\alpha\) that is problematic rather than
-Monte Carlo integration and importance sampling as such. However, in high 
-dimensions it can be difficult to choose a suitable distribution to sample 
-from. 
+To be fair, it is the choice of a standard multivariate normal distribution
+as the reference distribution for large \(\alpha\) that is problematic rather
+than Monte Carlo integration and importance sampling as such. However, in high
+dimensions it can be difficult to choose a suitable distribution to sample from.
 
-The difficulty for the specific integral is due to the exponent of the integrand,
-which can become large and positive if $x_k \approx x_{k-1}$ for enough coordinates.
-This happens rarely for independent random variables, but large values of rare
-events can, nevertheless, contribute notably to the integral. The 
-larger $\alpha$ is, the more pronounced is the problem with occasional 
-large values of the integrand. It is possible to use importance sampling and
-instead sample from a distribution where the large values are more likely. For this 
-particular example we would need to sample from a distribution where the 
-variables are dependent, a problem we will return to in Section \@ref(particle).
+The difficulty for the specific integral is due to the exponent of the
+integrand, which can become large and positive if $x_k \approx x_{k-1}$ for
+enough coordinates. This happens rarely for independent random variables,
+but large values of rare events can, nevertheless, contribute notably to the
+integral. The larger $\alpha$ is, the more pronounced is the problem with
+occasional large values of the integrand. It is possible to use importance
+sampling and instead sample from a distribution where the large values are more
+likely. For this particular example we would need to sample from a distribution
+where the variables are dependent, a problem we will return to in Section
+\@ref(particle).
 
-
-```{r gaus_weight, eval=FALSE, echo=FALSE}
+```{r}
+#| label: gaus_weight
+#| eval: false
+#| echo: false
 # Experiments with different proposals, e.g., Gaussian with different variance
 # and multivariate t-distributions. The idea was to make the distribution more
 # wide, but it turns out not to do much of a difference
@@ -760,68 +821,88 @@ w <- function(x, nu, sigma) {
   p <- length(x)
   # sigma^p * exp(sum(x^2) * (1 / sigma^2 - 1) / 2)
   norm_sq <- sum(x^2)
-  exp( (nu + p) / 2 * log(1 + norm_sq / (nu * sigma^2)) + p * log(sigma^2 * nu / 2) / 2 + 
-         lgamma(nu / 2) - lgamma((nu + p) / 2) - norm_sq / 2)
+  exp(
+    (nu + p) /
+      2 *
+      log(1 + norm_sq / (nu * sigma^2)) +
+      p * log(sigma^2 * nu / 2) / 2 +
+      lgamma(nu / 2) -
+      lgamma((nu + p) / 2) -
+      norm_sq / 2
+  )
 }
 ```
 
-```{r MC_loop3, dependson=c("MC_hfun", "MC_par"), eval=FALSE, echo=FALSE}
-#set.seed(123)
+```{r, dependson=c("MC_hfun", "MC_par")}
+#| label: MC_loop3
+#| eval: false
+#| echo: false
+# set.seed(123)
 nu <- 3
 sigma <- (nu - 2) / nu
-#sigma <- 1.1
+# sigma <- 1.1
 x <- matrix(rnorm(N * p, sd = sigma), N, p)
 x <- t(apply(x, 1, function(x) x / sqrt(rchisq(1, nu) / nu)))
-evaluations <- apply(x, 1, function(x) h(x, alpha = 0.4) * w(x, nu = nu, sigma = sigma))
+evaluations <- apply(x, 1, function(x) {
+  h(x, alpha = 0.4) * w(x, nu = nu, sigma = sigma)
+})
 evaluations <- apply(x, 1, function(x) w(x, nu = nu, sigma = sigma))
 ```
 
-```{r MC_CLT3, dependson=c("MC_par", "MC_loop3"), eval=FALSE, echo=FALSE, echo=FALSE}
+```{r, dependson=c("MC_par", "MC_loop3")}
+#| label: MC_CLT3
+#| eval: false
+#| echo: false
+#| echo: false
 plot(cumsum(evaluations) / 1:N, pch = 20, ylim = c(0, 2), xlab = "N")
 me <- cumsum(evaluations) / 1:N
 ve <- var(evaluations)
 abline(h = 1, col = "red")
-lines(1:N, me + 2*sqrt(ve/(1:N)))
-lines(1:N, me - 2*sqrt(ve/(1:N)))
+lines(1:N, me + 2 * sqrt(ve / (1:N)))
+lines(1:N, me - 2 * sqrt(ve / (1:N)))
 ```
 
 ## Network failure {#network}
 
-In this section we consider a more serious application of importance
-sampling. Though still a toy example, where we can find an exact solution, 
-the example illustrates well the type of application where we want to 
-approximate a small probability using a Monte Carlo average. Importance sampling can 
-then increase the probability of the rare event and as a result make the 
-variance of the Monte Carlo average smaller. 
+In this section we consider a more serious application of importance sampling.
+Though still a toy example, where we can find an exact solution, the example
+illustrates well the type of application where we want to approximate a small
+probability using a Monte Carlo average. Importance sampling can then increase
+the probability of the rare event and as a result make the variance of the Monte
+Carlo average smaller.
 
-We will consider the following network consisting of ten nodes and with some of 
-the nodes connected. 
+We will consider the following network consisting of ten nodes and with some of
+the nodes connected.
 
-```{r network_fig, echo = FALSE, out.width="85%"}
+```{r}
+#| label: network_fig
+#| echo: false
+#| out-width: "85%"
 knitr::include_graphics("figures/networkfig.png")
 ```
 
-The network could be a computer network with ten computers. The different 
-connections (edges) may "fail" independently with probability $p$, and
-we ask the question: what is the probability that node 1 and node 10 are disconnected?
+The network could be a computer network with ten computers. The different
+connections (edges) may "fail" independently with probability $p$, and we ask
+the question: what is the probability that node 1 and node 10 are disconnected?
 
-We can answer this question by computing an integral of an indicator
-function, that is, by computing the sum
+We can answer this question by computing an integral of an indicator function,
+that is, by computing the sum
 
 \[
-  \mu = \sum_{x \in \{0,1\}^{18}} 1_B(x) f_p(x)
+\mu = \sum_{x \in \{0,1\}^{18}} 1_B(x) f_p(x)
 \]
 
-where $f_p(x)$ is the point probability of $x$, with $x$ representing which of the 18 edges 
-in the graph that fail, and $B$ representing the set of edges where node 1 and node 10 are 
-disconnected. By simulating edge failures we can approximate the sum as a 
-Monte Carlo average.
+where $f_p(x)$ is the point probability of $x$, with $x$ representing which
+of the 18 edges in the graph that fail, and $B$ representing the set of edges
+where node 1 and node 10 are disconnected. By simulating edge failures we can
+approximate the sum as a Monte Carlo average.
 
-The network of nodes can be represented as a graph adjacency matrix $A$ such 
-that $A_{ij} = 1$ if and only if there is an edge between $i$ and $j$ (and $A_{ij} = 0$ 
-otherwise). 
+The network of nodes can be represented as a graph adjacency matrix $A$ such
+that $A_{ij} = 1$ if and only if there is an edge between $i$ and $j$ (and
+$A_{ij} = 0$ otherwise).
 
-```{r network_adj, echo=12}
+```{r, echo=12}
+#| label: network_adj
 A <- matrix(0, 10, 10)
 A[1, c(2, 4, 5)] <- 1
 A[2, c(1, 3, 6)] <- 1
@@ -833,66 +914,73 @@ A[7, c(3, 6, 10)] <- 1
 A[8, c(3, 4, 5, 9)] <- 1
 A[9, c(5, 8, 10)] <- 1
 A[10, c(3, 6, 7, 9)] <- 1
-A  # Graph adjacency matrix
+A # Graph adjacency matrix
 ```
 
-To compute the probability that 1 and 10 are disconnected by Monte Carlo 
-integration, we need to sample (sub)graphs by randomly removing some of the 
+To compute the probability that 1 and 10 are disconnected by Monte Carlo
+integration, we need to sample (sub)graphs by randomly removing some of the
 edges. This is implemented using the upper triangular part of the (symmetric)
-adjacency matrix. 
+adjacency matrix.
 
-```{r network_simNet}
+```{r}
+#| label: network_simNet
 sim_net <- function(Aup, p) {
   ones <- which(Aup == 1)
   Aup[ones] <- sample(
-    c(0, 1), 
-    length(ones), 
+    c(0, 1),
+    length(ones),
     replace = TRUE,
     prob = c(p, 1 - p)
   )
-  Aup 
+  Aup
 }
 ```
 
-The core of the implementation above uses the `sample()` function, which 
-can sample with replacement from the set $\{0, 1\}$. The vector `ones` 
-contains indices of the (upper triangular part of the) adjacency matrix 
-containing a `1`, and these positions are replaced by the sampled values before
-the matrix is returned.
+The core of the implementation above uses the `sample()` function, which can
+sample with replacement from the set $\{0, 1\}$. The vector `ones` contains
+indices of the (upper triangular part of the) adjacency matrix containing a
+`1`, and these positions are replaced by the sampled values before the matrix
+is returned.
 
-It is fairly fast to sample even a large number of random graphs this way. 
+It is fairly fast to sample even a large number of random graphs this way.
 
-```{r network_bench, dependson = c("network_simNet", "network_adj")}
+```{r, dependson=c("network_simNet", "network_adj")}
+#| label: network_bench
 Aup <- A
 Aup[lower.tri(Aup)] <- 0
-bench::bench_time(replicate(1e5, {sim_net(Aup, 0.5); NULL}))
+bench::bench_time(replicate(1e5, {
+  sim_net(Aup, 0.5)
+  NULL
+}))
 ```
 
-The second function we implement checks network connectivity based on 
-the upper triangular part of the adjacency matrix.
-It relies on the fact that there is a path from node 1 to node 10 consisting 
-of $m$ edges if and only if $(A^m)_{1,10} > 0$. We see directly that such a 
-path needs to consist of at least $m = 3$ edges. Also, we do not need to 
-check paths with more than $m = 9$ edges as they will contain at least one node 
-multiple times and can thus be shortened. 
+The second function we implement checks network connectivity based on the
+upper triangular part of the adjacency matrix. It relies on the fact that
+there is a path from node 1 to node 10 consisting of $m$ edges if and only if
+$(A^m)_{1,10} > 0$. We see directly that such a path needs to consist of at
+least $m = 3$ edges. Also, we do not need to check paths with more than $m = 9$
+edges as they will contain at least one node multiple times and can thus be
+shortened.
 
-```{r network_connect}
+```{r}
+#| label: network_connect
 discon <- function(Aup) {
   A <- Aup + t(Aup)
   i <- 3
   Apow <- A %*% A %*% A # A%^%3
-  while(Apow[1, 10] == 0 & i < 9) {
+  while (Apow[1, 10] == 0 & i < 9) {
     Apow <- Apow %*% A
-    i <- i + 1    
+    i <- i + 1
   }
-  Apow[1, 10] == 0  # TRUE if nodes 1 and 10 not connected
+  Apow[1, 10] == 0 # TRUE if nodes 1 and 10 not connected
 }
 ```
 
-We then obtain the following estimate of the probability of nodes 1 and 10 being 
-disconnected using Monte Carlo integration. 
+We then obtain the following estimate of the probability of nodes 1 and 10 being
+disconnected using Monte Carlo integration.
 
-```{r network_sim, dependson=c("network_connect", "network_simNet", "network_bench")}
+```{r, dependson=c("network_connect", "network_simNet", "network_bench")}
+#| label: network_sim
 seed <- 27092016
 set.seed(seed)
 n <- 1e5
@@ -902,40 +990,40 @@ mu_hat
 ```
 
 As this is a random approximation, we should report not only the Monte Carlo
-estimate but also the confidence interval. Since the estimate is an average of 
-0-1-variables, we can estimate the variance, $\sigma^2$, of the individual terms 
-using that $\sigma^2 = \mu (1 - \mu)$. We could just as well have used the 
-empirical variance, which would give almost the same numerical value
-as $\hat{\mu} (1 - \hat{\mu})$. We use $\hat{\mu} (1 - \hat{\mu})$ to illustrate 
-that any (good) estimator of $\sigma^2$ can be used when estimating the asymptotic
-variance. 
+estimate but also the confidence interval. Since the estimate is an average
+of 0-1-variables, we can estimate the variance, $\sigma^2$, of the individual
+terms using that $\sigma^2 = \mu (1 - \mu)$. We could just as well have used
+the empirical variance, which would give almost the same numerical value as
+$\hat{\mu} (1 - \hat{\mu})$. We use $\hat{\mu} (1 - \hat{\mu})$ to illustrate
+that any (good) estimator of $\sigma^2$ can be used when estimating the
+asymptotic variance.
 
-```{r network_conf, dependson = "network_sim", echo=2}
+```{r, dependson="network_sim", echo=2}
+#| label: network_conf
 old_options <- options(digits = 3)
 mu_hat + 1.96 * sqrt(mu_hat * (1 - mu_hat) / n) * c(-1, 0, 1)
 options(digits = old_options$digits)
 ```
 
-The estimated probability is low and only in about 1 of 3000 simulated graphs 
-will node 1 and 10 be disconnected. This suggests that importance sampling
-can be useful if we sample from a probability distribution with a larger 
-probability of edge failure. 
+The estimated probability is low and only in about 1 of 3000 simulated graphs
+will node 1 and 10 be disconnected. This suggests that importance sampling can
+be useful if we sample from a probability distribution with a larger probability
+of edge failure.
 
 To implement importance sampling we note that the point probabilities
-(the density w.r.t. counting measure) for sampling the $18$ independent $0$-$1$-variables 
-$x = (x_1, \ldots, x_{18})$ with $\P(X_k = 0) = p$ is
+(the density w.r.t. counting measure) for sampling the $18$ independent
+$0$-$1$-variables $x = (x_1, \ldots, x_{18})$ with $\P(X_k = 0) = p$ is
 
 \[
-  f_p(x) = p^{18 - s} (1- p)^{s}
+f_p(x) = p^{18 - s} (1- p)^{s}
 \]
 
-where $s = \sum_{k=1}^{18} x_k$. In the implementation, 
-weights are computed that correspond to using probability $p_0$ (with density $g = f_{p_0}$) 
-instead of $p$, and the weights are only computed if node 1 
-and 10 are disconnected.
+where $s = \sum_{k=1}^{18} x_k$. In the implementation, weights are computed
+that correspond to using probability $p_0$ (with density $g = f_{p_0}$) instead
+of $p$, and the weights are only computed if node 1 and 10 are disconnected.
 
-
-```{r network_weights}
+```{r}
+#| label: network_weights
 weights <- function(Aup, Aup0, p0, p) {
   w <- discon(Aup0)
   if (w) {
@@ -946,59 +1034,62 @@ weights <- function(Aup, Aup0, p0, p) {
 }
 ```
 
-The implementation uses the formula 
+The implementation uses the formula
 
 \[
-  w(x) = \frac{f_p(x)}{f_{p_0}(x)} = \frac{p^{18 - s} (1- p)^{s}}{p_0^{18 - s} (1- p_0)^{s}} = 
+w(x) = \frac{f_p(x)}{f_{p_0}(x)} = \frac{p^{18 - s} (1- p)^{s}}{p_0^{18 - s} (1- p_0)^{s}} = 
 \left(\frac{p}{p_0}\right)^{18} \left(\frac{p_0 (1- p)}{p (1- p_0)}\right)^s.
 \]
 
 The importance sampling estimate of $\mu$ is then computed.
 
-```{r network_sim2, dependson = c("network_sim", "network_weights", "network_simNet", "network_bench")}
+```{r, dependson=c("network_sim", "network_weights", "network_simNet", "network_bench")}
+#| label: network_sim2
 set.seed(seed)
 tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.2), 0.2, 0.05))
 mu_hat_IS <- mean(tmp)
 ```
 
-And we obtain the following confidence interval using the 
-empirical variance estimate $\hat{\sigma}^2$.
+And we obtain the following confidence interval using the empirical variance
+estimate $\hat{\sigma}^2$.
 
-```{r network_conf2, dependson = "network_sim2", echo=2}
+```{r, dependson="network_sim2", echo=2}
+#| label: network_conf2
 old_options <- options(digits = 3)
 mu_hat_IS + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1)
 options(digits = old_options$digits)
 ```
 
-The ratio of variances for the plain Monte Carlo estimate and the 
-importance sampling estimate is
+The ratio of variances for the plain Monte Carlo estimate and the importance
+sampling estimate is
 
-```{r network_varRatio, dependson=c("network_sim", "network_sim2")}
+```{r, dependson=c("network_sim", "network_sim2")}
+#| label: network_varRatio
 mu_hat * (1 - mu_hat) / var(tmp)
 ```
 
-Thus we need around `r round(mu_hat * (1 - mu_hat) / var(tmp))` times more observations
-if using plain Monte Carlo integration when compared to importance sampling to obtain the same precision.
-A benchmark will show that the extra computing time for importance sampling is small compared 
-to the reduction of variance.
-It is therefore worth the coding effort if used repeatedly, but not 
-if it is a one-off computation.
+Thus we need around `r round(mu_hat * (1 - mu_hat) / var(tmp))` times more
+observations if using plain Monte Carlo integration when compared to importance
+sampling to obtain the same precision. A benchmark will show that the extra
+computing time for importance sampling is small compared to the reduction of
+variance. It is therefore worth the coding effort if used repeatedly, but not if
+it is a one-off computation.
 
-The graph is, in fact, small enough for complete enumeration and thus the computation 
-of an exact solution. There are $2^{18} = 262\, 144$ different networks with 
-any number of the edges failing. To 
-systematically walk through all possible combinations of edges failing, 
-we use the function `intToBits` that converts an integer to its binary 
-representation for integers from $0$ to $262\, 144$. This is a quick and convenient 
-way of representing all the different fail and non-fail combinations 
-for the edges. 
+The graph is, in fact, small enough for complete enumeration and thus the
+computation of an exact solution. There are $2^{18} = 262\, 144$ different
+networks with any number of the edges failing. To systematically walk through
+all possible combinations of edges failing, we use the function `intToBits`
+that converts an integer to its binary representation for integers from $0$
+to $262\, 144$. This is a quick and convenient way of representing all the
+different fail and non-fail combinations for the edges.
 
-```{r network_enumeration}
+```{r}
+#| label: network_enumeration
 ones <- which(Aup == 1)
 Atmp <- Aup
 p <- 0.05
 prob <- numeric(2^18)
-for(i in 0:(2^18 - 1)) {
+for (i in 0:(2^18 - 1)) {
   on <- as.numeric(intToBits(i)[1:18])
   Atmp[ones] <- on
   if (discon(Atmp)) {
@@ -1008,25 +1099,29 @@ for(i in 0:(2^18 - 1)) {
 }
 ```
 
-The probability that nodes 1 and 10 are disconnected can then be computed as 
-the sum of all the probabilities in `prob`.
+The probability that nodes 1 and 10 are disconnected can then be computed as the
+sum of all the probabilities in `prob`.
 
-```{r network_fail_prob, dependson="network_enumeration"}
+```{r, dependson="network_enumeration"}
+#| label: network_fail_prob
 sum(prob)
 ```
 
-This number should be compared to the estimates computed above. For a more complete
-comparison, we have used importance sampling with edge fail probability 
-ranging from $0.1$ to $0.4$, see Figure \@ref(fig:networkImp). The results
-show that a failure probability of $0.2$ is close to optimal in terms of 
-giving an importance sampling estimate with minimal variance. For smaller 
-values, the event that 1 and 10 become disconnected is too rare, and for 
-larger values the importance weights become too variable. A choice of $0.2$ 
-strikes a good balance. 
+This number should be compared to the estimates computed above. For a more
+complete comparison, we have used importance sampling with edge fail probability
+ranging from $0.1$ to $0.4$, see Figure \@ref(fig:networkImp). The results show
+that a failure probability of $0.2$ is close to optimal in terms of giving an
+importance sampling estimate with minimal variance. For smaller values, the
+event that 1 and 10 become disconnected is too rare, and for larger values
+the importance weights become too variable. A choice of $0.2$ strikes a good
+balance.
 
 (ref:networkCap) Confidence intervals for importance sampling estimates of network nodes 1 and 10 being disconnected under independent edge failures with probability 0.05. The red line is the true probability computed by complete enumeration.
 
-```{r networkImp, dependson=c("network_sim", "network_sim2", "network_enumeration"), echo=FALSE, fig.cap="(ref:networkCap)"}
+```{r, dependson=c("network_sim", "network_sim2", "network_enumeration")}
+#| label: networkImp
+#| echo: false
+#| fig-cap: "(ref:networkCap)"
 MC_estimates <- data.frame(
   rbind(
     c(mu_hat_IS + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.2),
@@ -1037,94 +1132,124 @@ colnames(MC_estimates) <- c("low", "phat", "high", "p")
 
 set.seed(seed)
 tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.1), 0.1, 0.05))
-MC_estimates <- rbind(MC_estimates, c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.1))
+MC_estimates <- rbind(
+  MC_estimates,
+  c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.1)
+)
 
 set.seed(seed)
 tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.15), 0.15, 0.05))
-MC_estimates <- rbind(MC_estimates, c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.15))
+MC_estimates <- rbind(
+  MC_estimates,
+  c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.15)
+)
 
 set.seed(seed)
 tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.25), 0.25, 0.05))
-MC_estimates <- rbind(MC_estimates, c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.25))
+MC_estimates <- rbind(
+  MC_estimates,
+  c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.25)
+)
 
 set.seed(seed)
 tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.3), 0.3, 0.05))
-MC_estimates <- rbind(MC_estimates, c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.3))
+MC_estimates <- rbind(
+  MC_estimates,
+  c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.3)
+)
 
 set.seed(seed)
 tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.35), 0.35, 0.05))
-MC_estimates <- rbind(MC_estimates, c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.35))
+MC_estimates <- rbind(
+  MC_estimates,
+  c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.35)
+)
 
 set.seed(seed)
 tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.4), 0.4, 0.05))
-MC_estimates <- rbind(MC_estimates, c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.4))
+MC_estimates <- rbind(
+  MC_estimates,
+  c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.4)
+)
 
-ggplot(MC_estimates, aes(x = factor(p), y = phat, ymin = low, ymax = high)) + 
+ggplot(MC_estimates, aes(x = factor(p), y = phat, ymin = low, ymax = high)) +
   geom_hline(yintercept = sum(prob), color = "red") +
-  geom_point() + geom_linerange() + ylim(0.0002, 0.0005) + 
-  labs(y = "Probability of 1 and 10 disconnected", x = "Importance sampling edge fail probability")
+  geom_point() +
+  geom_linerange() +
+  ylim(0.0002, 0.0005) +
+  labs(
+    y = "Probability of 1 and 10 disconnected",
+    x = "Importance sampling edge fail probability"
+  )
 ```
 
 ### Object oriented implementations
 
-Implementations of algorithms that handle graphs and simulate graphs, as in the Monte Carlo 
-computations above, can benefit from using an object oriented approach. To 
-this end we first implement a so-called *constructor*, which is a function
-that takes the adjacency matrix and the edge failure probability as arguments and 
-returns a list with class label `network`. 
+Implementations of algorithms that handle graphs and simulate graphs, as in
+the Monte Carlo computations above, can benefit from using an object oriented
+approach. To this end we first implement a so-called *constructor*, which is
+a function that takes the adjacency matrix and the edge failure probability as
+arguments and returns a list with class label `network`.
 
-```{r network_constructor, dependson="network_bench"}
+```{r, dependson="network_bench"}
+#| label: network_constructor
 network <- function(A, p) {
   Aup <- A
-  Aup[lower.tri(Aup)] <- 0 
+  Aup[lower.tri(Aup)] <- 0
   ones <- which((Aup == 1))
   structure(
     list(
-      A = A, 
-      Aup = Aup, 
-      ones = ones, 
+      A = A,
+      Aup = Aup,
+      ones = ones,
       p = p
-    ), 
+    ),
     class = "network"
   )
 }
 ```
- 
-We use the constructor function `network()` to construct and object of class
-`network` for our specific adjacency matrix. 
 
-```{r construtor_use, dependson=c("network_constructor", "network_adj")}
+We use the constructor function `network()` to construct and object of class
+`network` for our specific adjacency matrix.
+
+```{r, dependson=c("network_constructor", "network_adj")}
+#| label: construtor_use
 my_net <- network(A, p = 0.05)
-str(my_net) 
+str(my_net)
 class(my_net)
 ```
 
-The network object contains, in addition to `A` and `p`, two precomputed components: 
-the upper triangular part of the adjacency matrix; and the indices in that matrix 
-containing a `1`.
+The network object contains, in addition to `A` and `p`, two precomputed
+components: the upper triangular part of the adjacency matrix; and the indices
+in that matrix containing a `1`.
 
-The intention is then to write two methods for the network class. A method `sim()` that will 
-simulate a graph where some edges have failed, and a method `failure()` that will
-estimate the probability of node 1 and 10 being disconnected by Monte Carlo 
-integration. To do so we need to define the two corresponding generic functions.
+The intention is then to write two methods for the network class. A method
+`sim()` that will simulate a graph where some edges have failed, and a
+method `failure()` that will estimate the probability of node 1 and 10 being
+disconnected by Monte Carlo integration. To do so we need to define the two
+corresponding generic functions.
 
-```{r network_generic}
-sim <- function(x, ...)
+```{r}
+#| label: network_generic
+sim <- function(x, ...) {
   UseMethod("sim")
-failure <- function(x, ...)
+}
+failure <- function(x, ...) {
   UseMethod("failure")
+}
 ```
 
-The method for simulation is then implemented as a function with name 
-`sim.network`. 
+The method for simulation is then implemented as a function with name
+`sim.network`.
 
-```{r simnetwork}
+```{r}
+#| label: simnetwork
 sim.network <- function(x) {
   Aup <- x$Aup
   Aup[x$ones] <- sample(
-    c(0, 1), 
-    length(x$ones), 
-    replace = TRUE, 
+    c(0, 1),
+    length(x$ones),
+    replace = TRUE,
     prob = c(x$p, 1 - x$p)
   )
   Aup
@@ -1135,32 +1260,33 @@ It is implemented using essentially the same implementation as `sim_net()`
 except that `Aup` and `p` are extracted as components from the object `x` 
 instead of being arguments, and `ones` is extracted from `x` as well instead 
 of being computed. One could argue that the `sim()` method should return an object 
-of class network — that would be natural. However, then we need to call the  
+of class network — that would be natural. However, then we need to call the\
 constructor with the full adjacency matrix, this will take some time and we do 
 not want to do that as a default. Thus we simply return the upper triangular 
 part of the adjacency matrix from `sim()`.
 
-The `failure()` method implements plain Monte Carlo integration as well
-as importance sampling and returns a vector containing the estimate as 
-well as the 95% confidence interval. This implementation relies on the 
-already implemented functions `discon()` and `weights()`. 
+The `failure()` method implements plain Monte Carlo integration as well as
+importance sampling and returns a vector containing the estimate as well as the
+95% confidence interval. This implementation relies on the already implemented
+functions `discon()` and `weights()`.
 
-```{r failure, dependson = c("simnetwork", "network_weights", "network_connect")}
+```{r, dependson=c("simnetwork", "network_weights", "network_connect")}
+#| label: failure
 failure.network <- function(x, n, p0 = NULL) {
-  if (is.null(p0)) { 
+  if (is.null(p0)) {
     # Plain Monte Carlo simulation
     tmp <- replicate(n, discon(sim(x)))
     mu_hat <- mean(tmp)
     se <- sqrt(mu_hat * (1 - mu_hat) / n)
-  } else { 
+  } else {
     # Importance sampling
     p <- x$p
     x$p <- p0
     tmp <- replicate(n, weights(x$Aup, sim(x), p0, p))
     se <- sd(tmp) / sqrt(n)
     mu_hat <- mean(tmp)
-  } 
-  value <- mu_hat + 1.96 * se * c(-1, 0, 1)  
+  }
+  value <- mu_hat + 1.96 * se * c(-1, 0, 1)
   names(value) <- c("low", "estimate", "high")
   value
 }
@@ -1168,26 +1294,27 @@ failure.network <- function(x, n, p0 = NULL) {
 
 We test the implementation against the previously computed results.
 
-```{r network_object_MC, dependson = "failure", echo=2:5}
+```{r, dependson="failure", echo=2:5}
+#| label: network_object_MC
 old_options <- options(digits = 3)
-set.seed(seed)  # Resetting seed
+set.seed(seed) # Resetting seed
 failure(my_net, n)
-set.seed(seed)  # Resetting seed
+set.seed(seed) # Resetting seed
 failure(my_net, n, p0 = 0.2)
 options(digits = old_options$digits)
 ```
 
-We find that these are the same numbers as computed above, thus the object 
+We find that these are the same numbers as computed above, thus the object
 oriented implementation concurs with the non-object oriented on this example.
 
-We benchmark the object oriented implementation to measure if there is 
-any runtime loss or improvement due to using objects. 
-One should expect a small computational overhead due to method dispatching, 
-that is, the procedure that R uses to look up the appropriate `sim()` method 
-for an object of class `network`. On the other hand, `sim()` does not recompute
-`ones` every time. 
+We benchmark the object oriented implementation to measure if there is any
+runtime loss or improvement due to using objects. One should expect a small
+computational overhead due to method dispatching, that is, the procedure that R
+uses to look up the appropriate `sim()` method for an object of class `network`.
+On the other hand, `sim()` does not recompute `ones` every time.
 
-```{r network_bench2, echo=2, dependson=c("network_simnet", "simnetwork", "network_bench", "network_constructor")}
+```{r, echo=2, dependson=c("network_simnet", "simnetwork", "network_bench", "network_constructor")}
+#| label: network_bench2
 old_options <- options(digits = 3)
 bench::mark(
   sim_net = sim_net(Aup, 0.05),
@@ -1197,15 +1324,19 @@ bench::mark(
 options(digits = old_options$digits)
 ```
 
-From the benchmark, the object oriented solution using `sim()` appears to be 
-a bit slower than `sim_net()` despite the latter recomputing `ones`, and 
-this can be explained by method dispatching taking of the order of 300 nanoseconds
-during these benchmark computations.
+From the benchmark, the object oriented solution using `sim()` appears to be a
+bit slower than `sim_net()` despite the latter recomputing `ones`, and this can
+be explained by method dispatching taking of the order of 300 nanoseconds during
+these benchmark computations.
 
-```{r test-method-dispatch-time, echo=FALSE, eval=FALSE}
+```{r}
+#| label: test-method-dispatch-time
+#| echo: false
+#| eval: false
 fun1 <- function(x) x
-fun2 <- function(x)
+fun2 <- function(x) {
   UseMethod("fun2")
+}
 fun2.some <- function(x) x
 xx <- structure(1:10, class = "some")
 fun1(xx)
@@ -1216,11 +1347,13 @@ bench::mark(
 )
 ```
 
-Once we have taken an object oriented approach, we can also implement methods 
-for some standard generic functions, e.g. the `print` function. As this generic
-function already exists, we simply need to implement a method for class `network`.
+Once we have taken an object oriented approach, we can also implement methods
+for some standard generic functions, e.g. the `print` function. As this
+generic function already exists, we simply need to implement a method for class
+`network`.
 
-```{r network_print}
+```{r}
+#| label: network_print
 print.network <- function(x) {
   cat("#vertices: ", nrow(x$A), "\n")
   cat("#edges:", sum(x$Aup), "\n")
@@ -1228,68 +1361,68 @@ print.network <- function(x) {
 }
 ```
 
-```{r network_printing, dependson="network_constructor"}
-my_net  # Implicitly calls 'print'
+```{r, dependson="network_constructor"}
+#| label: network_printing
+my_net # Implicitly calls 'print'
 ```
 
 Our print method now prints out some summary information about the graph instead
 of just the raw list.
 
-If you want to work more seriously with graphs, it is likely that you want to use
-an existing R package instead of reimplementing many graph algorithms. One of 
-these packages is igraph, which also illustrates well an object oriented implementation
-of graph classes in R. 
+If you want to work more seriously with graphs, it is likely that you want to
+use an existing R package instead of reimplementing many graph algorithms. One
+of these packages is igraph, which also illustrates well an object oriented
+implementation of graph classes in R.
 
 We start by constructing a new graph object from the adjacency matrix.
 
-```{r network_igraph, message=FALSE, dependson="network_adj"}
+```{r, dependson="network_adj"}
+#| label: network_igraph
+#| message: false
 net <- graph_from_adjacency_matrix(A, mode = "undirected")
 class(net)
 net # Illustrates the print method for objects of class 'igraph'
 ```
 
-The igraph package supports a vast number of graph computation, manipulation and 
-visualization tools. We will here illustrate how igraph can be used to plot the 
+The igraph package supports a vast number of graph computation, manipulation and
+visualization tools. We will here illustrate how igraph can be used to plot the
 graph and how we can implement a simulation method for objects of class igraph.
 
-You can use `plot(net)`, which will call the plot method for objects of class igraph.
-But before doing so, we will specify a layout of the graph.
+You can use `plot(net)`, which will call the plot method for objects of class
+igraph. But before doing so, we will specify a layout of the graph.
 
-```{r network_layout, dependson="network_igraph"}
+```{r, dependson="network_igraph"}
+#| label: network_layout
 # You can generate a layout ...
 net_layout <- layout_(net, nicely())
-# ... or you can specify one yourself 
+# ... or you can specify one yourself
 net_layout <- matrix(
-  c(-20,  1,
-    -4,  3,
-    -4,  1,
-    -4, -1,
-    -4, -3,
-     4,  3,
-     4,  1,
-     4, -1,
-     4, -3,
-     20,  -1),
-  ncol = 2, nrow = 10, byrow = TRUE)
+  c(-20, 1, -4, 3, -4, 1, -4, -1, -4, -3, 4, 3, 4, 1, 4, -1, 4, -3, 20, -1),
+  ncol = 2,
+  nrow = 10,
+  byrow = TRUE
+)
 ```
 
 The layout we have specified makes it easy to recognize the graph.
 
-```{r network_plot, dependson=c("network_layout", "network_igraph")}
+```{r, dependson=c("network_layout", "network_igraph")}
+#| label: network_plot
 plot(net, layout = net_layout, asp = 0)
 ```
 
-We then use two functions from the igraph package to implement simulation of 
+We then use two functions from the igraph package to implement simulation of
 a new graph. We need `gsize()`, which gives the number of edges in the graph,
-and we need `delete_edges()`, which removes edges from the graph. Otherwise
-the simulation is still based on `sample()`.
+and we need `delete_edges()`, which removes edges from the graph. Otherwise the
+simulation is still based on `sample()`.
 
-```{r network_sim_igraph}
+```{r}
+#| label: network_sim_igraph
 sim.igraph <- function(x, p) {
   deledges <- sample(
-    c(TRUE, FALSE), 
-    gsize(x),        # 'gsize()' returns the number of edges 
-    replace = TRUE, 
+    c(TRUE, FALSE),
+    gsize(x), # 'gsize()' returns the number of edges
+    replace = TRUE,
     prob = c(p, 1 - p)
   )
   delete_edges(x, which(deledges))
@@ -1298,140 +1431,136 @@ sim.igraph <- function(x, p) {
 
 Note that this method is also called `sim()`, yet there is no conflict here with
 the method for objects of class network because the generic `sim()` function
-will delegate the call to the correct method based on the objects class label. 
+will delegate the call to the correct method based on the objects class label.
 
-If we combine our new `sim()` method for igraphs with the plot method, we can 
+If we combine our new `sim()` method for igraphs with the plot method, we can
 plot a simulated graph.
 
-```{r network_simulated, dependson=c("network_igraph", "network_layout", "network_sim_igraph")}
+```{r, dependson=c("network_igraph", "network_layout", "network_sim_igraph")}
+#| label: network_simulated
 plot(sim(net, 0.25), layout = net_layout, asp = 0)
 ```
 
-The implementation using igraph turns out to be a little slower than using 
-the matrix representation alone as in `sim_net()`. 
+The implementation using igraph turns out to be a little slower than using the
+matrix representation alone as in `sim_net()`.
 
-```{r network_bench3, dependson=c("network_igraph", "network_sim_igraph")}
-system.time(replicate(1e5, {sim(net, 0.05); NULL}))
+```{r, dependson=c("network_igraph", "network_sim_igraph")}
+#| label: network_bench3
+system.time(replicate(1e5, {
+  sim(net, 0.05)
+  NULL
+}))
 ```
 
-One could also implement the function for testing if nodes 1 and 10 are 
-disconnected using the `shortest_paths()` function, but this is not faster 
+One could also implement the function for testing if nodes 1 and 10 are
+disconnected using the `shortest_paths()` function, but this is not faster
 than the simple matrix multiplications used in `discon()` either. However, one
-should be careful not to draw any general conclusions from this. Our graph is 
-admittedly a small toy example, and we implemented our solutions largely 
-to handle this particular graph.
+should be careful not to draw any general conclusions from this. Our graph is
+admittedly a small toy example, and we implemented our solutions largely to
+handle this particular graph.
 
 ## Particle filters {#particle}
 
-We encountered some challenges in Section \@ref(hd-int) when using importance 
-sampling for computing a high-dimensional integral. 
-Because we use a Monte Carlo average to approximate an integral, 
-the Monte Carlo approximation can be quite poor 
-if the function we average takes (relatively) 
-large values occasionally. For 
-importance sampling, this problem is often a consequence of the weights 
-occasionally being large, and this happens when the proposal distribution 
-deviates too much from the target distribution. For 
-high-dimensional importance sampling, it can be quite difficult to find a 
-proposal distribution that is sufficiently close to the target distribution.
+We encountered some challenges in Section \@ref(hd-int) when using importance
+sampling for computing a high-dimensional integral. Because we use a Monte Carlo
+average to approximate an integral, the Monte Carlo approximation can be quite
+poor if the function we average takes (relatively) large values occasionally.
+For importance sampling, this problem is often a consequence of the weights
+occasionally being large, and this happens when the proposal distribution
+deviates too much from the target distribution. For high-dimensional importance
+sampling, it can be quite difficult to find a proposal distribution that is
+sufficiently close to the target distribution.
 
-In this section we introduce *particle filters*, which uses a form of 
-sequentially adaptive proposals to alleviate the problem. Particle filters 
-solve a collection of integration problems for the specific class of 
-hidden Markov models, and they can be seen as a generalization 
-of the Kalman filter.
+In this section we introduce *particle filters*, which uses a form of
+sequentially adaptive proposals to alleviate the problem. Particle filters solve
+a collection of integration problems for the specific class of hidden Markov
+models, and they can be seen as a generalization of the Kalman filter.
 
 ### Hidden Markov models {#HMM}
 
-The hidden Markov model is a model of the random variables 
-$(Y_1, Z_1), \ldots, (Y_N, Z_N)$ given by the following 
-equations for $k = 1, \ldots, N$:
+The hidden Markov model is a model of the random variables
+$(Y_1, Z_1), \ldots, (Y_N, Z_N)$ given by the following equations for
+$k = 1, \ldots, N$:
 
 \begin{align}
   Z_k &= F_k(Z_{k-1}, U_k) (\#eq:HMM-update)  \\
   Y_k &= G_k(Z_k, V_k), (\#eq:HMM-observation) 
 \end{align}
 
-where $U_1, \ldots, U_N$ and $V_1, \ldots, V_N$ are independent and 
-identically distributed random variables, and where $F_k$ and $G_k$ are 
-some fixed maps. By convention, we let $Z_0 = z_0$ take some fixed value.
-The equation \@ref(eq:HMM-update) is a recursive update equation, which makes 
-the $Z$-s form a Markov chain. The equation \@ref(eq:HMM-observation) is 
-known as the observation equation, and we generally suppose that we 
-only observe the $Y$-s.
+where $U_1, \ldots, U_N$ and $V_1, \ldots, V_N$ are independent and identically
+distributed random variables, and where $F_k$ and $G_k$ are some fixed
+maps. By convention, we let $Z_0 = z_0$ take some fixed value. The equation
+\@ref(eq:HMM-update) is a recursive update equation, which makes the $Z$-s
+form a Markov chain. The equation \@ref(eq:HMM-observation) is known as the
+observation equation, and we generally suppose that we only observe the $Y$-s.
 
 We introduce the notation $Y_{1:k} = (Y_1, \ldots, Y_k)$ and similarly for
-$Z_{1:k}$. Likewise, $y_{1:k}$ and $z_{1:k}$ denote specific 
-observations of $Y_{1:k}$ and $Z_{1:k}$, respectively. Two standard problems
-that we want to solve are the computation of the following conditional 
-expectations:
-
+$Z_{1:k}$. Likewise, $y_{1:k}$ and $z_{1:k}$ denote specific observations of
+$Y_{1:k}$ and $Z_{1:k}$, respectively. Two standard problems that we want to
+solve are the computation of the following conditional expectations:
 
 \begin{align}
  & \E\left( h(Z_k) \mid Y_{1:k} = y_{1:k} \right) (\#eq:HMM-filter) \\
  &  \E\left( h(Z_k) \mid Y_{1:N} = y_{1:N} \right) (\#eq:HMM-smoother)
 \end{align}
 
-where $h$ is some real valued function. Computing the first conditional expectation 
-\@ref(eq:HMM-filter) is known as a *filtering* problem, and the second 
-\@ref(eq:HMM-smoother) is known as a *smoothing* problem.
+where $h$ is some real valued function. Computing the first conditional
+expectation \@ref(eq:HMM-filter) is known as a *filtering* problem, and the
+second \@ref(eq:HMM-smoother) is known as a *smoothing* problem.
 
-We first develop a bit of general theory that will show how the two 
-conditional expectations can be expressed as (high-dimensional) integrals 
+We first develop a bit of general theory that will show how the two
+conditional expectations can be expressed as (high-dimensional) integrals
 w.r.t. a distribution whose density is known up to a normalization constant.
-This suggests that we can use importance sampling with standardized weights 
+This suggests that we can use importance sampling with standardized weights
 to approximate the integrals. We show by example that the high-dimensional
-nature of the problem leads to similar problems as we encountered in
-Section \@ref(hd-int). That is, weights will occasionally be very large, and the
-standardized weights will except for one or a few observations be very small. 
-This is known as *weight degeneracy*, and it leads to 
-poor performance of importance sampling. Particle filters are a solution to
-weight degeneracy. 
+nature of the problem leads to similar problems as we encountered in Section
+\@ref(hd-int). That is, weights will occasionally be very large, and the
+standardized weights will except for one or a few observations be very small.
+This is known as *weight degeneracy*, and it leads to poor performance of
+importance sampling. Particle filters are a solution to weight degeneracy.
 
 ### Filtering and sequential importance sampling
 
-We will for simplicity suppose that $Z_k$ and $Y_k$ are real valued 
-random variables, and that the distributions of $F_k(z, U_k)$ and $G_k(z, V_k)$
-have densities $f_k(\cdot \mid z)$ and $g_k(\cdot \mid z)$, 
-respectively, w.r.t. Lebesgue measure. 
-That is, the conditional distribution of $Z_k | Z_{k-1} = z$ had density
-$f_k(\cdot \mid z)$, and the conditional distribution of $Y_k | Z_k = z$ has
-density $g_k(\cdot \mid z)$. Then 
+We will for simplicity suppose that $Z_k$ and $Y_k$ are real valued random
+variables, and that the distributions of $F_k(z, U_k)$ and $G_k(z, V_k)$ have
+densities $f_k(\cdot \mid z)$ and $g_k(\cdot \mid z)$, respectively, w.r.t.
+Lebesgue measure. That is, the conditional distribution of $Z_k | Z_{k-1} = z$
+had density $f_k(\cdot \mid z)$, and the conditional distribution of
+$Y_k | Z_k = z$ has density $g_k(\cdot \mid z)$. Then
 
 \begin{align}
 f_{1:k}(z_{1:k}) & = f_1(z_1 \mid z_0) \cdot \ldots \cdot f_k(z_k \mid z_{k-1}) \\
 & = f_{1:(k-1)}(z_{1:(t-1)}) \cdot f_k(z_k \mid z_{k-1}),
 \end{align}
 
-is the density of $Z_{0:k}$ w.r.t. Lebesgue measure in $\mathbb{R}^k$. 
-Likewise, 
+is the density of $Z_{0:k}$ w.r.t. Lebesgue measure in $\mathbb{R}^k$. Likewise,
 
 \[
-  g_{1:k}(y_{1:t} \mid z_{1:k}) = 
+g_{1:k}(y_{1:t} \mid z_{1:k}) = 
   g_1(y_1 \mid z_1) g_2(y_2 \mid z_2) \ldots g_k(y_k \mid x_k)
 \]
 
-is the conditional density of $Y_{1:k}$ given $Z_{1:k} = z_{1:k}$. It follows 
+is the conditional density of $Y_{1:k}$ given $Z_{1:k} = z_{1:k}$. It follows
 that the joint distribution of $(Y_1, Z_1), \ldots, (Y_k, Z_k)$ has density
 
 \[
-  k_{1:k}(y_{1:k}, z_{1:k}) = g_{1:k}(y_{1:k} \mid z_{1:k}) f_{1:k}(z_{1:k}) 
+k_{1:k}(y_{1:k}, z_{1:k}) = g_{1:k}(y_{1:k} \mid z_{1:k}) f_{1:k}(z_{1:k})
 \]
 
-w.r.t. Lebesgue measure in $\mathbb{R}^{2k}$. By Bayes' theorem, the conditional 
-density of $Z_{1:k}$ given $Y_{1:k} = y_{1:k}$ is 
+w.r.t. Lebesgue measure in $\mathbb{R}^{2k}$. By Bayes' theorem, the conditional
+density of $Z_{1:k}$ given $Y_{1:k} = y_{1:k}$ is
 
 \[
-  f_{1:k}(z_{1:k} \mid y_{1:k}) = \frac{k_{1:k}(y_{1:k}, z_{1:k})}{g_{1:k}(y_{1:k})}
+f_{1:k}(z_{1:k} \mid y_{1:k}) = \frac{k_{1:k}(y_{1:k}, z_{1:k})}{g_{1:k}(y_{1:k})}
 \]
 
-where the denominator is the marginal density of $Y_{1:k}$, that is, 
+where the denominator is the marginal density of $Y_{1:k}$, that is,
 
 \[
-  g_{1:k}(y_{1:k}) = \int k_{1:k}(y_{1:k}, z_{1:k}) \mathrm{d}z_{1:k}. 
+g_{1:k}(y_{1:k}) = \int k_{1:k}(y_{1:k}, z_{1:k}) \mathrm{d}z_{1:k}.
 \]
 
-Since 
+Since
 
 \begin{align*}
   \E\left( h(Z_k) \mid Y_{1:k} = y_{1:k} \right) & = 
@@ -1442,43 +1571,43 @@ Since
   {g_{1:k}(y_{1:k})},
 \end{align*}
 
-we see how the conditional expectation in the filtering problem 
-can be expressed as an integral. The computation of the denomiator 
-$g_{1:k}(y_{1:k})$ is generally infeasible, thus we only know the target 
-density up to a normalization constant. 
+we see how the conditional expectation in the filtering problem can be expressed
+as an integral. The computation of the denomiator $g_{1:k}(y_{1:k})$ is
+generally infeasible, thus we only know the target density up to a normalization
+constant.
 
-If we use simulations from the Markov Chain itself as proposals, 
-we identify the (unstandardized) weights from the integral above as 
+If we use simulations from the Markov Chain itself as proposals, we identify the
+(unstandardized) weights from the integral above as
 
 \[
-  w^*(Z_{1:k}) = g_{1:k}(y_{1:k} \mid Z_{1:k}) = w^*(Z_{1:(k-1)}) \cdot w^*(Z_{k}),
+w^*(Z_{1:k}) = g_{1:k}(y_{1:k} \mid Z_{1:k}) = w^*(Z_{1:(k-1)}) \cdot w^*(Z_{k}),
 \]
 
-where $w^*(Z_{k}) = g_k(y_k \mid Z_k)$. Since we can sample the Markov chain 
-and compute the weights sequentially from $Z_1$ to $Z_k$, we call the 
-corresponding algorithm *sequential importance sampling*. 
+where $w^*(Z_{k}) = g_k(y_k \mid Z_k)$. Since we can sample the Markov chain and
+compute the weights sequentially from $Z_1$ to $Z_k$, we call the corresponding
+algorithm *sequential importance sampling*.
 
-With $N$ i.i.d. observations $Z_{1:N}^{(1)}, \ldots, Z_{1:N}^{(n)}$ of the Markov 
-chain, we can approximate the conditional (filtering) expectation for any $k$ as 
+With $N$ i.i.d. observations $Z_{1:N}^{(1)}, \ldots, Z_{1:N}^{(n)}$ of the
+Markov chain, we can approximate the conditional (filtering) expectation for any
+$k$ as
 
 \[
-  \E\left( h(Z_k) \mid Y_{1:k} = y_{1:k} \right) \approx 
+\E\left( h(Z_k) \mid Y_{1:k} = y_{1:k} \right) \approx 
   \sum_{i=1}^N  h(Z_k^{(i)}) w(Z_{1:k}^{(i)})
 \]
 
-where the standardized weights are 
+where the standardized weights are
 
 \[
-  w(Z_{1:k}^{(i)}) = \frac{w^*(Z_{1:k}^{(i)})}{\sum_{j=1}^N w^*(Z_{1:k}^{(j)})}.
+w(Z_{1:k}^{(i)}) = \frac{w^*(Z_{1:k}^{(i)})}{\sum_{j=1}^N w^*(Z_{1:k}^{(j)})}.
 \]
 
 Likewise, the conditional smoothing expectation can be approximated by
 
 \[
-  \E\left( h(Z_k) \mid Y_{1:N} = y_{1:N} \right) \approx 
+\E\left( h(Z_k) \mid Y_{1:N} = y_{1:N} \right) \approx 
   \sum_{i=1}^N  h(Z_k^{(i)}) w(Z_{1:N}^{(i)}).
 \]
-
 
 ### AR(1) sequential importance sampling {#AR1-importance}
 
@@ -1486,89 +1615,88 @@ We revisit the AR(1) model from Section \@ref(kalman) with a small
 notational difference. In Section \@ref(kalman) we used $f_k$ to 
 denote the $k$-th value of the unobserved Gaussian process, while 
 we will use $Z_k$ in this section. Thus the update equation is linear 
-and given as  
+and given as\
 
 \[
-  Z_k = \alpha Z_{k-1} + \tau U_k
+Z_k = \alpha Z_{k-1} + \tau U_k
 \]
 
-where $U_1, \ldots, U_N$ are i.i.d. standard Gaussian random variables, and 
-$\alpha \in \mathbb{R}$ and $\tau > 0$ are fixed parameters. The observation 
-equation is likewise linear and given as 
+where $U_1, \ldots, U_N$ are i.i.d. standard Gaussian random variables, and
+$\alpha \in \mathbb{R}$ and $\tau > 0$ are fixed parameters. The observation
+equation is likewise linear and given as
 
 \[
-  Y_k = Z_k + \sigma V_k
+Y_k = Z_k + \sigma V_k
 \]
 
-where $V_1, \ldots, V_N$ are i.i.d. standard Gaussian random variables. We 
-see that the AR(1) model is a special case of the general hidden Markov models 
+where $V_1, \ldots, V_N$ are i.i.d. standard Gaussian random variables. We
+see that the AR(1) model is a special case of the general hidden Markov models
 considered in this section. In Section \@ref(kalman) we solved filtering
-and smoothing problems for the AR(1) model analytically, and we implemented 
-the solution efficiently. Here we will use the AR(1) to illustrate the 
-implementation of the sequential importance sampling algorithm, and we 
-can the compare the results to those obtained by the analytic solution.
+and smoothing problems for the AR(1) model analytically, and we implemented
+the solution efficiently. Here we will use the AR(1) to illustrate the
+implementation of the sequential importance sampling algorithm, and we can the
+compare the results to those obtained by the analytic solution.
 
-Since the conditional density of $Y_k$ given $Z_{k}$ is Gaussian we see 
-that the unstandardized weights become
+Since the conditional density of $Y_k$ given $Z_{k}$ is Gaussian we see that the
+unstandardized weights become
 
 \[
-  w^*(Z_{k}) = \exp\left( - \frac{\left( y_k - Z_k \right)^2}{2 \sigma^2} \right).
+w^*(Z_{k}) = \exp\left( - \frac{\left( y_k - Z_k \right)^2}{2 \sigma^2} \right).
 \]
 
 ### Particle filters for the AR(1) process
 
-
-
-
-
-
 ```{Rcpp, KalmanFilt}
 #include <Rcpp.h>
 using namespace Rcpp;
+
 // [[Rcpp::export]]
-NumericVector kalman_filter(NumericVector y, double alpha, double eta) {
-  double tmp, gamma0 = 1 + eta, rho = - eta * alpha, yp;
+NumericVector
+kalman_filter(NumericVector y, double alpha, double eta)
+{
+  double tmp, gamma0 = 1 + eta, rho = -eta * alpha, yp;
   double gamma = 1 + eta * (1 + alpha * alpha);
   int N = y.size();
   NumericVector f(N), rhop(N);
   rhop[0] = rho / gamma0;
   yp = y[0] / gamma0;
   f[0] = y[0] / (1 + eta * (1 - alpha * alpha));
-  for(int i = 1; i < N; ++i) { 
+
+  for (int i = 1; i < N; ++i) {
     tmp = (gamma - rho * rhop[i - 1]);
     rhop[i] = rho / tmp;
-    /* Note differences when compared to smoother */
-    f[i] = (y[i] - rho * yp) / (gamma0 - rho * rhop[i - 1]); 
-    yp = (y[i] - rho * yp) / tmp;         
+
+    // Note differences when compared to smoother
+    f[i] = (y[i] - rho * yp) / (gamma0 - rho * rhop[i - 1]);
+    yp = (y[i] - rho * yp) / tmp;
   }
+
   return f;
 }
 ```
 
-
-
 ## Exercises {#MC-ex}
 
 ::: {#mu .exercise}
-Use that the univariate Gaussian density integrates to $1$ to show that 
-for any value of $x_{k-1}$, 
+Use that the univariate Gaussian density integrates to $1$ to show that for any
+value of $x_{k-1}$,
 
 \[
-   \int \exp\left( - \frac{1}{2} (x_k - \alpha x_{k-1})^2 
+\int \exp\left( - \frac{1}{2} (x_k - \alpha x_{k-1})^2 
    \right) \mathrm{d}x_k = (2 \pi)^{1/2}.
 \]
 
-Use this to show by induction that 
+Use this to show by induction that
 
 \[
-   \int \exp\left( - \frac{1}{2} \left( x_1^2 + \sum_{i=1}^p (x_k - \alpha x_{k-1})^2 
+\int \exp\left( - \frac{1}{2} \left( x_1^2 + \sum_{i=1}^p (x_k - \alpha x_{k-1})^2 
    \right) \right) \mathrm{d}x = (2 \pi)^{p/2},
 \]
 
-and argue that it implies 
+and argue that it implies
 
-\[ 
-  \E\left( \exp\left(- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
+\[
+\E\left( \exp\left(- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
 X_{k-1}^2 - 2\alpha X_k X_{k-1} \right) \right) = 1.
 \]
 
@@ -1576,26 +1704,26 @@ if $X \sim \mathcal{N}(0, I_p)$.
 :::
 
 ::: {#finvar .exercise}
-The purpose of this exercise is to show that the variance of $h(X_1)$ in 
-Section \@ref(hd-int) is finite for $\alpha < 0.2929$. 
+The purpose of this exercise is to show that the variance of $h(X_1)$ in Section
+\@ref(hd-int) is finite for $\alpha < 0.2929$.
 
-First use Cauchy-Schwarz's inequality to show that 
+First use Cauchy-Schwarz's inequality to show that
 
 \[
-   \sum_{k=2} x_k x_{k-1}  \leq \|x\|^2,
+\sum_{k=2} x_k x_{k-1}  \leq \|x\|^2,
 \]
 
-and use this to conclude that 
+and use this to conclude that
 
 \[
-  h(x) \leq e^{(\alpha - \alpha^2/2) \|x\|^2}.
+h(x) \leq e^{(\alpha - \alpha^2/2) \|x\|^2}.
 \]
 
-Then use that if $X \sim \mathcal{N}(0, I_p)$ then $Z = \|X\| \sim \chi_p^2$
-and show that 
+Then use that if $X \sim \mathcal{N}(0, I_p)$ then $Z = \|X\| \sim \chi_p^2$ and
+show that
 
 \[
-  \E(h(X)^2) \leq \E\left( e^{(2 \alpha - \alpha^2) Z} \right) < \infty 
+\E(h(X)^2) \leq \E\left( e^{(2 \alpha - \alpha^2) Z} \right) < \infty
 \]
 for $\alpha < 1 - \sqrt{8} / 4 \approx 0.2929.$
 :::
