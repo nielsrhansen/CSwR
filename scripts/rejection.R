@@ -119,4 +119,3 @@ vMsim_adapt <- function(n, x1, x2, kappa, trace = FALSE) {
   }
   y
 }
-
