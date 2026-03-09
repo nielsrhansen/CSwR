@@ -155,6 +155,8 @@ Which convention to follow on using contractions?
 - Do we follow American English or British English?
 - Oxford comma or no Oxford comma?
 - En-dash (--) or em-dash (---) with no spacing for parenthetical statements?
+- Do we say "importance distribution" or "proposal distribution" for importance
+  sampling?
 
 ### LaTeX details
 
