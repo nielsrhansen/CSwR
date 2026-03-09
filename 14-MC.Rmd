@@ -1,5 +1,11 @@
 # Monte Carlo integration {#mci}
 
+```{r}
+#| label: mc-setup
+#| include: false
+library(tidyverse)
+```
+
 Suppose that we are interested in numerically computing the integral
 
 \[
@@ -506,6 +512,166 @@ ggplot(mapping = aes(1:N, mu_hat_IS)) +
 In this example, the variance when using standardized weights is a little lower
 than when using unstandardized weights, but still larger than the variance for
 the plain Monte Carlo average.
+
+### Diagnostics
+
+Importance sampling relies on varying weights to compute its average and it
+is not uncommon to see some of the weights dominating the estimate. In extreme
+cases, a single data point can be effectively responsible for the estimator.
+You might think that we could catch this issue by assessing the variance of
+the weights. Unfortunately, the estimate of the variance is *also* based on the
+weights, which means that it, too, can be unreliable.
+
+One intuitive and simple alternative to diagnose weight degeneracy is to
+visualize the weights, for instance with a histogram or boxplot. In the next
+example, we show an example of how this might work in practice.
+
+::: {.example .boxed #is-weights-histogram}
+Suppose that
+
+$$
+X \sim \mathcal{N}(0, I_{2})
+$$
+
+and that we want to estimate $\operatorname{E}[f(X)]$ where $f(X)$ is large near
+the origin.
+
+Let us assume we use a proposal density $g(x)$ from
+
+$$
+\mathcal{N}(\mu, I_{2})
+$$
+
+with large $|\mu|$. Then the importance weights are given by
+
+$$
+w^*(x) = \frac{f(x) \phi(x; 0, I_2)}{\phi(x; \mu, I_2)},
+$$
+
+where $\phi(\cdot; m, S)$ is the density of a Gaussian distribution with mean
+$m$ and covariance matrix $S$. Since $f(x)$ is large near the origin, the
+weights will be large for samples that are close to the origin and small for
+samples that are far from the origin. If $|\mu|$ is large, then most samples
+will end up far from the origin (Figure \@ref(fig:poor-importance-
+demo)).
+
+```{r}
+#| label: poor-is-demo-setup
+#| echo: false
+library(mvtnorm)
+
+set.seed(1)
+d <- 2
+n <- 1000
+mu <- rep(2, d)
+x <- matrix(rnorm(n * d, mean = mu), ncol = d)
+
+colnames(x) <- c("x1", "x2")
+
+grid <- expand.grid(
+  x1 = seq(-5, 8, length.out = 100),
+  x2 = seq(-5, 8, length.out = 100)
+)
+grid_mat <- as.matrix(grid)
+
+grid$target <- dmvnorm(grid_mat, mean = rep(0, d))
+grid$importance <- dmvnorm(grid_mat, mean = mu)
+```
+
+```{r}
+#| label: poor-importance-demo
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "Target (blue) and importance (orange) densities
+#|   with samples from the importance distribution."
+library(patchwork)
+library(mvtnorm)
+
+tibble(
+  x1 = grid$x1,
+  x2 = grid$x2,
+  target = grid$target,
+  importance = grid$importance
+) |>
+  ggplot(aes(x1, x2)) +
+  geom_contour(aes(z = target), color = "steelblue", linetype = "dashed") +
+  geom_contour(aes(z = importance), color = "darkorange") +
+  geom_point(aes(x1, x2), data = as_tibble(x), alpha = 0.3, size = 0.5) +
+  labs(
+    x = expression(X[1]),
+    y = expression(X[2])
+  ) +
+  coord_fixed()
+
+target_density <- function(x) dmvnorm(x, mean = rep(0, d))
+importance_density <- function(x) dmvnorm(x, mean = mu)
+f <- function(x) exp(-sum(x^2) / 2) # Large near origin
+
+w_star <- apply(x, 1, function(row) {
+  target_density(row) / importance_density(row)
+})
+values <- apply(x, 1, f)
+estimate <- sum(values * w_star) / sum(w_star)
+
+df <- tibble(weights = w_star)
+```
+
+Since the weights are derived from the ratio of the target and importance
+densities, they will be small for samples close to the origin and
+small for samples far from the origin. In this example, most of the
+samples will be far from the origin, leading to a situation where a few weights
+dominate the estimate. This phenomenon is known as *weight degeneracy*\index{weight degeneracy}.
+
+Visualizing the normalized weights in Figure \@ref(fig:poor-is-weight-plots),
+we see that the distribution is skewed and that a few of the weights are
+responsible for a major part of the estimate.
+
+```{r}
+#| label: poor-is-weight-plots
+#| echo: false
+#| fig-cap: "Histogram and boxplot of importance weights, showing weight degeneracy."
+#| warning: false
+#| message: false
+p1 <- ggplot(df, aes(w_star)) +
+  geom_histogram() +
+  lims(x = c(-5, 160)) +
+  labs(
+    x = "Importance Weights",
+    y = "Frequency"
+  )
+
+p2 <- ggplot(df, aes(w_star)) +
+  geom_boxplot(alpha = 0.5) +
+  scale_y_discrete() +
+  lims(x = c(-5, 160)) +
+  labs(
+    x = "Importance Weights"
+  )
+
+p1 + p2 + plot_layout(heights = c(2, 1), axes = "collect")
+```
+:::
+
+### Effective sample size {#ess}
+
+One measure we can use to quantify the weight degeneracy we saw in the example
+from the previous section is *effective sample size* (ESS), which is defined as
+
+$$
+\mathrm{ESS} = \frac{1}{\sum_{i=1}^n w_i^2} = \frac{\left(\sum_{i=1}^n w^*_i\right)^2}{\sum_{i=1}^n ({w^*_i})^2}.
+$$
+
+ESS can be interpreted as the number of samples from the target distribution
+that would give us the same variance as our importance sampling estimator. If
+all weights are equal, $\mathrm{ESS} = n$. But if one weight dominates, ESS
+can be much lower, in the worst case close to one, indicating that the estimate
+cannot be trusted.
+
+In our case, the ESS is `r round(ess, 1)` out of $1000$ samples, which is quite
+low and suggests that the estimate may be unreliable.
+
+### Picking the proposal distribution
 
 ### Computing a high-dimensional integral {#hd-int}
 
