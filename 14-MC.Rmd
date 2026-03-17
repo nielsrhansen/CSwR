@@ -14,8 +14,8 @@ approach is to approximate the integral by a sum of the form
 \]
 
 Here, the $x_i$-s are some, potentially carefully chosen, points in the
-$x$-space and $w_i$ is the magnitude of the $x$-space where the values of
-$h_0$ are well approximated by the value $h_0(x_i)$. But how should we then in
+$x$-space and $w_i$ is the magnitude of the $x$-space where the values of $h_0$
+are well approximated by the value $h_0(x_i)$. But how should we then in
 practice choose the $x_i$-s, and how should we compute the $w_i$-s?
 
 If $h_0(x) = h(x) f(x)$ for a probability density $f$, one possible idea is to
@@ -31,10 +31,10 @@ i.i.d. with density $f$, the *Monte Carlo* average satisfies that
 for $N \to \infty$ by the law of large numbers
 (LLN)\index{Law of Large Numbers}.
 
-Monte Carlo integration is a clever idea, where we use the computer to
-simulate i.i.d. random variables and compute an average as an approximation
-of an integral. The idea may be applied in a statistical context, but also
-has applications outside of statistics and can be a direct competitor to more
+Monte Carlo integration is a clever idea, where we use the computer to simulate
+i.i.d. random variables and compute an average as an approximation of an
+integral. The idea may be applied in a statistical context, but also has
+applications outside of statistics and can be a direct competitor to more
 standard numerical integration techniques. By increasing $N$ the LLN tells us
 that the average will eventually become a good approximation of the integral.
 However, the LLN does not quantify how large $N$ should be, and a fundamental
@@ -48,13 +48,13 @@ as well as provide a way to compare different Monte Carlo integration
 techniques.
 
 The direct usage of the average above as an approximation of the integral
-requires that we can simulate directly from the distribution with density
-$f$. This might be difficult, impossible, or might lead to Monte Carlo
-averages of poor precision. To remedy these challenges, we will in Section
+requires that we can simulate directly from the distribution with density $f$.
+This might be difficult, impossible, or might lead to Monte Carlo averages of
+poor precision. To remedy these challenges, we will in Section
 \@ref(importance-sampling) introduce importance sampling (and variations
-thereof), which are techniques that simulate from a different distribution
-and use a *weighted* average to obtain the approximation of the integral.
-First, however, we will discuss the assessment of the precision of Monte Carlo
+thereof), which are techniques that simulate from a different distribution and
+use a *weighted* average to obtain the approximation of the integral. First,
+however, we will discuss the assessment of the precision of Monte Carlo
 integration, which is a fundamental question for all Monte Carlo integration
 techniques.
 
@@ -63,16 +63,16 @@ techniques.
 The error analysis of Monte Carlo integration differs from that of ordinary
 (deterministic) numerical integration methods. For the latter, error analysis
 provides bounds on the error of the computable approximation in terms of
-properties of the function to be integrated. Such bounds provide a guarantee
-on what the error at most can be. It is generally impossible to provide such a
+properties of the function to be integrated. Such bounds provide a guarantee on
+what the error at most can be. It is generally impossible to provide such a
 guarantee when using Monte Carlo integration because the computed approximation
-is by construction (pseudo)random. Thus the error analysis and assessment of
-the precision of $\hat{\mu}_{\textrm{MC}}$ as an approximation of $\mu$ will
-be probabilistic.
+is by construction (pseudo)random. Thus the error analysis and assessment of the
+precision of $\hat{\mu}_{\textrm{MC}}$ as an approximation of $\mu$ will be
+probabilistic.
 
 There are two main approaches. The first is to use approximations of the
-distribution of $\hat{\mu}_{\textrm{MC}}$ to assess the precision by computing
-a confidence interval. Alternatively, we can provide finite sample upper bounds,
+distribution of $\hat{\mu}_{\textrm{MC}}$ to assess the precision by computing a
+confidence interval. Alternatively, we can provide finite sample upper bounds,
 known as *concentration inequalities*, on the probability that the error of
 $\hat{\mu}_{\textrm{MC}}$ is larger than a given $\varepsilon$. A concentration
 inequality can either be turned into a confidence interval or used directly to
@@ -81,8 +81,8 @@ than $\varepsilon = 10^{-3}$, how large does $N$ need to be to guarantee this
 error bound with probability at least $99.99$%?
 
 Confidence intervals are typically computed using the central limit theorem and
-an estimated value of the asymptotic variance. A major deficit of this method
-is that the central limit theorem does not provide bounds---only approximations
+an estimated value of the asymptotic variance. A major deficit of this method is
+that the central limit theorem does not provide bounds---only approximations
 whose precision for a finite $N$ is often unclear. Thus without further
 analysis, we cannot really be certain that the results from the central limit
 theorem reflect the accuracy of $\hat{\mu}_{\textrm{MC}}$.
@@ -138,14 +138,13 @@ interval for $\mu$ is
 \hat{\mu}_{\textrm{MC}} \pm 1.96 \frac{\hat{\sigma}_{\textrm{MC}}}{\sqrt{N}}.
 \]
 
-We illustrate the use of Monte Carlo integration and uncertainty
-quantification via the CLT by computing the mean of a Gamma
+We illustrate the use of Monte Carlo integration and uncertainty quantification
+via the CLT by computing the mean of a Gamma
 distribution\index{Gamma Distribution} via Monte Carlo integration.
 
 ```{r, dependson="gammasim", echo=-1}
 #| label: gammaMCCLT
-#| fig-cap: "Sample path with pointwise 95% confidence band for Monte Carlo
-#|  integration of the mean of a gamma distributed random variable."
+#| fig-cap: "Sample path with pointwise 95% confidence band for Monte Carlo integration of the mean of a gamma distributed random variable."
 set.seed(123)
 N <- 1000
 x <- rgamma(N, 8) # h(x) = x
@@ -218,8 +217,8 @@ average $\hat{\mu}_{\textrm{MC}}$ does, indeed, approximate $\mu$ for $N$ large.
 We can interpret this as a proof that Monte Carlo integration is, at least
 qualitatively, a sensible approach for numerical computation of an integral.
 
-Chebychev's inequality does, additionally, give a quantitative statement
-about how accurate $\hat{\mu}_{\textrm{MC}}$ is as an approximation of $\mu$.
+Chebychev's inequality does, additionally, give a quantitative statement about
+how accurate $\hat{\mu}_{\textrm{MC}}$ is as an approximation of $\mu$.
 Reorganizing the inequality above, we can write it as
 
 \[
@@ -237,13 +236,13 @@ $\sigma_{\textrm{MC}}$, the confidence interval
 \hat{\mu}_{\textrm{MC}} \pm 4.47 \frac{\sigma_{\textrm{MC}}}{\sqrt{N}}
 \]
 
-would have guaranteed coverage larger than 95% for all $N$. In practice,
-we would have to estimate $\sigma_{\textrm{MC}}$, e.g., by the empirical
-standard deviation $\hat{\sigma}_{\textrm{MC}}$, and we would effectively get
-the same confidence interval as obtained by the CLT, except that the $0.975$
-quantile $1.96$ for the normal distribution is replaced by $4.47$. This gives
-a wider interval---with some support from theory of having actual finite
-sample coverage being at least 95%. However, due to using the plug-in estimate
+would have guaranteed coverage larger than 95% for all $N$. In practice, we
+would have to estimate $\sigma_{\textrm{MC}}$, e.g., by the empirical standard
+deviation $\hat{\sigma}_{\textrm{MC}}$, and we would effectively get the same
+confidence interval as obtained by the CLT, except that the $0.975$ quantile
+$1.96$ for the normal distribution is replaced by $4.47$. This gives a wider
+interval---with some support from theory of having actual finite sample coverage
+being at least 95%. However, due to using the plug-in estimate
 $\hat{\sigma}_{\textrm{MC}}$ of the standard deviation, any finite sample
 guarantees are, in fact, lost.
 
@@ -336,9 +335,7 @@ and a 95% standard confidence interval is computed as
 
 ```{r, echo=1:2, dependson="gamma-sim-IS"}
 #| label: gamma-IS-fig2
-#| fig-cap: "Sample path with confidence band for importance sampling Monte
-#|  Carlo integration of the mean of a gamma distributed random variable via
-#|  simulations from a Gaussian distribution."
+#| fig-cap: "Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution."
 sigma_hat_IS <- sd(x * w_star)
 sigma_hat_IS # Theoretical value ??
 ggplot(mapping = aes(1:N, mu_hat_IS)) +
@@ -365,8 +362,8 @@ Monte Carlo integration.
 
 For the mean of the gamma distribution above, $\sigma^{*2}_{\textrm{IS}}$ is
 about 50% larger than $\sigma^2_{\textrm{MC}}$, so we loose precision by using
-importance sampling this way when compared to plain Monte Carlo integration.
-In Section \@ref(network) we consider a different example where we achieve a
+importance sampling this way when compared to plain Monte Carlo integration. In
+Section \@ref(network) we consider a different example where we achieve a
 considerable variance reduction by using importance sampling.
 
 ### Standardized weights
@@ -457,9 +454,9 @@ By the $\Delta$-method
 \mathcal{N}(\mu, c^{-2} (\sigma^{*2}_{\textrm{IS}} + \mu^2 \sigma_{w^*}^2 - 2 \mu \gamma) / n).
 \]
 
-The unknown quantities in the asymptotic variance must be estimated
-using, e.g., their empirical equivalents, and if $c \neq 1$ (we
-have used unnormalized densities) it is necessary to estimate $c$ as
+The unknown quantities in the asymptotic variance must be estimated using, e.g.,
+their empirical equivalents, and if $c \neq 1$ (we have used unnormalized
+densities) it is necessary to estimate $c$ as
 $\hat{c} = \frac{1}{N} \sum_{i=1}^N w^*(X_i)$ to compute an estimate of the
 variance.
 
@@ -484,9 +481,7 @@ sigma_hat_IS_w
 ```{r, dependson="gamma-sim-ISw"}
 #| label: gamma-IS-fig3
 #| echo: false
-#| fig-cap: "Sample path with confidence band for importance sampling Monte
-#|  Carlo integration of the mean of a gamma distributed random variable via
-#|  simulations from a Gaussian distribution and using standardized weights."
+#| fig-cap: "Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution and using standardized weights."
 ggplot(mapping = aes(1:N, mu_hat_IS)) +
   geom_line() +
   geom_point() +
@@ -509,18 +504,18 @@ the plain Monte Carlo average.
 
 ### Computing a high-dimensional integral {#hd-int}
 
-To further illustrate the usage, but also the limitations, of Monte
-Carlo integration and importance sampling, suppose we want to compute the
+To further illustrate the usage, but also the limitations, of Monte Carlo
+integration and importance sampling, suppose we want to compute the
 $p$-dimensional integral
 
 \[
 \int h_0(x) \mathrm{d} x
 \]
 
-w.r.t. Lebesgue measure in $\mathbb{R}^p$ for some integrable function $h_0$.
-We use the same idea as in importance sampling to rewrite the integral as an
-expectation w.r.t. a probability distribution. For simplicity, let us focus
-on sampling from a standard Gaussian distribution $\mathcal{N}(0, I_p)$, with
+w.r.t. Lebesgue measure in $\mathbb{R}^p$ for some integrable function $h_0$. We
+use the same idea as in importance sampling to rewrite the integral as an
+expectation w.r.t. a probability distribution. For simplicity, let us focus on
+sampling from a standard Gaussian distribution $\mathcal{N}(0, I_p)$, with
 density $g(x) = (2\pi)^{-p/2} \exp(-\|x\|_2^2/2)$. Then
 
 \begin{align*}
@@ -606,9 +601,7 @@ inequality or the CLT.
 ```{r, dependson=c("MC_par", "MC_loop")}
 #| label: MC-path-intervals
 #| echo: false
-#| fig-cap: "Sample path for the Monte Carlo average ($\\alpha = 0.1$) and
-#|  pointwise 95% confidence intervals using either Chebychev's inequality or
-#|  the CLT."
+#| fig-cap: "Sample path for the Monte Carlo average ($\\alpha = 0.1$) and pointwise 95% confidence intervals using either Chebychev's inequality or the CLT."
 #| out-width: "100%"
 #| fig-height: 3
 mu_hat <- cumsum(evaluations) / 1:N
@@ -649,8 +642,8 @@ The confidence bands provided by the CLT are typically more accurate estimates
 of the actual uncertainty than the upper bounds provided by Chebychev's
 inequality.
 
-To illustrate the limitations of Monte Carlo integration we increase $\alpha$
-to \(\alpha = 0.25.\) Recall that for this choice of $\alpha$, the variance is
+To illustrate the limitations of Monte Carlo integration we increase $\alpha$ to
+\(\alpha = 0.25.\) Recall that for this choice of $\alpha$, the variance is
 still finite.
 
 ```{r, dependson=c("MC_hfun", "MC_par"), echo=-(1:2)}
@@ -664,9 +657,7 @@ evaluations <- apply(x, 1, h, alpha)
 ```{r, dependson=c("MC_par", "MC_loop2")}
 #| label: MC-CLT2
 #| echo: false
-#| fig-cap: "Histogram of the log-distribution and sample path for the Monte
-#|  Carlo average $(\\alpha = 0.25)$ with pointwise 95% confidence intervals
-#|  based on the CLT."
+#| fig-cap: "Histogram of the log-distribution and sample path for the Monte Carlo average $(\\alpha = 0.25)$ with pointwise 95% confidence intervals based on the CLT."
 #| out-width: "100%"
 #| fig-height: 3
 mu_hat <- cumsum(evaluations) / 1:N
@@ -694,11 +685,11 @@ gridExtra::grid.arrange(p1, p2, ncol = 2)
 ```
 
 The sample path in Figure \@ref(fig:MC-CLT2) is not carefully selected to be
-pathological. Due to occasional large values, the typical sample path will
-show occasional large jumps, and the variance may easily be grossly over-
-or underestimated. The histogram of the log-distribution of the terms that
-enter into the Monte Carlo average also shows how there is several orders of
-magnitude differences between the typical values and the largest values. Figure
+pathological. Due to occasional large values, the typical sample path will show
+occasional large jumps, and the variance may easily be grossly over- or
+underestimated. The histogram of the log-distribution of the terms that enter
+into the Monte Carlo average also shows how there is several orders of magnitude
+differences between the typical values and the largest values. Figure
 \@ref(fig:MC-CLT3) shows four additional sample paths where the confidence
 interval for $N = 1000$ with one of them completely missing the actual value
 $\mu = 1$, and one producing an extremely wide confidence band due to a single
@@ -711,8 +702,7 @@ via the CLT is unreliable, even though the variance is finite.
 #| echo: false
 #| results: "hide"
 #| out-width: "100%"
-#| fig-cap: "Four sample paths for the Monte Carlo average ($\\alpha = 0.4$) and
-#|  pointwise 95% confidence intervals based on the CLT."
+#| fig-cap: "Four sample paths for the Monte Carlo average ($\\alpha = 0.4$) and pointwise 95% confidence intervals based on the CLT."
 sim <- tibble::tibble(
   x = matrix(rnorm(N * p), N, p),
   evaluations = apply(x, 1, h, alpha = alpha),
@@ -796,15 +786,15 @@ p4 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) +
 gridExtra::grid.arrange(p1, p2, p3, p4, ncol = 2)
 ```
 
-To be fair, it is the choice of a standard multivariate normal distribution
-as the reference distribution for large \(\alpha\) that is problematic rather
-than Monte Carlo integration and importance sampling as such. However, in high
+To be fair, it is the choice of a standard multivariate normal distribution as
+the reference distribution for large \(\alpha\) that is problematic rather than
+Monte Carlo integration and importance sampling as such. However, in high
 dimensions it can be difficult to choose a suitable distribution to sample from.
 
 The difficulty for the specific integral is due to the exponent of the
 integrand, which can become large and positive if $x_k \approx x_{k-1}$ for
-enough coordinates. This happens rarely for independent random variables,
-but large values of rare events can, nevertheless, contribute notably to the
+enough coordinates. This happens rarely for independent random variables, but
+large values of rare events can, nevertheless, contribute notably to the
 integral. The larger $\alpha$ is, the more pronounced is the problem with
 occasional large values of the integrand. It is possible to use importance
 sampling and instead sample from a distribution where the large values are more
@@ -893,9 +883,9 @@ that is, by computing the sum
 \mu = \sum_{x \in \{0,1\}^{18}} 1_B(x) f_p(x)
 \]
 
-where $f_p(x)$ is the point probability of $x$, with $x$ representing which
-of the 18 edges in the graph that fail, and $B$ representing the set of edges
-where node 1 and node 10 are disconnected. By simulating edge failures we can
+where $f_p(x)$ is the point probability of $x$, with $x$ representing which of
+the 18 edges in the graph that fail, and $B$ representing the set of edges where
+node 1 and node 10 are disconnected. By simulating edge failures we can
 approximate the sum as a Monte Carlo average.
 
 The network of nodes can be represented as a graph adjacency matrix $A$ such
@@ -939,9 +929,9 @@ sim_net <- function(Aup, p) {
 
 The core of the implementation above uses the `sample()` function, which can
 sample with replacement from the set $\{0, 1\}$. The vector `ones` contains
-indices of the (upper triangular part of the) adjacency matrix containing a
-`1`, and these positions are replaced by the sampled values before the matrix
-is returned.
+indices of the (upper triangular part of the) adjacency matrix containing a `1`,
+and these positions are replaced by the sampled values before the matrix is
+returned.
 
 It is fairly fast to sample even a large number of random graphs this way.
 
@@ -955,9 +945,9 @@ bench::bench_time(replicate(1e5, {
 }))
 ```
 
-The second function we implement checks network connectivity based on the
-upper triangular part of the adjacency matrix. It relies on the fact that
-there is a path from node 1 to node 10 consisting of $m$ edges if and only if
+The second function we implement checks network connectivity based on the upper
+triangular part of the adjacency matrix. It relies on the fact that there is a
+path from node 1 to node 10 consisting of $m$ edges if and only if
 $(A^m)_{1,10} > 0$. We see directly that such a path needs to consist of at
 least $m = 3$ edges. Also, we do not need to check paths with more than $m = 9$
 edges as they will contain at least one node multiple times and can thus be
@@ -991,10 +981,10 @@ mu_hat
 ```
 
 As this is a random approximation, we should report not only the Monte Carlo
-estimate but also the confidence interval. Since the estimate is an average
-of 0-1-variables, we can estimate the variance, $\sigma^2$, of the individual
-terms using that $\sigma^2 = \mu (1 - \mu)$. We could just as well have used
-the empirical variance, which would give almost the same numerical value as
+estimate but also the confidence interval. Since the estimate is an average of
+0-1-variables, we can estimate the variance, $\sigma^2$, of the individual terms
+using that $\sigma^2 = \mu (1 - \mu)$. We could just as well have used the
+empirical variance, which would give almost the same numerical value as
 $\hat{\mu} (1 - \hat{\mu})$. We use $\hat{\mu} (1 - \hat{\mu})$ to illustrate
 that any (good) estimator of $\sigma^2$ can be used when estimating the
 asymptotic variance.
@@ -1011,8 +1001,8 @@ will node 1 and 10 be disconnected. This suggests that importance sampling can
 be useful if we sample from a probability distribution with a larger probability
 of edge failure.
 
-To implement importance sampling we note that the point probabilities
-(the density w.r.t. counting measure) for sampling the $18$ independent
+To implement importance sampling we note that the point probabilities (the
+density w.r.t. counting measure) for sampling the $18$ independent
 $0$-$1$-variables $x = (x_1, \ldots, x_{18})$ with $\P(X_k = 0) = p$ is
 
 \[
@@ -1079,9 +1069,9 @@ it is a one-off computation.
 The graph is, in fact, small enough for complete enumeration and thus the
 computation of an exact solution. There are $2^{18} = 262\, 144$ different
 networks with any number of the edges failing. To systematically walk through
-all possible combinations of edges failing, we use the function `intToBits`
-that converts an integer to its binary representation for integers from $0$
-to $262\, 144$. This is a quick and convenient way of representing all the
+all possible combinations of edges failing, we use the function `intToBits` that
+converts an integer to its binary representation for integers from $0$ to
+$262\, 144$. This is a quick and convenient way of representing all the
 different fail and non-fail combinations for the edges.
 
 ```{r}
@@ -1113,8 +1103,8 @@ complete comparison, we have used importance sampling with edge fail probability
 ranging from $0.1$ to $0.4$, see Figure \@ref(fig:networkImp). The results show
 that a failure probability of $0.2$ is close to optimal in terms of giving an
 importance sampling estimate with minimal variance. For smaller values, the
-event that 1 and 10 become disconnected is too rare, and for larger values
-the importance weights become too variable. A choice of $0.2$ strikes a good
+event that 1 and 10 become disconnected is too rare, and for larger values the
+importance weights become too variable. A choice of $0.2$ strikes a good
 balance.
 
 (ref:networkCap) Confidence intervals for importance sampling estimates of network nodes 1 and 10 being disconnected under independent edge failures with probability 0.05. The red line is the true probability computed by complete enumeration.
@@ -1186,10 +1176,10 @@ ggplot(MC_estimates, aes(x = factor(p), y = phat, ymin = low, ymax = high)) +
 
 ### Object oriented implementations
 
-Implementations of algorithms that handle graphs and simulate graphs, as in
-the Monte Carlo computations above, can benefit from using an object oriented
-approach. To this end we first implement a so-called *constructor*, which is
-a function that takes the adjacency matrix and the edge failure probability as
+Implementations of algorithms that handle graphs and simulate graphs, as in the
+Monte Carlo computations above, can benefit from using an object oriented
+approach. To this end we first implement a so-called *constructor*, which is a
+function that takes the adjacency matrix and the edge failure probability as
 arguments and returns a list with class label `network`.
 
 ```{r, dependson="network_bench"}
@@ -1225,8 +1215,8 @@ components: the upper triangular part of the adjacency matrix; and the indices
 in that matrix containing a `1`.
 
 The intention is then to write two methods for the network class. A method
-`sim()` that will simulate a graph where some edges have failed, and a
-method `failure()` that will estimate the probability of node 1 and 10 being
+`sim()` that will simulate a graph where some edges have failed, and a method
+`failure()` that will estimate the probability of node 1 and 10 being
 disconnected by Monte Carlo integration. To do so we need to define the two
 corresponding generic functions.
 
@@ -1352,8 +1342,8 @@ bench::mark(
 ```
 
 Once we have taken an object oriented approach, we can also implement methods
-for some standard generic functions, e.g. the `print` function. As this
-generic function already exists, we simply need to implement a method for class
+for some standard generic functions, e.g. the `print` function. As this generic
+function already exists, we simply need to implement a method for class
 `network`.
 
 ```{r}
@@ -1416,9 +1406,9 @@ The layout we have specified makes it easy to recognize the graph.
 plot(net, layout = net_layout, asp = 0)
 ```
 
-We then use two functions from the igraph package to implement simulation of
-a new graph. We need `gsize()`, which gives the number of edges in the graph,
-and we need `delete_edges()`, which removes edges from the graph. Otherwise the
+We then use two functions from the igraph package to implement simulation of a
+new graph. We need `gsize()`, which gives the number of edges in the graph, and
+we need `delete_edges()`, which removes edges from the graph. Otherwise the
 simulation is still based on `sample()`.
 
 ```{r}
@@ -1458,9 +1448,9 @@ system.time(replicate(1e5, {
 ```
 
 One could also implement the function for testing if nodes 1 and 10 are
-disconnected using the `shortest_paths()` function, but this is not faster
-than the simple matrix multiplications used in `discon()` either. However, one
-should be careful not to draw any general conclusions from this. Our graph is
+disconnected using the `shortest_paths()` function, but this is not faster than
+the simple matrix multiplications used in `discon()` either. However, one should
+be careful not to draw any general conclusions from this. Our graph is
 admittedly a small toy example, and we implemented our solutions largely to
 handle this particular graph.
 
@@ -1493,10 +1483,10 @@ $k = 1, \ldots, N$:
 \end{align}
 
 where $U_1, \ldots, U_N$ and $V_1, \ldots, V_N$ are independent and identically
-distributed random variables, and where $F_k$ and $G_k$ are some fixed
-maps. By convention, we let $Z_0 = z_0$ take some fixed value. The equation
-\@ref(eq:HMM-update) is a recursive update equation, which makes the $Z$-s
-form a Markov chain. The equation \@ref(eq:HMM-observation) is known as the
+distributed random variables, and where $F_k$ and $G_k$ are some fixed maps. By
+convention, we let $Z_0 = z_0$ take some fixed value. The equation
+\@ref(eq:HMM-update) is a recursive update equation, which makes the $Z$-s form
+a Markov chain. The equation \@ref(eq:HMM-observation) is known as the
 observation equation, and we generally suppose that we only observe the $Y$-s.
 
 We introduce the notation $Y_{1:k} = (Y_1, \ldots, Y_k)$ and similarly for
@@ -1513,12 +1503,12 @@ where $h$ is some real valued function. Computing the first conditional
 expectation \@ref(eq:HMM-filter) is known as a *filtering* problem, and the
 second \@ref(eq:HMM-smoother) is known as a *smoothing* problem.
 
-We first develop a bit of general theory that will show how the two
-conditional expectations can be expressed as (high-dimensional) integrals
-w.r.t. a distribution whose density is known up to a normalization constant.
-This suggests that we can use importance sampling with standardized weights
-to approximate the integrals. We show by example that the high-dimensional
-nature of the problem leads to similar problems as we encountered in Section
+We first develop a bit of general theory that will show how the two conditional
+expectations can be expressed as (high-dimensional) integrals w.r.t. a
+distribution whose density is known up to a normalization constant. This
+suggests that we can use importance sampling with standardized weights to
+approximate the integrals. We show by example that the high-dimensional nature
+of the problem leads to similar problems as we encountered in Section
 \@ref(hd-int). That is, weights will occasionally be very large, and the
 standardized weights will except for one or a few observations be very small.
 This is known as *weight degeneracy*, and it leads to poor performance of
@@ -1634,11 +1624,11 @@ equation is likewise linear and given as
 Y_k = Z_k + \sigma V_k
 \]
 
-where $V_1, \ldots, V_N$ are i.i.d. standard Gaussian random variables. We
-see that the AR(1) model is a special case of the general hidden Markov models
-considered in this section. In Section \@ref(kalman) we solved filtering
-and smoothing problems for the AR(1) model analytically, and we implemented
-the solution efficiently. Here we will use the AR(1) to illustrate the
+where $V_1, \ldots, V_N$ are i.i.d. standard Gaussian random variables. We see
+that the AR(1) model is a special case of the general hidden Markov models
+considered in this section. In Section \@ref(kalman) we solved filtering and
+smoothing problems for the AR(1) model analytically, and we implemented the
+solution efficiently. Here we will use the AR(1) to illustrate the
 implementation of the sequential importance sampling algorithm, and we can the
 compare the results to those obtained by the analytic solution.
 
