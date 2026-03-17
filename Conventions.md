@@ -28,8 +28,8 @@
 # Protocols, Conventions and FAQ: CSwR
 
 The book Computational Statistics with R is written using
-[bookdown](https://bookdown.org/). It is (will be) published by
-Chapman & Hall/CRC Statistical Science series and is available
+[bookdown](https://bookdown.org/). It is (will be) published by Chapman &
+Hall/CRC Statistical Science series and is available
 [online](https://cswr.nrhstat.org).
 
 This document collects some protocols used for writing the book and developing
@@ -47,8 +47,8 @@ with a remote *public* [copy on GitHub](https://github.com/nielsrhansen/CSwR/).
 Compiled HTML and pdf versions of the book are in the CSwR_html and CSwR_pdf
 directories, respectively, both located in the parent directory of CSwR.
 
-`CSwR_html` is under git version control with a remote *private*
-[copy on GitHub](https://github.com/nielsrhansen/CSwR_html). The
+`CSwR_html` is under git version control with a remote *private* [copy on
+GitHub](https://github.com/nielsrhansen/CSwR_html). The
 [online](https://cswr.nrhstat.org) version is published from this repository via
 [Netlify](https://app.netlify.com/teams/nielsrhansen).
 
@@ -113,8 +113,7 @@ Uses roxygen2 for documentation.
 - $n$ and `n` denote iteration index/number or other integer variables/arguments
 - $i$, $j$, $k$, $l$ are data/parameter indices
 - $x$ and $X$ are (univariate) data variables: Chapters 1, 2, 5, 6, 7,
-- $y$ and $Y$ are (univariate) data variables, used when there is a need for
-  $x$:
+- $y$ and $Y$ are (univariate) data variables, used when there is a need for $x$:
   - Chapters 3 (bivariate data), 4 ($x$ is time)
   - Chapters 8 and 9 (regression on $x$)
   - Chapter 10 ($x$ is unobserved, $y = M(x)$ is observed; potentially
@@ -198,6 +197,16 @@ The code topics/progression in the chapters are as outlined here:
 - Accuracy of results from randomized algorithms
 - S3 objects
 - Rcpp
+
+#### Questions
+
+- Currently we use $w^*$ for normal weights and $w$ for normalized
+  (standardized) weights. Do we want to change this to $w$ for normal weights
+  and $\tilde{w}$ for normalized weights? Or $w$ and $w^*$, respectively?
+  Intuitively, $\tilde{w}$ or $w^*$ seems to be more natural for normalized
+  weights to me, and $w$ for normal weights. $\tilde{w}$ is also more
+  ergonomical when you want the squared normalized weights, which are used in
+  the effective sample size formula.
 
 ### 6. Likelihood and optimization
 
