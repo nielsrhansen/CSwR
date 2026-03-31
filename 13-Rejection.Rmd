@@ -151,8 +151,46 @@ rejecting a sample from $g$, and this is quantified explicitly by $\alpha$ as
 $1 - \alpha$ is the rejection probability. Thus $\alpha$ should preferably be as
 close to one as possible.
 
-::: {.example .boxed}
+In Figure \@ref(fig:rejection-envelope-illustration) we illustrate the concept
+of an envelope by using a Cauchy distribution as proposal for a standard normal
+target. The envelope is the blue dashed curve, and the target density is the
+black curve.
 
+```{r}
+#| label: rejection-envelope-illustration
+#| echo: false
+#| fig-height: 3.2
+#| fig-width: 5
+#| fig-cap: Target density $f$ (black) and envelope $g/\alpha$ (blue dashed)
+#|   for a standard normal target and a Cauchy proposal.
+f_env <- function(x) dnorm(x)
+g_env <- function(x) dcauchy(x)
+
+ratio_fun <- function(x) g_env(x) / f_env(x)
+opt <- optimize(ratio_fun, interval = c(-20, 20))
+alpha_env <- opt$objective
+
+env_df <- tibble(
+  x = seq(-5, 5, length.out = 500),
+  f = f_env(x),
+  envelope = g_env(x) / alpha_env
+) |>
+  tidyr::pivot_longer(c(f, envelope), names_to = "curve", values_to = "value")
+
+ggplot(env_df, aes(x = x, y = value, color = curve, linetype = curve)) +
+  geom_line() +
+  scale_color_manual(
+    values = c(f = "black", envelope = "steelblue"),
+    labels = c(f = "target", envelope = "envelope")
+  ) +
+  scale_linetype_manual(
+    values = c(f = "solid", envelope = "dashed"),
+    labels = c(f = "target", envelope = "envelope")
+  ) +
+  labs(x = "x", y = "Density", color = NULL, linetype = NULL)
+```
+
+::: {.example .boxed}
 Suppose we want to simulate from a $\mathcal{N}(5, 1)$ distribution truncated to
 $(3,6)$. The density of this distribution is
 
@@ -167,10 +205,10 @@ $$
 g(x) = \frac{1}{3} \mathbf{1}_{(3,6)}(x).
 $$
 
-This proposal density fulfills \@ref(eq:gfnull) as $g(x) = 0$ for $x \notin
-(3,6)$ and $f(x) = 0$ for $x \notin (3,6)$ as well. We can find $\alpha > 0$
-such that $\alpha f(x) \leq g(x)$ for all $x$ by noting that the function
-$x \mapsto 3 f(x)$ attains its maximum at $x = 5$ with
+This proposal density fulfills \@ref(eq:gfnull) as $g(x) = 0$ for
+$x \notin (3,6)$ and $f(x) = 0$ for $x \notin (3,6)$ as well. We can find
+$\alpha > 0$ such that $\alpha f(x) \leq g(x)$ for all $x$ by noting that the
+function $x \mapsto 3 f(x)$ attains its maximum at $x = 5$ with
 \[
 3 f(5) = \frac{3}{\sqrt{2\pi}(\Phi(1) - \Phi(-2))} \approx 1.79.
 \]
@@ -184,8 +222,9 @@ $$
 \alpha f(x) \leq \frac{1}{3} = g(x).
 $$
 
-We illustrate the result of rejection sampling in \@ref(fig:rejection-sampling-illustration),
-which shows acceptance and rejection for 1000 simulated points.
+We illustrate the result of rejection sampling in
+\@ref(fig:rejection-sampling-illustration), which shows acceptance and rejection
+for 1000 simulated points.
 
 :::
 
@@ -197,6 +236,7 @@ which shows acceptance and rejection for 1000 simulated points.
 #| fig-cap: Illustration of rejection sampling for a truncated normal target
 #|   density on $(3,6)$, using a uniform proposal on $(3,6)$. Colors show
 #|   whether the points were rejected (orange) or accepted (blue).
+#|   We also show the envelope (dashed black line).
 set.seed(1)
 n <- 1000
 y <- runif(n, 3, 6)
@@ -227,6 +267,12 @@ ggplot() +
     data = df,
     aes(x = y, y = u, color = accepted),
     size = 0.5
+  ) +
+  geom_line(
+    aes(x = x, y = y),
+    data = tibble(x = c(3, 6), y = c(1, 1)),
+    col = "black",
+    linetype = "dashed"
   ) +
   scale_color_manual(
     values = c("dark orange", "steelblue2"),
