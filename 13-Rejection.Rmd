@@ -1,21 +1,21 @@
 # Rejection sampling {#reject-samp}
 
-This chapter deals with a general algorithm for simulating observations
-from a distribution with density $f$. We call $f$ the target density and the
-corresponding distribution is called the target distribution. The idea is
-to simulate *proposals* from a different distribution with density $g$ (the
+This chapter deals with a general algorithm for simulating observations from a
+distribution with density $f$. We call $f$ the target density and the
+corresponding distribution is called the target distribution. The idea is to
+simulate *proposals* from a different distribution with density $g$ (the
 proposal distribution) and then according to a criterion decide to accept or
 reject the proposals. One notable property of rejection sampling is that it only
 requires evaluation of ratios $f(x) / g(x)$ *up to a constant factor*, which
 means that we can implement rejection sampling even when we are not able to
 compute normalization constants for $f$ and $g$.
 
-The theory and resulting algorithm are quite general. The main requirement
-is that the target and the proposal distribution have densities w.r.t. the
-same reference measure. To use the algorithm in practice we also need to be
-able to simulate from the proposal distribution. We first present the general
-theory, and then we demonstrate how to implement rejection sampling for some
-specific probability distributions on $\mathbb{R}$ with densities. In Section
+The theory and resulting algorithm are quite general. The main requirement is
+that the target and the proposal distribution have densities w.r.t. the same
+reference measure. To use the algorithm in practice we also need to be able to
+simulate from the proposal distribution. We first present the general theory,
+and then we demonstrate how to implement rejection sampling for some specific
+probability distributions on $\mathbb{R}$ with densities. In Section
 \@ref(adaptive) we discuss a particular class of proposal distributions on
 $\mathbb{R}$ and how they can be adapted to some target distributions, notably
 when the target distribution has a log-concave density. Our examples will thus
@@ -33,8 +33,8 @@ density $g$ fulfills that
 \end{equation}
 
 We let $X_1, X_2, \ldots$ be i.i.d. with density $g$ on $\mathbb{R}$ and
-$U_1, U_2, \ldots$ be i.i.d. uniformly distributed on $(0,1)$ and independent
-of the $X_i$-s. The collection of $X_i$-s is denoted $\mathbf{Y}$ and the
+$U_1, U_2, \ldots$ be i.i.d. uniformly distributed on $(0,1)$ and independent of
+the $X_i$-s. The collection of $X_i$-s is denoted $\mathbf{Y}$ and the
 collection of $U_i$-s is denoted $\mathbf{U}$. One perspective on rejection
 sampling is that it is a transformation technique, cf. Section \@ref(transform),
 that transforms $(\mathbf{Y}, \mathbf{U})$ to a single random variable with
@@ -136,10 +136,10 @@ Note that when $\alpha f \leq g$ for *densities* $f$ and $g$, then
 \alpha = \int \alpha f(x) \mathrm{d}x \leq \int g(x) \mathrm{d}x = 1,
 \]
 
-whence it follows automatically that $\alpha \leq 1$ whenever $\alpha f$
-is dominated by $g$. The function $g/\alpha$ is called the *envelope* of
-$f$.\index{envelope} The tighter the envelope, the smaller is the probability
-of rejecting a sample from $g$, and this is quantified explicitly by $\alpha$ as
+whence it follows automatically that $\alpha \leq 1$ whenever $\alpha f$ is
+dominated by $g$. The function $g/\alpha$ is called the *envelope* of
+$f$.\index{envelope} The tighter the envelope, the smaller is the probability of
+rejecting a sample from $g$, and this is quantified explicitly by $\alpha$ as
 $1 - \alpha$ is the rejection probability. Thus $\alpha$ should preferably be as
 close to one as possible.
 
@@ -150,9 +150,9 @@ $c, d > 0$ and $\alpha' q \leq p$ for $\alpha' > 0$ then
 \underbrace{\left(\frac{\alpha' d}{c}\right)}_{= \alpha} \ f \leq g.
 \]
 
-The constant $\alpha'$ may be larger than 1, but from the argument above we
-know that $\alpha \leq 1$, and Theorem \@ref(thm:reject) gives that $X_{\sigma}$
-has distribution with density $f$. It appears that we need to compute the
+The constant $\alpha'$ may be larger than 1, but from the argument above we know
+that $\alpha \leq 1$, and Theorem \@ref(thm:reject) gives that $X_{\sigma}$ has
+distribution with density $f$. It appears that we need to compute the
 normalizing constants to implement rejection sampling. However, observe that
 
 \[
@@ -181,8 +181,8 @@ than zero, we can take
 
 We can in practice often find this value by minimizing $p(x)/q(x)$. If the
 minimum is zero, there is no $\alpha'$, and $p$ cannot be used to construct an
-envelope. If the minimum is strictly positive it is the best possible choice
-of $\alpha'$.
+envelope. If the minimum is strictly positive it is the best possible choice of
+$\alpha'$.
 
 ### Rejection sampling from the von Mises distribution {#vMsim}
 
@@ -193,9 +193,9 @@ distribution on $(-\pi, \pi]$ with density
 f(x) \propto e^{\kappa \cos(x - \mu)}
 \]
 
-for parameters $\kappa > 0$ and $\mu \in (-\pi, \pi]$. The parameter $\mu$
-is a location parameter, and we fix $\mu = 0$ in the following. Simulating
-random variables with $\mu \neq 0$ can be achieved by (wrapped) translation of
+for parameters $\kappa > 0$ and $\mu \in (-\pi, \pi]$. The parameter $\mu$ is a
+location parameter, and we fix $\mu = 0$ in the following. Simulating random
+variables with $\mu \neq 0$ can be achieved by (wrapped) translation of
 variables with $\mu = 0$.
 
 The target density is thus $f(x)  \propto e^{\kappa \cos(x)}$. In this section
@@ -280,9 +280,9 @@ tmp <- von_mises_loop(100, kappa = 5) # Force JIT
 bench::system_time(von_mises_loop(100000, kappa = 5))
 ```
 
-Though the implementation can easily simulate 100,000 variables in less than
-one second, it might still be possible to improve it. To investigate what most
-of the runtime is spent on we use the line profiling tool as implemented in the
+Though the implementation can easily simulate 100,000 variables in less than one
+second, it might still be possible to improve it. To investigate what most of
+the runtime is spent on we use the line profiling tool as implemented in the
 profvis package, see also Section \@ref(profiling).
 
 ```{r, echo=4}
@@ -318,8 +318,8 @@ perhaps, expected that this should take some time, but that it takes so much
 more time than computing the ratio, say, used for the rejection test is a bit
 surprising.
 
-The culprit is `runif()` that has some overhead associated with each call.
-The function performs better if called once to return a vector than if called
+The culprit is `runif()` that has some overhead associated with each call. The
+function performs better if called once to return a vector than if called
 repeatedly as above to return just single numbers. We could rewrite the
 rejection sampler to make better use of `runif()`, but it would make the code a
 bit more complicated because we do not know upfront how many uniform variables
@@ -329,8 +329,8 @@ inefficiency of generating random numbers sequentially in R. We will not pursue
 that idea here but instead focus on a fully vectorized implementation.
 
 To write a runtime efficient R function we need to do more than just vectorize
-the generation of random numbers. We need to turn the entire rejection
-sampler into a vectorized computation. As all computations required are easily
+the generation of random numbers. We need to turn the entire rejection sampler
+into a vectorized computation. As all computations required are easily
 vectorized, it is straightforward to do so.
 
 ```{r}
@@ -343,14 +343,14 @@ von_mises_random <- function(N, kappa) {
 }
 ```
 
-The only downside of the implementation above is that it returns a random
-number of accepted proposals instead of `n` observations. Since we do not know
-upfront how many rejections there will be, there is no way around a loop if
-we want to convert `von_mises_random()` into a function that returns a fixed
-number of observations. We will need to solve this problem for several other
+The only downside of the implementation above is that it returns a random number
+of accepted proposals instead of `n` observations. Since we do not know upfront
+how many rejections there will be, there is no way around a loop if we want to
+convert `von_mises_random()` into a function that returns a fixed number of
+observations. We will need to solve this problem for several other
 distributions, so we implement a general solution that can convert any sampler
-generating a random number of observations into a sampler that returns a
-fixed number of observations. The solution is a *function operator*, much like
+generating a random number of observations into a sampler that returns a fixed
+number of observations. The solution is a *function operator*, much like
 `Vectorize()`, that takes a function and returns a function.
 
 The implementation below returns a sampler based on the function argument `rng`.
@@ -414,16 +414,18 @@ overhead of doing so in C++.
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-NumericVector von_mises_cpp(int N, double kappa) {
+NumericVector
+von_mises_cpp(int N, double kappa)
+{
   NumericVector x(N);
   double x0;
   bool reject;
 
-  for(int i = 0; i < N; ++i) {
+  for (int i = 0; i < N; ++i) {
     do {
-      x0 = R::runif(- M_PI, M_PI);
+      x0 = R::runif(-M_PI, M_PI);
       reject = R::runif(0, 1) > exp(kappa * (cos(x0) - 1));
-    } while(reject);
+    } while (reject);
     x[i] = x0;
   }
 
@@ -431,10 +433,10 @@ NumericVector von_mises_cpp(int N, double kappa) {
 }
 ```
 
-We can test the vectorized implementation as well as the C++ implementation
-by comparing simulated variables to the theoretical distribution as above.
-Here we present instead a test of whether they produce variables from the
-same distribution via a QQ-plot. Figure \@ref(fig:vMsim3alt) shows QQ-plots of
+We can test the vectorized implementation as well as the C++ implementation by
+comparing simulated variables to the theoretical distribution as above. Here we
+present instead a test of whether they produce variables from the same
+distribution via a QQ-plot. Figure \@ref(fig:vMsim3alt) shows QQ-plots of
 variables simulated by the Rccp implementation against variables simulated by
 the vectorized R implementation. The points fall roughly on a straight line with
 slope 1 and intercept 0, which confirms that the implementations simulate from
@@ -519,10 +521,10 @@ options(digits = old_options$digits)
 ```
 
 The C++ implementation and the vectorized R implementation have about the same
-runtime, while the implementation in `von_mises_loop()`, using a for-loop in
-R, is a factor 40 or so slower than the two others. Rejection sampling is a
-good example of an algorithm for which a naive loop-based R implementation
-performs rather poorly in terms of runtime, while a vectorized implementation is
+runtime, while the implementation in `von_mises_loop()`, using a for-loop in R,
+is a factor 40 or so slower than the two others. Rejection sampling is a good
+example of an algorithm for which a naive loop-based R implementation performs
+rather poorly in terms of runtime, while a vectorized implementation is
 competitive with an Rcpp implementation.
 
 ### Rejection sampling from the gamma distribution {#gammasim}
@@ -576,10 +578,10 @@ $\alpha' = 1$.
 
 The implementation of a rejection sampler based on this analysis is relatively
 straightforward. The rejection sampler will simulate from the distribution with
-density $f$ by simulating from the Gaussian distribution (the envelope). For
-the rejection step we need to implement $q$. Finally, we also need to implement
-$t$ to transform the result from the rejection sampler to be gamma distributed.
-The rejection sampler is otherwise implemented as for the vectorized von Mises
+density $f$ by simulating from the Gaussian distribution (the envelope). For the
+rejection step we need to implement $q$. Finally, we also need to implement $t$
+to transform the result from the rejection sampler to be gamma distributed. The
+rejection sampler is otherwise implemented as for the vectorized von Mises
 distribution except that we lower the argument `fact` from its default value
 `1.2` to `1.1`. By doing so the initial batch of proposals will be 10% larger
 than the desired sample size, and a second batch is rarely generated if the
@@ -616,9 +618,7 @@ respective theoretical densities.
 
 ```{r, dependson="gammasim"}
 #| label: gammaBench
-#| fig-cap: "Histograms of simulated gamma distributed variables with shape
-#|  parameters $r = 8$ (left) and $r = 1$ (right) with corresponding theoretical
-#|  densities (blue)."
+#| fig-cap: "Histograms of simulated gamma distributed variables with shape parameters $r = 8$ (left) and $r = 1$ (right) with corresponding theoretical densities (blue)."
 #| echo: false
 #| fig-pos: "h"
 #| fig-show: "hold"
@@ -654,23 +654,21 @@ y <- gamma_vec(100000, 4, cb = gamma_tracer$trace)
 y <- gamma_vec(100000, 1, cb = gamma_tracer$trace)
 ```
 
-We observe that the acceptance rates are large with $r = 1$ being the worst
-case but still with more than 95% acceptances. For the larger values of $r$, the
+We observe that the acceptance rates are large with $r = 1$ being the worst case
+but still with more than 95% acceptances. For the larger values of $r$, the
 acceptance rates are all above 99%, thus rejection is rare.
 
-To better understand why rejection is rare for this rejection sampler,
-we can visually compare $q$ to the unnormalized Gaussian density. Figure
-\@ref(fig:densComparison) does so for $r = 1$ and $r = 8$, and it shows that
-the Gaussian density is a very tight envelope---even for $r = 1$. For $r = 8$
-we can only really see a difference between the target and the envelope on the
+To better understand why rejection is rare for this rejection sampler, we can
+visually compare $q$ to the unnormalized Gaussian density. Figure
+\@ref(fig:densComparison) does so for $r = 1$ and $r = 8$, and it shows that the
+Gaussian density is a very tight envelope---even for $r = 1$. For $r = 8$ we can
+only really see a difference between the target and the envelope on the
 log-density scale, and these differences are areas of the sample space where
 there is very little probability mass anyway.
 
 ```{r}
 #| label: densComparison
-#| fig-cap: "Comparisons of the Gaussian proposal (red) and the target density
-#|  (blue) used for simulating gamma distributed variables via a transformation
-#|  for two different values of the shape parameter."
+#| fig-cap: "Comparisons of the Gaussian proposal (red) and the target density (blue) used for simulating gamma distributed variables via a transformation for two different values of the shape parameter."
 #| echo: false
 #| fig-show: "hold"
 #| out-width: "100%"
@@ -759,9 +757,9 @@ from and have a density that is fast to evaluate. It is not obvious how to find
 such an envelope for an arbitrary target density $f$.
 
 This section develops a general scheme for the construction of proposal
-distributions on $\mathbb{R}$ with piecewise log-affine densities. The scheme
-is particularly useful for densities that are either log-concave or log-convex.
-The scheme leads to analytically manageable formulas for the envelope, its
+distributions on $\mathbb{R}$ with piecewise log-affine densities. The scheme is
+particularly useful for densities that are either log-concave or log-convex. The
+scheme leads to analytically manageable formulas for the envelope, its
 corresponding distribution function and its inverse, and as a result it is fast
 to simulate proposals from these distributions and evaluate the envelope as
 needed in the accept-reject step.
@@ -776,8 +774,8 @@ $I \subseteq \mathbb{R}$. Let
   I_m & = (z_{m-1}, z_m) 
 \end{align*}
 
-be non-empty subintervals of $I$ forming a partition of $I$. That is, we
-assume that $I = (z_0, z_m)$ and that $z_0 < z_1 < \ldots z_{m-1} < z_m$. Then
+be non-empty subintervals of $I$ forming a partition of $I$. That is, we assume
+that $I = (z_0, z_m)$ and that $z_0 < z_1 < \ldots z_{m-1} < z_m$. Then
 endpoints $z_0$ and $z_m$ may be $- \infty$ and $+ \infty$, respectively. For
 $a_i, b_i \in \mathbb{R}$ for $i = 1, \ldots, m$ we define the piecewise affine
 function
@@ -793,8 +791,8 @@ d = \int_I e^{V(x)} \mathrm{d} x < \infty
 (\#eq:cfinite)
 \end{equation}
 
-then $g(x) = d^{-1}e^{V(x)}$ is a density for a probability
-distribution on the interval $I$, and this density is piecewise
+then $g(x) = d^{-1}e^{V(x)}$ is a density for a probability distribution on the
+interval $I$, and this density is piecewise
 log-affine.\index{piecewise log-affine} The integrability condition
 \@ref(eq:cfinite) holds if and only if
 
@@ -809,11 +807,11 @@ The distribution function for such a probability distribution is given by
 G(x) = \frac{1}{d} \int_{z_0}^x e^{V(z)} \mathrm{d}z.
 \]
 
-To simulate from a distribution with piecewise log-affine density, we can
-use Theorem \@ref(thm:inverse-distribution-function) and transform uniformly
+To simulate from a distribution with piecewise log-affine density, we can use
+Theorem \@ref(thm:inverse-distribution-function) and transform uniformly
 distributed variables by the inverse distribution function. It requires a little
-bookkeeping, but is otherwise straightforward. Define for $i = 1, \ldots, m$
-the functions
+bookkeeping, but is otherwise straightforward. Define for $i = 1, \ldots, m$ the
+functions
 
 \[
 H_i(x) = \int_{z_{i-1}}^x e^{a_i z + b_i} \mathrm{d} z,
@@ -881,14 +879,14 @@ the proposal.
 
 ### Log-concave densities {#log-concave-dens}
 
-In this section we give a systematic construction of piecewise
-log-affine proposal densities for [log-concave target
+In this section we give a systematic construction of piecewise log-affine
+proposal densities for [log-concave target
 densities](https://en.wikipedia.org/wiki/Logarithmically_concave_function#Log-concave_distributions),
 which form a relatively large class of unimodal densities.
 
-We suppose that $f : I \to (0, \infty)$ is (proportional to) a
-continuously differentiable, strictly positive and log-concave target
-density on the open interval $I \subseteq \mathbb{R}$. For any partition
+We suppose that $f : I \to (0, \infty)$ is (proportional to) a continuously
+differentiable, strictly positive and log-concave target density on the open
+interval $I \subseteq \mathbb{R}$. For any partition
 $I_1, \ldots, I_m \subseteq I$ as above and any collection of points
 $y_1 < y_2 < \ldots < y_{m}$ with $y_i \in I_i$ we define
 
@@ -919,11 +917,11 @@ log-affine density proportional to $e^{V(x)}$ can then be used as proposal
 density for rejection sampling from $f$ with $\alpha' = 1$.
 
 The bounds are constructed so that $f(x_i) = e^{V(x_i)}$ for $i = 1, \ldots, m$,
-thus the envelope touches the target density and we cannot increase
-$\alpha'$ beyond $1$. We can, however, tighten the envelope by adapting the
-boundary points $z_1, \ldots, z_{m-1}$ of the $I_i$-intervals to the points
-$y_1, \ldots, y_m$. The rejection probability is minimized if $a_i x + b_i$
-is minimal over $I_i$ among all the affine upper bounds. By the log-concavity,
+thus the envelope touches the target density and we cannot increase $\alpha'$
+beyond $1$. We can, however, tighten the envelope by adapting the boundary
+points $z_1, \ldots, z_{m-1}$ of the $I_i$-intervals to the points
+$y_1, \ldots, y_m$. The rejection probability is minimized if $a_i x + b_i$ is
+minimal over $I_i$ among all the affine upper bounds. By the log-concavity,
 $a_1 \geq a_2 \geq \ldots \geq a_m$, and for $a_{i+1} < a_i$ we can choose
 
 \[
@@ -936,16 +934,16 @@ corresponding tangents to the graph of $\log(f)$ intersect.
 
 For log-concave densities, the contructions above give us, for any fixed
 collection of points $y_1 < \ldots < y_m$ in $I$, a tight piecewise log-affine
-envelope. It is obtained by first computing the $a_i$-s and $b_i$-s and then
-the $z_i$-s.
+envelope. It is obtained by first computing the $a_i$-s and $b_i$-s and then the
+$z_i$-s.
 
-For some applications, notably when simulating from a posterior distribution
-for a large dataset within a Bayesian model framework, the target density $f$
-might be expensive to evaluate. If $f$ is log-concave, we can also bound it from
-below by a piecewise log-affine function, but using chords instead of tangents,
-similarly to the construction in Example \@ref(exm:log-convex-density).
-Such a lower bound, which is cheap to evaluate, could make the accept-reject
-step faster. It is also possible to choose the points $y_1 < \ldots < y_m$
+For some applications, notably when simulating from a posterior distribution for
+a large dataset within a Bayesian model framework, the target density $f$ might
+be expensive to evaluate. If $f$ is log-concave, we can also bound it from below
+by a piecewise log-affine function, but using chords instead of tangents,
+similarly to the construction in Example \@ref(exm:log-convex-density). Such a
+lower bound, which is cheap to evaluate, could make the accept-reject step
+faster. It is also possible to choose the points $y_1 < \ldots < y_m$
 automatically and by an adaptive algorithm. We will not pursue such potential
 improvements and generalizations, see [@Gilks:1992] for details.
 
@@ -1335,9 +1333,9 @@ trace_sum[trace_sum$l >= 10000, ]
 We see that compared to using the uniform density as envelope, these adaptive
 envelopes are generally tighter and leads to fewer rejections. Even tighter
 envelopes are possible by using more than four intervals, but it is, of course,
-always a good question how the added complexity and bookkeeping induced by
-using more advanced and adaptive envelopes affect runtime. It is even a good
-question if our current adaptive implementation will outperform our much simpler
+always a good question how the added complexity and bookkeeping induced by using
+more advanced and adaptive envelopes affect runtime. It is even a good question
+if our current adaptive implementation will outperform our much simpler
 implementation that used the uniform envelope.
 
 ```{r, dependson=c("vM-rejection-adaptive", "vM-rejection-fast"), echo=2}
@@ -1354,19 +1352,19 @@ bench::mark(
 options(digits = old_options$digits)
 ```
 
-The results from the benchmark show that the adaptive implementation has
-runtime comparable to but slightly slower than using the uniform proposal. With
+The results from the benchmark show that the adaptive implementation has runtime
+comparable to but slightly slower than using the uniform proposal. With
 $x_1 = -0.4$ and $x_2 = 0.4$ and $\kappa = 5$ we found above that the acceptance
-rate was about 80% with the adaptive envelope, while it was below 20% when
-using the uniform envelope. A naive computation would thus suggest a speedup of
-a factor 4, but using the adaptive envelope there is actually no speedup with
-the current implementation. It is left as an exercise to implement the adaptive
+rate was about 80% with the adaptive envelope, while it was below 20% when using
+the uniform envelope. A naive computation would thus suggest a speedup of a
+factor 4, but using the adaptive envelope there is actually no speedup with the
+current implementation. It is left as an exercise to implement the adaptive
 rejection sampler in Rcpp to test if any speedup can be obtained in this way.
 
 The benchmarks above show that when comparing algorithms and their
 implementations we should not get too focused on surrogate performance
-quantities. The acceptance rate is a surrogate for actual runtime. It might
-in principle be of interest to increase this probability, but if it is at the
+quantities. The acceptance rate is a surrogate for actual runtime. It might in
+principle be of interest to increase this probability, but if it is at the
 expense of additional computations it might not be worth the effort in terms of
 actual runtime.
 
@@ -1399,12 +1397,12 @@ f(x) = x^{\alpha - 1}(1 - x)^{\beta - 1}
 
 with shape parameters $\alpha,\beta > 1$.
 
-Construct a piecewise log-affine envelope using tangents at two
-points $y_1 < y_2$ and the intersection point formula in Section
+Construct a piecewise log-affine envelope using tangents at two points
+$y_1 < y_2$ and the intersection point formula in Section
 \@ref(log-concave-dens).
 
-Implement a rejection sampler based on this envelope and use it to
-generate samples of size $10^4$ for two different parameter choices (e.g.,
+Implement a rejection sampler based on this envelope and use it to generate
+samples of size $10^4$ for two different parameter choices (e.g.,
 $(\alpha,\beta) = (3,5)$ and $(\alpha,\beta) = (2,8)$). Repeat for at least two
 different choices of $(y_1, y_2)$ and compare acceptance rates and histograms.
 :::
