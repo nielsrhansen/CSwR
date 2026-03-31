@@ -1,3 +1,14 @@
+```{r}
+#| label: stochopt-setup
+#| include: false
+library(tidyverse)
+library(patchwork)
+
+knitr::opts_chunk$set(
+  cache = TRUE
+)
+```
+
 # Stochastic optimization {#stochopt}
 
 Numerical optimization involves different trade-offs such as an
@@ -285,9 +296,8 @@ p1 <- ggplot(grid_par, aes(n, rate, color = factor(K), linetype = factor(a))) +
 #  geom_point(size = 2) +
 #  scale_x_log10() +
 #  scale_y_log10("Learning rate") +
-  scale_color_discrete("K:") +
-  scale_linetype_discrete("a:") +
   theme(legend.position = "top", legend.box="vertical", legend.margin=margin()) +
+  labs(y = "Rate", color = "K:", linetype = "a:") +
   guides(color = guide_legend(order = 1), linetype = guide_legend(order = 2))
 
 grid_par <- expand.grid(
@@ -306,12 +316,12 @@ p2 <- ggplot(grid_par, aes(n, rate, color = factor(K), linetype = factor(a))) +
 #  scale_x_log10() +
 #  scale_y_log10("Learning rate") +
   ylab("") +
-  scale_color_discrete("K:", labels = c(quote(10^4), quote(10^5), quote(10^6))) +
-  scale_linetype_discrete("a:") +
+  scale_color_discrete(labels = c(quote(10^4), quote(10^5), quote(10^6))) +
+  labs(y = "Rate", color = "K:", linetype = "a:") +
   theme(legend.position = "top", legend.box="vertical", legend.margin=margin()) +
   guides(color = guide_legend(order = 1), linetype = guide_legend(order = 2))
 
-gridExtra::grid.arrange(p1, p2, ncol = 2)
+p1 + p2 + plot_layout(axes = "collect")
 ```
 
 The parameter $\gamma_0$ determines the initial baseline rate, and
@@ -729,9 +739,9 @@ ggplot(aes(n, value, color = Parameter)) +
   geom_hline(data = hline_data, aes(yintercept = beta0), color = "blue") + 
   geom_hline(data = hline_data, aes(yintercept = beta1), color = "red") + 
   geom_hline(yintercept = beta_true[1], linetype = 2, alpha = 0.5) + 
-  geom_hline(yintercept =  beta_true[2], linetype = 2, alpha = 0.5) + 
+  geom_hline(yintercept = beta_true[2], linetype = 2, alpha = 0.5) + 
   geom_point(alpha = 0.5, shape = 16, size = 2) + 
-  ylim(c(1.5, 3.5)) + 
+  ylim(c(1.5, 3.5)) +
   ylab("Parameter value") +
   facet_wrap("N") +
   scale_color_manual(values = c("blue", "red"), labels = c(expression(beta[0]), expression(beta[1])))
