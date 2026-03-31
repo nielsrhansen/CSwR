@@ -6,7 +6,7 @@
 - [ ] Rewrite Chapter 4. Downplay running mean, generalize to convolution,
       rewrite Fourier part and include convolutions using FFT, improve section
       on Kalman filter and smoothing.
-- [ ] Figure to illustrate Example 6.1
+- [x] Figure to illustrate Example 6.1
 - [ ] Rewrite Chapter 7, uniform figure usage, change network layout, finish
       section on particle filters.
 - [ ] Improve examples on mixtures and mixed models

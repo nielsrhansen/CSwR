@@ -138,6 +138,91 @@ yields
 and the density for the distribution of $X_{\sigma}$ is, indeed, $f$.
 :::
 
+::: {.example .boxed}
+
+Suppose we want to simulate from a $\mathcal{N}(5, 1)$ distribution truncated to
+$(3,6)$. The density of this distribution is
+
+$$
+f(x) = \frac{\phi(x - 5)}{\Phi(1) - \Phi(-2)} \mathbf{1}_{(3,6)}(x),
+$$
+
+We can use the uniform distribution on $(3,6)$ as proposal distribution. It has
+density
+
+$$
+g(x) = \frac{1}{3} \mathbf{1}_{(3,6)}(x).
+$$
+
+This proposal density fulfills \@ref(eq:gfnull) as $g(x) = 0$ for $x \notin
+(3,6)$ and $f(x) = 0$ for $x \notin (3,6)$ as well. We can find $\alpha > 0$
+such that $\alpha f(x) \leq g(x)$ for all $x$ by noting that the function
+$x \mapsto 3 f(x)$ attains its maximum at $x = 5$ with
+\[
+3 f(5) = \frac{3}{\sqrt{2\pi}(\Phi(1) - \Phi(-2))} \approx 1.79.
+\]
+Hence, with
+\[
+\alpha = \frac{1}{\sup_x 3 f(x)} =
+\frac{\sqrt{2\pi}(\Phi(1) - \Phi(-2))}{3},
+\]
+
+$$
+\alpha f(x) \leq \frac{1}{3} = g(x).
+$$
+
+We illustrate the result of rejection sampling in \@ref(fig:rejection-sampling-illustration),
+which shows acceptance and rejection for 1000 simulated points.
+
+:::
+
+```{r}
+#| label: rejection-sampling-illustration
+#| echo: false
+#| fig-height: 3.5
+#| fig-width: 5
+#| fig-cap: Illustration of rejection sampling for a truncated normal target
+#|   density on $(3,6)$, using a uniform proposal on $(3,6)$. Colors show
+#|   whether the points were rejected (orange) or accepted (blue).
+set.seed(1)
+n <- 1000
+y <- runif(n, 3, 6)
+phi <- function(z) dnorm(z)
+Z <- pnorm(1) - pnorm(-2)
+f <- function(x) dnorm(x, mean = 5, sd = 1) / Z
+g <- function(x) dunif(x, min = 3, max = 6)
+alpha <- sqrt(2 * pi) * Z / 3
+ratio <- function(x) alpha * f(x) / g(x)
+u <- runif(n, 0, 1)
+
+accepted <- u <= ratio(y)
+df <- data.frame(y = y, u = u, accepted = accepted)
+
+curve_df <- data.frame(
+  x = seq(3, 6, length.out = 200),
+  ratio = ratio(seq(3, 6, length.out = 200))
+)
+
+ggplot() +
+  geom_area(
+    data = curve_df,
+    aes(x = x, y = ratio),
+    col = "black",
+    fill = "grey90"
+  ) +
+  geom_point(
+    data = df,
+    aes(x = y, y = u, color = accepted),
+    size = 0.5
+  ) +
+  scale_color_manual(
+    values = c("dark orange", "steelblue2"),
+    labels = c("Rejected", "Accepted")
+  ) +
+  labs(x = "y", y = "U", color = NULL) +
+  theme(legend.position = "right")
+```
+
 Note that when $\alpha f \leq g$ for *densities* $f$ and $g$, then
 
 \[
