@@ -1625,18 +1625,124 @@ The *actual* reason for why vectorization often help therefore has nothing at
 all to do with vectorization itself, but is instead that they are implemented in
 a compiled language. And it is this property that we should try to profit from.
 
+<!-- TODO: add a part on using other packages that provide fast functions -->
+
 ### Writing compiled code in C++ with Rcpp
 
 Sometimes the bottlenecks in our R code cannot be easily mitigated by relying on
 R's built-in functions. Examples include complicated for loops and recursive
-functions. Sometimes, trying to write R code that is fast may also lead to code
-that is difficult to read and understand. In these cases, the solution is often
-to write the critical parts of the code in a compiled language. R has built-in
-support for calling multiple compiled languages, such as C, C++, and Fortran.
-Doing this with the built-in functions `.C()`, `.Call()`, and `.Fortran()` is,
-however, seldom ergonomic. Thankfully, it is much easier to write compiled code
-in C++ and call it from R using the Rcpp package, which is what we will briefly
-introduce here.
+functions for which there are no built-in functions to rely on. Other times,
+writing performant R code can require you to sacrifice readability and
+maintainability.
+
+In these cases, the solution is often to write the critical parts of the code in
+a compiled language. R has built-in support for calling multiple compiled
+languages, such as C, C++, and Fortran. Doing this with the built-in functions
+`.C()`, `.Call()`, and `.Fortran()` is, however, far from ergonomic. Thankfully,
+it is much easier to write compiled code in C++ and call it from R using the
+Rcpp package, which is what we will briefly introduce here.
+
+### Parallelization
+
+### Storage modes
+
+An often overlooked aspect of performance is how you store your data. Underneath
+this all lies the fact that any object that needs to persist needs to be stored
+somewhere in the computer's memory. If you, for instance, need to store a vector
+of numbers, then you need to allocate a chunk of memory for that vector. You can
+think of the memory as a long row of boxes, and each box can hold a number. When
+you create a vector of numbers, R allocates a chunk of memory for that vector
+and stores the numbers in the boxes.
+
+This memory has no sense of two-dimensionality, so even if you want to store a
+matrix, R needs to store its data as a long vector (plus some additional
+information about the dimensions of the matrix). The way R stores matrices is by
+filling the boxes is called *column-major* order, which means that the first
+column of the matrix is stored in the first boxes, then the second column, and
+so on.
+
+For technical reasons, accessing data that is stored in a contiguous chunk of
+memory is much faster than accessing data that is stored in a non-contiguous
+way. This means that if you want to perform operations on a matrix, it is often
+much faster to access the data column-wise than row-wise.
+
+Let's illustrate this with a simple example of matrix-vector multiplication. We
+will compare three different implementations of the matrix-vector product, which
+all compute the same result but differ in how they access the data of the
+matrix:
+
+1. Access rows
+
+Let's say we want to compute the product of a matrix `x` and a vector `y`.
+
+We access rows, then transpose.
+
+```{r}
+#| label: f1-code
+f1 <- function(x, y) {
+  n <- NROW(x)
+  z <- double(n)
+
+  for (i in seq_len(n)) {
+    z[i] <- crossprod(x[i, ], y)
+  }
+
+  z
+}
+```
+
+#### Strategy 2
+
+Transpose first, then access columns.
+
+```{r}
+#| label: f2-code
+f2 <- function(x, y) {
+  n <- NROW(x)
+  x_t <- t(x)
+  z <- double(n)
+
+  for (i in seq_len(n)) {
+    z[i] <- x_t[, i] %*% y
+  }
+
+  z
+}
+```
+
+### Strategy 3
+
+Access columns directly, update sums together.
+
+```{r}
+#| label: f3-code
+f3 <- function(x, y) {
+  n <- NROW(x)
+  p <- NCOL(x)
+  z <- double(n)
+
+  for (i in seq_len(p)) {
+    z <- z + x[, i] * y[i]
+  }
+
+  z
+}
+```
+
+```{r}
+#| label: bench-matvec
+#| fig-height: 3.4
+#| fig-cap: Benchmark results for three different implementations of
+#|   matrix-vector multiplication.
+n <- 1e3
+p <- 1e1
+
+x <- matrix(rnorm(n * p), n)
+y <- matrix(rnorm(p), p, 1)
+
+bench::mark(f1(x, y), f2(x, y), f3(x, y)) |>
+  plot()
+```
 
 ### The perils and pitfalls of benchmarking {#perils}
 
