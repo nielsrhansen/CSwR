@@ -1490,12 +1490,153 @@ that are responsible for the majority of the runtime or memory usage. Once we
 have identified these parts using tools for benchmarking, profiling and tracing
 our code, we can begin to optimize the implementation of the critical parts.
 
-- Dealt with throughout the book
-- Mention parallel computations
+When we, however, do in fact need to optimize our R code, there are many
+techniques available for doing so. Broadly speaking, we could categorized these
+techniques into three categories:
 
-### Rcpp
+1) General techniques for optimizing code, which apply to any computer language,
+   such as avoiding unnecessary copies, storing data efficiently, and
+   parallelizing computations.
+2) R-specific techniques, which are based on the specific features of the R
+   language.
+3) Context-specific techniques, which are based on the specific problem we are
+   trying to solve, and include using problem-specific algorithms and data
+   structures.
 
-Use the mean_numeric and mean_complex examples.
+The last of these categories is often the most important one and often lead to
+the most significant gains. We will cover these strategies throughout the book
+as we go. In the sequel, we will instead focus on the former two and here
+provide some general guidelines for how to improve performance with respect to
+these.
+
+We will start by discussing some R-specific techniques for improving
+performance. But firs, we need to understand some basics about how R code is
+executed and what happens, under the hood, when you evaluate an R expression.
+This will help you understand why some R code is slow and how to make it faster.
+
+When you run a piece of R code, it is not directly available in a form that the
+computer can execute. The reason for this is that the computer really only
+understands binary machine code---ones and zeros. And to make your R script
+executable, R needs to first *interpret* the code into machine code. What R does
+is to first parse your code into an internal representation and then dispatch
+your instructions to programs that already are in a binary form that the
+computer can execute.
+
+This process is not unique to R in any way. Any computer language needs *some*
+kind of outer layer that translates your instructions into machine code. But how
+much interpretation is needed and how efficient the translation is can differ a
+lot between different languages. Generally speaking, the more abstract and
+high-level a language is, the more interpretation is needed, and R is a
+high-level language with complex behavior and intricate abstractions. These
+abstractions and features are what make R a powerful and flexible language, but
+it also means that R code is often quite slow.
+
+The alternative to interpretation is *compilation*, which means that the
+translation of your code into machine code is done before you run the code.
+Then, at run time, the computer can "bypass" the interpretation step and
+directly execute the machine code. This will typically be much faster and is the
+reason for why compiled code usually outperforms interpreted code. And in
+addition to having the binary code available, the compiler can also optimize the
+code during compilation, for instance by removing unnecessary computations or by
+rearranging computations in a more efficient way. As an added bonus, compilation
+also catches some types of errors early, which can be helpful for debugging.
+
+You might wonder why we are bothering with interpreted languages (like R) at all
+if compiled code is both faster and safer. The reason is that interpreted
+languages are often much easier to write and to read than compiled languages.
+Compiled languages also require you to re-compile your code every time you make
+a change, which can be a tedious process. For these reasons, it is seldom a good
+strategy to try to speed up your R code by rewriting all of it in a compiled
+language. The key strategy is instead to try to identify the bottlenecks in your
+R code and then to optimize those parts.
+
+### Using compiled functions in R
+
+Tapping into the power of compiled code doesn't necessarily require you to
+rewrite your code in a compiled language. The reason for that is that R is
+itself partly implemented in C, Fortran, and C++ (all compiled languages) and
+knowing how to tap into that power can be a very effective way to speed up your
+code.
+
+For a simple example of how to tap into the power of compiled code, we can
+compare the runtime of a for-loop-based implementation of the mean function with
+the built-in `mean()`.
+
+```{r}
+#| label: vectorized-mean
+#| fig-height: 3
+#| fig-cap: Benchmarking the runtime of a simple implementation of the mean
+#|   function with a for loop against the built-in `mean()` function, which is
+#|   implemented in C.
+my_mean <- function(x) {
+  x_mean <- 0
+
+  for (i in seq_along(x)) {
+    x_mean <- x_mean + x[i]
+  }
+
+  x_mean
+}
+
+bench::mark(
+  my_mean = my_mean(rnorm(1e6)),
+  base_mean = mean(rnorm(1e6)),
+  check = FALSE
+) |>
+  plot()
+```
+
+As you can see from Figure\ \@ref(fig:vectorized-mean), the built-in `mean()` is
+much faster than our simple implementation. Many people call this kind of
+optimization *vectorization*, because it typically involves replacing loops with
+vectorized functions (functions that operate on vectors)---but that notion is
+misleading. It is true that vectorized functions are often much faster than
+R-based for loops, but the reason for that is not that they operate on vectors
+or eschew the use of loops. On the contrary, many vectorized functions are
+implemented with loops in C or Fortran. Moreover, many R functions that are
+vectorized in fact are implemented in R-based loops, which means that they are
+not faster than hand-written loops. In fact, the opposite if often the case, as
+we will illustrate next.
+
+```{r}
+#| label: lapply-vs-loop
+log_loop <- function(x) {
+  for (i in seq_along(x)) {
+    x[i] <- log(x[i])
+  }
+
+  x
+}
+
+x <- runif(1e5, 1, 2)
+
+bench::mark(
+  loop = log_loop(x),
+  lapply = vapply(x, log, numeric(1))
+) |>
+  plot()
+```
+
+Evidently, the for-loop implementation is faster than the one using `vapply()`
+(which in turn is faster than both `sapply()` and `lapply()`). So try not to
+fall into the
+
+The *actual* reason for why vectorization often help therefore has nothing at
+all to do with vectorization itself, but is instead that they are implemented in
+a compiled language. And it is this property that we should try to profit from.
+
+### Writing compiled code in C++ with Rcpp
+
+Sometimes the bottlenecks in our R code cannot be easily mitigated by relying on
+R's built-in functions. Examples include complicated for loops and recursive
+functions. Sometimes, trying to write R code that is fast may also lead to code
+that is difficult to read and understand. In these cases, the solution is often
+to write the critical parts of the code in a compiled language. R has built-in
+support for calling multiple compiled languages, such as C, C++, and Fortran.
+Doing this with the built-in functions `.C()`, `.Call()`, and `.Fortran()` is,
+however, seldom ergonomic. Thankfully, it is much easier to write compiled code
+in C++ and call it from R using the Rcpp package, which is what we will briefly
+introduce here.
 
 ### The perils and pitfalls of benchmarking {#perils}
 
@@ -1550,10 +1691,7 @@ Something
 ::: {.exercise #numerics}
 Explain the result of evaluating the following R expression.
 
-```{r}
-#| label: ex-numerics
-(0.1 + 0.1 + 0.1) > 0.3
-```
+\` \`\` { r } #\| label: ex-numerics (0.1 + 0.1 + 0.1) > 0.3 \`\`\`
 :::
 
 ::: {.exercise #filter-function}
@@ -1715,4 +1853,6 @@ What is the type and class of `tmp`? What happens when `plot(tmp, col = "red")`
 is executed? How can you find help on what `plot()` does with an object of this
 class? Specifically, how do you find the documentation for the argument `col`,
 which is not an argument of `plot()`?
+:::
+
 :::
