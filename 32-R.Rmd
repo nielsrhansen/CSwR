@@ -176,6 +176,8 @@ Vectors of any length can be created by the generic function `vector()`, or by
 type specific functions such as `numeric()` that creates vectors of type double.
 
 ```{r}
+#| label: vector-numeric
+
 vector("numeric", length = 10)
 numeric(10)
 ```
@@ -188,6 +190,8 @@ type of a vector created by `vector()` is logical, with all elements being
 `FALSE`.
 
 ```{r}
+#| label: vector-logical
+
 vector(length = 10)
 ```
 
@@ -1664,7 +1668,7 @@ which means that they are not faster than hand-written loops. In fact, the
 opposite if often the case, as we will illustrate next.
 
 ```{r}
-#| label: lapply-vs-loop
+#| label: vapply-vs-loop
 #| fig-cap: >-
 #|   Benchmarking the runtime of a for-loop-based implementation of the
 #|   logarithm of a vector against an implementation using `vapply()`, which is
@@ -1683,7 +1687,7 @@ bench::mark(
 
     x_log
   },
-  lapply = vapply(x, log, numeric(1))
+  vapply = vapply(x, log, numeric(1))
 ) |>
   plot()
 ```
@@ -1858,11 +1862,11 @@ one()
 This is a simple way to get started with Rcpp, but for more complicated
 functions and for better organization of your code, it is better to write your
 C++ code in separate files. You can tell call `Rcpp::sourceCpp()` to source the
-C++ code from a file. For instance, if you may in `R/my_r_experiment.R` (or
+C++ code from a file. For instance, if you may in `my_r_experiment.R` (or
 similar), call the following line:
 
 ```r
-Rcpp::sourceCpp(file.path("src", "my_cpp_functions.cpp"))
+Rcpp::sourceCpp("my_cpp_functions.cpp")
 ```
 
 This should work as long as the file `my_cpp_functions.cpp` contains valid C++
@@ -1870,12 +1874,90 @@ code and is in the correct location. The organization of your project could look
 like this:
 ```
 my_project/
-├── scripts/
-│   └── my_r_experiment.R    # R script
-├── src/
-│   └── my_cpp_functions.cpp # Source for C++ functions
-└── my_rproject.Rproj        # RStudio project file
+├── my_r_experiment.R    # R script
+├── my_cpp_functions.cpp # Source for C++ functions
+└── my_rproject.Rproj    # RStudio project file
 ```
+
+This allows you to keep your C++ code separate from your R code, which is good
+for organization and readability. Still, the best way to organize your code is
+to write an R package, which allows you to keep your code organized and to
+easily share it with others. We will not, however, cover how to write an R
+package in this book, but recommend the R Packages book\ [@Wickham:2023b] for
+learning how to do that.
+
+#### References
+
+When you pass an argument in R, you typically pass a reference to the object.
+But if you modify the object inside the function, R will create a copy of the
+object and modify the copy instead. This is called *copy-on-modify* semantics.
+This is helpful because it allows you to write functions that modify their
+arguments without worrying about side effects and also avoid needless copying of
+objects. The downside, however, is that you cannot modify an object in place,
+which can lead to performance issues.
+
+C++ does not make use of copy-on-modify semantics. Instead, you need to declare
+whether you want to pass an argument by value (which means that a copy of the
+object is passed to the function) or by reference (which means that a reference
+to the object is passed to the function). So far, we have only seen how to pass
+an argument by value (copying), but if you want to pass an argument by
+reference, you can do that by using the `&` operator in the function
+declaration. For instance, the following code defines a function `sum_inplace()`
+that takes a numeric vector as an argument and modifies it in place by adding 1
+to each element.
+
+```{Rcpp}
+//| label: rcpp-sum-inplace
+
+#include <Rcpp.h>
+
+void
+sum_inplace(Rcpp::NumericVector& x)
+{
+  for (int i = 0; i < x.size(); ++i) {
+    x[i] += 1;
+  }
+}
+```
+
+Just to make things slightly more complicated, there is a peculiar aspect of the
+Rcpp objects that we need to be aware of. And that is that they are references
+to R objects, which means that even if you omit `&`, they are in fact still
+references. This means that you can modify them in place without using `&`,
+which can trip you up!
+
+```{Rcpp}
+//| label: rcpp-uhoh
+
+#include <Rcpp.h>
+
+// [[Rcpp::export]]
+void
+uh_oh(Rcpp::NumericVector x)
+{
+  x = x + 1.0;
+}
+```
+
+```{r}
+#| label: uh-oh
+
+x <- 1.5:4.5
+uh_oh(x)
+x
+```
+
+As you can see, the `uh_oh()` function modifies the input vector `x` in place,
+even though we did not use `&` in the function declaration. This is because
+`Rcpp::NumericVector` is a reference to an R object and so modifying it means
+that we also modify the underlying object. So be careful when modifying Rcpp
+objects in place, as it can lead to unintended side effects if you are not aware
+of this behavior.
+
+In general, you should avoid modifying any Rcpp object that comes from an
+argument on the R side. It can absolutely be helpful for performance, but users
+of R are not typically used this kind of side-effect from calling a function, so
+it is best avoided.
 
 ### Parallelization
 
@@ -1916,7 +1998,7 @@ matrix:
      z <- double(n)
    
      for (i in seq_len(n)) {
-       z[i] <- crossprod(x[i, ], y)
+       z[i] <- t(x[i, ]) %*% y
      }
    
      z
@@ -1926,39 +2008,41 @@ matrix:
 2. Transpose the matrix and take inner products between columns of the
    transposed matrix and the vector.
 
+   ```{r}
+   #| label: f2-code
+   
+   f2 <- function(x, y) {
+     n <- NROW(x)
+     x_t <- t(x)
+     z <- double(n)
+   
+     for (i in seq_len(n)) {
+       z[i] <- x_t[, i] %*% y
+     }
+   
+     z
+   }
+   ```
+
 3. Access columns of the matrix directly and update the sums together.
 
-```{r}
-#| label: f2-code
+   ```{r}
+   #| label: f3-code
+   
+   f3 <- function(x, y) {
+     n <- NROW(x)
+     p <- NCOL(x)
+     z <- double(n)
+   
+     for (i in seq_len(p)) {
+       z <- z + x[, i] * y[i]
+     }
+   
+     z
+   }
+   ```
 
-f2 <- function(x, y) {
-  n <- NROW(x)
-  x_t <- t(x)
-  z <- double(n)
-
-  for (i in seq_len(n)) {
-    z[i] <- x_t[, i] %*% y
-  }
-
-  z
-}
-```
-
-```{r}
-#| label: f3-code
-
-f3 <- function(x, y) {
-  n <- NROW(x)
-  p <- NCOL(x)
-  z <- double(n)
-
-  for (i in seq_len(p)) {
-    z <- z + x[, i] * y[i]
-  }
-
-  z
-}
-```
+Now, let's benchmark the three implementations to see how they perform.
 
 ```{r}
 #| label: bench-matvec
@@ -1975,6 +2059,13 @@ y <- matrix(rnorm(p), p, 1)
 bench::mark(f1(x, y), f2(x, y), f3(x, y)) |>
   plot()
 ```
+
+Figure\ \@ref(fig:bench-matvec) shows that the first implementation, which
+accesses the data row-wise, is slower than the other two implementations, which
+access the data column-wise---even though the second implementation adds
+overhead from a full transpose of the matrix. But that overhead is removed from
+the third method, which accesses the columns directly and as a result performs
+best.
 
 ### The perils and pitfalls of benchmarking {#perils}
 
@@ -2198,7 +2289,4 @@ What is the type and class of `tmp`? What happens when `plot(tmp, col = "red")`
 is executed? How can you find help on what `plot()` does with an object of this
 class? Specifically, how do you find the documentation for the argument `col`,
 which is not an argument of `plot()`?
-:::
-
-:::
 :::
