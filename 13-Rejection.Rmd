@@ -1,6 +1,7 @@
 ```{r}
 #| label: rejection-setup
 #| include: false
+
 knitr::opts_chunk$set(
   cache = TRUE
 )
@@ -161,8 +162,9 @@ black curve.
 #| echo: false
 #| fig-height: 3.2
 #| fig-width: 5
-#| fig-cap: Target density $f$ (black) and envelope $g/\alpha$ (blue dashed)
-#|   for a standard normal target and a Cauchy proposal.
+#| fig-cap: Target density $f$ (black) and envelope $g/\alpha$ (blue dashed) for
+#|   a standard normal target and a Cauchy proposal.
+
 f_env <- function(x) dnorm(x)
 g_env <- function(x) dcauchy(x)
 
@@ -235,8 +237,9 @@ for 1000 simulated points.
 #| fig-width: 5
 #| fig-cap: Illustration of rejection sampling for a truncated normal target
 #|   density on $(3,6)$, using a uniform proposal on $(3,6)$. Colors show
-#|   whether the points were rejected (orange) or accepted (blue).
-#|   We also show the envelope (dashed black line).
+#|   whether the points were rejected (orange) or accepted (blue). We also show
+#|   the envelope (dashed black line).
+
 set.seed(1)
 n <- 1000
 y <- runif(n, 3, 6)
@@ -366,6 +369,7 @@ keeps sampling new proposals as long as they are rejected.
 
 ```{r}
 #| label: vM-rejection
+
 von_mises_loop <- function(N, kappa) {
   x <- numeric(N)
 
@@ -389,11 +393,12 @@ different values of the parameter $\kappa$ and compare the histograms to the
 corresponding theoretical densities.
 
 ```{r, dependson=c("vonMisesDens", "vM-rejection"), echo=1:4}
-#| label: vMsim
+#| label: vMsimFig
 #| fig-cap: "(ref:vMsim)"
 #| fig-pos: "h"
 #| fig-show: "hold"
 #| out-width: "49%"
+
 x1 <- von_mises_loop(100000, 0.5)
 x2 <- von_mises_loop(100000, 2)
 # Histograms of these observations should be compared to the density
@@ -415,6 +420,7 @@ variables.
 
 ```{r, dependson="vM-rejection-fast", echo=2}
 #| label: vMsim-runtime
+
 tmp <- von_mises_loop(100, kappa = 5) # Force JIT
 bench::system_time(von_mises_loop(100000, kappa = 5))
 ```
@@ -426,6 +432,7 @@ profvis package, see also Section \@ref(profiling).
 
 ```{r, echo=4}
 #| label: profvis-vMsim
+
 source("scripts/vMsim.R", keep.source = TRUE)
 tmp <- von_mises_loop(100, 5) # Forces JIT
 
@@ -440,6 +447,7 @@ setwd("..")
 #| label: profvis-vMsim-image
 #| out-width: "100%"
 #| echo: false
+
 pagedown::chrome_print(
   "figures/vMsim_profile.html",
   format = "png",
@@ -474,6 +482,7 @@ vectorized, it is straightforward to do so.
 
 ```{r}
 #| label: vM-rejection-vec-random
+
 von_mises_random <- function(N, kappa) {
   x0 <- runif(N, -pi, pi)
   u <- runif(N)
@@ -505,6 +514,7 @@ Section \@ref(tracing).
 
 ```{r, dependson="vM-rejection-vec-random"}
 #| label: vM-rejection-vec
+
 rng_vec <- function(rng, fact = 1.2, M_min = 100) {
   CSwR::force_all()
 
@@ -589,6 +599,7 @@ the same distribution.
 #| out-width: "49%"
 #| echo: false
 #| eval: false
+
 x <- von_mises_cpp(100000, 0.5)
 hist(x, breaks = seq(-pi, pi, length.out = 20), prob = TRUE)
 curve(f(x, 0.5), -pi, pi, col = "blue", lwd = 2, add = TRUE)
@@ -615,6 +626,7 @@ curve(f(x, 2), -pi, pi, col = "blue", lwd = 2, add = TRUE)
 #| fig-show: "hold"
 #| out-width: "49%"
 #| echo: false
+
 x_cpp <- von_mises_cpp(2000, 0.5)
 x_vec <- von_mises_vec(2000, 0.5)
 qqplot(
@@ -648,6 +660,7 @@ package.
 
 ```{r, dependson=c("vMsim-cpp", "vM-rejection-vec", "vM-rejection"), echo=2}
 #| label: vMsim-cpp-runtime
+
 old_options <- options(digits = 3)
 bench::mark(
   loop = von_mises_loop(1000, kappa = 5),
@@ -728,6 +741,7 @@ acceptance rate is above 91%.
 
 ```{r}
 #| label: gammasim
+
 t_fun <- function(x, a) {
   b <- 1 / (3 * sqrt(a))
   (x > -1 / b) * a * (1 + b * x)^3 # 0 when y <= -1/b
@@ -762,6 +776,7 @@ respective theoretical densities.
 #| fig-pos: "h"
 #| fig-show: "hold"
 #| out-width: "49%"
+
 x <- gamma_vec(100000, 8)
 hist(x, freq = FALSE, ylim = c(0, 0.18), main = "", xlab = "y")
 curve(dgamma(x, 8), col = "blue", lwd = 2, add = TRUE)
@@ -782,6 +797,7 @@ acceptance rate from the first (and in most cases only) iteration in the loop.
 ```{r, dependson="gammasim"}
 #| label: tracing
 #| results: "hold"
+
 gamma_tracer <- tracer(
   "alpha",
   # alpha is the estimated acceptance rate
@@ -811,6 +827,7 @@ there is very little probability mass anyway.
 #| echo: false
 #| fig-show: "hold"
 #| out-width: "100%"
+
 par(mfcol = c(2, 2), mex = 0.7, cex = 0.6, font.main = 1)
 
 curve(
@@ -884,6 +901,7 @@ legend(
 #| label: gamma_compare
 #| echo: false
 #| eval: false
+
 gamma_tracer
 bench::system_time(rgamma(100000, 4))
 bench::system_time(gamma_vec(100000, 4))
@@ -1088,18 +1106,19 @@ improvements and generalizations, see [@Gilks:1992] for details.
 
 ### Beta distribution
 
-To illustrate the envelope construction above for a simple log-concave  density
+To illustrate the envelope construction above for a simple log-concave density
 we consider the beta distribution on $(0, 1)$ with shape parameters $\geq 1$.
 This distribution has density
 $$
 f(x) \propto x^{\alpha - 1}(1-x)^{\beta - 1},
 $$
-which is log-concave (when both shape parameters are greater than one).  We
-implement the rejection sampling algorithm for this density with the  piecewise
-log-affine envelope having two pieces---determined by two  user-supplied points.
+which is log-concave (when both shape parameters are greater than one). We
+implement the rejection sampling algorithm for this density with the piecewise
+log-affine envelope having two pieces---determined by two user-supplied points.
 
 ```{r}
 #| label: beta-rejection
+
 beta_random <- function(N, x1, x2, alpha, beta) {
   lf <- function(x) (alpha - 1) * log(x) + (beta - 1) * log(1 - x)
   lf_deriv <- function(x) (alpha - 1) / x - (beta - 1) / (1 - x)
@@ -1144,6 +1163,7 @@ beta_vec <- rng_vec(beta_random)
 #| fig-cap: "(ref:beta-sim)"
 #| fig-show: "hold"
 #| out-width: "100%"
+
 par(mfrow = c(2, 2), mex = 0.7, cex = 0.6, font.main = 1)
 
 envelope <- function(x, x1, x2, alpha, beta) {
@@ -1225,6 +1245,7 @@ by zero.
 ```{r}
 #| label: beta-test
 #| error: true
+
 beta_vec(1, x1 = 0.25, x2 = 0.75, alpha = 4, beta = 2)
 beta_vec(1, x1 = 0.2, x2 = 0.75, alpha = 4, beta = 2)
 beta_vec(1, x1 = 0.2, x2 = 0.8, alpha = 4, beta = 2)
@@ -1240,6 +1261,7 @@ acceptance rate for our previous implementation.
 ```{r, dependson="vM-rejection-fast"}
 #| label: vM-reject-freq
 #| results: "hold"
+
 von_mises_tracer <- tracer(
   c("r", "l", "MM"),
   N = 0,
@@ -1276,6 +1298,7 @@ that returns a random length vector.
 
 ```{r}
 #| label: vM-rejection-adaptive-random
+
 von_mises_adapt_random <- function(N, x1, x2, kappa) {
   lf <- function(x) kappa * cos(x)
   lf_deriv <- function(x) -kappa * sin(x)
@@ -1330,6 +1353,7 @@ different combinations of parameters and partition points.
 
 ```{r, dependson=c("vM-rejection-adaptive-random", "vM-rejection-vec")}
 #| label: vM-rejection-adaptive
+
 von_mises_adapt <- rng_vec(von_mises_adapt_random)
 ```
 
@@ -1341,6 +1365,7 @@ von_mises_adapt <- rng_vec(von_mises_adapt_random)
 #| echo: false
 #| fig-show: "hold"
 #| out-width: "100%"
+
 par(mfrow = c(2, 2), mex = 0.7, cex = 0.6, font.main = 1)
 envelope <- function(x, x1, x2, kappa) {
   lf <- function(x) kappa * cos(x)
@@ -1455,6 +1480,7 @@ curve(
 ```{r, dependson="vM-rejection-adaptive", echo=1:6}
 #| label: vM-adaptive-reject-test
 #| results: "hold"
+
 von_mises_tracer$clear()
 
 y <- von_mises_adapt(10000, -0.4, 0.4, 5, cb = von_mises_tracer$trace)
@@ -1479,6 +1505,7 @@ implementation that used the uniform envelope.
 
 ```{r, dependson=c("vM-rejection-adaptive", "vM-rejection-fast"), echo=2}
 #| label: vM-bench
+
 old_options <- options(digits = 2)
 bench::mark(
   adapt1 = von_mises_adapt(100, -1, 1, 5),
