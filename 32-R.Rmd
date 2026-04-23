@@ -740,7 +740,8 @@ implemented in compiled languages like C and Fortran, which means that the
 computations are carried out much faster than if they were implemented directly
 in R. But this advice can be misleading since other vectorized functions in R
 are not in fact implemented in a compiled language, and thus do not necessarily
-lead to faster computations than an explicit loop
+lead to faster computations than an explicit loop. We discuss this issue in more
+detail in [Improving Performance].
 
 In any case, several examples in the book illustrate the computational benefits
 of vectorized implementations. It may, however, not always be obvious how to
@@ -1125,7 +1126,7 @@ is any point to using the stream. The next section will explore how to measure
 runtime and memory usage of small pieces of R code, which can be used for
 comparisons of different implementations.
 
-## Performance {#performance}
+## Measuring performance {#measuring-performance}
 
 Whenever we evaluate an R function it carries out some computations, which take
 a certain amount of time and require a certain amount of memory. The efficiency
@@ -1541,7 +1542,7 @@ optimization. In Section \@ref(objects) we touch on the implementation of
 encouraged to study how `tracer()` is implemented for more insights on how
 environments and function evaluation actually work in R.
 
-### Optimization of code
+## Improving performance {#improving-performance}
 
 @Knuth:1974 is famous for the quote "Premature optimization is the root of all
 evil"---with the keyword being *premature*. The point is that a programmer
@@ -1654,14 +1655,14 @@ bench::mark(
 As you can see from Figure\ \@ref(fig:vectorized-mean), the built-in `mean()` is
 much faster than our simple implementation. Many people call this kind of
 optimization *vectorization*, because it typically involves replacing loops with
-vectorized functions (functions that operate on vectors)---but that notion is
-misleading. It is true that vectorized functions are often much faster than
-R-based for loops, but the reason for that is not that they operate on vectors
-or eschew the use of loops. On the contrary, many vectorized functions are
-implemented with loops in C or Fortran. Moreover, many R functions that are
-vectorized in fact are implemented in R-based loops, which means that they are
-not faster than hand-written loops. In fact, the opposite if often the case, as
-we will illustrate next.
+vectorized functions (functions that operate on vectors, which we covered in
+[Vectorization])---but that notion is misleading. It is true that vectorized
+functions are often much faster than R-based for loops, but the reason for that
+is not that they operate on vectors or eschew the use of loops. On the contrary,
+many vectorized functions are implemented with loops in C or Fortran. Moreover,
+many R functions that are vectorized in fact are implemented in R-based loops,
+which means that they are not faster than hand-written loops. In fact, the
+opposite if often the case, as we will illustrate next.
 
 ```{r}
 #| label: lapply-vs-loop
