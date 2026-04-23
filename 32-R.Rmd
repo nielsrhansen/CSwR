@@ -1710,18 +1710,172 @@ that contains the function you need.
 
 ### Writing compiled code in C++ with Rcpp
 
-Sometimes the bottlenecks in our R code cannot be easily mitigated by relying on
-R's built-in functions. Examples include complicated for loops and recursive
-functions for which there are no built-in functions to rely on. Other times,
-writing performant R code can require you to sacrifice readability and
-maintainability.
+Sometimes the bottlenecks in our R code cannot be mitigated by relying on
+existing functions in either R or external packages like `matrixStats`. This is
+typically the case with more complicated algorithms, which often require complex
+statements and control flow. Moreover, trying to wrangle R into performing well
+on complicated algorithms can sometimes lead to code that is difficult to
+understand and maintain. Many algorithms are for instance naturally expressed
+with loops and if statements, and trying to avoid these can lead to obscure code
+that's both difficult to read and to debug.
 
 In these cases, the solution is often to write the critical parts of the code in
 a compiled language. R has built-in support for calling multiple compiled
 languages, such as C, C++, and Fortran. Doing this with the built-in functions
 `.C()`, `.Call()`, and `.Fortran()` is, however, far from ergonomic. Thankfully,
 it is much easier to write compiled code in C++ and call it from R using the
-Rcpp package, which is what we will briefly introduce here.
+[Rcpp package](https://cran.r-project.org/package=Rcpp)\ [@Eddelbuettel:2011],
+which is what we will briefly introduce here.
+
+We will start by example. Below is a simple implementation of the sum function
+in C++ using Rcpp.
+
+```{Rcpp}
+//| label: rcpp-sum
+
+#include <Rcpp.h>
+
+// [[Rcpp::export]]
+double
+sum_cpp(Rcpp::NumericVector& x)
+{
+  double x_sum = 0.0;
+
+  for (int i = 0; i < x.size(); ++i) {
+    x_sum += x[i];
+  }
+
+  return x_sum;
+}
+```
+
+As you can see, there are a couple of differences:
+
+- We include the Rcpp header file (`Rcpp.h`) with `#include <Rcpp.h>`. This is
+  similar in spirit to `library()` in R, but still requires us to explicitly
+  include the namespace `Rcpp::` when we use functions from the Rcpp
+  package.[^1]
+
+- We need to specify the *return type* of the function, which is `double` in
+  this case. This is a requirement of C++, which is a statically typed language,
+  and it means that we need to declare the type of all variables we use in the
+  function. It doesn't have to go on its own line and can also be separated from
+  the function name by a space. If your function does not return anything, you
+  can use the `void` type.
+
+- We also need to specify argument as well as variable types. In this case, the
+  argument `x` is a reference to a numeric vector, which is denoted by
+  `Rcpp::NumericVector x`.
+
+- Each statement in the function body needs to end with a semicolon (`;`), and
+  the function body needs to be enclosed in curly braces (`{}`).
+
+- The for loop is written in a C++ style, which means that we need to declare
+  the loop variable `i` as an integer and we need to specify the start, end, and
+  step of the loop.
+
+- C++ uses zero-based indexing, which means that the first element of the vector
+  is accessed with `x[0]` instead of `x[1]` as in R. This is a common source of
+  off-by-one errors when writing C++ code, so be careful with this.
+
+- We need to use `return` to return the result of the function, and the returned
+  value needs to be of the type specified in the function declaration.
+
+- To assign, we need to use the assignment operator `=`, and we cannot use the
+  `<-` operator for assignment in C++. Also note the special in-place assignment
+  operator `+=`, which is equivalent to (but sometimes faster than)
+  `x_sum = x_sum + x[i]`.
+
+[^1]: Unless we use the `using namespace Rcpp;` statement. This is typically
+    fine to use in `Rcpp` packages and generally inside functions, but should
+    otherwise be avoided to prevent namespace pollution.
+
+If we now try to benchmark this implementation against the built-in `sum()`
+function, we see that they perform similarly. The reason is that they are both
+written in a compiled language.
+
+```{r}
+#| label: sum-benchmark
+
+x <- rnorm(1e6)
+
+bench::mark(
+  rcpp_sum = sum_cpp(x),
+  base_sum = sum(x)
+)
+```
+
+#### Getting started with Rcpp
+
+To get started with Rcpp, you need to first have a compiler installed on your
+system.
+
+Windows
+
+:   On Windows you need to install
+    [Rtools](https://cran.r-project.org/bin/windows/Rtools/), which is a
+    toolchain for building R packages on Windows that includes a C++ compiler.
+    Please see the instructions on the Rtools website for how to install it and
+    set it up correctly.
+
+MacOS
+
+:   You need Xcode. Open up a terminal and call this:
+
+    ```sh
+    xcode-select --install
+    ```
+
+Linux
+
+:   How to install a C++ compiler on Linux depends on the distribution you are
+    using. On Ubuntu, you can get all the essential tools by installing the
+    `r-base-dev` package.
+
+    ```bash
+    sudo apt install r-base-dev
+    ```
+
+To write a first Rcpp function, you can use the `cppFunction()` function from
+the Rcpp package, which allows you to write C++ code directly in your R script.
+For instance, the following code defines a simple function `one()` that returns
+the number 1.
+
+```{r}
+#| label: cpp-function
+
+Rcpp::cppFunction(
+  "
+  int one() {
+    return 1;
+  }
+  "
+)
+
+one()
+```
+
+This is a simple way to get started with Rcpp, but for more complicated
+functions and for better organization of your code, it is better to write your
+C++ code in separate files. You can tell call `Rcpp::sourceCpp()` to source the
+C++ code from a file. For instance, if you may in `R/my_r_experiment.R` (or
+similar), call the following line:
+
+```r
+Rcpp::sourceCpp(file.path("src", "my_cpp_functions.cpp"))
+```
+
+This should work as long as the file `my_cpp_functions.cpp` contains valid C++
+code and is in the correct location. The organization of your project could look
+like this:
+```
+my_project/
+├── scripts/
+│   └── my_r_experiment.R    # R script
+├── src/
+│   └── my_cpp_functions.cpp # Source for C++ functions
+└── my_rproject.Rproj        # RStudio project file
+```
 
 ### Parallelization
 
@@ -2046,4 +2200,5 @@ class? Specifically, how do you find the documentation for the argument `col`,
 which is not an argument of `plot()`?
 :::
 
+:::
 :::
