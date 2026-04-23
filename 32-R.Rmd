@@ -1634,20 +1634,19 @@ the built-in `mean()`.
 #|   function with a for loop against the built-in `mean()` function, which is
 #|   implemented in C.
 
-my_mean <- function(x) {
-  x_mean <- 0
-
-  for (i in seq_along(x)) {
-    x_mean <- x_mean + x[i]
-  }
-
-  x_mean
-}
+x <- rnorm(1e6)
 
 bench::mark(
-  my_mean = my_mean(rnorm(1e6)),
-  base_mean = mean(rnorm(1e6)),
-  check = FALSE
+  loop_mean = {
+    x_sum <- 0
+
+    for (i in seq_along(x)) {
+      x_sum <- x_sum + x[i]
+    }
+
+    x_sum / length(x)
+  },
+  base_mean = mean(x)
 ) |>
   plot()
 ```
