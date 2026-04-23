@@ -1655,7 +1655,7 @@ As you can see from Figure\ \@ref(fig:vectorized-mean), the built-in `mean()` is
 much faster than our simple implementation. Many people call this kind of
 optimization *vectorization*, because it typically involves replacing loops with
 vectorized functions (functions that operate on vectors, which we covered in
-[Vectorization])---but that notion is misleading. It is true that vectorized
+[Vectorization])---but that statement is misleading. It is true that vectorized
 functions are often much faster than R-based for loops, but the reason for that
 is not that they operate on vectors or eschew the use of loops. On the contrary,
 many vectorized functions are implemented with loops in C or Fortran. Moreover,
@@ -1665,19 +1665,20 @@ opposite if often the case, as we will illustrate next.
 
 ```{r}
 #| label: lapply-vs-loop
-
-log_loop <- function(x) {
-  for (i in seq_along(x)) {
-    x[i] <- log(x[i])
-  }
-
-  x
-}
+#| fig-height: 3
 
 x <- runif(1e5, 1, 2)
 
 bench::mark(
-  loop = log_loop(x),
+  loop = {
+    x_log <- numeric(length(x))
+
+    for (i in seq_along(x)) {
+      x_log[i] <- log(x[i])
+    }
+
+    x_log
+  },
   lapply = vapply(x, log, numeric(1))
 ) |>
   plot()
@@ -1685,11 +1686,11 @@ bench::mark(
 
 Evidently, the for-loop implementation is faster than the one using `vapply()`
 (which in turn is faster than both `sapply()` and `lapply()`). So try not to
-fall into the
+fall into the trap of thinking that vectorization is always faster than loops.
 
-The *actual* reason for why vectorization often help therefore has nothing at
-all to do with vectorization itself, but is instead that they are implemented in
-a compiled language. And it is this property that we should try to profit from.
+The *actual* reason for why vectorization often helps has nothing at all to do
+with vectorization itself, but is instead that they are implemented in a
+compiled language. And it is this property that we should try to profit from.
 
 <!-- TODO: add a part on using other packages that provide fast functions -->
 
