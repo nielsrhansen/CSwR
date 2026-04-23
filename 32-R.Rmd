@@ -1961,7 +1961,57 @@ it is best avoided.
 
 ### Parallelization
 
-### Storage modes
+Modern processors have multiple cores, which means that they can perform
+multiple computations simultaneously. This happens all the time when you use
+your computer---if it did not, just opening up a web browser or music player
+would freeze your computer until the program has finished loading. We can take
+advantage of this property in computations by parallelizing our operations,
+splitting into multiple parts and running each separately on different cores. It
+is easy to see how this can speed up computations.
+
+The problem, however, is that parallelization is not inherently safe. Not every
+algorithm or computation is amenable to parallelization simply because order of
+executtion sometimes matters. Therefore, your computer will not automatically
+know how to parallelize your code, and every for loop your write will therefore,
+by default, be executed sequentially (on a single core)---unless you explicitly
+tell R to parallelize it, which is what we will learn how to do next.
+
+There is a plethora of packages for parallel computing in R and we will not
+cover all of them here. Instead, we will focus on two packages:
+[`foreach`](https://cran.r-project.org/package=foreach) and
+[`future`](https://cran.r-project.org/package=future), which are both very
+popular and easy to use, but cover slightly different approaches to
+parallelization.
+
+The `foreach` package provides a simple, close-to drop-in, replacement for the
+`for` loop, which allows you to parallelize the computations in the loop with
+minimal changes to your code.
+
+The idea if that you replace a for loop with the following construct:
+
+```{r}
+#| label: foreach-code
+
+library(foreach)
+
+foreach(i = 1:3) %dopar%
+  {
+    sqrt(i)
+  }
+```
+
+This is designed to look and feel like a regular for loop, but it is not. The
+`foreach()` function is a function that returns a special object that is then
+evaluated with the `%dopar%` operator, which in turn returns a list. This is
+fundamentally different from a regular for loop, which does not return anything
+at all but instead modifies objects in place. This is necessary because the
+computations in the loop are executed on different cores, and the results need
+to be collected and returned in a way that is compatible with this parallel
+execution. The `foreach` package also provides a `%do%` operator, which allows
+you to execute the loop sequentially, which can be useful for debugging and for
+comparing the performance of the parallelized code with the sequential code.
+
+### Efficient data storage and access
 
 An often overlooked aspect of performance is how you store your data. Underneath
 this all lies the fact that any object that needs to persist needs to be stored
@@ -1992,15 +2042,15 @@ matrix:
 
    ```{r}
    #| label: f1-code
-   
+
    f1 <- function(x, y) {
      n <- NROW(x)
      z <- double(n)
-   
+
      for (i in seq_len(n)) {
        z[i] <- t(x[i, ]) %*% y
      }
-   
+
      z
    }
    ```
@@ -2010,16 +2060,16 @@ matrix:
 
    ```{r}
    #| label: f2-code
-   
+
    f2 <- function(x, y) {
      n <- NROW(x)
      x_t <- t(x)
      z <- double(n)
-   
+
      for (i in seq_len(n)) {
        z[i] <- x_t[, i] %*% y
      }
-   
+
      z
    }
    ```
@@ -2028,16 +2078,16 @@ matrix:
 
    ```{r}
    #| label: f3-code
-   
+
    f3 <- function(x, y) {
      n <- NROW(x)
      p <- NCOL(x)
      z <- double(n)
-   
+
      for (i in seq_len(p)) {
        z <- z + x[, i] * y[i]
      }
-   
+
      z
    }
    ```
@@ -2061,8 +2111,8 @@ bench::mark(f1(x, y), f2(x, y), f3(x, y)) |>
 ```
 
 Figure\ \@ref(fig:bench-matvec) shows that the first implementation, which
-accesses the data row-wise, is slower than the other two implementations, which
-access the data column-wise---even though the second implementation adds
+accesses the data row-wise, is slightly slower than the second implementations,
+which access the data column-wise---even though the second implementation adds
 overhead from a full transpose of the matrix. But that overhead is removed from
 the third method, which accesses the columns directly and as a result performs
 best.
