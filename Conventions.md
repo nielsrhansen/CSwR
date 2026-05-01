@@ -113,7 +113,8 @@ Uses roxygen2 for documentation.
 - $n$ and `n` denote iteration index/number or other integer variables/arguments
 - $i$, $j$, $k$, $l$ are data/parameter indices
 - $x$ and $X$ are (univariate) data variables: Chapters 1, 2, 5, 6, 7,
-- $y$ and $Y$ are (univariate) data variables, used when there is a need for $x$:
+- $y$ and $Y$ are (univariate) data variables, used when there is a need for
+  $x$:
   - Chapters 3 (bivariate data), 4 ($x$ is time)
   - Chapters 8 and 9 (regression on $x$)
   - Chapter 10 ($x$ is unobserved, $y = M(x)$ is observed; potentially
@@ -200,13 +201,15 @@ The code topics/progression in the chapters are as outlined here:
 
 #### Questions
 
-- Currently we use $w^*$ for normal weights and $w$ for normalized
-  (standardized) weights. Do we want to change this to $w$ for normal weights
-  and $\tilde{w}$ for normalized weights? Or $w$ and $w^*$, respectively?
-  Intuitively, $\tilde{w}$ or $w^*$ seems to be more natural for normalized
-  weights to me, and $w$ for normal weights. $\tilde{w}$ is also more
-  ergonomical when you want the squared normalized weights, which are used in
-  the effective sample size formula.
+- Currently we use $w^*$ for normal weights and $w$ for normalized (normalized)
+  weights. Do we want to change this to $w$ for normal weights and $\tilde{w}$
+  for normalized weights? Or $w$ and $w^*$, respectively? Intuitively,
+  $\tilde{w}$ or $w^*$ seems to be more natural for normalized weights to me,
+  and $w$ for normal weights. $\tilde{w}$ is also more ergonomical when you want
+  the squared normalized weights, which are used in the effective sample size
+  formula.
+- Should we use "importance distribution" or "proposal distribution" for
+  importance sampling?
 
 ### 6. Likelihood and optimization
 

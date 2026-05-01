@@ -1,5 +1,15 @@
 # Monte Carlo integration {#mci}
 
+```{r}
+#| label: mc-setup
+#| include: false
+library(tidyverse)
+
+knitr::opts_chunk$set(
+  cache = TRUE
+)
+```
+
 Suppose that we are interested in numerically computing the integral
 
 \[
@@ -144,7 +154,8 @@ distribution\index{Gamma Distribution} via Monte Carlo integration.
 
 ```{r, dependson="gammasim", echo=-1}
 #| label: gammaMCCLT
-#| fig-cap: "Sample path with pointwise 95% confidence band for Monte Carlo integration of the mean of a gamma distributed random variable."
+#| fig-cap: Sample path with pointwise 95% confidence band for Monte Carlo
+#|   integration of the mean of a gamma distributed random variable.
 set.seed(123)
 N <- 1000
 x <- rgamma(N, 8) # h(x) = x
@@ -273,13 +284,14 @@ whenever $g$ is a density fulfilling that
 g(x) = 0 \Rightarrow f(x) = 0.
 \]
 
-With $X_1, \ldots, X_N$ i.i.d. with density $g$ we define the *weights* as
+We call $g$ the *proposal* (or importance) density. With $X_1, \ldots, X_N$
+i.i.d. with density $g$ we define the *weights* as
 
 \[
 w^*(X_i) = f(X_i) / g(X_i).
 \]
 
-The *importance sampling*\index{Importance Sampling} estimator is then
+The *importance sampling*\index{importance sampling} estimator is then
 
 \[
 \hat{\mu}_{\textrm{IS}}^* := \frac{1}{N} \sum_{i=1}^N h(X_i)w^*(X_i).
@@ -349,6 +361,7 @@ ggplot(mapping = aes(1:N, mu_hat_IS)) +
     ),
     fill = "gray"
   ) +
+  labs(y = expression(hat(mu)[IS])) +
   geom_hline(yintercept = 8, color = "blue") +
   geom_line() +
   geom_point()
@@ -366,10 +379,10 @@ importance sampling this way when compared to plain Monte Carlo integration. In
 Section \@ref(network) we consider a different example where we achieve a
 considerable variance reduction by using importance sampling.
 
-### Standardized weights
+### Self-normalized importance sampling
 
 A slight modification of the importance sampling estimator consists of
-standardizing the weights so that they take values in $[0, 1]$ and sum to $1$.
+normalizing the weights so that they take values in $[0, 1]$ and sum to $1$.
 This can sometimes be beneficial in itself, but it also allows for the use of
 importance sampling when the target density is only known up to a normalization
 constant.
@@ -388,8 +401,8 @@ and
 
 where $w^*(x) = q(x) / g(x).$
 
-If $X_1, \ldots, X_N$ are i.i.d. from the distribution with density $g$, an
-importance sampling estimate of $\mu$ can be computed as
+If $X_1, \ldots, X_N$ are i.i.d. from the distribution with density $g$, the
+self-normalized importance sampling estimate of $\mu$ can be computed as
 
 \[
 \hat{\mu}_{\textrm{IS}} = \frac{\sum_{i=1}^N h(X_i) w^*(X_i)}{\sum_{i=1}^N w^*(X_i)} = \sum_{i=1}^N h(X_i) w(X_i),
@@ -401,8 +414,8 @@ where $w^*(X_i) = q(X_i) / g(X_i)$ and
 w(X_i) = \frac{w^*(X_i)}{\sum_{i=1}^N w^*(X_i)}
 \]
 
-are the *standardized weights*. This works irrespectively of the value of the
-normalizing constant $c$, and it actually works if also $g$ is unnormalized.
+are the *normalized weights*. This works regardless of the value of the
+normalizing constant $c$, and it actually works if also $g$ is not normalized.
 
 Revisiting the mean of the gamma distribution, we can implement importance
 sampling via sampling from a Gaussian distribution but using weights computed
@@ -417,7 +430,7 @@ mu_hat_IS <- cumsum(x * w_star) / cumsum(w_star)
 mu_hat_IS[N] # Theoretical value 8
 ```
 
-The variance of the IS estimator with standardized weights is a little more
+The variance of the IS estimator with normalized weights is a little more
 complicated, because the estimator is a ratio of random variables. From the
 multivariate CLT
 
@@ -481,7 +494,9 @@ sigma_hat_IS_w
 ```{r, dependson="gamma-sim-ISw"}
 #| label: gamma-IS-fig3
 #| echo: false
-#| fig-cap: "Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution and using standardized weights."
+#| fig-cap: Sample path with confidence band for importance sampling Monte Carlo
+#|   integration of the mean of a gamma distributed random variable via simulations
+#|   from a Gaussian distribution and using normalized weights.
 ggplot(mapping = aes(1:N, mu_hat_IS)) +
   geom_line() +
   geom_point() +
@@ -493,14 +508,816 @@ ggplot(mapping = aes(1:N, mu_hat_IS)) +
     ),
     fill = "gray"
   ) +
+  labs(y = expression(hat(mu)[IS])) +
   geom_hline(yintercept = 8, color = "blue") +
   geom_line() +
   geom_point()
 ```
 
-In this example, the variance when using standardized weights is a little lower
-than when using unstandardized weights, but still larger than the variance for
-the plain Monte Carlo average.
+In this example, the variance when using normalized weights is a little lower
+than when using unnormalized weights, but still larger than the variance for the
+plain Monte Carlo average.
+
+### Diagnostics
+
+Importance sampling relies on varying weights to compute its average and it is
+not uncommon to see some of the weights dominating the estimate. In extreme
+cases, a single data point can even be effectively responsible for the
+estimator. You might think that we could catch this issue by assessing the
+variance of $\hat{\mu}^*_{\textrm{IS}}$ (or $\hat{\mu}_{\textrm{IS}}$).
+Unfortunately, the estimate of the variance is *also* based on the weights,
+which means that it, too, can be unreliable.
+
+One intuitive and simple alternative to diagnose importance sampling is to
+visualize the weights, for instance with a histogram or boxplot. In the next
+example, we show an example of how this might work in practice.
+
+::: {.example .boxed #is-weights-histogram}
+Suppose that
+
+$$
+X \sim \mathcal{N}(0, 1)
+$$
+
+and that we want to estimate $\operatorname{E}[f(X)]$ where $f(X)$ is large near
+the origin.
+
+Let us assume we use a proposal density $g(x)$ from
+
+$$
+\mathcal{N}(\mu, 1)
+$$
+
+with large $|\mu|$. Then the proposal weights are given by
+
+$$
+w^*(x) = \frac{f(x) \phi(x; 0, 1)}{\phi(x; \mu, 1)},
+$$
+
+where $\phi(\cdot; m, \sigma^2)$ is the density of a Gaussian distribution with
+mean $m$ and variance $\sigma^2$. Since $f(x)$ is large near the origin, the
+weights will be large for samples that are close to the origin and small for
+samples that are far from the origin. If $|\mu|$ is large, then most samples
+will end up far from the origin (Figure \@ref(poor-is-demo)).
+
+```{r}
+#| label: poor-is-demo-setup
+#| echo: false
+set.seed(1)
+n <- 1000
+mu <- 2
+x <- rnorm(n, mean = mu)
+
+grid <- tibble(x = seq(-5, 8, length.out = 200))
+grid$target <- dnorm(grid$x, mean = 0, sd = 1)
+grid$proposal <- dnorm(grid$x, mean = mu, sd = 1)
+```
+
+```{r}
+#| label: poor-is-demo
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: Target (blue, dashed) and proposal (orange) densities with samples
+#|   from the proposal distribution.
+library(patchwork)
+library(dplyr)
+
+tibble(
+  x = grid$x,
+  target = grid$target,
+  proposal = grid$proposal
+) |>
+  pivot_longer(
+    c(target, proposal),
+    names_to = "density",
+    values_to = "value"
+  ) |>
+  ggplot(aes(x, value, color = density, linetype = density)) +
+  geom_line() +
+  geom_rug(data = tibble(x = x), aes(x = x), inherit.aes = FALSE, alpha = 0.2) +
+  scale_color_manual(
+    values = c(target = "black", proposal = "dark orange")
+  ) +
+  scale_linetype_manual(values = c(target = "dashed", proposal = "solid")) +
+  labs(
+    x = "x",
+    y = "Density",
+    color = NULL,
+    linetype = NULL
+  )
+
+target_density <- function(x) dnorm(x, mean = 0, sd = 1)
+proposal_density <- function(x) dnorm(x, mean = mu, sd = 1)
+f <- function(x) exp(-(x^2) / 2) # Large near origin
+
+w_star <- target_density(x) / proposal_density(x)
+values <- f(x)
+estimate <- sum(values * w_star) / sum(w_star)
+
+df <- tibble(w_star = w_star)
+```
+
+Since the weights are derived from the ratio of the target and proposal
+densities, they will be large for samples close to the origin and
+small for samples far from the origin. In this example, most of the
+samples will be far from the origin, leading to a situation where a few weights
+dominate the estimate. This phenomenon is known as *weight degeneracy*\index{weight degeneracy}.
+
+Visualizing the normalized weights in Figure \@ref(fig:poor-is-weight-plots), we
+see that the distribution is skewed and that a few of the weights are
+responsible for a major part of the estimate.
+
+```{r}
+#| label: poor-is-weight-plots
+#| echo: false
+#| fig-cap: "Histogram and boxplot of importance weights, showing weight degeneracy."
+#| warning: false
+#| message: false
+p1 <- ggplot(df, aes(w_star)) +
+  geom_histogram() +
+  lims(x = c(-5, NA)) +
+  labs(
+    x = "Importance Weights",
+    y = "Frequency"
+  )
+
+p2 <- ggplot(df, aes(w_star)) +
+  geom_boxplot(alpha = 0.5) +
+  scale_y_discrete() +
+  lims(x = c(-5, NA)) +
+  labs(
+    x = "Importance Weights"
+  )
+
+p1 + p2 + plot_layout(heights = c(2, 1), axes = "collect")
+```
+:::
+
+Another useful visualization is to plot a weighted histogram, which gives an
+indication of where the samples that contribute most to the estimate are
+located. See Figure \@ref(fig:weighted-histogram) for an example of a weighted
+histogram of the samples from the proposal distribution, where the weights are
+given by the importance weights.
+
+```{r}
+#| label: weighted-histogram
+#| fig-cap: Weighted histogram of samples from the proposal distribution, where
+#|   the  weights are given by the importance weights.
+df <- data.frame(x = x, w = w_star)
+df_grid <- tibble(
+  x = seq(-3, 3, length.out = 200),
+  integrand = target_density(x) * f(x)
+)
+
+ggplot(df, aes(x)) +
+  geom_histogram(aes(weight = w, y = after_stat(density)), bins = 30) +
+  geom_line(aes(y = integrand), color = "dark orange", data = df_grid) +
+  labs(y = "Weighted count")
+```
+
+One measure we can use to quantify the weight degeneracy we saw in the example
+from the previous section is *effective sample size* (ESS), which is defined as
+
+$$
+\mathrm{ESS} = \frac{1}{\sum_{i=1}^n w_i^2} = \frac{\left(\sum_{i=1}^n w^*_i\right)^2}{\sum_{i=1}^n ({w^*_i})^2}.
+$$
+
+ESS can be interpreted as the number of samples from the target distribution
+that would give us the same variance as our importance sampling estimator. If
+all weights are equal, $\mathrm{ESS} = n$. But if one weight dominates, ESS can
+be much lower, in the worst case close to one, indicating that the estimate
+cannot be trusted.
+
+A measure that's closely related to ESS is the *coefficient of
+variation*\index{coefficient of variation} (CV) of the weights, which is defined
+as
+
+$$
+\mathrm{CV} = \frac{\sqrt{\frac{1}{n} \sum_{i=1}^n (w_i^* - \bar{w}^*)^2}}{\bar{w}^*}
+$$
+
+where $\bar{w}^* = n^{-1} \sum_{i=1}^n w_i^*$ is the mean of the weights. It can
+also be computed directly from normalized weights via
+
+$$
+\mathrm{CV} = \sqrt{n \sum_{i=1}^n w_i^2 - 1}.
+$$
+
+The CV is directly related to ESS via the formula
+
+$$
+\mathrm{ESS} = \frac{n}{1 + \mathrm{CV}^2}.
+$$
+
+CV serves as a unit-less measure of the variability of the weights, and a high
+CV indicates that the weights are highly variable, which can lead to weight
+degeneracy and unreliable estimates in importance sampling.
+
+Unfortunately, it is hard to give general guidelines for what values of ESS and
+CV are acceptable, as it depends on the specific problem at hand. But as a rule
+of thumb, an ESS that is much smaller than the number of samples $n$ and a CV
+that is much larger than 1 can be signs of weight degeneracy and unreliable
+estimates.
+
+In the following code snippet, we compute the ESS and CV for the example above.
+
+```{r}
+#| label: ess-computation
+w <- w_star / sum(w_star)
+ess <- 1 / sum(w^2)
+cv <- sqrt(n * sum(w^2) - 1)
+```
+
+In our case, the ESS is `r round(ess, 1)` out of $1000$ samples, which is quite
+low and suggests that the estimate may be unreliable. The CV is
+`r round(cv, 2)`, which is quite high and also suggests that the weights are
+highly variable.
+
+ESS and CV do not offer definitive answers as to the quality of our IS estimate.
+One reason for that is that they are based on the weights, which depend on the
+target and proposal densities---not on the function $h$ that we are integrating.
+
+A third, and final, option that we propose for diagnosing the quality of the
+importance sampling estimator is to simply compare with plain Monte Carlo
+integration. You may, for instance, run a pilot run of plain Monte Carlo
+integration and compare the estimate and confidence interval with the estimate
+and confidence interval from importance sampling. If the two are very different,
+it may be a sign that the importance sampling estimator is unreliable.
+
+### Picking the proposal distribution
+
+Being able to diagnose the quality of the importance sampling estimator lays the
+foundation for picking good proposals. We have already seen that a bad choice of
+proposal can lead to weight degeneracy and unreliable estimates. On the other
+hand, a good choice of proposal distribution can lead to a significant reduction
+in variance compared to plain Monte Carlo integration.
+
+As we have discussed, the optimal proposal is proportional to $|h(x)| f(x)$. But
+this fact is only helpful in theory since it depends on the integral we want to
+compute (which we do not know). In practice, we need to pick a proposal
+distribution based on heuristics and algorithm and in this and the next section
+(Section \@ref(is-strategies)) we will discuss how to do this in practice.
+First, we will discuss some general principles for picking a good proposal
+distribution. These are not hard and fast rules, but they can serve as useful
+guidelines when picking a proposal distribution. The principles are to
+
+- ensure support coverage,
+- match the shape of the integrand, and
+- prefer heavier tails than the target distribution.
+
+#### Cover the support of the target distribution
+
+The first principle for picking a good proposal distribution is to ensure that
+the proposal distribution covers the support of the target distribution. If the
+proposal distribution does *not*, then the importance sampling estimator might
+be biased or have high variance.
+
+For a simple example, suppose that our target distribution is a standard
+Gaussian distribution and that we use a uniform distribution on the interval
+$[-2, 2]$ as our proposal distribution (Figure
+\@ref(fig:support-coverage-demo-setup)).
+
+```{r}
+#| label: support-coverage-demo-setup
+#| fig-cap: Target (black) and proposal (orange) densities for a demonstration
+#|   of the importance of support coverage in importance sampling.
+#| fig-height: 2.5
+x <- seq(-4, 4, length.out = 1000)
+
+df <- tibble(
+  x = x,
+  target = dnorm(x),
+  proposal = dunif(x, -2, 2)
+)
+
+df_long <- df |>
+  tidyr::pivot_longer(-x)
+
+ggplot(df_long, aes(x, value, color = name)) +
+  geom_line() +
+  scale_color_manual(
+    values = c(target = "black", proposal = "dark orange")
+  ) +
+  labs(y = "density", color = NULL, linetype = NULL)
+```
+
+If we are looking to just estimate the mean of the target distribution, then
+this proposal will actually work reasonably well, but if we are looking to for
+instance estimate the tail probability $\P(X > 2.5)$ then the uniform proposal
+will fail completely because it will never generate samples in the region.
+
+```{r}
+#| label: support-coverage-demo
+set.seed(53)
+n <- 1e4
+
+# sample from bad proposal
+x_bad <- runif(n, -2, 2)
+
+# weights
+w_bad <- dnorm(x_bad) / dunif(x_bad, -2, 2)
+
+# estimator
+h <- function(x) as.numeric(x > 2.5)
+
+est_bad <- mean(h(x_bad) * w_bad)
+est_bad
+```
+
+The fix is to use a proposal distribution that covers the entire support of the
+target distribution, which, in this case, is a trivial matter. But in more
+complex, high-dimensional problems, this issue might be harder to diagnose. The
+*opposite* mistake of using a proposal with support larger than needed is
+usually safer than missing support, but it can still be inefficient: many draws
+fall in low-contribution regions, increasing weight variability and often
+estimator variance too.
+
+#### Match the shape of the integrand
+
+Suppose we want to estimate $\mu = \P(X > 2)$ where $X \sim \mathcal{N}(0, 1)$.
+The integrand is then $f(x) 1(x > 2)$. If we now pick the proposal distribution
+to be a Gaussian distribution with mean $0$ and standard deviation $1$,
+then---even though the proposal distribution both covers the support and is in
+fact exactly the same as the target distribution---the importance sampling
+estimator will still have high variance. The reason for this is that the
+proposal distribution fails to match the shape of the integrand, which is zero
+for $x \leq 2$ and equal to the target density for $x > 2$.
+\@ref(fig:shape-matching-demo) shows the target density, the integrand, and the
+proposal distribution for this example.
+
+```{r}
+#| label: shape-matching-demo
+#| echo: false
+#| fig-height: 2.5
+#| fig-width: 5
+#| fig-cap: Integrand (black) and proposal density
+#|   (orange) for a demonstration of the importance of matching the shape of the
+#|   integrand in importance sampling.
+x <- seq(-3, 6, length.out = 1000)
+
+f <- dnorm(x)
+f_h <- f * (x > 2)
+
+df <- tibble(
+  x = x,
+  integrand = f_h,
+  proposal = dnorm(x, 0, 1)
+) |>
+  pivot_longer(-x)
+
+ggplot(df, aes(x, value, color = name, linetype = name)) +
+  geom_line() +
+  scale_color_manual(
+    values = c(integrand = "black", proposal = "dark orange")
+  ) +
+  labs(y = "density", color = NULL, linetype = NULL)
+```
+
+Later on, we will see that we can use the Laplace approximation to pick a
+proposal distribution that better matches the shape of the integrand, which can
+lead to a significant reduction in variance compared to plain Monte Carlo
+integration.
+
+#### Prefer heavier tails than the target distribution
+
+Consider estimating the tail probability $\P(X) > 4$ where
+$X \sim \operatorname{Gamma}(2, 1)$. If we choose a proposal density from
+$\mathcal{N}(3, 1)$, then the proposal distribution will have lighter tails than
+the target distribution, which means that it will not generate enough samples in
+the tail region where the integrand is large. In this case, the importance
+sampling estimator will have high variance, and it may even be biased if the
+proposal distribution does not generate any samples in the tail region.
+
+```{r}
+#| label: tail-matching-demo
+#| echo: false
+#| fig-height: 2.5
+#| fig-width: 5
+#| fig-cap: Integrand (solid black) and proposal density (dashed orange) for a
+#|   demonstration of the importance of matching the tails of the integrand in
+#|   importance sampling.
+x <- seq(0, 10, length.out = 1000)
+f <- dgamma(x, shape = 2, rate = 1)
+
+f_h <- f * (x > 3)
+g <- dnorm(x, mean = 3, sd = 1)
+
+df <- tibble(
+  x = x,
+  integrand = f_h,
+  proposal = g
+) |>
+  pivot_longer(-x)
+
+ggplot(df, aes(x, value, color = name, linetype = name)) +
+  geom_line() +
+  scale_color_manual(
+    values = c(integrand = "black", proposal = "dark orange")
+  ) +
+  labs(y = "density", color = NULL, linetype = NULL)
+```
+
+If we next try to estimate $\P(X > 4)$ using a Gaussian proposal distribution
+with mean $3$, we will find that the importance sampling estimator has high
+variance, because the proposal distribution has lighter tails than the target
+distribution, which means that it does not generate enough samples in the tail
+region where the integrand is large.
+
+```{r}
+#| label: tail-matching-demo-IS
+#| fig-height: 2
+#| fig-width: 5
+set.seed(49)
+
+n <- 1e3
+x <- rnorm(n, mean = 3, sd = 1)
+w <- dgamma(x, shape = 2, rate = 1) / dnorm(x, mean = 3, sd = 1)
+
+ggplot(tibble(w = w), aes(w)) +
+  geom_boxplot(alpha = 0.4) +
+  scale_y_discrete() +
+  labs(x = "Importance Weights")
+```
+
+### Strategies for picking a good proposal distribution {#is-strategies}
+
+Having discussed both how to diagnose the quality of the importance sampling
+estimator and the principles for picking a good proposal distribution, we can
+now turn to some specific strategies for picking a good proposal distribution,
+including:
+
+- the Laplace approximation,
+- adaptive importance sampling, and
+- mixture proposals.
+
+#### The Laplace approximation
+
+It is often the case that we don't know the mode of the integrand, which means
+that we cannot efficiently pick a proposal to match its bulk. An alternative is
+to use the Laplace approximation: a Gaussian approximation to the integrand that
+is centered at the mode and has a covariance matrix given by the inverse of the
+Hessian of the negative log of the integrand. The resulting Gaussian
+distribution can then be used as the proposal. It proceeds as follows:
+
+1. Find the mode $x^* = \arg\max_x |h(x)|f(x)$.
+2. Compute the Hessian $H$ of the first-order Taylor approximation of
+   $-\log |h(x)| f(x)$ around $x^*$.
+3. Use $\mathcal{N}(x^*, H^{-1})$ as proposal distribution.
+
+To show how this works in practice, we will consider the following example.
+
+::: {.example .boxed #laplace-approximation-example}
+Let our target density come from a $\mathrm{Gamma}(3,1)$ distribution, with
+$$
+f(x) = \frac{1}{2} x^2 e^{-x}, \quad x > 0.
+$$
+
+And assume we want to compute the second moment, so that $h(x) = x^2$.
+Then the integrand is
+$$
+|h(x)| f(x) = \tfrac{1}{2} x^4 e^{-x}.
+$$
+
+The mode is at $x^* = 4$ and the Hessian of $-\log |h(x)| f(x)$ at $x^*$ is
+$$
+H = \frac{4}{(x^*)^2} = \frac 1 4.
+$$
+
+So the Laplace approximation is $\mathcal{N}(4, 2^2)$. In
+Figure \@ref(fig:laplace-approximation-demo) we see the integrand and its
+Laplace approximation. The Laplace approximation is a good match near the mode,
+but it does not capture the tail behavior of the integrand very well.
+
+```{r}
+#| label: laplace-approximation-demo
+#| echo: false
+#| warning: false
+#| fig-height: 2.5
+#| fig-width: 5
+#| fig-cap: >-
+#|   Integrand (solid black) and Laplace approximation (dashed orange)
+#|   for a $\operatorname{Gamma}(3,1)$ target with $h(x)=x^2$.
+f_density <- function(x) dgamma(x, shape = 3, rate = 1) # Gamma(3,1)
+integrand <- function(x) f_density(x) * x^2
+
+x_star <- 4
+H <- 4 / (x_star^2)
+
+laplace_approx <- function(x) {
+  integrand(x_star) * exp(-0.5 * H * (x - x_star)^2)
+}
+
+x_grid <- seq(-5, 15, length.out = 400)
+
+df <- tibble(
+  x = x_grid,
+  integrand = integrand(x_grid),
+  laplace = laplace_approx(x_grid),
+) |>
+  pivot_longer(
+    cols = c(integrand, laplace),
+    names_to = "Density",
+    values_to = "value"
+  ) |>
+  filter(value > 0)
+
+# Plot
+ggplot(df, aes(x = x, y = value, color = Density, linetype = Density)) +
+  geom_line() +
+  scale_color_manual(
+    values = c(integrand = "black", laplace = "dark orange")
+  ) +
+  labs(
+    y = "Density",
+    color = NULL,
+    linetype = NULL
+  )
+```
+
+:::
+
+#### Adaptive importance sampling
+
+The basic idea of adaptive importance sampling is to iteratively update the
+proposal distribution based on the samples generated in previous iterations. The
+algorithm proceeds as follows:
+
+1. Choose an initial proposal distribution $g_0(x)$.
+2. Draw samples from $g_0$ and compute weights.
+3. Update the proposal distribution parameters based on weighted samples.
+4. Repeat steps 2-3 until convergence.
+
+How you update the proposal distribution can vary, but a common approach is
+moment-matching, where you update the parameters of the proposal distribution to
+match the weighted mean and covariance of the samples.
+
+At iteration $t$, draw samples $x_1, \ldots, x_n \sim g_t(x)$ and compute
+weights
+$$
+w_i^* = \frac{f(X_i)}{g_t(X_i)}.
+$$
+
+In this example we take $h \equiv 1$, so the integrand is proportional to the
+target density $f$ and adapting toward $f$ is appropriate.
+
+For a bimodal target, a single Gaussian proposal is often too rigid and may end
+up as a compromise between modes. In this example, we instead use a
+two-component Gaussian mixture proposal
+$$
+g_t(x) = \pi_{t,1} \phi(x; \mu_{t,1}, \sigma_{t,1}^2) +
+\pi_{t,2} \phi(x; \mu_{t,2}, \sigma_{t,2}^2),
+$$
+and adapt $(\pi_{t,k}, \mu_{t,k}, \sigma_{t,k})_{k=1}^2$ after each iteration.
+The update uses weighted responsibilities, so each component moves toward one
+mode and we can better track the target's multimodal shape.
+
+```{r}
+#| echo: false
+#| label: adaptive-importance-demo
+f_density <- function(x) 0.4 * dnorm(x, -2, 1) + 0.6 * dnorm(x, 3, 0.5)
+
+# Mixture density and simulator helpers
+dmixnorm <- function(x, pi, mu, sd) {
+  pi[1] *
+    dnorm(x, mean = mu[1], sd = sd[1]) +
+    pi[2] * dnorm(x, mean = mu[2], sd = sd[2])
+}
+
+rmixnorm <- function(n, pi, mu, sd) {
+  z <- sample.int(2, size = n, replace = TRUE, prob = pi)
+  rnorm(n, mean = mu[z], sd = sd[z])
+}
+
+# Adaptive importance sampling with a two-component Gaussian mixture proposal
+adaptive_is_mixture <- function(
+  n = 1000,
+  n_iter = 5,
+  pi_init = c(0.5, 0.5),
+  mu_init = c(-1, 1),
+  sd_init = c(1.5, 1.5)
+) {
+  proposals <- list()
+  samples <- list()
+  w_norm_list <- list()
+
+  pi_q <- pi_init / sum(pi_init)
+  mu_q <- mu_init
+  sd_q <- pmax(sd_init, 0.1)
+
+  for (i in 1:n_iter) {
+    # Draw from current proposal and compute IS weights
+    x <- rmixnorm(n, pi = pi_q, mu = mu_q, sd = sd_q)
+    g_x <- dmixnorm(x, pi = pi_q, mu = mu_q, sd = sd_q)
+    w_star <- f_density(x) / g_x
+    w_norm <- w_star / sum(w_star)
+
+    proposals[[i]] <- list(pi = pi_q, mu = mu_q, sd = sd_q)
+    samples[[i]] <- x
+    w_norm_list[[i]] <- w_norm
+
+    # Responsibilities under current proposal
+    r1 <- pi_q[1] * dnorm(x, mean = mu_q[1], sd = sd_q[1]) / g_x
+    r2 <- pi_q[2] * dnorm(x, mean = mu_q[2], sd = sd_q[2]) / g_x
+
+    # Importance-weighted responsibility update
+    a1 <- w_norm * r1
+    a2 <- w_norm * r2
+
+    n1 <- max(sum(a1), 1e-8)
+    n2 <- max(sum(a2), 1e-8)
+
+    mu1_new <- sum(a1 * x) / n1
+    mu2_new <- sum(a2 * x) / n2
+    sd1_new <- sqrt(sum(a1 * (x - mu1_new)^2) / n1)
+    sd2_new <- sqrt(sum(a2 * (x - mu2_new)^2) / n2)
+
+    pi_q <- c(n1, n2)
+    pi_q <- pi_q / sum(pi_q)
+    mu_q <- c(mu1_new, mu2_new)
+    sd_q <- pmax(c(sd1_new, sd2_new), 0.1)
+  }
+
+  list(proposals = proposals, samples = samples, weights = w_norm_list)
+}
+
+# Run adaptive importance sampling
+set.seed(123)
+res <- adaptive_is_mixture(n = 1000, n_iter = 5)
+
+# Plotting function for a given iteration
+plot_step <- function(iter) {
+  proposal <- res$proposals[[iter]]
+  x_grid <- seq(-6, 6, length.out = 400)
+  df <- tibble(
+    x = x_grid,
+    target = f_density(x_grid),
+    proposal = dmixnorm(
+      x_grid,
+      pi = proposal$pi,
+      mu = proposal$mu,
+      sd = proposal$sd
+    )
+  ) |>
+    pivot_longer(
+      cols = c(target, proposal),
+      names_to = "Density",
+      values_to = "value"
+    )
+
+  # Calculate ESS and CV for current iteration
+  w <- res$weights[[iter]]
+  n <- length(w)
+  ess <- (sum(w))^2 / sum(w^2)
+  cv <- sqrt(mean((w - mean(w))^2)) / mean(w)
+
+  ggplot(df, aes(x = x, y = value, color = Density, linetype = Density)) +
+    geom_line() +
+    scale_color_manual(
+      values = c(target = "black", proposal = "dark orange")
+    ) +
+    scale_linetype_manual(values = c(target = "solid", proposal = "dashed")) +
+    lims(x = c(-6, 6), y = c(0, 0.6)) +
+    labs(
+      y = "Density",
+      linetype = NULL,
+      color = NULL,
+      title = sprintf("Step %.0f", iter),
+      subtitle = bquote(
+        "ESS = " *
+          .(sprintf("%.0f", ess)) *
+          ", CV = " *
+          .(sprintf("%.1f", cv)) *
+          ", " *
+          pi *
+          " = " *
+          "(" *
+          .(sprintf("%.2f", proposal$pi[1])) *
+          ", " *
+          .(sprintf("%.2f", proposal$pi[2])) *
+          ")"
+      )
+    )
+}
+```
+
+```{r}
+#| label: adaptive-importance
+#| echo: false
+#| cache: false
+#| fig-cap: Adaptive importance sampling with a two-component Gaussian mixture
+#|   proposal.
+p1 <- plot_step(1)
+p2 <- plot_step(2)
+p3 <- plot_step(3)
+p4 <- plot_step(4)
+
+p1 + p2 + p3 + p4 + plot_layout(ncol = 2, axes = "collect", guides = "collect")
+```
+
+Each panel in Figure \@ref(fig:adaptive-importance) shows one adaptation step:
+the solid black curve is the target and the dashed blue curve is the current
+proposal. A successful adaptation is one where the proposal progressively covers
+both modes rather than concentrating between them. We can also track this
+numerically: ESS should increase, CV should decrease, and the mixture weights
+$(\pi_1, \pi_2)$ should stabilize as the proposal settles.
+
+#### Mixture proposals
+
+Another strategy for picking a good proposal distribution is to use a mixture of
+distributions as the proposal distribution. This can be particularly useful when
+the target distribution is multimodal or has complex structure that is difficult
+to capture with a single distribution.
+
+It is also the basis for *defensive importance sampling* [@hesterberg1995],
+where you use a mixture of the target distribution and a more diffuse
+distribution as the proposal distribution. This can help to mitigate the issue
+of weight degeneracy, because it ensures that the proposal distribution has
+heavier tails than the target distribution, which can lead to more stable
+estimates.
+
+Recall the earlier Gamma(8,1) importance sampling example in Section
+\@ref(importance-sampling), where we estimated the mean using
+$g(x) = \mathcal{N}(10, 3^2)$. To make the effect of defensive importance
+sampling clearer, we now use a narrower baseline proposal.
+
+Instead we can use a mixture
+
+$$
+g_{\mathrm{mix}}(x) = 0.8 \cdot \mathcal{N}(10, 2^2) + 0.2 \cdot \mathcal{N}(10, 10^2)
+$$
+
+with heavier tails to ensure coverage.
+
+To see the practical effect, we compare the unnormalized importance weights
+$w^*(x) = f(x)/g(x)$ under the narrower Gaussian proposal $\mathcal{N}(10, 2^2)$
+and the defensive mixture proposal. If the mixture is helpful, we should see
+fewer extreme weights, together with a larger ESS and smaller CV.
+
+```{r}
+#| label: gamma-defensive-fig
+#| fig-cap: Comparison of weight behavior for a narrow Gaussian proposal and a
+#|   defensive mixture proposal. Bottom panels show sampled importance weights
+#|   on a log scale; each facet also reports effective sample size (ESS) and the
+#|   coefficient of variation (CV) of the weights.
+#| echo: false
+#| fig-height: 3.5
+set.seed(1234)
+B <- 1000
+n_comp <- rbinom(B, 1, 0.8)
+x_norm <- rnorm(B, mean = 10, sd = 2)
+x_mix <- rnorm(B, mean = 10, sd = 2)
+x_mix[n_comp == 0] <- rnorm(sum(n_comp == 0), mean = 10, sd = 10)
+
+g_norm_x <- dnorm(x_norm, 10, 2)
+g_mix_x <- 0.8 * dnorm(x_mix, 10, 2) + 0.2 * dnorm(x_mix, 10, 10)
+
+w_norm <- dgamma(x_norm, 8) / g_norm_x
+w_mix <- dgamma(x_mix, 8) / g_mix_x
+
+ess_norm <- (sum(w_norm)^2) / sum(w_norm^2)
+ess_mix <- (sum(w_mix)^2) / sum(w_mix^2)
+cv_norm <- sd(w_norm) / mean(w_norm)
+cv_mix <- sd(w_mix) / mean(w_mix)
+
+label_norm <- sprintf(
+  "Normal proposal\nESS = %.0f, CV = %.1f",
+  ess_norm,
+  cv_norm
+)
+label_mix <- sprintf("Mixture proposal\nESS = %.0f, CV = %.1f", ess_mix, cv_mix)
+
+z <- seq(-10, 30, length.out = 300)
+f_x <- dgamma(z, 8)
+g_norm <- dnorm(z, 10, 2)
+g_mix <- 0.8 * dnorm(z, 10, 2) + 0.2 * dnorm(z, 10, 10)
+
+p1 <- tibble(x = z, target = f_x, normal = g_norm, mixture = g_mix) |>
+  pivot_longer(c(target, normal, mixture)) |>
+  ggplot(aes(x, value, color = name, linetype = name)) +
+  geom_line() +
+  guides(color = guide_legend(position = "inside")) +
+  scale_color_manual(
+    values = c(target = "black", normal = "steelblue", mixture = "dark orange")
+  ) +
+  scale_linetype_manual(
+    values = c(target = "solid", normal = "dashed", mixture = "solid")
+  ) +
+  theme(legend.position.inside = c(0.78, 0.8)) +
+  labs(y = "Density", color = NULL, linetype = NULL)
+
+p2 <- tibble(
+  w = c(w_norm, w_mix),
+  proposal = c(rep(label_norm, B), rep(label_mix, B))
+) |>
+  ggplot(aes(w)) +
+  geom_histogram(bins = 30) +
+  scale_x_log10() +
+  facet_wrap(~proposal, ncol = 1) +
+  labs(x = "Importance weights (log scale)", y = "Count")
+
+p1 | p2 + plot_layout(axes = "collect")
+```
 
 ### Computing a high-dimensional integral {#hd-int}
 
@@ -618,6 +1435,7 @@ p1 <- ggplot(mapping = aes(x = 1:N, y = mu_hat)) +
   geom_hline(yintercept = 1, color = "blue") +
   geom_line() +
   geom_point() +
+  labs(y = expression(hat(mu))) +
   coord_cartesian(ylim = c(0, 2)) +
   ggtitle("With Chebychev confidence intervals")
 
@@ -632,10 +1450,11 @@ p2 <- ggplot(mapping = aes(x = 1:N, y = mu_hat)) +
   geom_hline(yintercept = 1, color = "blue") +
   geom_line() +
   geom_point() +
+  labs(y = expression(hat(mu))) +
   coord_cartesian(ylim = c(0, 2)) +
   ggtitle("With CLT confidence intervals")
 
-gridExtra::grid.arrange(p1, p2, ncol = 2)
+p1 + p2 + plot_layout(ncol = 2, axes = "collect")
 ```
 
 The confidence bands provided by the CLT are typically more accurate estimates
@@ -679,9 +1498,10 @@ p2 <- ggplot(mapping = aes(x = 1:N, y = mu_hat)) +
   geom_line() +
   geom_point() +
   coord_cartesian(ylim = c(0, 2)) +
+  labs(y = expression(hat(mu))) +
   ggtitle("CLT confidence intervals")
 
-gridExtra::grid.arrange(p1, p2, ncol = 2)
+p1 + p2
 ```
 
 The sample path in Figure \@ref(fig:MC-CLT2) is not carefully selected to be
@@ -697,12 +1517,36 @@ large value. In this example the Monte Carlo integration technique does not
 perform well for $\alpha = 0.25$ (or larger), and the uncertainty quantification
 via the CLT is unreliable, even though the variance is finite.
 
+As a simple diagnostic for this instability, we can look at the normalized
+contributions $\tilde{w}_i = h(X_i) / \sum_{j=1}^N h(X_j)$ and compute
+
+$$
+\mathrm{ESS}_{\mathrm{contr}} = \frac{1}{\sum_{i=1}^N \tilde{w}_i^2}.
+$$
+
+If only a few terms dominate, $\mathrm{ESS}_{\mathrm{contr}}$ becomes much
+smaller than $N$, and the largest normalized contribution can be substantial.
+
+```{r, dependson="MC-loop2"}
+#| label: MC-contribution-diagnostics
+w_contr <- evaluations / sum(evaluations)
+ess_contr <- 1 / sum(w_contr^2)
+max_w_contr <- max(w_contr)
+```
+
+In this run, $\text{ESS}_\text{contr} = `r round(ess_contr, 1)`$ and the maximum
+normalized contribution (`max_w_contr`) is `r round(max_w_contr, 3)`, indicating
+substantial concentration: a small number of terms contribute disproportionately
+to the average, which can lead to instability in the estimate and unreliable
+confidence intervals.
+
 ```{r, dependson=c("MC_par", "MC_hfun")}
 #| label: MC-CLT3
 #| echo: false
 #| results: "hide"
 #| out-width: "100%"
-#| fig-cap: "Four sample paths for the Monte Carlo average ($\\alpha = 0.4$) and pointwise 95% confidence intervals based on the CLT."
+#| fig-cap: Four sample paths for the Monte Carlo average ($\alpha = 0.4$) and
+#|   pointwise 95% confidence intervals based on the CLT.
 sim <- tibble::tibble(
   x = matrix(rnorm(N * p), N, p),
   evaluations = apply(x, 1, h, alpha = alpha),
@@ -721,6 +1565,7 @@ p1 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) +
   geom_hline(yintercept = 1, color = "blue") +
   geom_line() +
   geom_point() +
+  labs(y = expression(hat(mu))) +
   coord_cartesian(ylim = c(-1, 3))
 
 sim <- tibble::tibble(
@@ -741,6 +1586,7 @@ p2 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) +
   geom_hline(yintercept = 1, color = "blue") +
   geom_line() +
   geom_point() +
+  labs(y = expression(hat(mu))) +
   coord_cartesian(ylim = c(-1, 3))
 
 sim <- tibble::tibble(
@@ -759,6 +1605,7 @@ p3 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) +
     fill = "gray"
   ) +
   geom_hline(yintercept = 1, color = "blue") +
+  labs(y = expression(hat(mu))) +
   geom_line() +
   geom_point() +
   coord_cartesian(ylim = c(-1, 3))
@@ -779,11 +1626,12 @@ p4 <- ggplot(sim, aes(x = 1:N, y = mu_hat)) +
     fill = "gray"
   ) +
   geom_hline(yintercept = 1, color = "blue") +
+  labs(y = expression(hat(mu))) +
   geom_line() +
   geom_point() +
   coord_cartesian(ylim = c(-1, 3))
 
-gridExtra::grid.arrange(p1, p2, p3, p4, ncol = 2)
+p1 + p2 + p3 + p4 + plot_layout(ncol = 2, axes = "collect", guides = "collect")
 ```
 
 To be fair, it is the choice of a standard multivariate normal distribution as
@@ -935,10 +1783,14 @@ returned.
 
 It is fairly fast to sample even a large number of random graphs this way.
 
-```{r, dependson=c("network_simNet", "network_adj")}
-#| label: network_bench
+```{r, dependson="network_adj"}
+#| label: network_Aup
 Aup <- A
 Aup[lower.tri(Aup)] <- 0
+```
+
+```{r, dependson=c("network_simNet", "network_Aup")}
+#| label: network_bench
 bench::bench_time(replicate(1e5, {
   sim_net(Aup, 0.5)
   NULL
@@ -970,7 +1822,7 @@ discon <- function(Aup) {
 We then obtain the following estimate of the probability of nodes 1 and 10 being
 disconnected using Monte Carlo integration.
 
-```{r, dependson=c("network_connect", "network_simNet", "network_bench")}
+```{r, dependson=c("network_connect", "network_simNet", "network_Aup")}
 #| label: network_sim
 seed <- 27092016
 set.seed(seed)
@@ -1034,7 +1886,7 @@ w(x) = \frac{f_p(x)}{f_{p_0}(x)} = \frac{p^{18 - s} (1- p)^{s}}{p_0^{18 - s} (1-
 
 The importance sampling estimate of $\mu$ is then computed.
 
-```{r, dependson=c("network_sim", "network_weights", "network_simNet", "network_bench")}
+```{r, dependson=c("network_sim", "network_weights", "network_simNet", "network_Aup")}
 #| label: network_sim2
 set.seed(seed)
 tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.2), 0.2, 0.05))
@@ -1107,63 +1959,38 @@ event that 1 and 10 become disconnected is too rare, and for larger values the
 importance weights become too variable. A choice of $0.2$ strikes a good
 balance.
 
-(ref:networkCap) Confidence intervals for importance sampling estimates of network nodes 1 and 10 being disconnected under independent edge failures with probability 0.05. The red line is the true probability computed by complete enumeration.
-
 ```{r, dependson=c("network_sim", "network_sim2", "network_enumeration")}
 #| label: networkImp
 #| echo: false
-#| fig-cap: "(ref:networkCap)"
-MC_estimates <- data.frame(
-  rbind(
-    c(mu_hat_IS + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.2),
-    c(mu_hat + 1.96 * sqrt(mu_hat * (1 - mu_hat) / n) * c(-1, 0, 1), 0.05)
+#| warning: false
+#| fig-cap: Confidence intervals for importance sampling estimates of network
+#|   nodes 1 and 10 being disconnected under independent edge failures with
+#|   probability 0.05 (top), and the corresponding effective sample sizes
+#|   (ESS, bottom), for a range of proposal edge-failure probabilities. The red line
+#|   is the true probability computed by complete enumeration.
+p_grid <- c(0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4)
+network_stats <- lapply(p_grid, function(p0) {
+  if (p0 == 0.05) {
+    tmp_loc <- replicate(n, discon(sim_net(Aup, p0)))
+  } else {
+    tmp_loc <- replicate(n, weights(Aup, sim_net(Aup, p0), p0, 0.05))
+  }
+  w_norm <- tmp_loc / sum(tmp_loc)
+  data.frame(
+    p = p0,
+    low = mean(tmp_loc) - 1.96 * sd(tmp_loc) / sqrt(n),
+    phat = mean(tmp_loc),
+    high = mean(tmp_loc) + 1.96 * sd(tmp_loc) / sqrt(n),
+    ess = 1 / sum(w_norm^2),
+    cv = sd(tmp_loc) / mean(tmp_loc)
   )
-)
-colnames(MC_estimates) <- c("low", "phat", "high", "p")
+})
+MC_estimates <- dplyr::bind_rows(network_stats)
 
-set.seed(seed)
-tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.1), 0.1, 0.05))
-MC_estimates <- rbind(
+p1 <- ggplot(
   MC_estimates,
-  c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.1)
-)
-
-set.seed(seed)
-tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.15), 0.15, 0.05))
-MC_estimates <- rbind(
-  MC_estimates,
-  c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.15)
-)
-
-set.seed(seed)
-tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.25), 0.25, 0.05))
-MC_estimates <- rbind(
-  MC_estimates,
-  c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.25)
-)
-
-set.seed(seed)
-tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.3), 0.3, 0.05))
-MC_estimates <- rbind(
-  MC_estimates,
-  c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.3)
-)
-
-set.seed(seed)
-tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.35), 0.35, 0.05))
-MC_estimates <- rbind(
-  MC_estimates,
-  c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.35)
-)
-
-set.seed(seed)
-tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.4), 0.4, 0.05))
-MC_estimates <- rbind(
-  MC_estimates,
-  c(mean(tmp) + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1), 0.4)
-)
-
-ggplot(MC_estimates, aes(x = factor(p), y = phat, ymin = low, ymax = high)) +
+  aes(x = factor(p), y = phat, ymin = low, ymax = high)
+) +
   geom_hline(yintercept = sum(prob), color = "red") +
   geom_point() +
   geom_linerange() +
@@ -1172,17 +1999,32 @@ ggplot(MC_estimates, aes(x = factor(p), y = phat, ymin = low, ymax = high)) +
     y = "Probability of 1 and 10 disconnected",
     x = "Importance sampling edge fail probability"
   )
+
+p2 <- ggplot(MC_estimates, aes(x = factor(p), y = 0)) +
+  geom_segment(aes(yend = ess)) +
+  geom_point(aes(y = ess)) +
+  labs(
+    x = "Importance sampling edge fail probability",
+    y = "ESS"
+  )
+
+p1 / p2 + plot_layout(heights = c(2, 1), axes = "collect")
 ```
 
-### Object oriented implementations
+The lower panel in Figure \@ref(fig:networkImp) shows the ESS for each proposal
+probability $p_0$. It gives a direct diagnostic of weight variability: very low
+ESS indicates that only a small fraction of simulations contribute meaningfully
+to the estimate.
+
+### Object-oriented implementations
 
 Implementations of algorithms that handle graphs and simulate graphs, as in the
-Monte Carlo computations above, can benefit from using an object oriented
+Monte Carlo computations above, can benefit from using an object-oriented
 approach. To this end we first implement a so-called *constructor*, which is a
 function that takes the adjacency matrix and the edge failure probability as
-arguments and returns a list with class label `network`.
+arguments and returns a list with class label `"network"`.
 
-```{r, dependson="network_bench"}
+```{r, dependson="network_Aup"}
 #| label: network_constructor
 network <- function(A, p) {
   Aup <- A
@@ -1307,7 +2149,7 @@ computational overhead due to method dispatching, that is, the procedure that R
 uses to look up the appropriate `sim()` method for an object of class `network`.
 On the other hand, `sim()` does not recompute `ones` every time.
 
-```{r, echo=2, dependson=c("network_simnet", "simnetwork", "network_bench", "network_constructor")}
+```{r, echo=2, dependson=c("network_simNet", "simnetwork", "network_bench", "network_constructor")}
 #| label: network_bench2
 old_options <- options(digits = 3)
 bench::mark(
@@ -1349,9 +2191,9 @@ function already exists, we simply need to implement a method for class
 ```{r}
 #| label: network_print
 print.network <- function(x) {
-  cat("#vertices: ", nrow(x$A), "\n")
+  cat("#vertices:", nrow(x$A), "\n")
   cat("#edges:", sum(x$Aup), "\n")
-  cat("p = ", x$p, "\n")
+  cat("p =", x$p, "\n")
 }
 ```
 
@@ -1365,7 +2207,7 @@ of just the raw list.
 
 If you want to work more seriously with graphs, it is likely that you want to
 use an existing R package instead of reimplementing many graph algorithms. One
-of these packages is igraph, which also illustrates well an object oriented
+of these packages is igraph, which also illustrates well an object-oriented
 implementation of graph classes in R.
 
 We start by constructing a new graph object from the adjacency matrix.
@@ -1506,13 +2348,24 @@ second \@ref(eq:HMM-smoother) is known as a *smoothing* problem.
 We first develop a bit of general theory that will show how the two conditional
 expectations can be expressed as (high-dimensional) integrals w.r.t. a
 distribution whose density is known up to a normalization constant. This
-suggests that we can use importance sampling with standardized weights to
+suggests that we can use importance sampling with normalized weights to
 approximate the integrals. We show by example that the high-dimensional nature
 of the problem leads to similar problems as we encountered in Section
 \@ref(hd-int). That is, weights will occasionally be very large, and the
-standardized weights will except for one or a few observations be very small.
-This is known as *weight degeneracy*, and it leads to poor performance of
-importance sampling. Particle filters are a solution to weight degeneracy.
+normalized weights will except for one or a few observations be very small. This
+is known as *weight degeneracy*, and it leads to poor performance of importance
+sampling. Particle filters are a solution to weight degeneracy.
+
+As in the static importance sampling setting, a useful diagnostic is the
+effective sample size at time $k$,
+
+$$
+\mathrm{ESS}_k = \frac{1}{\sum_{i=1}^N \big(w_k^{(i)}\big)^2},
+$$
+
+computed from normalized particle weights $w_k^{(i)}$. A rapidly decreasing
+$\mathrm{ESS}_k$ is a practical warning sign of degeneracy and is commonly used
+as a trigger for resampling in particle filters.
 
 ### Filtering and sequential importance sampling
 
@@ -1572,7 +2425,7 @@ generally infeasible, thus we only know the target density up to a normalization
 constant.
 
 If we use simulations from the Markov Chain itself as proposals, we identify the
-(unstandardized) weights from the integral above as
+(unnormalized) weights from the integral above as
 
 \[
 w^*(Z_{1:k}) = g_{1:k}(y_{1:k} \mid Z_{1:k}) = w^*(Z_{1:(k-1)}) \cdot w^*(Z_{k}),
@@ -1591,7 +2444,7 @@ $k$ as
   \sum_{i=1}^N  h(Z_k^{(i)}) w(Z_{1:k}^{(i)})
 \]
 
-where the standardized weights are
+where the normalized weights are
 
 \[
 w(Z_{1:k}^{(i)}) = \frac{w^*(Z_{1:k}^{(i)})}{\sum_{j=1}^N w^*(Z_{1:k}^{(j)})}.
@@ -1633,7 +2486,7 @@ implementation of the sequential importance sampling algorithm, and we can the
 compare the results to those obtained by the analytic solution.
 
 Since the conditional density of $Y_k$ given $Z_{k}$ is Gaussian we see that the
-unstandardized weights become
+unnormalized weights become
 
 \[
 w^*(Z_{k}) = \exp\left( - \frac{\left( y_k - Z_k \right)^2}{2 \sigma^2} \right).
@@ -1673,8 +2526,8 @@ kalman_filter(NumericVector y, double alpha, double eta)
 ## Exercises {#MC-ex}
 
 ::: {#mu .exercise}
-Use that the univariate Gaussian density integrates to $1$ to show that for any
-value of $x_{k-1}$,
+Use the fact that the univariate Gaussian density integrates to $1$ to show that
+for any value of $x_{k-1}$,
 
 \[
 \int \exp\left( - \frac{1}{2} (x_k - \alpha x_{k-1})^2 
@@ -1692,7 +2545,7 @@ and argue that it implies
 
 \[
 \E\left( \exp\left(- \frac{1}{2} \sum_{i = 2}^p \alpha^2 
-X_{k-1}^2 - 2\alpha X_k X_{k-1} \right) \right) = 1.
+X_{k-1}^2 - 2\alpha X_k X_{k-1} \right) \right) = 1
 \]
 
 if $X \sim \mathcal{N}(0, I_p)$.
@@ -1720,5 +2573,16 @@ show that
 \[
 \E(h(X)^2) \leq \E\left( e^{(2 \alpha - \alpha^2) Z} \right) < \infty
 \]
-for $\alpha < 1 - \sqrt{8} / 4 \approx 0.2929.$
+
+for $\alpha < 1 - \sqrt{8} / 4 \approx 0.2929$.
+:::
+
+::: {#mc-practical .exercise}
+Simulate from a proposal \(g\) and use importance sampling to estimate
+\(\mu=\Pr(X>4)\) for \(X\sim\mathcal{N}(0,1)\).
+
+(a) Use \(g=\mathcal{N}(0,1)\), \(g=\mathcal{N}(3,1)\), and a mixture
+    \(g=0.9\,\mathcal{N}(3,1)+0.1\,\mathcal{N}(0,4^2)\).
+(b) For each, compute the estimate, ESS, and CV.
+(c) Explain which proposal is best and why.
 :::
