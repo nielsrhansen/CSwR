@@ -1,8 +1,8 @@
 ## TODO
 
 - [ ] Rewrite Sections 2.3 and 2.4. Introduce score based methods. Implement CV.
-- [ ] Go through Section 3.5; particularly thresholding. Move penalty matrix
-      to CSwR
+- [ ] Go through Section 3.5; particularly thresholding. Move penalty matrix to
+      CSwR
 - [ ] Rewrite Chapter 4. Downplay running mean, generalize to convolution,
       rewrite Fourier part and include convolutions using FFT, improve section
       on Kalman filter and smoothing.
@@ -14,12 +14,12 @@
 - [ ] Write last chapter on stochastic EM
 - [ ] Finish appendix on performance and objects
 - [ ] Add exercises throughout
-      - [X] One or two more in Rejection Sampling chapter
-      - [ ] One or two more in MC chapter
+      - [x] One or two more in Rejection Sampling chapter
+      - [x] One more in MC chapter
       - [ ] Add exercises for Time Series Smoothing chapter
       - [ ] Add exercises for Likelihood Optimization chapter
       - [ ] Add exercises for Numerical Optimization chapter
       - [ ] Add exercises for EM chapter
       - [ ] Add exercises for Stochastic EM chapter
 - [ ] Finish index
-- [ ] Talk about effectiveness and defensive importance sampling
+- [x] Mention diagnostics and defensive importance sampling
