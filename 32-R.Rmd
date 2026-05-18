@@ -1731,45 +1731,88 @@ it is much easier to write compiled code in C++ and call it from R using the
 [Rcpp package](https://cran.r-project.org/package=Rcpp)\ [@Eddelbuettel:2011],
 which is what we will briefly introduce here.
 
-We will start by example. Below is a simple implementation of the sum function
-in C++ using Rcpp.
+To run the examples that follow, you need a C++ compiler installed; we cover
+setup in the [Getting started with Rcpp](#getting-started-with-rcpp) section
+below.
+
+We will start by example. Consider a one-dimensional random walk that is
+reflected at a lower and an upper boundary: at each step, we add an increment to
+the current position, and if the result falls outside the interval, we mirror it
+back inside. Because each step depends on the previous one, this is awkward to
+vectorize in R, and the natural implementation uses a loop with branches.
+
+```{r}
+#| label: reflected-walk-r
+
+reflected_walk_r <- function(steps, lower, upper) {
+  n <- length(steps)
+  x <- numeric(n + 1)
+
+  for (i in seq_len(n)) {
+    y <- x[i] + steps[i]
+
+    if (y < lower) {
+      y <- 2 * lower - y
+    } else if (y > upper) {
+      y <- 2 * upper - y
+    }
+
+    x[i + 1] <- y
+  }
+
+  x
+}
+```
+
+The same algorithm in C++ using Rcpp looks like this:
 
 ```{Rcpp}
-//| label: rcpp-sum
+//| label: reflected-walk-cpp
 
 #include <Rcpp.h>
 
 // [[Rcpp::export]]
-double
-sum_cpp(Rcpp::NumericVector& x)
+Rcpp::NumericVector
+reflected_walk_cpp(Rcpp::NumericVector steps, double lower, double upper)
 {
-  double x_sum = 0.0;
+  int n = steps.size();
+  Rcpp::NumericVector x(n + 1);
+  x[0] = 0.0;
 
-  for (int i = 0; i < x.size(); ++i) {
-    x_sum += x[i];
+  for (int i = 0; i < n; ++i) {
+    double y = x[i] + steps[i];
+
+    if (y < lower) {
+      y = 2 * lower - y;
+    } else if (y > upper) {
+      y = 2 * upper - y;
+    }
+
+    x[i + 1] = y;
   }
 
-  return x_sum;
+  return x;
 }
 ```
 
-As you can see, there are a couple of differences:
+The two implementations follow the same shape, but several syntactic differences
+in the C++ version stand out:
 
 - We include the Rcpp header file (`Rcpp.h`) with `#include <Rcpp.h>`. This is
-  similar in spirit to `library()` in R, but still requires us to explicitly
-  include the namespace `Rcpp::` when we use functions from the Rcpp
-  package.[^1]
+  similar to `library()` in R, but we still need to explicitly include the
+  namespace (`Rcpp::`) when we use functions from the Rcpp package.[^1]
 
-- We need to specify the *return type* of the function, which is `double` in
-  this case. This is a requirement of C++, which is a statically typed language,
-  and it means that we need to declare the type of all variables we use in the
-  function. It doesn't have to go on its own line and can also be separated from
-  the function name by a space. If your function does not return anything, you
-  can use the `void` type.
+- We need to specify the *return type* of the function, which is
+  `Rcpp::NumericVector` here. This is a requirement of C++, which is a
+  statically typed language, and it means that we need to declare the type of
+  every variable we use in the function. The return type doesn't have to go on
+  its own line and can also be separated from the function name by a space. If
+  your function does not return anything, you can use the `void` type.
 
-- We also need to specify argument as well as variable types. In this case, the
-  argument `x` is a reference to a numeric vector, which is denoted by
-  `Rcpp::NumericVector x`.
+- We also need to specify argument types. Here, `steps` is an
+  `Rcpp::NumericVector` and `lower` and `upper` are `double` scalars. Local
+  variables like `n`, `y`, and the loop counter `i` similarly need their types
+  declared.
 
 - Each statement in the function body needs to end with a semicolon (`;`), and
   the function body needs to be enclosed in curly braces (`{}`).
@@ -1785,27 +1828,25 @@ As you can see, there are a couple of differences:
 - We need to use `return` to return the result of the function, and the returned
   value needs to be of the type specified in the function declaration.
 
-- To assign, we need to use the assignment operator `=`, and we cannot use the
-  `<-` operator for assignment in C++. Also note the special in-place assignment
-  operator `+=`, which is equivalent to (but sometimes faster than)
-  `x_sum = x_sum + x[i]`.
+- To assign, we use the assignment operator `=`; the `<-` operator from R does
+  not exist in C++.
 
 [^1]: Unless we use the `using namespace Rcpp;` statement. This is typically
     fine to use in `Rcpp` packages and generally inside functions, but should
     otherwise be avoided to prevent namespace pollution.
 
-If we now try to benchmark this implementation against the built-in `sum()`
-function, we see that they perform similarly. The reason is that they are both
-written in a compiled language.
+Benchmarking the two implementations shows where Rcpp earns its keep: the
+compiled version is many times faster than the R loop, while remaining just as
+readable.
 
 ```{r}
-#| label: sum-benchmark
+#| label: reflected-walk-benchmark
 
-x <- rnorm(1e6)
+steps <- rnorm(1e5)
 
 bench::mark(
-  rcpp_sum = sum_cpp(x),
-  base_sum = sum(x)
+  rcpp = reflected_walk_cpp(steps, -1, 1),
+  r = reflected_walk_r(steps, -1, 1)
 )
 ```
 
@@ -1861,9 +1902,9 @@ one()
 
 This is a simple way to get started with Rcpp, but for more complicated
 functions and for better organization of your code, it is better to write your
-C++ code in separate files. You can tell call `Rcpp::sourceCpp()` to source the
-C++ code from a file. For instance, if you may in `my_r_experiment.R` (or
-similar), call the following line:
+C++ code in separate files. You can then call `Rcpp::sourceCpp()` to source the
+C++ code from a file. For instance, from a script like `my_r_experiment.R`, call
+the following line:
 
 ```r
 Rcpp::sourceCpp("my_cpp_functions.cpp")
