@@ -1965,29 +1965,19 @@ Modern processors have multiple cores, which means that they can perform
 multiple computations simultaneously. This happens all the time when you use
 your computer---if it did not, just opening up a web browser or music player
 would freeze your computer until the program has finished loading. We can take
-advantage of this property in computations by parallelizing our operations,
-splitting into multiple parts and running each separately on different cores. It
-is easy to see how this can speed up computations.
+advantage of this in our own code by splitting a computation into independent
+pieces and running each piece on a different core.
 
-The problem, however, is that parallelization is not inherently safe. Not every
-algorithm or computation is amenable to parallelization simply because order of
-executtion sometimes matters. Therefore, your computer will not automatically
-know how to parallelize your code, and every for loop your write will therefore,
-by default, be executed sequentially (on a single core)---unless you explicitly
-tell R to parallelize it, which is what we will learn how to do next.
+Parallelization is not, however, automatic. The iterations of a `for` loop may
+depend on each other---a running sum, for instance, needs the previous value
+before it can compute the next---and R cannot tell which loops are safe to
+parallelize and which are not. By default, every `for` loop you write is
+therefore executed sequentially on a single core. To run a loop in parallel we
+have to mark it as such ourselves and tell R how to distribute the work.
 
-There is a plethora of packages for parallel computing in R and we will not
-cover all of them here. Instead, we will focus on two packages:
-[`foreach`](https://cran.r-project.org/package=foreach) and
-[`future`](https://cran.r-project.org/package=future), which are both very
-popular and easy to use, but cover slightly different approaches to
-parallelization.
-
-The `foreach` package provides a simple, close-to drop-in, replacement for the
-`for` loop, which allows you to parallelize the computations in the loop with
-minimal changes to your code.
-
-The idea if that you replace a for loop with the following construct:
+We will use the [`foreach`](https://cran.r-project.org/package=foreach) package,
+which provides a close-to drop-in replacement for the `for` loop. The idea is to
+replace a loop like `for (i in 1:3) { ... }` with the following construct:
 
 ```{r}
 #| message: false
@@ -1995,42 +1985,109 @@ The idea if that you replace a for loop with the following construct:
 
 library(foreach)
 
-foreach(i = 1:3) %dopar%
-  {
-    sqrt(i)
-  }
+foreach(i = 1:3) %do% sqrt(i)
 ```
 
-This is designed to look and feel like a regular for loop---but it is not. The
-`foreach()` function is a function that returns a special object that is then
-evaluated with the `%dopar%` operator, which in turn returns a list. This is
-fundamentally different from a regular for loop, which does not return anything
-at all but instead modifies objects in place. This is necessary because the
-computations in the loop are executed on different cores, and the results need
-to be collected and returned in a way that is compatible with this parallel
-execution.
+Unlike a regular `for` loop, `foreach()` returns a value---by default a list of
+the results from each iteration. This is necessary because the iterations may be
+executed independently and possibly out of order, so the results have to be
+collected together at the end.
 
-Note that the chunk above returned a warning about having no parallel backend
-registered. This is because the `foreach` package needs a parallel backend to
-actually run the computations in parallel. There are several parallel backends
-available for `foreach`, such as `doParallel`, `doMC`, and `doFuture`, which you
-can install and register to enable parallel execution.
+To run the iterations in parallel we swap `%do%` for `%dopar%`. We also need to
+provide a *backend*: a set of worker processes that the iterations are sent to.
+The `parallel` package, which ships with R, provides one such backend, and the
+[`doParallel`](https://cran.r-project.org/package=doParallel) package connects
+it to `foreach`.
 
 ```{r}
 #| label: foreach-parallel
 #| message: false
 
 library(doParallel)
+
 cl <- makeCluster(2)
 registerDoParallel(cl)
 
-cl <- makeCluster(2)
+foreach(i = 1:3) %dopar% sqrt(i)
 
-foreach(i = 1:3) %dopar%
-  {
-    sqrt(i)
-  }
+stopCluster(cl)
 ```
+
+Here, `makeCluster(2)` starts two worker R processes, `registerDoParallel()`
+tells `foreach` to use them, and `stopCluster()` shuts them down when we are
+done.
+
+Running `sqrt(i)` in parallel is, of course, pointless: the cost of sending each
+tiny task to a worker is much larger than the cost of computing `sqrt(i)`.
+Parallelization only pays off when each iteration does enough work to justify
+this dispatch cost. As a more realistic example, consider drawing samples from a
+target distribution by rejection sampling. We take the target to be the
+$\operatorname{Beta}(2, 5)$ density on $(0, 1)$ and use a uniform proposal with
+envelope constant $M = 2.5$.
+
+```{r}
+#| label: rejection-bench-setup
+
+beta_sample <- function(n) {
+  M <- 2.5
+  out <- numeric(n)
+  i <- 0
+
+  while (i < n) {
+    u <- runif(1)
+    if (runif(1) < dbeta(u, 2, 5) / M) {
+      i <- i + 1
+      out[i] <- u
+    }
+  }
+
+  out
+}
+
+N <- 1e5
+W <- 4
+```
+
+Each accept-reject decision is independent of the others, so we can split the
+task of generating $N$ samples across $W$ workers, with each worker generating
+$N/W$ samples. Next, we compare the serial (`%do%`) and parallel (`%dopar%`)
+versions.
+
+```{r}
+#| label: rejection-bench
+#| warning: false
+
+cl <- makeCluster(W)
+registerDoParallel(cl)
+
+bench::mark(
+  serial = foreach(w = 1:W, .combine = c) %do% beta_sample(N / W),
+  parallel = foreach(w = 1:W, .combine = c) %dopar% beta_sample(N / W),
+  check = FALSE
+)
+
+stopCluster(cl)
+```
+
+The parallel version *is* faster, but *not* by a factor of four. Some of the
+running time is spent dispatching iterations and collecting their results, and
+this overhead does not parallelize.
+
+Workers started by `makeCluster()` are fresh R sessions and do not see the
+variables or packages from your interactive session. `foreach` tries to
+auto-detect what each iteration needs, but for non-trivial loops you may have to
+pass variables and packages explicitly using the `.export` and `.packages`
+arguments.
+
+Random number generation is not synchronized between the workers and the parent
+session, so setting `set.seed()` before a `%dopar%` loop does not make the
+results reproducible. The [`doRNG`](https://cran.r-project.org/package=doRNG)
+package provides a `%dorng%` operator that serves as a drop-in replacement for
+`%dopar%` and produces reproducible parallel random number streams.
+
+`parallel::detectCores()` reports the number of cores available on the machine,
+but using all of them is rarely a good idea since the rest of the system needs
+cores too. A reasonable default is to leave one or two cores free.
 
 ### Efficient data storage and access
 
