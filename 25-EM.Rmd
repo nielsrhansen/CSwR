@@ -397,9 +397,9 @@ is given as an exponential family Bayesian network
 and $x = M(\mathbf{y})$ is the observed transformation. 
 
 The complete data log-likelihood is 
-$$\theta \mapsto \theta^T t(\mathbf{y}) - \kappa(\theta)  = \theta^T \sum_{j=1}^m t_j(y_j) -  \kappa(\theta),$$
+$$\theta \mapsto \theta^\top t(\mathbf{y}) - \kappa(\theta)  = \theta^\top \sum_{j=1}^m t_j(y_j) -  \kappa(\theta),$$
 and we find that 
-$$Q(\theta \mid \theta') = \theta^T \sum_{j=1}^m E_{\theta'}(t_j(Y_j) \mid X = x)  - 
+$$Q(\theta \mid \theta') = \theta^\top \sum_{j=1}^m E_{\theta'}(t_j(Y_j) \mid X = x)  - 
 E_{\theta'}( \kappa(\theta) \mid X = x).$$
 
 To maximize $Q$ we differentiate $Q$ and equate the derivative equal to zero. We
@@ -578,7 +578,7 @@ and using the second Bartlett identity
 we see that 
 
 \[
-  \hat{\mathcal{I}}(\theta_0) =  \sum_{i=1}^N \big(\nabla_{\theta} Q_i(\theta_0 \mid \theta_0) - N^{-1} \nabla_{\theta} \ell(\theta_0)\big)\big(\nabla_{\theta} Q_i(\theta_0 \mid \theta_0) - N^{-1} \nabla_{\theta} \ell(\theta_0)\big)^T
+  \hat{\mathcal{I}}(\theta_0) =  \sum_{i=1}^N \big(\nabla_{\theta} Q_i(\theta_0 \mid \theta_0) - N^{-1} \nabla_{\theta} \ell(\theta_0)\big)\big(\nabla_{\theta} Q_i(\theta_0 \mid \theta_0) - N^{-1} \nabla_{\theta} \ell(\theta_0)\big)^\top
 \]
 
 is almost an unbiased estimator of the
@@ -587,7 +587,7 @@ estimator as $\theta_0$ is not known. Using a plug-in-estimator,
 $\hat{\theta}$, of $\theta_0$ we get a real estimator
 
 \[
-  \hat{\mathcal{I}} = \hat{\mathcal{I}}(\hat{\theta}) =  \sum_{i=1}^N \big(\nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) - N^{-1} \nabla_{\theta} \ell(\hat{\theta})\big)\big(\nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) - N^{-1} \nabla_{\theta} \ell(\hat{\theta})\big)^T,
+  \hat{\mathcal{I}} = \hat{\mathcal{I}}(\hat{\theta}) =  \sum_{i=1}^N \big(\nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) - N^{-1} \nabla_{\theta} \ell(\hat{\theta})\big)\big(\nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) - N^{-1} \nabla_{\theta} \ell(\hat{\theta})\big)^\top,
 \]
 
 though $\hat{\mathcal{I}}$ will no longer necessarily be unbiased. 
@@ -599,7 +599,7 @@ estimator, in which case $\nabla_{\theta} \ell(\hat{\theta}) = 0$ and the empiri
 Fisher information simplifies to 
 
 \[
-  \hat{\mathcal{I}} = \sum_{i=1}^N \nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) \nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta})^T.
+  \hat{\mathcal{I}} = \sum_{i=1}^N \nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta}) \nabla_{\theta} Q_i(\hat{\theta} \mid \hat{\theta})^\top.
 \]
 
 However, $\nabla_{\theta} \ell(\hat{\theta})$ is in practice only approximately 
@@ -656,7 +656,7 @@ possible to get `optim()` to compute the Hessian numerically in the minimizer
 as a final step, but `optimHess()` does this computation separately). 
 
 
-```{r empFisher-pep, dependson=c("grad-loglik-pep", "moth-EM", "moth-likelihood", "moth-prob", "moth-M", "pep-jacobian")}
+```{r empFisher-pep, dependson=c("grad-loglik-pep-em", "moth-EM", "moth-likelihood", "moth-prob", "moth-M")}
 # The gradient of Q (equivalently the log-likelihood) is
 # implemented via 'grad_neg_loglik_mult'.
 grad_Q <- function(par, xx) {
@@ -673,11 +673,23 @@ estimates of the same quantity. Thus they are *not* supposed to be identical on
 a given data set, but they are supposed to estimate the same thing 
 and thus to be similar. 
 
-An alternative to the empirical Fisher information or a direct computation of 
-the observed Fisher information is supplemented EM (SEM). This is a general method 
-for computing the observed Fisher 
-information that relies only on EM steps and a numerical differentiation scheme. 
-Define the EM map $\Phi : \Theta \mapsto \Theta$ by 
+An alternative to the empirical Fisher information or a direct computation of
+the observed Fisher information is supplemented EM (SEM). This is a general method
+for computing the observed Fisher
+information that relies only on EM steps and a numerical differentiation scheme.
+
+Before introducing the SEM update, it is worth positioning EM within the
+iteration schema of Section\ \@ref(numopt). EM produces a sequence
+$\theta_n = \Phi(\theta_{n-1})$ for a step map $\Phi$ defined implicitly
+through the conditional expectation $Q$; the explicit formula is given
+below. Unlike the descent methods of Section\ \@ref(grad-descent), EM does
+not move along $-\nabla \ell$ at each step; monotonicity of the observed
+log-likelihood comes from Theorem\ \@ref(thm:EM-inequality) instead. Its
+convergence rate is governed by the spectrum of $D \Phi$ at a fixed point,
+and the SEM derivation below turns this fact into a recipe for computing
+observed Fisher information from EM steps alone.
+
+Define the EM map $\Phi : \Theta \mapsto \Theta$ by
 
 \[
 \Phi(\theta') = \argmax_{\theta} \ Q(\theta \mid \theta').
@@ -709,14 +721,14 @@ We want to compute $\hat{i}_Y$ but $\hat{i}_{X \mid Y} := \hat{i}_{X \mid Y}(\ha
 is not computable either. It can, however, be shown that 
 
 \[
-D_{\theta} \Phi(\hat{\theta})^T = \hat{i}_{X\mid Y} \left(\hat{i}_X\right)^{-1}.
+D_{\theta} \Phi(\hat{\theta})^\top = \hat{i}_{X\mid Y} \left(\hat{i}_X\right)^{-1}.
 \]
 
 Hence
 
 \begin{align}
 \hat{i}_Y & = \left(I - \hat{i}_{X \mid Y} \left(\hat{i}_X \right)^{-1}\right) \hat{i}_X \\
-& = \left(I - D_{\theta} \Phi(\hat{\theta})^T\right) \hat{i}_X.
+& = \left(I - D_{\theta} \Phi(\hat{\theta})^\top\right) \hat{i}_X.
 \end{align}
 
 Though the EM map $\Phi$ might not have a simple analytic expression, 
@@ -758,9 +770,9 @@ be computed by inverting $\hat{i}_Y$, but we also have the following
 interesting identity
 
 \begin{align}
-\hat{i}_Y^{-1} & = \hat{i}_Y^{-1} \left(I - D_{\theta} \Phi(\hat{\theta})^T\right)^{-1} \\
- & = \hat{i}_Y^{-1} \left(I + \sum_{n=1}^{\infty} \left(D_{\theta} \Phi(\hat{\theta})^T\right)^n \right) \\
- & = \hat{i}_Y^{-1} + \hat{i}_Y^{-1} D_{\theta} \Phi(\hat{\theta})^T \left(I - D_{\theta} \Phi(\hat{\theta})^T\right)^{-1}
+\hat{i}_Y^{-1} & = \hat{i}_Y^{-1} \left(I - D_{\theta} \Phi(\hat{\theta})^\top\right)^{-1} \\
+ & = \hat{i}_Y^{-1} \left(I + \sum_{n=1}^{\infty} \left(D_{\theta} \Phi(\hat{\theta})^\top\right)^n \right) \\
+ & = \hat{i}_Y^{-1} + \hat{i}_Y^{-1} D_{\theta} \Phi(\hat{\theta})^\top \left(I - D_{\theta} \Phi(\hat{\theta})^\top\right)^{-1}
 \end{align}
 
 where the second identity follows by the 
@@ -796,37 +808,247 @@ differentiation since this method ignores numerical errors, and when the algorit
 gets sufficiently close to the MLE, the numerical errors will dominate in 
 the difference quotients.
 
-## Revisiting Gaussian mixtures
+## Revisiting Gaussian mixtures {#Gauss-mix-ex}
 
-In a two-component Gaussian mixture model the marginal density of the 
-distribution of $Y$ is 
+To close this chapter, we develop the EM algorithm in full for a
+two-component Gaussian mixture. Mixture likelihoods are the textbook example
+of multimodal objectives, and the resulting fragility of direct maximization
+is exactly the regime where EM is most useful. We first set up the model and
+its canonical exponential-family parametrization, building on
+Section\ \@ref(parametrization); then simulate from it; then attempt
+direct maximization with `optim()`, which works for good initial guesses
+but gets stuck in local maxima for bad ones; and finally develop the EM
+algorithm itself.
+
+### Setting up the model
+
+A Gaussian mixture model is a mixture model where all the mixture
+distributions are Gaussian but potentially with different means and
+variances. We focus on the simplest case with $K = 2$ mixture components,
+parametrized by the five parameters: the mixture weight
+$p = \P(Z = 1) \in (0, 1)$, the two means $\mu_1, \mu_2 \in \mathbb{R}$, and
+the two standard deviations $\sigma_1, \sigma_2 > 0$.
+
+The marginal density of $Y$ in this parametrization is
 
 \[
-  f(y) = p \frac{1}{\sqrt{2 \pi \sigma_1^2}} e^{-\frac{(y - \mu_1)^2}{2 \sigma_1^2}} + 
+f(y) = p \frac{1}{\sqrt{2 \pi \sigma_1^2}} e^{-\frac{(y - \mu_1)^2}{2 \sigma_1^2}} +
 (1 - p)\frac{1}{\sqrt{2 \pi \sigma_2^2}}e^{-\frac{(y - \mu_2)^2}{2 \sigma_2^2}}.
 \]
 
-The following is a simulation of data from such a mixture model.
+It is also useful to express the model in canonical exponential-family form,
+following Section\ \@ref(parametrization). The canonical parameters are
 
-```{r gaus-mix-sim}
+\[
+\theta_1  = \log \frac{p}{1 - p}, \quad
+\theta_2  = \frac{\mu_1}{2\sigma_1^2}, \quad
+\theta_3  = \frac{1}{2\sigma_1^2}, \quad
+\theta_4  = \frac{\mu_2}{\sigma_2^2}, \quad
+\theta_5  = \frac{1}{2\sigma_2^2}.
+\]
+
+The joint density of $(Y, Z)$ in this parametrization is
+
+\[
+(y,k) \mapsto \left\{ \begin{array}{ll}
+\exp\left(\theta_1 + \theta_2 y - \theta_3 y^2 - \log (1 + e^{\theta_1}) - \frac{ \theta_2^2}{4\theta_3}+ \frac{1}{2} \log(\theta_3) \right) & \quad \text{if } k = 1 \\
+\exp\left(\theta_4 y - \theta_5 y^2 - \log (1 + e^{\theta_1}) - \frac{\theta_4^2}{4\theta_5} + \frac{1}{2}\log(\theta_5) \right) &  \quad \text{if } k = 2
+\end{array} \right.
+\]
+
+and the marginal density of $Y$ becomes
+
+\begin{align}
+f(y \mid \theta) & = \exp\left(\theta_1 + \theta_2 y - \theta_3 y^2 - \log (1 + e^{\theta_1}) - \frac{ \theta_2^2}{4\theta_3}+ \frac{1}{2} \log(\theta_3) \right) \\
+& + \exp\left(\theta_4 y - \theta_5 y^2 - \log (1 + e^{\theta_1}) - \frac{\theta_4^2}{4\theta_5} + \frac{1}{2}\log(\theta_5) \right).
+\end{align}
+
+There is no apparent benefit to the canonical parametrization for the
+marginal density itself, but it is useful when we need the logarithm of the
+joint density, as we will for the EM algorithm below.
+
+### Simulating from the mixture
+
+We simulate $N = 5000$ observations from the two-component Gaussian mixture
+model with mixture distributions $\mathcal{N}(-0.5, 1)$ and $\mathcal{N}(4, 4)$
+and equal mixture weights.
+
+```{r}
+#| label: mixture-gaus-sim
+
 sigma1 <- 1
 sigma2 <- 2
 mu1 <- -0.5
 mu2 <- 4
 p <- 0.5
-n <- 1000
-z <- sample(c(TRUE, FALSE), n, replace = TRUE, prob = c(p, 1 - p))
-y <- numeric(n)
-n1 <- sum(z)
-y[z] <- rnorm(n1, mu1, sigma1)
-y[!z] <- rnorm(n - n1, mu2, sigma2)
+N <- 5000
+z <- sample(c(TRUE, FALSE), N, replace = TRUE, prob = c(p, 1 - p))
+## Conditional simulation from the mixture components
+y <- numeric(N)
+N1 <- sum(z)
+y[z] <- rnorm(N1, mu1, sigma1)
+y[!z] <- rnorm(N - N1, mu2, sigma2)
 ```
 
-We implement the log-likelihood assuming that the variances are known. Note
-that the implementation takes just one single parameter argument, which is 
-then supposed to be a vector of all parameters in the model. Internally to 
-the function one has to decide for each entry in the parameter vector what
-parameter in the model it corresponds to.
+The resulting marginal distribution is bimodal, as the histogram in
+Figure\ \@ref(fig:mixture-gaus-histogram) shows.
+
+```{r, dependson="mixture-gaus-sim"}
+#| label: mixture-gaus-histogram
+#| fig-cap: "Histogram and density estimate (red) of data simulated from a two-component Gaussian mixture distribution. The true marginal density is in blue."
+
+yy <- seq(-3, 11, 0.1)
+dens <- p * dnorm(yy, mu1, sigma1) + (1 - p) * dnorm(yy, mu2, sigma2)
+ggplot(mapping = aes(y, after_stat(density))) +
+  geom_histogram(bins = 20) +
+  geom_line(aes(yy, dens), color = "blue", size = 1) +
+  stat_density(bw = "sj", geom = "line", color = "red", size = 1)
+```
+
+It is possible to give a mathematically different representation of the
+marginal distribution of $Y$ that is sometimes useful. Though it gives the
+same marginal distribution from the same components, it does provide a
+different interpretation of what a mixture model is a model of, and it does
+provide a different way of simulating from a mixture distribution.
+
+If we let $Y_1 \sim \mathcal{N}(\mu_1, \sigma_1^2)$ and
+$Y_2 \sim \mathcal{N}(\mu_2, \sigma_2^2)$ be independent, and independent of
+$Z$, we can define
+
+\begin{equation}
+Y = 1(Z = 1) Y_1 + 1(Z = 2) Y_2 = Y_{Z}.
+(\#eq:mixturerep)
+\end{equation}
+
+Clearly, the conditional distribution of $Y$ given $Z = k$ is $f_k$. From
+\@ref(eq:mixturerep) it follows directly that
+
+$$
+\E(Y^n) = \P(Z = 1) \E(Y_1^n) + \P(Z = 2) \E(Y_2^n) = p m_1(n) + (1 - p) m_2(n)
+$$
+
+where $m_k(n)$ denotes the $n$th non-central moment of the $k$th mixture
+component. In particular,
+
+$$
+\E(Y) = p \mu_1 + (1 - p) \mu_2.
+$$
+
+The variance can be found from the second moment as
+
+\begin{align}
+\V(Y) & = p(\mu_1^2 + \sigma_1^2) + (1-p)(\mu_2^2 + \sigma_2^2) -  (p \mu_1 + (1 - p) \mu_2)^2 \\
+& = p\sigma_1^2 + (1 - p) \sigma_2^2 + p(1-p)(\mu_1^2 + \mu_2^2 - 2 \mu_1 \mu_2).
+\end{align}
+
+While it is certainly possible to derive this formula by other means, using
+\@ref(eq:mixturerep) gives a simple argument based on elementary properties
+of expectation and independence of $(Y_1, Y_2)$ and $Z$.
+
+The construction via \@ref(eq:mixturerep) has an interpretation that differs
+from how a mixture model was defined in the first place. Though $(Y, Z)$
+has the correct joint distribution, $Y$ is by \@ref(eq:mixturerep) the
+result of $Z$ *selecting* one out of two possible observations. The
+difference is illustrated by the following example. Suppose that we have a
+population of twins with each pair of twins consisting of a male and a
+female. We can draw a sample of individuals (ignoring the relations between
+the twins) from this population and let $Z$ denote the sex and $Y$ the
+height of the individual. Then $Y$ follows a mixture distribution with two
+components corresponding to males and females according to the definition.
+We could then also draw a sample of twins, and for each pair of twins flip
+a coin to decide whether to report the male's or the female's height. This
+corresponds to the construction of $Y$ by \@ref(eq:mixturerep). We get the
+same marginal mixture distribution of heights though.
+
+Arguably the heights of two twins are not independent, but this is actually
+immaterial. Any dependence structure between $Y_1$ and $Y_2$ is lost in the
+transformation \@ref(eq:mixturerep), and we can just as well assume them
+independent for mathematical convenience. We will not be able to tell the
+difference from observing only $Y$ (and $Z$) anyway.
+
+We illustrate below how \@ref(eq:mixturerep) can be used for alternative
+implementations of ways to simulate from the mixture model. We compare
+empirical means and variances to the theoretical values to test if all the
+implementations actually simulate from the Gaussian mixture model.
+
+```{r, dependson="mixture-gaus-sim"}
+#| label: sim-gaus-mix
+
+## Mean
+mu <- p * mu1 + (1 - p) * mu2
+
+## Variance
+sigmasq <- p *
+  sigma1^2 +
+  (1 - p) * sigma2^2 +
+  p * (1 - p) * (mu1^2 + mu2^2 - 2 * mu1 * mu2)
+
+## Simulation using the selection formulation via 'ifelse'
+y2 <- ifelse(z, rnorm(N, mu1, sigma1), rnorm(N, mu2, sigma2))
+
+## Yet another way of simulating from a mixture model
+## using arithmetic instead of 'ifelse' for the selection
+## and with Y_1 and Y_2 actually being dependent
+y3 <- rnorm(N)
+y3 <- z * (sigma1 * y3 + mu1) + (!z) * (sigma2 * y3 + mu2)
+
+## Returning to the definition again, this last method simulates conditionally
+## from the mixture components via transformation of an underlying Gaussian
+## variable with mean 0 and variance 1
+y4 <- rnorm(N)
+y4[z] <- sigma1 * y4[z] + mu1
+y4[!z] <- sigma2 * y4[!z] + mu2
+
+## Tests
+data.frame(
+  mean = c(mu, mean(y), mean(y2), mean(y3), mean(y4)),
+  variance = c(sigmasq, var(y), var(y2), var(y3), var(y4)),
+  row.names = c("true", "conditional", "ifelse", "arithmetic", "conditional2")
+)
+```
+
+In terms of runtime there is not a big difference between three of the ways
+of simulating from a mixture model. A benchmark study (not shown) revealed
+that the first and third methods are comparable in terms of runtime and a
+bit faster than the fourth, while the second using `ifelse()` takes about
+twice as long as the two fastest. This is unsurprising as the `ifelse()`
+method takes \@ref(eq:mixturerep) very literally and generates twice the
+number of Gaussian variables actually needed.
+
+```{r}
+#| label: mix-sim-bench
+#| eval: false
+#| include: false
+
+N <- 10000
+z <- sample(c(TRUE, FALSE), N, replace = TRUE, prob = c(p, 1 - p))
+bench::mark(
+  {
+    x <- numeric(N)
+    N1 <- sum(z)
+    x[z] <- rnorm(N1, mu1, sigma1)
+    x[!z] <- rnorm(N - N1, mu2, sigma2)
+  },
+  x <- ifelse(z, rnorm(N, mu1, sigma1), rnorm(N, mu2, sigma2)),
+  {
+    x <- rnorm(N)
+    x <- z * (sigma1 * x + mu1) + (!z) * (sigma2 * x + mu2)
+  },
+  {
+    x <- rnorm(N)
+    x[z] <- sigma1 * x[z] + mu1
+    x[!z] <- sigma2 * x[!z] + mu2
+  },
+  check = FALSE
+)
+```
+
+### Optimization by direct MLE
+
+We implement the log-likelihood assuming that the variances are known. The
+implementation takes a single parameter argument, which is a vector of all
+parameters in the model; internally the function decides for each entry in
+the parameter vector what parameter in the model it corresponds to.
 
 ```{r gaus-mix-loglik}
 loglik <- function(par, y) {
@@ -841,34 +1063,36 @@ loglik <- function(par, y) {
 }
 ```
 
-Without further implementations, `optim()` can find the 
-maximum-likelihood estimate if we have a sensible initial parameter guess. 
-In this case we use the true parameters, which can be used when 
-algorithms are tested, but they are, of course, not available for 
-real applications. 
+Without further implementations, `optim()` can find the maximum-likelihood
+estimate if we have a sensible initial parameter guess. Here we use the true
+parameters, which can be used when algorithms are tested but are, of course,
+not available for real applications.
 
-```{r gaus-mix-example, dependson=c("gaus-mix-loglik", "gaus-mix-sim")}
+```{r gaus-mix-example, dependson=c("gaus-mix-loglik", "mixture-gaus-sim")}
 optim(c(0.5, -0.5, 4), loglik, y = y)[c(1, 2)]
 ```
 
-However, if we initialize the optimization badly, it does not find the maximum 
-but a local maximum instead.
+However, if we initialize the optimization badly, it does not find the
+maximum but a local maximum instead.
 
-```{r gaus-mix-example-bad, dependson=c("gaus-mix-loglik", "gaus-mix-sim")}
+```{r gaus-mix-example-bad, dependson=c("gaus-mix-loglik", "mixture-gaus-sim")}
 optim(c(0.9, 3, 1), loglik, y = y)[c(1, 2)]
 ```
 
-We will implement the EM algorithm for the Gaussian mixture model by 
-implementing and E-step and an M-step function. We know from Section 
-\@ref(Gauss-mix-ex) how the complete log-likelihood looks, and the E-step
-becomes a matter of computing 
-$$p_i(\mathbf{y}) = E(1(Z_i = 1) \mid \mathbf{Y} = \mathbf{y}) = P(Z_i = 1 \mid  \mathbf{Y} = \mathbf{y}).$$
+### EM algorithm
+
+We implement the EM algorithm for the Gaussian mixture model with an E-step
+and an M-step function. Using the canonical exponential-family parametrization
+set up above, the E-step amounts to computing
+
+$$p_i(\mathbf{y}) = \E(1(Z_i = 1) \mid \mathbf{Y} = \mathbf{y}) = \P(Z_i = 1 \mid  \mathbf{Y} = \mathbf{y}).$$
+
 The M-step becomes identical to the MLE, which can be found explicitly,
-but where the indicators $1(Z_i = 1)$ and $1(Z_i = 2) = 1 - 1(Z_i = 1)$ are 
-replaced by the conditional probabilities $p_i(\mathbf{y})$ and 
+but where the indicators $1(Z_i = 1)$ and $1(Z_i = 2) = 1 - 1(Z_i = 1)$ are
+replaced by the conditional probabilities $p_i(\mathbf{y})$ and
 $1 - p_i(\mathbf{y})$, respectively.
 
-```{r gaus-mix-EM, dependson=c("gaus-mix-loglik", "gaus-mix-sim")}
+```{r gaus-mix-EM, dependson=c("gaus-mix-loglik", "mixture-gaus-sim")}
 e_step_mix <- function(par, y) {
   p <- par[1]
   mu1 <- par[2]
@@ -879,10 +1103,10 @@ e_step_mix <- function(par, y) {
 }
 
 m_step_mix <- function(pz, y) {
-  n <- length(y)
+  N <- length(y)
   N2 <- sum(pz)
-  N1 <- n - N2
-  c(N1 / n, sum((1 - pz) * y) / N1, sum(pz * y) / N2)
+  N1 <- N - N2
+  c(N1 / N, sum((1 - pz) * y) / N1, sum(pz * y) / N2)
 }
 
 em_mix <- em_factory(e_step_mix, m_step_mix, eps = 1e-12)
@@ -890,10 +1114,10 @@ em_mix <- em_factory(e_step_mix, m_step_mix, eps = 1e-12)
 em_mix(c(0.5, -0.5, 4), y)
 ```
 
-The EM algorithm may, just as any other optimization algorithm, 
-end up in a *local* maximum, if it is started wrongly. 
+The EM algorithm may, just as any other optimization algorithm,
+end up in a *local* maximum, if it is started wrongly.
 
-```{r gauss-mix-EM-bad, dependson=c("gaus-mix-loglik", "gaus-mix-sim", "gaus-mix-EM")}
+```{r gauss-mix-EM-bad, dependson=c("gaus-mix-loglik", "mixture-gaus-sim", "gaus-mix-EM")}
 em_mix(c(0.9, 3, 1), y)
 ```
 

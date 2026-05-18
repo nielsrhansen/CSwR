@@ -113,7 +113,8 @@ Uses roxygen2 for documentation.
 - $n$ and `n` denote iteration index/number or other integer variables/arguments
 - $i$, $j$, $k$, $l$ are data/parameter indices
 - $x$ and $X$ are (univariate) data variables: Chapters 1, 2, 5, 6, 7,
-- $y$ and $Y$ are (univariate) data variables, used when there is a need for $x$:
+- $y$ and $Y$ are (univariate) data variables, used when there is a need for
+  $x$:
   - Chapters 3 (bivariate data), 4 ($x$ is time)
   - Chapters 8 and 9 (regression on $x$)
   - Chapter 10 ($x$ is unobserved, $y = M(x)$ is observed; potentially
@@ -127,6 +128,7 @@ Uses roxygen2 for documentation.
 - Use \P, \E, \V, \cov for probability, expectation, variance and covariance.
   These are defined for pdf in latex/preamble.tex, and for HTML in
   mathjax_header.html
+- Use $\top$ for transpose.
 
 ### Terminology and grammar
 

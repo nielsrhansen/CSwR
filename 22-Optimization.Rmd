@@ -1,1037 +1,800 @@
 ---
 output: html_document
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
 # Numerical optimization {#numopt}
 
-The main application of numerical optimization in statistics is computation of
-parameter estimates, typically by maximizing the likelihood function or by
-maximizing or minimizing another estimation criterion. The focus of this chapter
-is on optimization algorithms for (penalized) maximum likelihood estimation. Out
-of tradition, we formulate all results and algorithms in terms of minimization
-and not maximization.
+In Chapter\ \@ref(opt-problem), we framed maximum-likelihood and penalized
+estimation as the minimization of $H = -\ell$ or $H = -\ell + J$, where $J$ is a
+penalty that does not depend on the data.
+\index{negative log-likelihood!minimization}\index{penalty function} In this
+chapter, we introduce algorithms for actually computing those minimizers.
+Throughout we assume $H : \Theta \to \mathbb{R}$ is twice continuously
+differentiable on an open set $\Theta \subseteq \mathbb{R}^p$.
 
-The generic optimization problem considered is the minimization of a function 
-$H: \Theta \to \mathbb{R}$ for an open set $\Theta \subseteq \mathbb{R}^p$ and $H$
-twice differentiable. In applications, we might consider $H = -\ell$, the negative
-log-likelihood function, or $H = -\ell + J$, where $J : \Theta \to \mathbb{R}$
-is a *penalty function*, likewise twice differentiable, that does not depend
-upon data.\index{negative log-likelihood!minimization}\index{penalty function}
+When $H$ is convex, every stationary point is a global minimizer
+(Section\ \@ref(opt-conditions)) and the algorithms considered in this section
+produce a certified optimum. When it is not, they produce a local minimizer or
+merely a stationary point. That does not, however, mean that the solutions are
+meaningless. @Kiefer:1978, for instance, showed that the Gaussian-mixture
+likelihood of Section\ \@ref(Gauss-mix-ex) is unbounded above, yet $\nabla
+H(\theta) = 0$ admits a consistent sequence of solutions as $N \to \infty$.
+Convexity is convenient but not essential.
 
-Most statistical optimization problems share a common structure that we 
-should pay attention to. Given data points $y_1, \ldots, y_N$ 
-the negative log-likelihood 
+Throughout the rest of this chapter, two recurrent themes will emerge. First,
+our goal is typically not the minimizer of $H$ for a particular dataset---what
+matters is the statistical estimate it represents. Driving an optimizer to
+machine precision is rarely worth the computational effort when the statistical
+uncertainty of the estimate is orders of magnitude larger, and our budget is
+then better spent exploring many models and starting values and quantifying
+parameter uncertainty. Second, the runtime of every algorithm in this chapter is
+dominated by the cost of evaluating $H$ and its derivatives. For
+exponential-family models, that cost collapses to a one-time
+sufficient-statistic computation (Section\ \@ref(parametrization)), making each
+iteration $O(p)$ rather than $O(Np)$. We will exploit this structure repeatedly.
 
-\[
--\ell(\theta) = - \sum_{i=1}^N \log(f_{\theta}(y_i))
-\]
+## Iterative algorithms
 
-is a sum over the data, and the more data we have, the more computationally demanding 
-it is to evaluate $-\ell$ and its derivatives. There are exceptions, though, 
-when a sufficient statistic can be computed upfront, but generally 
-we must expect runtime to grow with data size. 
-
-We should also note that blindly pursuing the global maximum of the likelihood
-can lead us astray if our model is not well behaved. @Kiefer:1978 demonstrated
-that for the Gaussian mixture model introduced in Section \@ref(Gauss-mix-ex),
-the likelihood (with unknown variance parameters) is unbounded. Yet Kiefer
-showed that for $H = -\ell$ there exists a consistent sequence of solutions to
-the equation $\nabla H(\theta) = 0$ as $N \to \infty$. That is, the unknown
-parameters can be estimated consistently by computing stationary points of
-$H$---even if these do not globally minimize $H$. In situations where $H$ is not
-convex and where $H$ may be unbounded below, it might still be possible to
-compute a good parameter estimate as a local minimizer. So even if we phrase the
-objective as a global optimization problem, we may be equally interested in
-local minima or even just stationary points; solutions to $\nabla H(\theta) =
-0$.
-
-Optimization is a computational technique used in statistics for adapting models to
-data---but the minimizer of $H$ for a particular data set is not intrinsically
-interesting. It is typically unnecessary to compute a (local) minimizer to high
-numerical precision. If the numerical error is already orders of magnitudes
-smaller than the statistical uncertainty of the parameter estimate being
-computed, further optimization makes no relevant difference. Rather than
-computing a single numerically accurate minimizer we should use our
-computational resources to explore many models and many starting values for the
-numerical optimizers, and we should assess the various model fits and
-quantify the model and parameter uncertainties.
-
-For the generic minimization problem considered in this chapter, the practical
-challenge when implementing algorithms in R is typically to implement efficient
-evaluation of $H$ and its derivatives. In particular, efficient evaluations of
-the negative log-likelihood, $-\ell$. Several choices of standard optimization algorithms are possible and
-some are already implemented and available in R. For many practical purposes the
-BFGS-algorithms, as implemented via `optim()`, work well and require only the
-computation of gradients. It is, of course, paramount that $H$ and $\nabla H$
-are correctly implemented, and efficiency of the algorithms is largely
-determined by the efficiency of the implementation of $H$ and $\nabla H$ as well
-as by the choice of parametrization.
-
-## Peppered moths {#pep-moth-descent}
-
-We revisit in this section the peppered moth example from Section \@ref(pep-moth),
-where we implemented the log-likelihood for general multinomial distributions
-with collapsing of categories, and where we 
-computed the maximum-likelihood estimate via 
-`optim()`. We used the default Nelder-Mead algorithm, which does not require 
-derivatives. In this section we implement the gradient as well and 
-illustrate how to optimize a function via `optim()` using the conjugate 
-gradient algorithm and the BFGS-algorithm. 
-
-From the 
-expression for the log-likelihood in \@ref(eq:mult-col-loglik) it follows
-that the gradient equals
+Optimization algorithms are typically *iterative*: from an initial value
+$\theta_0 \in \Theta$ they generate a sequence $\theta_1, \theta_2, \ldots$ via
+a step map $\Phi : \Theta \to \Theta$ with
 
 \[
-\nabla \ell(\theta) = \sum_{j = 1}^{K_0}  \frac{ n_j }{ M(p(\theta))_j}\nabla M(p(\theta))_j = \sum_{j = 1}^{K_0} \sum_{k \in A_j}  \frac{ n_j}{ M(p(\theta))_j} \nabla p_k(\theta).
+\theta_n = \Phi(\theta_{n-1}).
 \]
 
-Letting $j(k)$ be defined by $k \in A_{j(k)}$ we see that the gradient 
-can also be written as
+We hope that $\theta_n \to \theta^\star$ for some minimizer
+$\theta^\star \in \argmin_\theta H(\theta)$. When this happens, continuity of
+$\Phi$ forces $\Phi(\theta^\star) = \theta^\star$, so the limit is a *fixed
+point* of the step map. We thus specify $\Phi$ so that its fixed points are
+exactly the points we want to converge to, typically the stationary points of
+$H$, and then verify that the iterates do converge.
+
+Less than full convergence is often the best we can guarantee. The global
+minimizer may not exist or may not be unique, in which case the limit is defined
+only up to that ambiguity. The iterates may converge only to a *local* minimizer
+rather than the global one. And $\theta_n$ may not converge at all even if
+$H(\theta_n)$ converges to a (local) minimum, as the iterates can wander along a
+flat valley while the function value stabilizes.
+
+Most of the algorithms in this chapter are unified via a common feature: each
+step moves $\theta_n$ in a *descent direction* $\rho_n \in \mathbb{R}^p$ scaled
+by a *step size* $t_n > 0$:
 
 \[
-\nabla \ell(\theta) = \sum_{k=1}^K    \frac{n_{j(k)}}{ M(p(\theta))_{j(k)}} \nabla p_k(\theta) = \tilde{\mathbf{x}}(\theta) \mathrm{D}p(\theta),
+\theta_{n+1} = \theta_n + t_n \rho_n.
 \]
 
-where $\mathrm{D}p(\theta)$ is the Jacobian of the parametrization $\theta \mapsto p(\theta)$,
-and $\tilde{\mathbf{x}}(\theta)$ is the vector with 
- 
+The direction $\rho_n$ is called a descent direction at $\theta_n$ when
+
 \[
-\tilde{\mathbf{x}}(\theta)_k = \frac{ n_{j(k)}}{M(p(\theta))_{j(k)}}.
+\rho_n^\top \nabla H(\theta_n) < 0
 \]
- 
-We first recall the implementation of the general log-likelihood function
-in the multinomial model with cell collapsing before implementing the 
-gradient based on the formula above. The gradient takes the Jacobian
-of the parametrization, $Dp$, as an argument. If the parameters are out of 
-bounds, it returns a vector of `NA`s.
 
-```{r grad-loglik-pep}
-mult_collapse <- function(ny, group) {
-  as.vector(tapply(ny, group, sum))
-}
+whenever $\theta_n$ is not a stationary point. The first-order Taylor expansion
 
-neg_loglik_mult <- function(par, ny, prob, group, ...) {
-  p <- prob(par)
-  if (is.null(p)) return(Inf)
-  - sum(ny * log(mult_collapse(p, group)))
-}
+\[
+H(\theta_n + t \rho_n) = H(\theta_n) + t \rho_n^\top \nabla H(\theta_n) + o(t)
+\]
 
-grad_neg_loglik_mult <- function(par, ny, prob, Dprob, group) {
-  p <- prob(par)
-  if (is.null(p)) return(rep(NA, length(par)))
-  - (ny[group] / mult_collapse(p, group)[group]) %*% Dprob(par)
-}
+then guarantees $H(\theta_n + t \rho_n) < H(\theta_n)$ for sufficiently small
+$t > 0$. The algorithms in this chapter differ in how they choose $\rho_n$ and
+$t_n$. The simplest choice is gradient descent (Section\ \@ref(grad-descent)),
+which moves opposite the gradient, taking $\rho_n = -\nabla H(\theta_n)$.
+Newton's method (Section\ \@ref(Newton)) uses the curvature of $H$ (the Hessian)
+to correct the gradient direction, resulting in
+$\rho_n = -\nabla^2 H(\theta_n)^{-1} \nabla H(\theta_n)$, provided the Hessian
+is positive definite. Quasi-Newton methods replace the Hessian inverse with a
+cheaper surrogate. Step sizes can be fixed, chosen by line search, or obtained
+by minimizing exactly along the ray $t \mapsto H(\theta_n + t \rho_n)$.
+
+A sequence generated this way is called a *descent sequence* if
+
+\[
+H(\theta_0) \geq H(\theta_1) \geq H(\theta_2) \geq \ldots,
+\]
+
+and a *strict* descent sequence if the inequalities are sharp at every
+non-stationary $\theta_n$. The sequence $H(\theta_n)$ converges whenever $H$ is
+bounded below on the level set
+$\mathrm{lev}(\theta_0) = \{\theta \in \Theta \mid H(\theta) \leq H(\theta_0)\}$,
+which holds in particular when that level set is compact. But descent alone does
+not imply convergence to a stationary point---an algorithm can take ever-smaller
+steps and stall short of any minimizer. What we need is *sufficient* descent at
+each step, controlled by a quantitative lower bound on
+$H(\theta_n) - H(\theta_{n+1})$ in terms of the gradient. The rest of the
+chapter is largely devoted to establishing such bounds and deriving convergence
+rates from them.
+
+## Gradient descent {#grad-descent}
+
+Gradient descent is the quintessential first-order optimization algorithm. At
+each iteration we take $\rho_n = -\nabla H(\theta_n)$, the steepest descent
+direction, pick a step size $t_n > 0$, and update our current best guess of
+$\theta$ (Algorithm\ 1).
+
+```{algorithm, gd-basic}
+\begin{algorithm}
+  \caption{Gradient descent}
+  \begin{algorithmic}
+    \Require step size $t > 0$
+    \Repeat
+        \State $\theta \gets \theta - t \nabla H(\theta)$
+    \Until{convergence}
+    \Return $\theta$
+  \end{algorithmic}
+\end{algorithm}
 ```
 
-For the specific example of peppered moths we recall how to implement 
-the parametrization of the multinomial probabilities. 
+Geometrically, the step replaces $\theta_n$ with the point
+$\theta_n - t \nabla H(\theta_n)$ on the parameter axis: a move opposite to the
+local slope, by an amount proportional to its magnitude.
+Figure\ \@ref(fig:gd-step-1d) shows a single step on a one-dimensional convex
+$H$.
 
-```{r prob-pep-reimplement}
-prob_pep <- function(p) {
-  p[3] <- 1 - p[1] - p[2]
+```{r}
+#| label: gd-step-1d
+#| echo: false
+#| fig-width: 5
+#| fig-height: 3
+#| fig-cap: "One step of gradient descent. The tangent at $\\theta_n$ has slope
+#|   $\\nabla H(\\theta_n)$; the update moves $\\theta_n$ by $-t \\nabla H(\\theta_n)$
+#|   along the parameter axis, towards lower $H$."
+#| warning: false
 
-  out_of_bounds <-
-    p[1] > 1 || p[1] < 0 || p[2] > 1 || p[2] < 0 || p[3] < 0
-  if (out_of_bounds) return(NULL)
+f <- function(x) 0.4 * (x - 2)^2 + 0.5
+f_prime <- function(x) 0.8 * (x - 2)
 
-  c(p[1]^2, 2 * p[1] * p[2], 2 * p[1] * p[3],
-    p[2]^2, 2 * p[2] * p[3], p[3]^2
-  )
-}
-```
+theta_n <- -0.5
+t <- 0.6
+theta_n1 <- theta_n - t * f_prime(theta_n)
 
-Finally, we also need to implement the problem 
-specific Jacobian for the peppered moths example. 
+x_grid <- seq(-1.5, 4, length.out = 200)
+curve_df <- data.frame(x = x_grid, y = f(x_grid))
 
-```{r pep-jacobian}
-Dprob_pep <- function(p) {
-  p[3] <- 1 - p[1] - p[2]
-  matrix(
-    c(2 * p[1],             0,
-      2 * p[2],             2 * p[1],
-      2 * p[3] - 2 * p[1], -2 * p[1],
-      0,                    2 * p[2],
-      -2 * p[2],            2 * p[3] - 2 * p[2],
-      -2 * p[3],           -2 * p[3]),
-    ncol = 2, nrow = 6, byrow = TRUE)
-}
-```
-
-We can then use the conjugate gradient algorithm, say, to compute the 
-maximum-likelihood estimate. 
-
-```{r pep-cg,  dependson=c("moth-likelihood", "moth-prob", "moth-M", "grad-loglik-pep", "pep-jacobian")}
-optim(c(0.3, 0.3), neg_loglik_mult, grad_neg_loglik_mult,
-  ny = c(85, 196, 341),
-  prob = prob_pep,
-  Dprob = Dprob_pep,
-  group = c(1, 1, 1, 2, 2, 3),
-  method = "CG"
+tan_x <- c(theta_n - 0.9, theta_n + 0.9)
+tan_df <- data.frame(
+  x = tan_x,
+  y = f(theta_n) + f_prime(theta_n) * (tan_x - theta_n)
 )
-```
 
-NOTE ON THE `...` in the implementation of `neg_loglike_mult()`.
-
-The peppered moth example is very simple. 
-The log-likelihood can easily be computed, and we used this 
-problem to illustrate ways of implementing a 
-likelihood in R and how to use `optim()` to maximize it. 
-
-The first likelihood implementation in Section \@ref(pep-moth) 
-is very problem specific 
-while the second is more abstract and general, and we used the same general and abstract
-approach to implement the gradient above. The gradient could then 
-be used for other optimization algorithms, still using `optim()`, such as 
-conjugate gradient. In fact, we can use conjugate gradient without
-computing and implementing the gradient.
-
-```{r pep-cg-nograd, dependson=c("moth-likelihood", "moth-prob", "moth-M")}
-optim(c(0.3, 0.3), neg_loglik_mult,
-  ny = c(85, 196, 341),
-  prob = prob_pep,
-  group = c(1, 1, 1, 2, 2, 3),
-  method = "CG"
+pts <- data.frame(
+  x = c(theta_n, theta_n1),
+  y = c(f(theta_n), f(theta_n1)),
+  label = c("theta[n]", "theta[n+1]")
 )
+
+ggplot(curve_df, aes(x, y)) +
+  geom_line() +
+  geom_line(data = tan_df, linetype = "dashed", color = "steelblue") +
+  geom_segment(
+    data = pts,
+    aes(x = x, xend = x, y = 0, yend = y),
+    linetype = "dotted"
+  ) +
+  geom_segment(
+    aes(x = theta_n, xend = theta_n1, y = -0.15, yend = -0.15),
+    arrow = arrow(length = unit(0.15, "cm"), type = "closed")
+  ) +
+  annotate(
+    "text",
+    x = (theta_n + theta_n1) / 2,
+    y = -0.4,
+    label = "-t * nabla * H(theta[n])",
+    parse = TRUE
+  ) +
+  geom_point(data = pts) +
+  geom_text(
+    data = pts,
+    aes(label = label),
+    parse = TRUE,
+    nudge_y = 0.3,
+    nudge_x = c(0.15, 0.15)
+  ) +
+  labs(x = expression(theta), y = expression(H(theta))) +
+  coord_cartesian(ylim = c(-0.6, NA)) +
+  theme_schematic()
 ```
 
-If we do not implement a gradient, a numerical gradient is used by `optim()`.
-This can result in a slower algorithm than if the gradient is implemented, but
-more seriously, in can result in convergence problems. This is because there is
-a subtle trade-off between numerical accuracy and accuracy of the finite
-difference approximation used to approximate the gradient. We did not experience
-convergence problems in the example above, but if one encounters such problems 
-a possible solution is to change the `parscale` or `fnscale` entries 
-in the `control` list argument to `optim()`.
-
-Chapter \@ref(em) revisits the peppered moth example and use it to illustrate the
-EM algorithm for computing the maximum-likelihood estimate. It is important to
-understand that the EM algorithm does not rely on the ability to compute the
-(log-)likelihood---or the gradient of the (log-)likelihood for that matter. In
-some applications of the EM algorithm the computation of the likelihood is
-challenging or even impossible, in which case most standard optimization 
-algorithms will not be directly applicable.
-
-## Algorithms and convergence
-
-In the subsequent sections of this chapter we will investigate the implementation 
-of several standard optimization algorithms---including the conjugate gradient 
-algorithm used for the peppered moth example in the previous section. In this section 
-we develop a minimal theoretical framework 
-for presenting and analyzing optimization algorithms and their convergence. 
-This establishes a rudimentary theoretical understanding of sufficient conditions 
-for convergence, but equally importantly it provides us with a precise 
-framework for quantifying and measuring convergence of algorithms in practice. 
-
-A numerical optimization algorithm computes from an initial value 
-$\theta_0 \in \Theta$ a sequence $\theta_1, \theta_2, \ldots \in \Theta$.
-We could hope for 
+But how do we set $t$? If we set it too large, then we risk overshooting the
+target, possibly even diverging. If we set it too small, then we might never
+reach the optimum within our time budget. The answer hinges on the *smoothness*
+of $H$. Recall from Section\ \@ref(smoothness) that $H$ is *$L$-smooth* on
+$\Theta$ when $\nabla^2 H(\theta) \preceq L I$ for all $\theta \in \Theta$, and
+that the descent lemma (Lemma\ \@ref(lem:descent-lemma)) then guarantees
 
 \[
-\theta_n \rightarrow \theta_{\infty} = \argmin_{\theta} H(\theta)
+H(\theta') \leq H(\theta) + \nabla H(\theta)^\top (\theta' - \theta) + \frac{L}{2} \|\theta' - \theta\|_2^2
 \]
 
-for $n \to \infty$, but less can typically be guaranteed. First, 
-the global minimizer may not exist or it may not be unique, in which 
-case the convergence itself is undefined or ambiguous. Second, $\theta_n$
-can in general only be shown to converge to a *local* minimizer if anything. 
-Third, $\theta_n$ may not converge, even if $H(\theta_n)$
-converges to a local minimum. 
-
-To discuss properties of optimization algorithms in greater detail we 
-need ways to quantify, analyze and monitor their convergence. This can be 
-done in terms of $\theta_n$, $H(\theta_n)$ or $\nabla H(\theta_n)$. 
-Focusing on $H(\theta_n)$ we say that an algorithm is a *descent algorithm* if
-
-\[
-  H(\theta_0) \geq H(\theta_1) \geq H(\theta_2) \geq \ldots.
-\]
-
-If all inequalities are sharp (except if some $\theta_i$ is a local minimizer), 
-the algorithm is called a *strict* descent algorithm. The 
-sequence $H(\theta_n)$ is convergent for any descent algorithm if $H$ 
-is bounded from below, e.g., if the *level set*
-
-\[
-  \mathrm{lev}(\theta_0) =  \{\theta \in \Theta \mid H(\theta) \leq H(\theta_0)\}
-\]
-
-is compact. However, even for a strict descent algorithm, 
-$H(\theta_n)$ may descent in smaller and smaller steps toward a limit that is 
-not a (local) minimum. A good optimization algorithm needs to 
-guarantee more than descent---it needs to guarantee *sufficient* descent 
-in each step. 
-
-Many algorithms can be phrased as
-
-\[
-  \theta_n = \Phi(\theta_{n-1})
-\]
-
-for a map $\Phi : \Theta \to \Theta$.
-When $\Phi$ is continuous and $\theta_n \rightarrow \theta_{\infty}$
-it follows that 
-
-\[
-  \Phi(\theta_n) \rightarrow \Phi(\theta_{\infty}).
-\]
-
-Since $\Phi(\theta_n) = \theta_{n+1} \rightarrow \theta_{\infty}$ we see that
-
-\[
-  \Phi(\theta_{\infty}) = \theta_{\infty}.
-\]
-
-That is, $\theta_{\infty}$ is a *fixed point* of $\Phi$. If $\theta_n$ is 
-not convergent, any accumulation point of $\theta_n$ will still be a 
-fixed point of $\Phi$. Thus we can search for potential accumulation 
-points by searching for fixed points of the map $\Phi: \Theta \to \Theta$. 
-
-Mathematics is full of *fixed point theorems* that: i) give conditions under which a map 
-has a fixed point; and ii) in some cases guarantee that the iterates $\Phi^{\circ n}(\theta_0)$
-converge to a fixed point. The most prominent result is [Banach's fixed point 
-theorem](https://en.wikipedia.org/wiki/Banach_fixed-point_theorem). 
-It states that if $\Phi$ is a *contraction*, that is,
-
-\[
-  \| \Phi(\theta) - \Phi(\theta')\| \leq c \|\theta - \theta'\|
-\]
-
-for a constant $c \in [0,1)$ (using any norm), then $\Phi$ has a unique 
-fixed point and $\theta_n = \Phi^{\circ n}(\theta_0)$ converges to that fixed 
-point for any starting point $\theta_0 \in \Theta$. 
-
-We will show how a simple gradient descent algorithm can be 
-analyzed---both as a descent algorithm and through Banach's 
-fixed point theorem. This will demonstrate basic proof techniques as
-well as typical conditions on $H$ that can give convergence results 
-for optimization algorithms. 
-We will only scratch the surface here with the intention that it can motivate
-the algorithms introduced in subsequent sections and chapters as well 
-as empirical techniques for practical assessment of 
-convergence.
-
-Indeed, theory rarely provides us with sharp quantitative results on 
-the rate of convergence and we will need computational techniques to monitor and measure convergence of algorithms in practice. Otherwise we cannot compare 
-the efficiency of different algorithms. 
-
-### Gradient descent {#grad-descent}
-
-We will assume in this section that $\Theta = \mathbb{R}^p$. This will 
-simplify the analysis a bit, but with minor modifications it can 
-be generalized to the case where $\Theta$ is open and convex. 
-
-Suppose that $D^2H(\theta)$ has *numerical radius* uniformly bounded by $L$, that is,
-
-\[
-  |\gamma^T D^2H(\theta) \gamma| \leq L \|\gamma\|_2^2
-\]
-
-for all $\theta \in \Theta$ and $\gamma \in \mathbb{R}^p$. The 
-*gradient descent* algorithm with a fixed step length $1/(L + 1)$ is given by
+for all $\theta, \theta' \in \Theta$. Setting
+$\theta' = \theta - t \nabla H(\theta)$ in this inequality yields
 
 \begin{align}
-\theta_{n} & = \theta_{n-1} - \frac{1}{L + 1} \nabla H(\theta_{n-1}).  (\#eq:grad-descent)
+H(\theta - t \nabla H(\theta)) & \leq H(\theta) - t \left(1 - \frac{tL}{2}\right) \|\nabla H(\theta)\|_2^2.
+(\#eq:gd-descent-bound)
 \end{align}
 
-Fixing $n$ there is by Taylor's theorem a
-$\tilde{\theta} = \alpha \theta_{n} + (1- \alpha)\theta_{n-1}$ (where $\alpha \in [0,1]$) 
-on the line between $\theta_n$ and $\theta_{n-1}$ such that
-
-\begin{align*}
-H(\theta_n) & = H(\theta_{n-1}) - \frac{1}{L+1} \|\nabla H(\theta_{n-1})\|_2^2 +  
- \\  & \qquad \frac{1}{(L+1)^2} \nabla H(\theta_{n-1})^T D^2H(\tilde{\theta}) \nabla H(\theta_{n-1}) \\
-& \leq H(\theta_{n-1}) - \frac{1}{L+1} \|\nabla H(\theta_{n-1})\|_2^2 + 
-   \frac{L}{(L+1)^2} \|\nabla H(\theta_{n-1})\|_2^2 \\
-& = H(\theta_{n-1}) - \frac{1}{(L+1)^2} \|\nabla H(\theta_{n-1})\|_2^2.
-\end{align*}
-  
-This shows that $H(\theta_n) \leq H(\theta_{n-1})$, and if $\theta_{n-1}$ is not a 
-stationary point, $H(\theta_n) < H(\theta_{n-1})$. That is, the algorithm 
-is a descent algorithm, and unless it 
-hits a stationary point it is a strict descent algorithm. 
-
-It furthermore follows that
-
-\begin{align*}
-H(\theta_n) & = 
-(H(\theta_n) - H(\theta_{n-1})) + (H(\theta_{n-1}) - H(\theta_{n-2})) + ... \\
-& \qquad + (H(\theta_1) - H(\theta_0)) + H(\theta_0) \\
-& \leq H(\theta_0) - \frac{1}{(L + 1)^2} \sum_{k=1}^n \|\nabla H(\theta_{k-1})\|_2^2.
-\end{align*}
-
-If $H$ is bounded below, $\sum_{k=1}^{\infty} \|\nabla H(\theta_{k-1})\|_2^2 < \infty$
-and hence
+The right-hand side is minimized over $t > 0$ at $t = 1/L$, where the bound
+collapses to
 
 \[
-  \|\nabla H(\theta_{n})\|_2 \rightarrow 0
+H(\theta - L^{-1} \nabla H(\theta)) \leq H(\theta) - \frac{1}{2L} \|\nabla H(\theta)\|_2^2.
 \]
 
-for $n \to \infty$. For any accumulation point, $\theta_{\infty}$, of 
-the sequence $\theta_n$, it follows by continuity of $\nabla H$ that 
+The gradient descent step we will analyze in this section is correspondingly
+
+\begin{align}
+\theta_{n+1} & = \theta_n - \frac{1}{L} \nabla H(\theta_n).  (\#eq:gd-step)
+\end{align}
+
+Every iteration decreases $H$ by at least
+$(2L)^{-1} \|\nabla H(\theta_n)\|_2^2$, so $(\theta_n)$ is a strict descent
+sequence unless it hits a stationary point. The corresponding step map
 
 \[
-  \nabla H(\theta_{\infty}) = 0,
+\Phi(\theta) = \theta - \frac{1}{L} \nabla H(\theta)
 \]
 
-and $\theta_{\infty}$ is a stationary point. If $H$ has a *unique*
-stationary point in $\mathrm{lev}(\theta_0)$, $\theta_{\infty}$ is a (local) 
-minimizer, and 
+has $\theta$ as a fixed point if and only if $\nabla H(\theta) = 0$, so the
+fixed points of $\Phi$ are exactly the stationary points of $H$. Knowing $L$ in
+advance is rarely realistic in practice, and Section\ \@ref(stop-crit) and the
+line-search material that follows show how a backtracking step size adapts the
+step length without requiring it explicitly.
+
+Figure\ \@ref(fig:gd-step-sizes) illustrates the three regimes on a simple step
+near $1/L$ converges in a handful of iterations; a step approaching the step
+near $1/L$ converges in a handful of iterations; a step approaching the
+stability boundary $2/L$ (where the descent inequality
+\@ref(eq:gd-descent-bound) becomes vacuous) oscillates across the steep
+direction. For $t > 2/L$ the iterates diverge.
+
+```{r}
+#| label: gd-step-sizes
+#| echo: false
+#| fig-width: 7
+#| fig-height: 3
+#| fig-cap: "Gradient descent on $H(\\theta) = (\\theta_1^2 + 4\\theta_2^2)/2$ (so $L = 4$) for three step sizes, starting from $\\theta_0 = (-2.5, 1.5)$. Contours are level sets of $H$; dots are the iterates. A step much smaller than $1/L$ descends slowly; a step near $1/L$ converges efficiently; a step near the stability boundary $2/L = 0.5$ oscillates across the steep direction."
+
+library(patchwork)
+
+A <- diag(c(1, 4))
+grad_H <- function(theta) drop(A %*% theta)
+
+gd_path <- function(t, theta0, n_steps) {
+  path <- matrix(0, n_steps + 1, 2)
+  path[1, ] <- theta0
+  for (i in 1:n_steps) {
+    path[i + 1, ] <- path[i, ] - t * grad_H(path[i, ])
+  }
+  data.frame(theta1 = path[, 1], theta2 = path[, 2])
+}
+
+theta0 <- c(-2.5, 1.5)
+n_steps <- 12
+grid <- expand.grid(
+  theta1 = seq(-3, 1, length.out = 120),
+  theta2 = seq(-2, 2, length.out = 120)
+)
+grid$H <- 0.5 * (grid$theta1^2 + 4 * grid$theta2^2)
+
+make_panel <- function(t, title) {
+  path <- gd_path(t, theta0, n_steps)
+  ggplot(grid, aes(theta1, theta2)) +
+    geom_contour(aes(z = H), color = "grey70", bins = 8) +
+    geom_path(data = path) +
+    geom_point(data = path, size = 1) +
+    labs(
+      title = title,
+      x = expression(theta[1]),
+      y = expression(theta[2])
+    )
+}
+
+make_panel(0.05, "t = 0.05") +
+  make_panel(0.20, "t = 0.20") +
+  make_panel(0.45, "t = 0.45") +
+  plot_layout(axes = "collect")
+```
+
+### Convergence rates
+
+Two convergence-rate results follow from the descent inequality
+\@ref(eq:gd-descent-bound), one assuming only convexity (Theorem
+\@ref(thm:gd-sublinear)) and one assuming strong convexity
+(Theorem\ \@ref(thm:gd-linear)).
+
+::: {.theorem #gd-sublinear}
+Let $H : \mathbb{R}^p \to \mathbb{R}$ be convex and $L$-smooth, and suppose $H$
+attains its minimum at some $\theta^\star$. The gradient descent iterates
+\@ref(eq:gd-step) starting from $\theta_0 \in \mathbb{R}^p$ satisfy
 
 \[
-  \theta_n \rightarrow \theta_{\infty}
+H(\theta_n) - H(\theta^\star) \leq \frac{L \|\theta_0 - \theta^\star\|_2^2}{2n}
 \]
 
-for $n \to \infty$. 
-
-The gradient descent algorithm \@ref(eq:grad-descent) is given 
-by the map 
-
-\[
-  \Phi_{\nabla}(\theta) = \theta - \frac{1}{L + 1} \nabla H(\theta).
-\]
-
-The gradient descent map, $\Phi_{\nabla}$, has $\theta$ as fixed point if and only if  
-
-\[
-  \nabla H(\theta) = 0,
-\]
-
-that is, if and only if $\theta$ is a stationary point. 
-
-We will show that $\Phi_{\nabla}$ is a contraction on $\Theta$
-under the assumption that the eigenvalues of the (symmetric) matrix 
-$D^2H(\theta)$ for all $\theta \in \Theta$ are contained in an interval $[l, L]$ 
-with $0 < l \leq L$. If $\theta, \theta' \in \Theta$ we find 
-by Taylor's theorem that 
-
-\[
-  \nabla H(\theta) = \nabla H(\theta') + D^2H(\tilde{\theta})(\theta - \theta')
-\]
-
-for some $\tilde{\theta}$ on the line between $\theta$ and $\theta'$. 
-For the gradient descent map this gives that
-
-\begin{align*}
-\|\Phi_{\nabla}(\theta) - \Phi_{\nabla}(\theta')\|_2 & = 
-\left\|\theta - \theta' - \frac{1}{L+1}\left(\nabla H(\theta) - \nabla H(\theta')\right)\right\|_2 \\
-& = 
-\left\|\theta - \theta' - \frac{1}{L+1}\left( D^2H(\tilde{\theta})(\theta - \theta')\right)\right\|_2 \\
-& = 
-\left\|\left(I - \frac{1}{L+1} D^2H(\tilde{\theta}) \right) (\theta - \theta')\right\|_2 \\
-& \leq \left(1 - \frac{l}{L + 1}\right) \|\theta - \theta'\|_2,
-\end{align*}
-
-since the eigenvalues of $I - \frac{1}{L+1} D^2H(\tilde{\theta})$ are all between 
-$1 - L/(L + 1)$ and $1 - l/(L+1)$. This shows that $\Phi_{\nabla}$ is a 
-contraction for the $2$-norm with $c = 1 - l/(L + 1) < 1$. From Banach's fixed
-point theorem it follows that there is a unique stationary point, $\theta_{\infty}$,
-and $\theta_n \rightarrow \theta_{\infty}$. Since $D^2H(\theta_{\infty})$ is 
-positive definite, $\theta_{\infty}$ is a (global) minimizer.
-
-To summarize, if $D^2H(\theta)$ has uniformly bounded numerical radius, and if
-$H$ has a unique stationary point $\theta_{\infty}$ in the compact set $\mathrm{lev}(\theta_0)$, then the gradient descent algorithm is a strict descent
-algorithm that converges toward that (local) minimizer $\theta_{\infty}.$
-The fixed step length was key to this analysis. 
-The upper bound on the numerical radius 
-of $D^2H(\theta)$ guarantees descent with a fixed step length, and the
-fixed step length then guarantees sufficient descent.
-
-When the eigenvalues of $D^2H(\theta)$ are in $[l, L]$ for $0 < l \leq L$, 
-$H$ is a *strongly convex function* with a unique global minimizer 
-$\theta_{\infty}$ and all level sets $\mathrm{lev}(\theta_0)$ compact.
-Convergence can then also be established via Banach's fixed point theorem. 
-The constant $c = 1 - l/(L + 1) = 1 - \kappa^{-1}$ with $\kappa = (L + 1) / l$
-then quantifies the rate of the convergence, as will be discussed in greater 
-detail in the next section. The constant $\kappa$ is an upper bound on the
-[conditioning number](https://en.wikipedia.org/wiki/Condition_number#Matrices)
-of the matrix $D^2H(\theta)$ uniformly in $\theta$, and a large value of 
-$\kappa$ means that $c$ is close to 1 and the convergence can be slow. 
-A large conditioning number for the second derivative indicates that the graph 
-of $H$ looks like a narrow ravine, in which case we can expect the 
-gradient descent algorithm to be slow.
-
-### Convergence rate
-
-When $\theta_n = \Phi^{\circ n}(\theta_0)$ for a contraction $\Phi$, 
-Banach's fixed point theorem tells us that there is a unique fixed point 
-$\theta_{\infty}.$ That $\Phi$ is a contraction further implies that  
-
-\[
-  \|\theta_n - \theta_{\infty}\| = \|\Phi(\theta_{n-1}) - \theta_{\infty}\| \leq c \|\theta_{n-1} - \theta_{\infty}\| \leq c^n \|\theta_0 - \theta_{\infty}\|.
-\]
-
-That is, $\|\theta_n - \theta_{\infty}\| \to 0$ with at least geometric rate $c < 1$. 
-
-In the numerical optimization literature, convergence at a geometric rate is 
-known as linear convergence (the number of correct digits increases linearly 
-with the number of iterations), and a linearly convergent algorithm is often 
-quantified in terms of its asymptotic convergence rate. 
-
-::: {.definition #order-rate}
-Let $(\theta_n)_{n \geq 1}$ be a convergent sequence in $\mathbb{R}^p$ with 
-limit $\theta_{\infty}$. Let $\| \cdot \|$ be a norm on $\mathbb{R}^p$. We say 
-that the convergence is linear if 
-
-\[
-  \limsup_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|} = r
-\]
-
-for some $r \in (0, 1)$, in which case $r$ is called the asymptotic rate.
-:::
-
-
-Convergence of an algorithm can be faster or slower than linear. If      
-
-\[
-  \limsup_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|} = 1
-\]
-
-we say that the convergence is sublinear, and if 
-
-\[
-  \limsup_{n \to \infty} \frac{\|\theta_{n} - \theta_{\infty}\|}{\|\theta_{n-1} - \theta_{\infty}\|} = 0
-\]
-
-we say that the convergence is superlinear. There is also a refined 
-notion of convergence order for superlinearly convergent algorithms
-that more precisely describes the convergence. 
-
-For a contraction, $\theta_n = \Phi^{\circ n}(\theta_0)$ converges linearly 
-or superlinearly. If it converges linearly, the asymptotic rate is bounded by 
-$c$, but this is a global constant and may be pessimistic. The following 
-lemma provides a local upper bound on the asymptotic rate in terms of 
-the derivative of $\Phi$ in the limit $\theta_{\infty}$. 
-
-::: {.lemma #fixed-point-rate} 
-Let $\Phi : \mathbb{R}^p \to \mathbb{R}^p$ be twice continuously differentiable. If 
-$\theta_n = \Phi^{\circ n}(\theta_0)$ converges linearly toward a fixed point $\theta_{\infty}$ 
-of $\Phi$ then 
-
-\[
-  r_{\max} = \sup_{\gamma: \|\gamma \| = 1} \|D \Phi(\theta_{\infty}) \gamma\|
-\]
-
-is an upper bound on the asymptotic rate.
+for every $n \geq 1$.
 :::
 
 ::: {.proof .boxed}
-By Taylor's theorem, 
+Apply \@ref(eq:gd-descent-bound) at $\theta = \theta_i$ with $t = 1/L$ to get
+
+\[
+H(\theta_{i+1}) \leq H(\theta_i) - \frac{1}{2L} \|\nabla H(\theta_i)\|_2^2.
+\]
+
+By the first-order characterization of convexity (Section\ \@ref(convexity)),
+
+$$
+H(\theta^\star) \geq H(\theta_i) + \nabla H(\theta_i)^\top (\theta^\star - \theta_i),
+$$
+
+so
+
+$$
+H(\theta_i) - H(\theta^\star) \leq \nabla H(\theta_i)^\top (\theta_i - \theta^\star).
+$$
+
+Combining with the previous display,
 
 \begin{align*}
-\theta_{n} = \theta_{\infty} + D \Phi(\theta_{\infty})(\theta_{n-1} - \theta_{\infty}) +
-o(\|\theta_{n-1} - \theta_{\infty}\|_2).
+  H(\theta_{i+1}) - H(\theta^\star) & \leq \nabla H(\theta_i)^\top (\theta_i - \theta^\star) - \frac{1}{2L} \|\nabla H(\theta_i)\|_2^2 \\
+  & = \frac{L}{2} \left( \|\theta_i - \theta^\star\|_2^2 - \|\theta_i - \theta^\star - L^{-1} \nabla H(\theta_i)\|_2^2 \right) \\
+  & = \frac{L}{2} \left( \|\theta_i - \theta^\star\|_2^2 - \|\theta_{i+1} - \theta^\star\|_2^2 \right),
 \end{align*}
 
-Rearranging yields
+where the second line completes the square. Summing from $i = 0$ to $n - 1$
+gives us
+
+\[
+\sum_{i=0}^{n-1} \left( H(\theta_{i+1}) - H(\theta^\star) \right) \leq \frac{L}{2} \|\theta_0 - \theta^\star\|_2^2.
+\]
+
+The descent property ensures $H(\theta_n) - H(\theta^\star)$ is decreasing in
+$n$, so the left-hand side is at least $n (H(\theta_n) - H(\theta^\star))$.
+:::
+
+The suboptimality $H(\theta_n) - H(\theta^\star)$ thus decays like $1/n$. This
+is *sublinear* convergence: the number of correct digits in $H(\theta_n)$ grows
+like $\log n$. Doubling the accuracy requires doubling the iteration count, a
+slow rate when many digits are needed, but one that places remarkably weak
+demands on $H$ (just convexity and smoothness).
+
+Adding strong convexity sharpens the picture dramatically. If $H$ is
+$m$-strongly convex in addition to $L$-smooth, then
+Lemma\ \@ref(lem:strong-convex-suboptimality) gives the two-sided bound
+
+\[
+\frac{m}{2} \|\theta - \theta^\star\|_2^2 \leq H(\theta) - H(\theta^\star) \leq \frac{1}{2m} \|\nabla H(\theta)\|_2^2.
+\]
+
+The right inequality says that suboptimality is controlled by gradient norm,
+which combines with the per-step decrease of
+$(2L)^{-1} \|\nabla H(\theta_n)\|_2^2$ to yield a *contraction* in
+suboptimality.
+
+::: {.theorem #gd-linear}
+Let $H : \mathbb{R}^p \to \mathbb{R}$ be $m$-strongly convex and $L$-smooth with
+$0 < m \leq L$, and let $\theta^\star$ be its unique minimizer. The gradient
+descent iterates \@ref(eq:gd-step) satisfy
+
+\[
+H(\theta_{n+1}) - H(\theta^\star) \leq \left( 1 - \frac{m}{L} \right) \left( H(\theta_n) - H(\theta^\star) \right),
+\]
+
+and therefore
+
+\[
+H(\theta_n) - H(\theta^\star) \leq \left( 1 - \frac{1}{\kappa} \right)^n \left( H(\theta_0) - H(\theta^\star) \right),
+\]
+
+where $\kappa = L/m$ is the condition number from Section\ \@ref(smoothness).
+:::
+
+::: {.proof .boxed}
+The strong-convexity bound rearranges to
+
+$$
+\|\nabla H(\theta_n)\|_2^2 \geq 2m (H(\theta_n) - H(\theta^\star)).
+$$
+
+Substituting into the per-step decrease,
 
 \begin{align*}
-\limsup_{n \to \infty} 
-\frac{\| \theta_{n} - \theta_{\infty}\|}{\| \theta_{n-1} - \theta_{\infty}\|} 
-& = \limsup_{n \to \infty} 
-\frac{\| D \Phi(\theta_{\infty})(\theta_{n-1} - \theta_{\infty})\|}{\| \theta_{n-1} - \theta_{\infty}\|} \\
-& = \limsup_{n \to \infty} 
-\| D \Phi(\theta_{\infty})\left(\frac{\theta_{n-1} - \theta_{\infty}}{\| \theta_{n-1} - \theta_{\infty}\|} \right)\| \\
-& \leq r_{\max}.
-\end{align*}
-:::
-
-Note that it is possible that $r_{\max} \geq 1$ even if the convergence is linear, 
-in which case $r_{\max}$ is a useless upper bound. Moreover, the actual rate 
-can depend on the starting point $\theta_0$, and even when $r_{\max} < 1$ it 
-only quantifies the worst case convergence rate. 
-
-To estimate the actual convergence rate, note that linear 
-convergence with rate $r$ implies that for any $\delta > 0$
-
-\[
-\| \theta_n - \theta_{\infty} \| \leq (r + \delta) \| \theta_{n-1} - \theta_{\infty} \| \leq \ldots 
-\leq (r + \delta)^{n - n_0} \| \theta_{n_0} - \theta_{\infty} \|
-\]
-
-$n \geq n_0$ with $n_0$ sufficiently large (depending on $\delta$). That is, 
-
-\[
-  \log \|\theta_{n} - \theta_{\infty}\| \leq n \log(r + \delta) + d,
-\]
-
-for $n \geq n_0$. In practice, we run the algorithm for $M$ 
-iterations, so that $\theta_M = \theta_{\infty}$ up to computer precision, 
-and we plot $\log \|\theta_{n} - \theta_{M}\|$ as a function of $n$. 
-The decay should be approximately linear for $n \geq n_0$ for some $n_0$, in 
-which case the slope is about $\log(r) < 0$, which can then be estimated by least squares. 
-A slower-than-linear or faster-than-linear decay indicate that the 
-algorithm converges sublinearly or superlinearly, respectively.
-
-It is, of course, possible to quantify convergence 
-in terms of the sequences $H(\theta_n)$ and $\nabla H(\theta_n)$ instead.
-For a descent algorithm with $H(\theta_n) \rightarrow H(\theta_\infty)$ linearly for 
-$n \to \infty$, we can plot 
-
-\[
-  \log(H(\theta_n) - H(\theta_M))
-\]
-
-as a function of $n$, and use least squares to estimate the asymptotic rate of 
-convergence of $H(\theta_n)$.
-
-Using $\nabla H(\theta_n)$ to quantify convergence is particularly appealing 
-as we know that the limit is $0$. This also means that we can monitor 
-its convergence while the algorithm is running and not only after it has 
-converged. If $\nabla H(\theta_n)$ converges linearly in the norm $\|\cdot\|$, that is,
-
-\[
-  \limsup_{n \to \infty} \frac{\|\nabla H(\theta_n)\|}{\|\nabla H(\theta_{n-1})\|} = r,
-\]
-
-we have for any $\delta > 0$ that 
-
-\[
-  \log \|\nabla H(\theta_n)\| \leq n \log(r + \delta) + d
-\]
-
-for $n \geq n_0$ and $n_0$ sufficiently large. Again, least squares
-can be used to estimate the asymptotic rate of convergence of 
-$\|\nabla H(\theta_n)\|$. 
-
-The concepts of linear convergence and asymptotic rate are, unfortunately, not 
-independent of the norm used, nor does linear convergence of $\theta_n$ in $\|\cdot\|$
-imply linear convergence of $H(\theta_n)$ or $\|\nabla H(\theta_n)\|$. 
-We can show, though, that if $\theta_n$ converges linearly in the norm $\| \cdot \|$, the other two 
-sequences converge linearly along an arithmetic subsequence. Similarly, it can be shown 
-that in any other norm than $\| \cdot \|$, $\theta_n$ is also linearly convergent 
-along an arithmetic subsequence. 
-
-::: {.theorem #linear-convergence} 
-Suppose that $H$ is three times continuously 
-differentiable with $\nabla H (\theta_{\infty}) = 0$ and $D^2 H(\theta_{\infty})$
-positive definite. If $\theta_n$ converges linearly toward $\theta_{\infty}$ 
-in any norm then for some $k \geq 1$, the subsequences $H(\theta_{nk})$ and 
-$\|\nabla H(\theta_{nk})\|$ converge linearly toward $H(\theta_{\infty})$ 
-  and $0$, respectively.
-:::
-
-::: {.proof .boxed} 
-Let $G = D^2 H(\theta_{\infty})$ and $g_n = \theta_n - \theta_{\infty}$.
-Since $G$ is positive definite it defines a norm, and since all norms
-on $\mathbb{R}^p$ are equivalent there are constants $a, b > 0$ such that 
-
-\[
-  a \| x \|^2 \leq x^T G x \leq b \| x \|^2.
-\]
-
-By Taylor's theorem, 
-
-\[
-  H(\theta_{(n + 1)k}) - H(\theta_{\infty}) = g_{(n + 1)k}^T G  g_{(n + 1)k} + o(\|g_{(n + 1)k}\|^2).
-\]
-
-From this, 
-
-\begin{align*}
-\limsup_{n \to \infty} \frac{H(\theta_{(n + 1)k}) - H(\theta_{\infty})}{H(\theta_{nk}) - H(\theta_{\infty})}
-& = \limsup_{n \to \infty} \frac{g_{(n + 1)k}^T G  g_{(n + 1)k}}{g_{nk}^T G  g_{nk}} \\
-& \leq \limsup_{n \to \infty} \frac{b \| g_{(n + 1)k}\|^2}{a \| g_{nk}\|^2} 
-= \frac{b}{a} r^{2k}
+  H(\theta_{n+1}) & \leq H(\theta_n) - \frac{1}{2L} \|\nabla H(\theta_n)\|_2^2 \\
+  & \leq H(\theta_n) - \frac{m}{L} (H(\theta_n) - H(\theta^\star)).
 \end{align*}
 
-where $r \in (0, 1)$ is the asymptotic rate of $\theta_n \to \theta_{\infty}$.
-By choosing $k$ sufficiently large, the right hand side above is strictly 
-smaller than 1, which gives an upper bound on the rate along the 
-subsequence $H(\theta_{nk})$. A similar argument gives a lower bound strictly larger 
-than 0, which shows that the convergence is not superlinear. 
-
-Using Taylor's theorem on $\nabla H(\theta_{nk})$ yields a similar 
-proof for the subsequence $\|\nabla H(\theta_{nk})\|$---with $G$ replaced 
-by $G^2$ in the bounds.
+Subtracting $H(\theta^\star)$ from both sides gives the one-step contraction;
+iterating gives the geometric rate.
 :::
 
-The bounds in the proof are often pessimistic since $g_n$ and $g_{n+1}$ 
-can point in completely different directions. 
-Exercise ?? shows, however, that if $\theta_n$ approaches $\theta_{\infty}$ nicely 
-along a fixed direction (making $g_n$ and $g_{n+1}$ almost collinear), 
-$H(\theta_n)$ as well as $\|\nabla H(\theta_n)\|$
-inherit linear convergence from $\theta_n$ and even with the same rate. 
+Convergence at a geometric rate is called *linear* convergence in the
+numerical-optimization literature, because the number of correct digits in
+$H(\theta_n) - H(\theta^\star)$ grows linearly in $n$. The contraction factor
+$1 - 1/\kappa$ depends only on the condition number. Well-conditioned problems
+($\kappa$ close to $1$) converge in ewiterations. Ill-conditioned problems
+($\kappa$ large) crawl slowly towards convergence with the iterates tracing a
+long zigzag along the floor of a narrow ravine. In Section\ \@ref(smoothness),
+we provided the geometric interpretation: $\kappa$ is the aspect ratio of the
+level sets of $H$. Newton's method (Section\ \@ref(Newton)) corrects for the
+conditioning at the cost of solving a linear system per iteration.
 
-All rates discussed hithereto are *per iteration*,
-which is natural when investigating a single algorithm. However, different 
-algorithms may spend different amounts of time per iteration, and it does not 
-make sense to make a comparison of per iteration rates across different 
-algorithms. We therefore need to be able to convert between per iteration
-and per time unit rates. If one iteration takes $\delta$ time units (seconds, say) 
-the *per time unit* rate is 
+Both theorems assume $\Theta = \mathbb{R}^p$. The arguments go through on any
+open convex $\Theta$ provided the iterates remain in $\Theta$, but ensuring that
+under arbitrary constraints requires projection or barrier methods rather than
+the plain step\ \@ref(eq:gd-step).
+
+### Measuring convergence in practice
+
+The theoretical rates above are *worst case* bounds. The actual rate on any
+given problem can be much better. The standard way to estimate it empirically is
+to run the algorithm for $M$ iterations, such that
+$\theta_M \approx \theta^\star$ at machine precision and then plot
+$\log(H(\theta_n) - H(\theta_M))$ against $n$. Linear convergence with rate $r$
+means
 
 \[
-  r^{1/\delta}.
+\log(H(\theta_n) - H(\theta_M)) \approx n \log r + \text{const}
 \]
 
-If $t_n$ denotes the runtime of $n$ iterations, we could 
-estimate $\delta$ as $t_M / M$ for $M$ sufficiently large. 
+for sufficiently large $n$, so the slope of a linear fit to the late iterations
+estimates $\log r$. Sublinear convergence shows up as a decay slower than any
+straight line---superlinear convergence as a steepening slope.
 
-We will throughout systematically investigate convergence 
-as a function of time $t_n$ instead of iterations $n$, and we will estimate 
-rates per time unit directly by least squares regression on $t_n$ 
-instead of $n$. 
+The same idea can be applied to $\theta_n$ or to $\|\nabla H(\theta_n)\|$, the
+latter being especially convenient because the limit is known to be zero, so we
+can monitor it without waiting for the algorithm to finish.
+
+Per-iteration rates are useful for analyzing a single algorithm but not for
+comparing different algorithms, which may spend wildly different amounts of time
+per iteration. Throughout the chapter we will also report *per-second*
+convergence rates by plotting against measured runtime rather than iteration
+count. If one iteration takes $\delta$ seconds the per-second rate is
+$r^{1/\delta}$; in practice we estimate $\delta$ as $t_M / M$ for $M$ large.
+
+## Step size and stopping criteria
+
+The convergence theorems of Section\ \@ref(grad-descent) used the fixed step
+$t = 1/L$, which requires knowing the smoothness (Lipschitz) constant $L$. In
+practice $L$ is rarely available analytically, since it may vary across the
+parameter space, and a generic Lipschitz bound is often so pessimistic that
+fixed-step iterations slow to almost a stop. Practical implementations therefore
+often choose the step length adaptively at each iteration via a *line search*.
+The general step is
+
+\[
+\theta_{n+1} = \theta_n + \gamma_n \rho_n
+\]
+
+for a descent direction $\rho_n$ and a step length $\gamma_n > 0$ that is
+allowed to depend on $\theta_n$ and $\rho_n$. In this section we introduce
+backtracking line search, which we use throughout the rest of the chapter, and
+then turn to the question of when to terminate our algorithm.
+
+### Line search {#line-search}
+
+Given $\theta_n$ and a descent direction $\rho_n$, restrict $H$ to the ray
+emanating from $\theta_n$ in the direction $\rho_n$:
+
+\[
+h(\gamma) = H(\theta_n + \gamma \rho_n), \qquad \gamma \in [0, \infty).
+\]
+
+Then $h'(\gamma) = \nabla H(\theta_n + \gamma \rho_n)^\top \rho_n$ and the
+descent-direction property gives $h'(0) = \nabla H(\theta_n)^\top \rho_n < 0$,
+so $h$ is decreasing at $0$. The *exact line search* strategy picks
+$\gamma_n = \argmin_{\gamma > 0} h(\gamma)$, which delivers the maximal possible
+descent along the ray. It is rarely worth the compute unless the inner
+minimization admits a closed form.
+
+Inexact line search settles for *sufficient* descent. Fix $c \in (0, 1)$. The
+*Armijo condition*\index{Armijo condition}
+
+\[
+h(\gamma) \leq h(0) + c \gamma h'(0)
+\]
+
+requires $h$ to descend by at least the fraction $c$ of the linear prediction
+along the tangent at $0$. Since $h'(0) < 0$ the right-hand side sits below
+$h(0)$, and the condition reduces to one evaluation of $H$. For any
+$c \in (0, 1)$ the Armijo condition holds on some interval $[0, \varepsilon)$,
+so a small enough step always works. Figure\ \@ref(fig:armijo) shows the
+condition geometrically: $h$ must lie at or below the lower dashed line
+$h(0) + c \gamma h'(0)$ to be accepted, while the steeper tangent
+$h(0) + \gamma h'(0)$ is ceiling. Choosing $c$ close to $0$ asks for very little
+descent and admits most steps, whilst choosing $c$ close to $1$ asks fr a almost
+full linear prediction of descent and rules out most steps.
+
+```{r}
+#| label: armijo
+#| echo: false
+#| fig-width: 4
+#| fig-height: 3.2
+#| fig-align: "center"
+#| fig-cap: "The Armijo condition. Solid: the restriction $h(\\gamma) = H(\\theta + \\gamma \\rho)$ along a descent direction $\\rho$. Dashed orange: the tangent $h(0) + \\gamma h'(0)$, the linear prediction of descent at rate $h'(0)$. Dashed blue: the Armijo line $h(0) + c \\gamma h'(0)$ with $c = 0.35$. The shaded interval marks the values of $\\gamma$ for which the Armijo condition $h(\\gamma) \\leq h(0) + c \\gamma h'(0)$ holds."
+
+h_fun <- function(g) 0.5 * (g - 1.3)^2 - 0.4
+h0 <- h_fun(0)
+hp0 <- -1.3
+c_arm <- 0.35
+
+g_grid <- seq(-0.2, 2.4, length.out = 300)
+df_h <- data.frame(g = g_grid, y = h_fun(g_grid))
+df_tan <- data.frame(g = g_grid, y = h0 + g_grid * hp0)
+df_arm <- data.frame(g = g_grid, y = h0 + c_arm * g_grid * hp0)
+acc_max <- max(g_grid[df_h$y - df_arm$y <= 0])
+
+ggplot() +
+  annotate(
+    "rect",
+    xmin = 0,
+    xmax = acc_max,
+    ymin = -Inf,
+    ymax = Inf,
+    fill = "grey88",
+    alpha = 0.7
+  ) +
+  geom_line(data = df_h, aes(g, y), linewidth = 0.7) +
+  geom_line(
+    data = df_tan,
+    aes(g, y),
+    linetype = "dashed",
+    color = "darkorange",
+    linewidth = 0.6
+  ) +
+  geom_line(
+    data = df_arm,
+    aes(g, y),
+    linetype = "dashed",
+    color = "steelblue",
+    linewidth = 0.6
+  ) +
+  annotate("point", x = 0, y = h0, size = 2) +
+  annotate(
+    "text",
+    x = 0.05,
+    y = h0 + 0.18,
+    label = "h(0)",
+    hjust = 0,
+    size = 3.6
+  ) +
+  annotate(
+    "text",
+    x = 2.05,
+    y = h_fun(2.05) + 0.20,
+    label = "h(gamma)",
+    parse = TRUE,
+    hjust = 0.5,
+    size = 3.6
+  ) +
+  annotate(
+    "text",
+    x = 1.65,
+    y = h0 + 1.95 * hp0 - 0.15,
+    label = "h(0) + gamma * h*minute*(0)",
+    parse = TRUE,
+    hjust = 0.5,
+    vjust = 1,
+    size = 3.3,
+    color = "darkorange"
+  ) +
+  annotate(
+    "text",
+    x = 1.85,
+    y = h0 + c_arm * 1.95 * hp0 - 0.18,
+    label = "h(0) + c * gamma * h*minute*(0)",
+    parse = TRUE,
+    hjust = 0.5,
+    vjust = 1,
+    size = 3.3,
+    color = "steelblue"
+  ) +
+  annotate(
+    "text",
+    x = acc_max / 2,
+    y = -2.0,
+    label = "Armijo-acceptable",
+    size = 3.1,
+    color = "grey30"
+  ) +
+  coord_cartesian(xlim = c(-0.3, 2.4), ylim = c(-2.8, 0.9), expand = FALSE) +
+  labs(x = expression(gamma), y = NULL) +
+  theme_schematic()
+```
+
+The Armijo criterion alone can yield arbitrarily small step sizes, which can
+stall the algorithm venathough we are far from stationary point. The *curvature
+condition*
+
+\[
+h'(\gamma) \geq \tilde{c}\, h'(0)
+\]
+
+for some $\tilde{c} \in (c, 1)$ forces the slope at $\gamma$ to be less negative
+than at $0$, ruling out the smallest step sizes. Together the two requirements
+form the *Wolfe conditions*.\index{Wolfe conditions} They can always be
+satisfied when $h$ is bounded below, and under a mild angle condition on
+$\rho_n$ they ensure $\|\nabla H(\theta_n)\|_2 \to 0$.
+
+Most practical implementations replace the curvature condition with a geometric
+search. *Backtracking line search*\index{backtracking line search} (Algorithm 2)
+picks a starting step $\gamma_0 > 0$ and a shrinkage factor $d \in (0, 1)$, then
+tests the sequence
+
+\[
+\gamma_0, \, d \gamma_0, \, d^2 \gamma_0, \, d^3 \gamma_0, \ldots
+\]
+
+stopping at the first $\gamma = d^k \gamma_0$ satisfying the Armijo condition.
+The algorithm always tries $\gamma_0$ first and only shrinks when forced, so the
+smallest step sizes are excluded by design rather than by an explicit curvature
+bound.
+
+```{algorithm, backtracking}
+\begin{algorithm}
+  \caption{Backtracking line search}
+  \begin{algorithmic}
+    \Require descent direction $\rho$, initial step $\gamma_0 > 0$, shrinkage $d \in (0,1)$, Armijo constant $c \in (0,1)$
+    \State $\gamma \gets \gamma_0$
+    \While{$H(\theta + \gamma \rho) > H(\theta) + c \gamma \nabla H(\theta)^\top \rho$}
+        \State $\gamma \gets d \gamma$
+    \EndWhile
+    \Return $\gamma$
+  \end{algorithmic}
+\end{algorithm}
+```
+
+Three constants control the search: the initial step $\gamma_0$, the shrinkage
+factor $d$, and the Armijo slope $c$. Typical defaults are $d \in [0.5, 0.9]$
+and $c \in [10^{-4}, 0.1]$. For Newton's method (Section\ \@ref(Newton)) the
+choice $\gamma_0 = 1$ is a natural choice. For plain gradient descent there is
+no universal default and $\gamma_0$ has to be tuned to the scale of the problem.
 
 ### Stopping criteria {#stop-crit}
 
-One important practical question remains unanswered even 
-if we understand the theoretical convergence properties of an 
-algorithm well and have good methods for measuring its convergence rates. 
-No algorithm can run for an infinite number 
-of iterations, thus all algorithms need a criterion for when
-to stop, but the choice of an appropriate stopping criterion is 
-notoriously difficult. We present four of the most commonly used criteria and 
-discuss benefits and deficits for each of them. 
+No algorithm can run forever and every implementation needs a rule for when to
+terminate. But choosing an appropriate one is notoriously difficult. Next, we
+will provide four common stopping criter a, each of which is easy to implement
+and common in practice, but none of which actually guarantees convergence to a
+minimum. We also note that each should be combined with a *maximum iteration
+count* as a safeguard against infinite loops.
 
-::: {.boxed} 
-**Maximum number of iterations:** Stop when 
+::: {.boxed}
+*Maximum number of iterations.* Stop when
 
 \[
-  n = M
+n = M
 \]
 
-for a fixed maximum number of iterations $M$. 
-This is arguably the simplest criterion, but, obviously, 
-reaching a maximum number of iterations provides no evidence in 
-itself that $H(\theta_M)$ is sufficiently close to a (local) minimum. For 
-a specific problem we could from experience know of a sufficiently large
-$M$ so that the algorithm has typically converged after $M$ iterations, but
-the most important use of this criterion is in combination with another 
-criterion so that it works as a safeguard against an infinite loop.
+for a fixed maximum number of iterations $M$. The simplest criterion: it
+guarantees termination but says nothing about proximity to a minimum. Useful
+mainly as a safety net combined with one of the criteria below.
 :::
 
-The other three stopping criteria all depend on choosing a 
-*tolerance parameter* $\varepsilon > 0$, which will play different roles in the three 
-criteria. The three criteria can be used individually and in combinations, 
-but unfortunately neither of them nor their combination provide convergence 
-guarantees. It is nevertheless common say that an algorithm "has converged" 
-when the stopping criterion is satisfied, but since none of the criteria 
-are sufficient for convergence this can be a bit misleading. 
+The remaining three criteria depend on a *tolerance parameter* $\varepsilon > 0$
+that plays a different role in each. They can be used individually or in
+combination, but none of them (nor their combination) implies convergence. One
+nevertheless says that an algorithm "has converged" when its stopping criterion
+is met, with the understanding that this is shorthand.
 
-::: {.boxed} 
-**Small relative change:** Stop when 
+::: {.boxed}
+*Small relative change.* Stop when
 
 \[
-  \|\theta_n - \theta_{n-1}\| \leq \varepsilon(\|\theta_n\| + \varepsilon).
+\|\theta_n - \theta_{n-1}\| \leq \varepsilon (\|\theta_n\| + \varepsilon).
 \]
 
-The idea is that when $\theta_n \approx \theta_{n-1}$ the sequence has approximately
-reached the limit $\theta_{\infty}$ and we can stop. It is possible to use an
-absolute criterion such as $\|\theta_n - \theta_{n-1}\| < \varepsilon$, but then 
-the criterion would be sensitive to a rescaling of the parameters. Thus fixing a 
-reasonable tolerance parameter across many problems makes more sense for the 
-relative then the absolute criterion. The main reason for adding $\varepsilon$
-on the right hand size is to make the criterion well behaved even if 
-$\|\theta_n\|$ is close to zero. 
-
-The main benefit of this criterion is that it does not require evaluations 
-of the objective function. Some algorithms, such as the EM algorithm, do not
-need to evaluate the objective function, and it may even be difficult to do so. 
-In those cases this criterion can be used. The main deficit is that a 
-single iteration with little change in the parameter can happen for many 
-reasons besides convergence, and it does not imply that neither 
-$\|\theta_n - \theta_{\infty}\|$ nor $H(\theta_{n}) - H(\theta_{\infty})$ 
-are small.
+A step that barely moves $\theta_n$ suggests proximity to a fixed point of the
+step map. The relative form makes the criterion invariant to a global rescaling
+of the parameters, and the additive $\varepsilon$ keeps the right-hand side from
+collapsing when $\|\theta_n\|$ is near zero. Its main practical merit is that it
+does not require evaluating $H$, which makes it useful for algorithms where $H$
+is expensive or unavailable, such as the EM algorithm of Chapter\ \@ref(em). The
+deficit is that a small step has many causes besides convergence, and does not
+imply that either $\|\theta_n - \theta^\star\|$ or
+$H(\theta_n) - H(\theta^\star)$ is small.
 :::
 
-::: {.boxed} 
-**Small relative descent:** Stop when 
+::: {.boxed}
+*Small relative descent.* Stop when
 
 \[
-  H(\theta_{n-1}) - H(\theta_n) \leq \varepsilon (|H(\theta_n)| + \varepsilon).
+H(\theta_{n-1}) - H(\theta_n) \leq \varepsilon (|H(\theta_n)| + \varepsilon).
 \]
 
-This criterion only makes sense if the algorithm is a descent algorithm.
-As discussed above, an absolute criterion would be sensitive to rescaling of 
-the objective function, and the added $\varepsilon$ 
-on the right hand side is to ensure a reasonable behavior if $H(\theta_n)$
-is close to zero. 
-
-This criterion is natural for descent algorithms; we stop when the algorithm
-does not decrease the value of the objective function sufficiently. 
-The use of a relative criterion makes is possible to choose a tolerance 
-parameter that works reasonably well for many problems. A conventional choice 
-is $\varepsilon \approx 10^{-8}$ (and often chosen as the square root of the 
-[machine epsilon](https://en.wikipedia.org/wiki/Machine_epsilon)), though 
-the theoretical support for this choice is weak. The deficit of the 
-algorithm is as for the criterion above: a small descent does not imply that $H(\theta_{n}) - H(\theta_{\infty})$ is small, and it could happen if the 
-algorithm enters a part of $\Theta$ where $H$ is very flat, say. 
+Sensible only for descent algorithms. The relative form neutralizes a global
+rescaling of $H$, and the additive $\varepsilon$ handles
+$H(\theta_n) \approx 0$. A conventional choice is $\varepsilon \approx 10^{-8}$,
+often the square root of machine epsilon, a folk default with weak theoretical
+backing. The deficit mirrors that of the previous criterion: small descent can
+occur in flat regions of $\Theta$ without proximity to a minimizer.
 :::
 
-::: {.boxed} 
-**Small gradient:** Stop when 
+::: {.boxed}
+*Small gradient.* Stop when
 
 \[
-  \|\nabla H(\theta_n)\| \leq \varepsilon.
+\|\nabla H(\theta_n)\| \leq \varepsilon.
 \]
 
-This criterion directly measures if $\theta_n$ is close to being a stationary 
-point (and not if $\theta_n$ is close to a stationary point). 
-A small value of $\|\nabla H(\theta_n)\|$ is still no guarantee that
-$\|\theta_n - \theta_{\infty}\|$ or $H(\theta_{n}) - H(\theta_{\infty})$ are 
-small. The criterion also requires the computation of the gradient. In addition, 
-different norms can be used, and
-if different coordinates of the gradient are of different orders of 
-magnitude this should be reflected by the norm. Alternatively, the parameters
-should be rescaled.
+This criterion measures whether $\theta_n$ is close to being a stationary point,
+not whether it is close to a stationary point. A small gradient norm is no
+guarantee that $\|\theta_n - \theta^\star\|$ or $H(\theta_n) - H(\theta^\star)$
+is small. The criterion requires $\nabla H$ at each iteration. The choice of
+norm matters: when the gradient coordinates differ by orders of magnitude, a
+weighted norm (or a rescaling of the parameters) is more informative than the
+plain $\ell_2$ norm.
 :::
 
-Neither of the four criteria above gives a theoretical convergence guarantee 
-in terms of how close $H(\theta_{n})$ is to $H(\theta_{\infty})$ or 
-how close $\theta_n$ is to $\theta_{\infty}$. In some 
-special cases it is, however, possible to make stronger statements. If 
-$H$ is *strongly convex*, there is a constant $C$ such that 
+The picture improves under strong convexity. If $H$ is $m$-strongly convex,
+Lemma\ \@ref(lem:strong-convex-suboptimality) gives
 
 \[
-  \|\theta_n - \theta_{\infty}\| \leq C \|\nabla H(\theta_n)\|,
+\frac{m}{2} \|\theta_n - \theta^\star\|_2^2 \leq H(\theta_n) - H(\theta^\star) \leq \frac{1}{2m} \|\nabla H(\theta_n)\|_2^2,
 \]
 
-and the small gradient stopping criterion will, actually, imply 
-that $\theta_n$ is close to $\theta_{\infty}$---if $\varepsilon$ is 
-small relative to $C$. 
+so a small gradient norm does imply both proximity to $\theta^\star$ and small
+suboptimality, with constants in $m$. Strong convexity is the exception rather
+than the rule, but when it holds the small-gradient criterion comes with a
+rigorous interpretation.
 
-Another approach is based on a lower envelope. If there is a continuous function $\tilde{H}$ 
-satisfying $H(\theta_{\infty}) = \tilde{H}(\theta_{\infty})$ and 
+A more general option uses a *lower envelope*. Suppose a continuous
+$\tilde{H} : \Theta \to \mathbb{R}$ satisfies
+$H(\theta^\star) = \tilde{H}(\theta^\star)$ and
+$H(\theta^\star) \geq \tilde{H}(\theta)$ for all $\theta \in \Theta$ (or for all
+$\theta \in \mathrm{lev}(\theta_0)$ when the algorithm is a descent algorithm).
+Then
 
 \[
-  H(\theta_{\infty}) \geq \tilde{H}(\theta)
+0 \leq H(\theta_n) - H(\theta^\star) \leq H(\theta_n) - \tilde{H}(\theta_n),
 \]
 
-for all $\theta \in \Theta$ (or just in $\mathrm{lev}(\theta_0)$ for a descent
-algorithm)  then 
+and the right-hand side gives a computable upper bound on the suboptimality.
+Convex duality theory supplies such an envelope for many convex optimization
+problems; in those cases a *duality-gap* criterion can replace the *ad hoc*
+tolerances above with a quantitative one. Treating duality properly is beyond
+our scope, but it is worth knowing that better stopping rules exist when problem
+structure allows.
+
+### Implementing gradient descent
+
+We implement gradient descent with backtracking below as the function
+`grad_desc()`. For gradient descent, the sufficient descent condition amounts to
+choosing the smallest $k \geq 0$ such that
 
 \[
-  0 \leq H(\theta_{n}) - H(\theta_{\infty}) \leq 
-H(\theta_{n}) - \tilde{H}(\theta_{n}),
+H(\theta_{n} - d^k \gamma_0 \nabla H(\theta_{n})) \leq H(\theta_n) -  cd^k \gamma_0 \|\nabla H(\theta_{n})\|_2^2.
 \]
 
-and the right hand side directly quantifies convergence. Convex duality 
-theory gives for many convex optimization problems such a function, $\tilde{H}$,
-and in those cases a convergence criterion based on 
-$H(\theta_{n}) - \tilde{H}(\theta_{n})$ actually comes with a theoretical guarantee on
-how close we are to the minimum. We will not pursue 
-the necessary convex duality theory here, but it is useful to know 
-that in some cases we can do better than the *ad hoc* criteria above.
+The `grad_desc()` function takes the starting point, $\theta_0$, the objective
+function, $H$, and its gradient, $\nabla H$, as arguments. The four parameters
+$d$, $c$, $\gamma_0$ and $\varepsilon$ that control the algorithm can also be
+specified as additional arguments, but are given some reasonable default values.
+The implementation uses the *squared* norm of the gradient as a stopping
+criterion, but it also has a maximum number of iterations as a safeguard. If the
+maximum number is reached, a warning is printed.
 
-## Descent direction algorithms
+Finally, we include a callback argument (the `cb` argument). If a function is
+passed to this argument, it will be evaluated in each iteration of the
+algorithm. This gives us the possibility of logging or printing values of
+variables during evaluation, which can be highly useful for understanding the
+inner workings of the algorithm. Monitoring or logging intermediate values
+during the evaluation of code is referred to as *tracing*.
 
-The negative gradient of $H$ in $\theta$ is the direction of steepest descent.
-Since the goal is to minimize $H$, it is natural to move 
-away from $\theta$ in the direction of $-\nabla H(\theta)$. 
-However, other directions than the negative gradient can also be suitable
-descent directions.
+```{r}
+#| label: gd
 
-::: {.definition} 
-A *descent direction* in $\theta$ is a vector $\rho \in \mathbb{R}^p$ such that 
-
-\[
-\nabla H(\theta)^T \rho < 0.
-\]
-::: 
-
-When $\theta$ is not a stationary point,  
-
-\[
-\nabla H(\theta)^T(-\nabla H(\theta)) = - \| \nabla H(\theta)^T \|_2^2 < 0
-\]
-
-and $-\nabla H(\theta)^T$ is a descent direction in $\theta$ according to 
-the definition.
-
-Given $\theta_n$ and a descent direction $\rho_n$ in $\theta_n$ we can define 
-
-\[
-\theta_{n+1} = \theta_n + \gamma \rho_n
-\]
-
-for a suitably chosen $\gamma > 0$. By Taylor's theorem 
-
-\[
-H(\theta_{n+1}) = H(\theta_n) + \gamma \nabla H(\theta_n) \rho_n + o(\gamma),
-\]
-
-which means that
-
-\[
-H(\theta_{n+1}) < H(\theta_n)
-\]
-
-if $\gamma$ is small enough. 
-
-One strategy for choosing $\gamma$ is to minimize the univariate 
-function 
-
-\[
-\gamma \mapsto H(\theta_n + \gamma \rho_n),
-\]
-
-which is an example of a *line search* method. Such a minimization 
-would give the maximal possible descent in the direction $\rho_n$,
-and as we have argued, if $\rho_n$ is a descent direction, a minimizer $\gamma > 0$
-guarantees descent of $H$. However, unless the minimization can be 
-done analytically it is often computationally too expensive. 
-Less will also do, and as shown in Section \@ref(grad-descent),
-if the Hessian has uniformly bounded numerical radius it is possible to 
-fix one (sufficiently small) step length that will guarantee descent. 
-
-### Line search
-
-We consider algorithms of the form 
-
-\[
-\theta_{n+1} = \theta_n + \gamma_{n} \rho_n
-\]
-
-starting in $\theta_n$ and with $\rho_n$ a descent direction in $\theta_n$. 
-The step lengths, $\gamma_n$, should be chosen so as to give 
-sufficient descent in each iteration. 
-
-The function $h(\gamma) = H(\theta_{n} + \gamma \rho_{n})$ 
-is a univariate and differentiable function,
-
-\[
-h : [0,\infty) \to \mathbb{R},
-\]
-
-that gives the value of $H$ in the descent direction
-$\rho_n$. We find that 
-
-\[
-h'(\gamma) = \nabla H(\theta_{n} + \gamma \rho_{n})^T \rho_{n},
-\]
-
-and the maximal descent in direction $\rho_n$ can be found by solving
-$h'(\gamma) = 0$ for $\gamma$. As mentioned above, less will do. First note
-that 
-
-\[
-h'(0) = \nabla H(\theta_{n})^T \rho_{n} < 0,
-\]
-
-so $h$ has a negative slope in $0$. It descents in a sufficiently 
-small interval $[0, \varepsilon)$, and it is even true that for any $c \in (0, 1)$
-there is an $\varepsilon > 0$ such that
-
-\[
-h(\gamma) \leq h(0) + c \gamma h'(0)
-\]
-
-for $\gamma \in [0, \varepsilon)$. We note that this inequality can 
-be checked easily for any given $\gamma > 0$, and is known as the 
-*sufficient descent* condition. Sufficient descent is not enough 
-in itself as the step length could be arbitrarily small, and the algorithm 
-could effectively get stuck.  
-
-To prevent too small steps we can enforce another condition. Very close 
-to $0$, $h$ will have almost the same slope, $h'(0)$, as it has in $0$. If we 
-therefore require that the slope in $\gamma$ should be larger than $\tilde{c} h'(0)$
-for some $\tilde{c} \in (0, 1)$, $\gamma$ is forced away from $0$. This is 
-known as the *curvature condition*. 
-
-The combined conditions on $\gamma$, 
-
-\[
-h(\gamma) \leq h(0) + c \gamma h'(0)
-\]
-
-for a $c \in (0, 1)$ and 
-
-\[
-h'(\gamma) \geq \tilde{c} h'(0)
-\]
-
-for a $\tilde{c} \in (c, 1)$ are known collectively as 
-the *Wolfe conditions*. It can be shown that if $h$ is bounded below there 
-exists a step length satisfying the Wolfe conditions (Lemma 3.1 in @Nocedal:2006).
-
-Even when choosing $\gamma_{n}$ to fulfill
-the Wolfe conditions there is no guarantee that $\theta_n$
-will converge let alone converge toward a global minimizer. The best we
-can hope for in general is that 
-
-\[
-\|\nabla H(\theta_n)\|_2 \rightarrow 0
-\]
-
-for $n \to \infty$, and this will happen under some relatively weak 
-conditions on $H$ (Theorem 3.2 @Nocedal:2006) under the assumption 
-that
-
-\[
-\frac{\nabla H(\theta_n)^T \rho_n}{\|\nabla H(\theta_n)\|_2 \| \rho_n\|_2} \leq - \delta < 0.
-\]
-
-That is, the angle between the descent direction and the gradient should be 
-uniformly bounded away from $90^{\circ}$. 
-
-A practical way of searching for a step length is via *backtracking*. 
-Choosing a $\gamma_0$ and a constant $d \in (0, 1)$ we 
-can search through the sequence of step lengths 
-
-\[
-\gamma_0, d \gamma_0, d^2 \gamma_0, d^3 \gamma_0, \ldots
-\]
-
-and stop the first time we find a step length satisfying the Wolfe 
-conditions.
-
-Using backtracking, we can actually dispense of the curvature condition 
-and simply check the sufficient descent condition
-
-\[
-H(\theta_{n} + d^k \gamma_0 \rho_{n}) \leq H(\theta_n) + cd^k \gamma_0 \nabla H(\theta_{n})^T \rho_{n}
-\]
-
-for $c \in (0, 1)$. The implementation of backtracking requires the choice 
-of the three parameters: $\gamma_0 > 0$, $d \in (0, 1)$ and $c \in (0, 1)$.
-A good choice depends quite a lot on the algorithm used for choosing
-the descent direction, but choosing $c$ too close to 1 can make the algorithm 
-take too small steps, and taking $d$ too small can likewise 
-generate small step lengths. Thus $d = 0.8$ or $d = 0.9$ 
-and $c = 0.1$ or even smaller are sensible choices. For some algorithms, 
-like the Newton algorithm to be dealt with below, there is a natural 
-choice of $\gamma_0 = 1$. But for other algorithms a good choice depends 
-crucially on the scale of the parameters, and there is then no general 
-advice on choosing $\gamma_0$.
-
-### Gradient descent 
-
-We implement gradient descent with backtracking below as the function `grad_desc()`. 
-For gradient descent, the sufficient descent condition amounts to 
-choosing the smallest $k \geq 0$ such that 
-
-\[
-  H(\theta_{n} - d^k \gamma_0 \nabla H(\theta_{n})) \leq H(\theta_n) -  cd^k \gamma_0 \|\nabla H(\theta_{n})\|_2^2.
-\]
-
-The `grad_desc()` function takes the starting point, $\theta_0$, the objective function,
-$H$, and its gradient, $\nabla H$, as arguments. The four parameters $d$, $c$, $\gamma_0$ and 
-$\varepsilon$ that control the algorithm can also be specified as additional arguments, 
-but are given some reasonable default values. The implementation uses the *squared* norm of 
-the gradient as a stopping criterion, but it also has a maximum number of 
-iterations as a safeguard. If the maximum number is reached, a 
-warning is printed.
-
-Finally, we include a callback argument (the `cb` argument).
-If a function is passed to this argument, it will be evaluated in each iteration
-of the algorithm. This gives us the possibility of logging or 
-printing values of variables during evaluation, which can be highly useful 
-for understanding the inner workings of the algorithm. Monitoring or logging 
-intermediate values during the evaluation of code is referred to as 
-*tracing*. 
-
-```{r gd}
 grad_desc <- function(
-  par, 
+  par,
   H,
   gr,
-  d = 0.8, 
-  c = 0.1, 
-  gamma0 = 0.01, 
-  epsilon = 1e-4, 
+  d = 0.8,
+  c = 0.1,
+  gamma0 = 0.01,
+  epsilon = 1e-4,
   maxit = 1000,
   cb = NULL
 ) {
@@ -1039,64 +802,79 @@ grad_desc <- function(
     value <- H(par)
     grad <- gr(par)
     h_prime <- sum(grad^2)
-    if (!is.null(cb)) cb()
+
+    if (!is.null(cb)) {
+      cb()
+    }
+
     # Convergence criterion based on gradient norm
-    if (h_prime <= epsilon) break
+    if (h_prime <= epsilon) {
+      break
+    }
+
     gamma <- gamma0
+
     # Proposed descent step
     par1 <- par - gamma * grad
+
     # Backtracking while descent is insufficient
     while (H(par1) > value - c * gamma * h_prime) {
       gamma <- d * gamma
       par1 <- par - gamma * grad
     }
+
     par <- par1
   }
+
   if (n == maxit) {
     warning("Maximum number, ", maxit, ", of iterations reached")
   }
+
   par
 }
 ```
 
+We will use the Poisson regression example to illustrate the use of gradient
+descent and other optimization algorithms, and we need to implement functions in
+R for computing the negative log-likelihood and its gradient.
 
-We will use the Poisson regression example to illustrate the use of 
-gradient descent and other optimization algorithms, and we need to 
-implement functions in R for computing the negative log-likelihood and 
-its gradient.
+The implementation below uses a function factory to produce a list containing a
+parameter vector, the negative log-likelihood function and its gradient. We
+anticipate that for the Newton algorithm in Section \@ref(Newton) we also need
+an implementation of the Hessian, which is thus included here as well.
 
-The implementation below uses a function factory to produce a 
-list containing a parameter vector, the negative log-likelihood function 
-and its gradient. We anticipate that for the Newton algorithm in Section 
-\@ref(Newton) we also need an implementation of the Hessian, which is 
-thus included here as well. 
+We will exploit the `model.matrix()` function to construct the model matrix from
+the data via a formula, and the sufficient statistic is also computed. The
+implementations use linear algebra and vectorized computations relying on access
+to the model matrix and the sufficient statistics in their enclosing
+environment.
 
-We will exploit the `model.matrix()` function to construct the model matrix 
-from the data via a formula, and the sufficient statistic is also
-computed. The implementations use linear algebra and vectorized computations
-relying on access to the model matrix and the sufficient statistics in 
-their enclosing environment.
+```{r}
+#| label: Implement
 
-```{r Implement}
 poisson_model <- function(form, data, response) {
   X <- model.matrix(form, data)
   y <- data[[response]]
-  # The computation of t(X) %*% y is more efficiently done by 
-  # crossprod(X,y). Use the function drop() to drop the dim attribute 
+
+  # The computation of t(X) %*% y is more efficiently done by
+  # crossprod(X,y). Use the function drop() to drop the dim attribute
   # and turn a matrix with one column into a vector
-  t_map <- drop(crossprod(X, y)) 
+  t_map <- drop(crossprod(X, y))
   N <- nrow(X)
   p <- ncol(X)
-  
-  H <- function(beta) 
+
+  H <- function(beta) {
     drop(sum(exp(X %*% beta)) - beta %*% t_map) / N
-  
-  grad <- function(beta) 
+  }
+
+  grad <- function(beta) {
     (drop(crossprod(X, exp(X %*% beta))) - t_map) / N
-  
-  Hessian <- function(beta)
+  }
+
+  Hessian <- function(beta) {
     crossprod(X, drop(exp(X %*% beta)) * X) / N
-  
+  }
+
   list(par = rep(0, p), H = H, grad = grad, Hessian = Hessian)
 }
 ```
@@ -1109,121 +887,167 @@ numerical optimization algorithms. Gradient descent is very slow for the large
 Poisson model with individual store effects, so we consider only the simple
 model with two parameters.
 
-```{r veg-pois}
+```{r}
+#| label: veg-pois
+
 veg_pois <- poisson_model(
-  ~ log(normalSale), 
-  CSwR::vegetables, 
+  ~ log(normalSale),
+  CSwR::vegetables,
   response = "sale"
 )
 ```
 
-```{r gd-test, dependson=c("veg-pois", "gd")}
+```{r, dependson=c("veg-pois", "gd")}
+#| label: gd-test
+
 pois_gd <- grad_desc(veg_pois$par, veg_pois$H, veg_pois$grad)
 ```
 
-The gradient descent implementation is tested by comparing the minimizer to
-the estimated parameters as computed by `glm()`.
+The gradient descent implementation is tested by comparing the minimizer to the
+estimated parameters as computed by `glm()`.
 
-```{r gd-comp, dependson=c("gd-test", "pois-model-null"), results='hold'}
+```{r, dependson=c("gd-test", "pois-model-null")}
+#| label: gd-comp
+#| results: "hold"
+
 rbind(pois_glm = coefficients(pois_model_null), pois_gd)
 ```
 
-We get the same result up to the first two decimals. The convergence 
-criterion on our gradient descent algorithm was quite loose ($\varepsilon = 10^{-4}$,
-which means that the norm of the gradient is smaller than $10^{-2}$ when 
-the algorithm stops). This choice of $\varepsilon$ in combination with $\gamma_0 = 0.01$ 
-implies that the algorithm stops when the gradient is so small that the changes 
-are at most of norm $10^{-4}$. 
+We get the same result up to the first two decimals. The convergence criterion
+on our gradient descent algorithm was quite loose ($\varepsilon = 10^{-4}$,
+which means that the norm of the gradient is smaller than $10^{-2}$ when the
+algorithm stops). This choice of $\varepsilon$ in combination with
+$\gamma_0 = 0.01$ implies that the algorithm stops when the gradient is so small
+that the changes are at most of norm $10^{-4}$.
 
-Comparing the resulting values of the negative log-likelihood shows agreement
-up to the first five decimals, but we notice that the negative log-likelihood 
-for the parameters fitted using `glm()` is just slightly smaller. 
+Comparing the resulting values of the negative log-likelihood shows agreement up
+to the first five decimals, but we notice that the negative log-likelihood for
+the parameters fitted using `glm()` is just slightly smaller.
 
-```{r gd-object, dependson=c("veg-pois", "pois-model-null", "gd-test"), echo=2:3, results='hold'}
+```{r, dependson=c("veg-pois", "pois-model-null", "gd-test"), echo=2:3}
+#| label: gd-object
+#| results: "hold"
+
 old_options = options(digits = 15)
 veg_pois$H(coefficients(pois_model_null))
 veg_pois$H(pois_gd)
 options(digits = old_options$digits)
 ```
 
-To investigate what actually went on inside the gradient descent 
-algorithm we will use the callback argument to trace the internals 
-of a call to `grad_desc()`. The `tracer()` function from the [CSwR package](https://github.com/nielsrhansen/CSwR/tree/master/CSwR_package)
-can be used to construct a tracer object with a `tracer()` function that we can pass as the callback 
-argument.  The tracer object and its `tracer()` function work by storing 
-information in the enclosing environment of `tracer()`. When used as 
-the callback argument to, e.g., `grad_desc()` the `tracer()` function will look up 
-variables in the evaluation environment of `grad_desc()`, store them and 
-print them if requested, and store runtime information as well. 
+To investigate what actually went on inside the gradient descent algorithm we
+will use the callback argument to trace the internals of a call to
+`grad_desc()`. The `tracer()` function from the [CSwR
+package](https://github.com/nielsrhansen/CSwR/tree/master/CSwR_package) can be
+used to construct a tracer object with a `tracer()` function that we can pass as
+the callback argument. The tracer object and its `tracer()` function work by
+storing information in the enclosing environment of `tracer()`. When used as the
+callback argument to, e.g., `grad_desc()` the `tracer()` function will look up
+variables in the evaluation environment of `grad_desc()`, store them and print
+them if requested, and store runtime information as well.
 
-When `grad_desc()` has returned, the trace information can be accessed
-via the `summary()` method for the tracer object. The tracer objects 
-and their `tracer()` function should not be confused with the `trace()` 
-function from the R base package, but the tracer object's `tracer()` function
-can be passed as the `tracer` argument to `trace()` to interactively 
-inject tracing code into any R function. Here, the tracer objects will 
-only be used together with a callback argument.
+When `grad_desc()` has returned, the trace information can be accessed via the
+`summary()` method for the tracer object. The tracer objects and their
+`tracer()` function should not be confused with the `trace()` function from the
+R base package, but the tracer object's `tracer()` function can be passed as the
+`tracer` argument to `trace()` to interactively inject tracing code into any R
+function. Here, the tracer objects will only be used together with a callback
+argument.
 
-We use the tracer object with our gradient descent implementation
-and print trace information every 50th iteration. 
+We use the tracer object with our gradient descent implementation and print
+trace information every 50th iteration.
 
-```{r gd-trace, dependson=c("gd", "veg-pois")}
+```{r, dependson=c("gd", "veg-pois")}
+#| label: gd-trace
+
 gd_tracer <- CSwR::tracer(c("value", "h_prime", "gamma"), Delta = 50)
 pois_gd <- grad_desc(
-  veg_pois$par, 
-  veg_pois$H, 
-  veg_pois$grad, 
+  veg_pois$par,
+  veg_pois$H,
+  veg_pois$grad,
   cb = gd_tracer$tracer
 )
 ```
 
 We see that the gradient descent algorithm runs for a little more than 350
-iterations, and we can observe how the value of the negative log-likelihood is 
-descending. We can also see that the step length $\gamma$ bounces between 
-$0.004096 = 0.8^4 \times 0.01$ and 
-$0.00512 = 0.8^3 \times 0.01$, thus the backtracking 
-takes 3 to 4 iterations to find a step length with sufficient descent.
- 
-The printed trace does not reveal the runtime information. The 
-runtime is measured for each iteration of the algorithm and the 
-cumulative runtime is of greater interest. This information
-can be computed and inspected after the algorithm has converged,
-and it is returned by the summary method for tracer objects.
+iterations, and we can observe how the value of the negative log-likelihood is
+descending. We can also see that the step length $\gamma$ bounces between
+$0.004096 = 0.8^4 \times 0.01$ and $0.00512 = 0.8^3 \times 0.01$, thus the
+backtracking takes 3 to 4 iterations to find a step length with sufficient
+descent.
 
-```{r this-summary, dependson=c("gd-trace")}
+The printed trace does not reveal the runtime information. The runtime is
+measured for each iteration of the algorithm and the cumulative runtime is of
+greater interest. This information can be computed and inspected after the
+algorithm has converged, and it is returned by the summary method for tracer
+objects.
+
+```{r, dependson=c("gd-trace")}
+#| label: this-summary
+
 tail(summary(gd_tracer))
 ```
 
-The trace information is stored in a list. The summary method transforms 
-the trace information into a data frame with one row per iteration. We can also access 
-individual entries of the list of trace information via subsetting. 
+The trace information is stored in a list. The summary method transforms the
+trace information into a data frame with one row per iteration. We can also
+access individual entries of the list of trace information via subsetting.
 
-```{r gd-trace-sub, dependson=c("gd-trace")}
-gd_tracer[377] 
+```{r, dependson=c("gd-trace")}
+#| label: gd-trace-sub
+
+gd_tracer[377]
 ```
 
+```{r, dependson=c("gd-trace", "veg-pois")}
+#| label: gd-trace-plot
+#| echo: false
+#| fig-cap: "Gradient norm (left) and value of the negative log-likelihood (right) above the limit value $H(\\theta_{\\infty})$. The straight line is fitted to the data points except the first ten using least squares, and the rate is computed from this estimate and reported per ms."
+#| out-width: "100%"
+#| fig-width: 8
+#| fig-height: 3
+#| message: false
 
-```{r gd-trace-plot, echo=FALSE, fig.cap="Gradient norm (left) and value of the negative log-likelihood (right) above the limit value $H(\\theta_{\\infty})$. The straight line is fitted to the data points except the first ten using least squares, and the rate is computed from this estimate and reported per ms.", dependson=c("gd-trace", "veg-pois"), out.width="100%", fig.width=8, fig.height=3, message=FALSE}
 trace_gd <- summary(gd_tracer)
 
-rate1 <- exp(coef(lm(log(h_prime)/2 ~ I(1000 * .time), data = trace_gd, subset = 11:nrow(trace_gd))))[2]
+rate1 <- exp(coef(lm(
+  log(h_prime) / 2 ~ I(1000 * .time),
+  data = trace_gd,
+  subset = 11:nrow(trace_gd)
+)))[2]
 
 p1 <- ggplot(data = trace_gd, aes(x = 1000 * .time, y = sqrt(h_prime))) +
-  geom_point() + 
+  geom_point() +
   scale_y_log10("Gradient norm") +
-  xlab("Time (ms)") + 
-  geom_smooth(method = "lm", se = FALSE, method.args = list(subset = 11:nrow(trace_gd))) + 
-  geom_text(aes(x = 15, y = 10, label = paste("rate:", round(rate1, 3), "per ms")), data = data.frame())
+  xlab("Time (ms)") +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    method.args = list(subset = 11:nrow(trace_gd))
+  ) +
+  geom_text(
+    aes(x = 15, y = 10, label = paste("rate:", round(rate1, 3), "per ms")),
+    data = data.frame()
+  )
 
 value_Inf <- veg_pois$H(coefficients(pois_model_null))
-rate2 <- exp(coef(lm(log(value - value_Inf) ~ I(1000 * .time), data = trace_gd, subset = 11:nrow(trace_gd))))[2]
+rate2 <- exp(coef(lm(
+  log(value - value_Inf) ~ I(1000 * .time),
+  data = trace_gd,
+  subset = 11:nrow(trace_gd)
+)))[2]
 
 p2 <- ggplot(data = trace_gd, aes(x = 1000 * .time, y = value - value_Inf)) +
-  geom_point() + 
+  geom_point() +
   scale_y_log10(expression(Value - Value[infinity])) +
-  xlab("Time (ms)") + 
-  geom_smooth(method = "lm", se = FALSE, method.args = list(subset = 11:nrow(trace_gd))) + 
-  geom_text(aes(x = 15, y = 10, label = paste("rate:", round(rate2, 3), "per ms")), data = data.frame())
+  xlab("Time (ms)") +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    method.args = list(subset = 11:nrow(trace_gd))
+  ) +
+  geom_text(
+    aes(x = 15, y = 10, label = paste("rate:", round(rate2, 3), "per ms")),
+    data = data.frame()
+  )
 
 cc <- coord_cartesian(xlim = c(0, 20), ylim = c(1e-6, 1000))
 
@@ -1232,430 +1056,912 @@ library(patchwork)
 (p1 + cc) + (p2 + cc)
 ```
 
-```{r, echo=FALSE, eval=FALSE}
+```{r}
+#| label: gd-trace-plot-diff
+#| echo: false
+#| eval: false
 
-rate3 <- exp(coef(lm.fit(cbind(1, 11:nrow(trace_gd)), log(trace_gd$h_prime[11:nrow(trace_gd)])))[2])
+rate3 <- exp(coef(lm.fit(
+  cbind(1, 11:nrow(trace_gd)),
+  log(trace_gd$h_prime[11:nrow(trace_gd)])
+))[2])
 
 delta <- trace_gd$.time[nrow(trace_gd)] / nrow(trace_gd)
 
 plot(diff(trace_gd$.time), ylim = c(0, 0.0003))
 abline(h = delta, col = "red")
-rate3^(1/(1000 * delta))
+rate3^(1 / (1000 * delta))
 ```
 
+## Newton's method {#Newton}
 
-### Conjugate gradients
-
-The gradient direction is not the best descent direction. It is too 
-local, and convergence can be quite slow. One of the better algorithms that 
-is still a *first order algorithm* (using only gradient information) is the [nonlinear conjugate
-gradient](https://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method) algorithm. 
-In the Fletcher--Reeves version of the algorithm
-the descent direction is initialized as the negative gradient
-$\rho_0 = - \nabla H(\theta_{0})$ and then updated as
+We can re-derive gradient descent from a different angle, and that derivation
+will lead us straight to Newton's method. Take the second-order Taylor expansion
+of $H$ around $\theta$,
 
 \[
-\rho_{n} = - \nabla H(\theta_{n}) + \frac{\|\nabla H(\theta_n)\|_2^2}{\|\nabla H(\theta_{n-1})\|_2^2} \rho_{n-1}.
+H(\theta + \rho) \approx H(\theta) + \nabla H(\theta)^\top \rho + \frac{1}{2} \rho^\top \nabla^2 H(\theta) \rho,
 \]
 
-That is, the descent direction, $\rho_{n}$, is the negative gradient but modified according to 
-the previous descent direction. There is plenty of opportunity to vary the prefactor 
-of $\rho_{n-1}$, and the one presented here is what makes it the Fletcher--Reeves
-version. Other versions go by the names of their inventors such as Polak–Ribière
-or Hestenes--Stiefel.
+and replace the Hessian $\nabla^2 H(\theta)$ with the conservative diagonal
+$(1/t) I$. Minimizing the resulting quadratic over $\rho$ recovers
+$\rho = -t \nabla H(\theta)$, the gradient descent direction. Substituting a
+scalar for the Hessian is what makes gradient descent both cheap (no Hessian to
+compute) and slow on ill-conditioned problems (it discards the geometry of the
+level sets). Figure\ \@ref(fig:gd-taylor-surrogate) shows the surrogate model
+for a one-dimensional objective, where the dashed quadratic surrogate uses
+curvature $1/t$ in place of the true Hessian, and its minimizer is the gradient
+descent step.
 
-In fact, $\rho_{n}$ need not be a descent direction unless we put some 
-restrictions on the step lengths. One possibility is to require that
-the step length $\gamma_{n}$ satisfies the *strong* curvature condition
+```{r}
+#| label: gd-taylor-surrogate
+#| echo: false
+#| fig-width: 4
+#| fig-height: 3
+#| fig-cap: "Gradient descent as surrogate minimization. The dashed quadratic, obtained from the second-order Taylor expansion of $H$ around $\\theta$ with the Hessian replaced by $(1/t)I$, has minimizer $\\theta^+ = \\theta - t \\nabla H(\\theta)$ (open circle). The filled dots mark $\\theta$ and the next iterate $\\theta^+$ on $H$. Newton's method instead keeps the true Hessian."
+#| warning: false
+
+H <- function(theta) (theta - 2)^2 + 1
+grad_H_1d <- function(theta) 2 * (theta - 2)
+
+theta <- 0
+t <- 0.2
+theta_p <- theta - t * grad_H_1d(theta)
+
+x_grid <- seq(theta - 0.5, theta + 1.7, length.out = 200)
+surrogate <- function(x) {
+  H(theta) + grad_H_1d(theta) * (x - theta) + (x - theta)^2 / (2 * t)
+}
+
+curve_df <- data.frame(
+  x = x_grid,
+  H_val = H(x_grid),
+  surr_val = surrogate(x_grid)
+)
+
+iterate_pts <- data.frame(
+  x = c(theta, theta_p),
+  y = c(H(theta), H(theta_p)),
+  label = c("theta", "theta^{`+`}")
+)
+
+surr_min <- data.frame(x = theta_p, y = surrogate(theta_p))
+
+ggplot(curve_df, aes(x)) +
+  geom_line(aes(y = H_val)) +
+  geom_line(aes(y = surr_val), linetype = "dashed", col = "steelblue") +
+  geom_segment(
+    aes(
+      x = theta_p,
+      xend = theta_p,
+      y = H(theta_p),
+      yend = surrogate(theta_p)
+    ),
+    linetype = "dotted"
+  ) +
+  geom_point(data = iterate_pts, aes(x = x, y = y)) +
+  geom_point(data = surr_min, aes(x = x, y = y), shape = 1) +
+  geom_text(
+    data = iterate_pts,
+    aes(x = x, y = y, label = label),
+    parse = TRUE,
+    nudge_y = -0.35
+  ) +
+  labs(x = expression(theta), y = expression(H(theta))) +
+  theme_schematic()
+```
+
+Newton's method does the opposite: it keeps the full Hessian and minimizes the
+second-order Taylor model exactly. When $\nabla^2 H(\theta)$ is positive
+definite, the minimizer of
+$\rho \mapsto \nabla H(\theta)^\top \rho + \frac{1}{2} \rho^\top \nabla^2 H(\theta) \rho$
+is
 
 \[
-|h'(\gamma)| = |\nabla H(\theta_n + \gamma \rho_n)^T \rho_n | \leq \tilde{c} |\nabla H(\theta_n)^T \rho_n| = \tilde{c} |h'(0)|
+\rho_{\mathrm{N}}(\theta) = -[\nabla^2 H(\theta)]^{-1} \nabla H(\theta),
 \]
 
-for a $\tilde{c} < \frac{1}{2}$. Then $\rho_{n + 1}$ can be shown to be a descent 
-direction if $\rho_{n}$ is. 
+the *Newton direction*.\index{Newton direction}
+Figure\ \@ref(fig:gd-vs-newton-surrogate) compares the two surrogates and their
+trajectories on the ill-conditioned OLS design from Section\ \@ref(smoothness)
+(Figure\ \@ref(fig:ols-condition-contour), right panel). The objective is
+quadratic, so its Hessian is constant and the Newton surrogate equals $H$
+exactly---its level sets coincide with the grey ellipses, and a single Newton
+step lands at $\hat{\beta}$. The gradient descent surrogate replaces that
+Hessian with $L \cdot I$ (where $L$ is the largest eigenvalue of
+$X^\top X$)---its level sets are circles aligned with neither axis of the true
+objective, and the resulting iterates zigzag across the narrow valley before
+drifting along it towards $\hat{\beta}$. This is the condition-number penalty
+paid by gradient descent in geometric form.
 
-We implement the conjugate gradient method in a slightly different way. Instead
-of introducing the more advanced curvature condition, we simply reset the 
-algorithm to use the gradient direction in any case where a non-descent direction
-has been chosen. Resets of descent direction every $p$-th iteration is recommended 
-anyway for the nonlinear conjugate gradient algorithm.
+```{r}
+#| label: gd-vs-newton-surrogate
+#| echo: false
+#| fig-width: 8
+#| fig-height: 4.5
+#| fig-cap: "Surrogate models and iterates for the OLS objective on the ill-conditioned design of Figure\\ \\@ref(fig:ols-condition-contour) (right panel). Both panels start from the filled dot $\\beta_0$. Solid grey contours are level sets of $H(\\beta) = \\tfrac{1}{2}\\lVert y - X\\beta \\rVert^2$; dashed blue contours are level sets of the surrogate built at $\\beta_0$, drawn at the same values. Left: gradient descent at step size $t = 1/L$. The surrogate is isotropic and misses the elongation of $H$, and the iterates trace a zigzag across the valley. Right: Newton's method. The surrogate coincides with $H$ (the dashed contours overlay the grey ones), and a single step reaches $\\hat{\\beta}$."
 
-```{r cg}
-conj_grad <- function(
-  par, 
+library(patchwork)
+
+set.seed(24)
+N_fig <- 100
+z1 <- rnorm(N_fig)
+z2 <- rnorm(N_fig)
+X <- cbind(z1, 0.8 * z1 + sqrt(1 - 0.8^2) * z2)
+beta_true <- c(1, 2)
+y <- X %*% beta_true
+
+XtX <- crossprod(X)
+Xty <- crossprod(X, y)
+beta_hat <- as.numeric(solve(XtX, Xty))
+eig <- eigen(XtX, symmetric = TRUE)
+L <- eig$values[1]
+flat_dir <- eig$vectors[, 2]
+steep_dir <- eig$vectors[, 1]
+grad_f <- function(b) drop(XtX %*% b - Xty)
+
+beta0 <- beta_hat + 1.8 * steep_dir + 0.6 * flat_dir
+g0 <- grad_f(beta0)
+f0 <- 0.5 * sum((beta0 - beta_hat) * (XtX %*% (beta0 - beta_hat)))
+t_gd <- 1 / L
+
+n_steps <- 30
+gd_path <- matrix(0, n_steps + 1, 2)
+gd_path[1, ] <- beta0
+for (i in seq_len(n_steps)) {
+  gd_path[i + 1, ] <- gd_path[i, ] - t_gd * grad_f(gd_path[i, ])
+}
+newton_path <- rbind(beta0, beta_hat)
+
+halfwidth <- 2.5
+
+grid <- expand.grid(
+  b1 = seq(beta_hat[1] - halfwidth, beta_hat[1] + halfwidth, length.out = 200),
+  b2 = seq(beta_hat[2] - halfwidth, beta_hat[2] + halfwidth, length.out = 200)
+)
+
+de1 <- grid$b1 - beta_hat[1]
+de2 <- grid$b2 - beta_hat[2]
+grid$H <- 0.5 *
+  (XtX[1, 1] * de1^2 + 2 * XtX[1, 2] * de1 * de2 + XtX[2, 2] * de2^2)
+
+d1 <- grid$b1 - beta0[1]
+d2 <- grid$b2 - beta0[2]
+grid$gd_surr <- f0 + g0[1] * d1 + g0[2] * d2 + (d1^2 + d2^2) / (2 * t_gd)
+grid$newton_surr <- f0 +
+  g0[1] * d1 +
+  g0[2] * d2 +
+  0.5 * (XtX[1, 1] * d1^2 + 2 * XtX[1, 2] * d1 * d2 + XtX[2, 2] * d2^2)
+
+start_pt <- data.frame(b1 = beta0[1], b2 = beta0[2])
+gd_df <- data.frame(b1 = gd_path[, 1], b2 = gd_path[, 2])
+newton_df <- data.frame(b1 = newton_path[, 1], b2 = newton_path[, 2])
+breaks <- c(10, 30, 80, 200, 400, 700)
+
+panel <- function(z_col, path_df, title) {
+  ggplot(grid, aes(b1, b2)) +
+    geom_contour(aes(z = H), color = "grey70", breaks = breaks) +
+    geom_contour(
+      aes(z = .data[[z_col]]),
+      color = "steelblue",
+      linetype = "dashed",
+      breaks = breaks
+    ) +
+    geom_path(data = path_df, linewidth = 0.4) +
+    geom_point(data = path_df, size = 0.8) +
+    geom_point(data = start_pt, size = 2) +
+    # coord_equal(
+    #   xlim = beta_hat[1] + c(-1, 1) * halfwidth,
+    #   ylim = beta_hat[2] + c(-1, 1) * halfwidth
+    # ) +
+    labs(
+      x = expression(beta[1]),
+      y = expression(beta[2]),
+      title = title
+    )
+}
+
+panel("gd_surr", gd_df, "Gradient descent") +
+  panel("newton_surr", newton_df, "Newton") +
+  plot_layout(axes = "collect")
+```
+
+The Newton iteration is then
+$\theta_{n+1} = \theta_n + \gamma_n \rho_{\mathrm{N}}(\theta_n)$. Pure Newton
+takes $\gamma_n = 1$, which is the right choice near a minimizer with
+positive-definite Hessian. Far from a minimizer, the model may be a poor guide
+and the natural unit step can overshoot, so the practical version combines the
+Newton direction with the backtracking line search of
+Section\ \@ref(line-search). This is called *damped
+Newton*.\index{Newton's method!damped}
+
+The Newton direction is automatically a descent direction whenever
+$\nabla^2 H(\theta_n)$ is positive definite:
+
+\[
+\rho_{\mathrm{N}}(\theta_n)^\top \nabla H(\theta_n) = -\nabla H(\theta_n)^\top [\nabla^2 H(\theta_n)]^{-1} \nabla H(\theta_n) < 0.
+\]
+
+When the Hessian is not positive definite, which can happen for non-convex $H$,
+we must either modify the Hessian by adding $\lambda I$ for some $\lambda > 0$
+or fall back to gradient descent for the offending iteration.
+
+Newton's method has two structural advantages over plain gradient descent.
+First, it is *affine invariant*: under a reparametrization $\theta = A\eta + b$
+for invertible $A$, the Newton iterates in $\eta$ are exact images of those in
+$\theta$, so the algorithm sees no difference between a well-conditioned and an
+ill-conditioned parametrization of the same underlying problem. The
+condition-number dependence that makes gradient descent slow
+(Section\ \@ref(smoothness)) is no longer an issue. Second, near a strict local
+minimizer where the Hessian is positive definite and Lipschitz continuous, pure
+Newton converges *quadratically*: there is a constant $M$ such that
+
+\[
+\|\theta_{n+1} - \theta^\star\|_2 \leq M \|\theta_n - \theta^\star\|_2^2,
+\]
+
+so the number of correct digits roughly doubles per iteration. We state this
+without proof, and refer the interested reader to @Boyd:2004; @Nocedal:2006. Far
+from the minimizer, damped Newton enters a *damped phase* with $\gamma_n < 1$
+and at least linear convergence. Once the iterates reach a neighborhood of
+$\theta^\star$, they transition to the pure-Newton phase, where quadratic
+convergence takes over.
+
+The cost of these advantages is an increase in the computational demands of
+every iteration. Each Newton step requires the Hessian $\nabla^2 H(\theta_n)$, a
+dense $p \times p$ matrix that costs $O(N p^2)$ to assemble for typical
+exponential-family models (Section\ \@ref(parametrization)), and the solution of
+a linear system in that Hessian, costing $O(p^3)$ by Cholesky factorization. For
+$p$ in the hundreds this is unproblematic; for $p$ in the millions it is
+prohibitive. The quasi-Newton methods of the next section cut the cost by
+replacing the Hessian inverse with a cheap surrogate.
+
+We implement damped Newton below as the function `newton()`, an immediate
+extension of `grad_desc()` from Section\ \@ref(stop-crit) with the Hessian added
+to the argument list and the gradient swapped for the Newton direction.
+
+```{r}
+#| label: Newton
+
+newton <- function(
+  par,
   H,
   gr,
-  d = 0.8, 
-  c = 0.1, 
-  gamma0 = 0.05, 
+  hess,
+  d = 0.8,
+  c = 0.1,
+  gamma0 = 1,
   epsilon = 1e-10,
-  maxit = 10000,
+  maxit = 50,
   cb = NULL
 ) {
-  p <- length(par)
-  m <- 1
-  rho0 <- numeric(p)
-  for(n in 1:maxit) {
+  for (n in 1:maxit) {
     value <- H(par)
     grad <- gr(par)
     grad_norm_sq <- sum(grad^2)
-    if(!is.null(cb)) cb()
-    if(grad_norm_sq <= epsilon) break
-    gamma <- gamma0
-    # Descent direction
-    rho <- - grad + grad_norm_sq * rho0
-    h_prime <- drop(t(grad) %*% rho)
-    # Reset to gradient if m > p or rho is not a descent direction
-    if(m > p || h_prime >= 0) {
-      rho <- - grad
-      h_prime <- - grad_norm_sq 
-      m <- 1
+
+    if (!is.null(cb)) {
+      cb()
     }
+
+    if (grad_norm_sq <= epsilon) {
+      break
+    }
+
+    Hessian <- hess(par)
+    rho <- -drop(solve(Hessian, grad))
+    gamma <- gamma0
     par1 <- par + gamma * rho
-    # Backtracking
-    while(H(par1) > value + c * gamma * h_prime) {
+    h_prime <- t(grad) %*% rho
+
+    while (H(par1) > value + c * gamma * h_prime) {
       gamma <- d * gamma
       par1 <- par + gamma * rho
     }
-    rho0 <- rho / grad_norm_sq
+
     par <- par1
-    m <- m + 1
   }
-  if(n == maxit)
+
+  if (n == maxit) {
     warning("Maximum number, ", maxit, ", of iterations reached")
+  }
+
   par
 }
 ```
 
+### Poisson regression
 
-```{r cg-test-null, echo=2:3, dependson=c("veg-pois", "cg")}
-old_options = options(digits = 5)
-cg_tracer <- CSwR::tracer(c("value", "gamma", "grad_norm_sq"), Delta = 25)
-pois_cg <- conj_grad(
-  veg_pois$par, 
-  veg_pois$H, 
-  veg_pois$grad, 
-  cb = cg_tracer$tracer
-)
-options(digits = old_options$digits)
-```
+We reconsider the Poisson regression model `pois_model` from
+Section\ \@ref(regression). The vegetables dataset has 352 stores, so a fit with
+store-level intercepts plus a slope on $\log(\mathrm{normalSale})$ gives 353
+parameters, a non-trivial size that exposes the differences between optimization
+algorithms.
 
-```{r gd-cg-trace-plot, echo=FALSE, fig.cap="Gradient norms (top) and negative log-likelihoods (bottom) for gradient descent (left) and conjugate gradient (right).", fig.height=6, fig.width=8, dependson=c("cg-test-null", "gd-trace-plot"), out.width="100%", message=FALSE}
-trace_cg <- summary(cg_tracer)
+```{r, dependson=c("Implement")}
+#| label: X-update
 
-rate3 <- exp(coef(lm(log(grad_norm_sq) / 2 ~ I(1000 * .time), data = trace_cg, subset = 11:nrow(trace_cg))))[2]
-
-p3 <- ggplot(data = trace_cg, aes(x = 1000 * .time, y = sqrt(grad_norm_sq))) +
-  geom_point() + 
-  scale_y_log10("Gradient norm") +
-  xlab("") + 
-  geom_smooth(method = "lm", se = FALSE, method.args = list(subset = 11:nrow(trace_cg))) + 
-  geom_text(aes(x = 15, y = 10, label = paste("rate:", round(rate3, 3), "per ms")), data = data.frame())
-
-rate4 <- exp(coef(lm(log(value - value_Inf) ~ I(1000 * .time), data = trace_cg, subset = 11:nrow(trace_cg))))[2]
-
-p4 <- ggplot(data = trace_cg, aes(x = 1000 * .time, y = value - value_Inf)) +
-  geom_point() + 
-  scale_y_log10(expression(Value - Value[infinity])) +
-  xlab("Time (ms)") + 
-  geom_smooth(method = "lm", se = FALSE, method.args = list(subset = 11:nrow(trace_cg))) + 
-  geom_text(aes(x = 15, y = 10, label = paste("rate:", round(rate4, 3), "per ms")), data = data.frame())
-
-cc1 <- coord_cartesian(xlim = c(0, 20), ylim = c(1e-5, 1000))
-cc2 <- coord_cartesian(xlim = c(0, 20), ylim = c(1e-12, 1000))
-gridExtra::grid.arrange(p1 + cc1 + ggtitle("Gradient descent") + xlab(""), 
-             p3 + cc1 + ggtitle("Conjugate gradient"), 
-             p2 + cc2, p4 + cc2, nrow = 2)
-```
-
-
-This algorithm is fast enough to fit the large Poisson regression model.
-
-```{r X-update, dependson=c("Implement")}
 veg_pois_large <- poisson_model(
-  ~ store + log(normalSale) - 1, 
-  CSwR::vegetables, 
+  ~ store + log(normalSale) - 1,
+  CSwR::vegetables,
   response = "sale"
 )
 ```
 
-```{r cg-test, echo=2:3, dependson=c("X-update", "cg")}
-old_options = options(digits = 5)
-cg_tracer <- CSwR::tracer(c("value", "gamma", "grad_norm_sq"), Delta = 400)
-pois_cg <- conj_grad(
-  veg_pois_large$par, 
-  veg_pois_large$H, 
-  veg_pois_large$grad, 
-  cb = cg_tracer$tracer
-)
-options(digits = old_options$digits)
-```
+The `veg_pois_large` list contains the negative log-likelihood $H$, the gradient
+$\nabla H$, and the Hessian $\nabla^2 H$ that the Newton iteration requires.
 
-```{r cg-tracer-summary, dependson = "cg-test"}
-tail(summary(cg_tracer))
-```
+```{r, dependson=c("X-update", "Newton")}
+#| label: Newton-test
 
-Using `optim()` with the conjugate gradient method.
-
-```{r cg-optim, dependson=c("X-update")}
-bench::bench_time(
-  pois_optim_cg <- optim(
-    veg_pois_large$par, 
-    veg_pois_large$H, 
-    veg_pois_large$grad, 
-    method = "CG", 
-    control = list(maxit = 10000)
-  )
-)
-```
-
-```{r cg-results, dependson="cg-optim"}
-pois_optim_cg[c("value", "counts")]
-```
-
-```{r cg-comparisons, echo = FALSE, eval = FALSE}
-old_options = options(digits = 15)
-veg_pois_large$H(pois_cg)
-veg_pois_large$H(pois_optim_cg$par)
-options(digits = old_options$digits)
-```
-
-## Newton-type algorithms {#Newton}
-
-The Newton algorithm is similar to gradient descent except that the gradient is 
-replaced by
-
-\[
-\rho_n = - D^2 H(\theta_n)^{-1} \nabla H(\theta_n)
-\]
-
-as a descent direction.
-
-The Newton algorithm is typically much more efficient than gradient 
-descent per iteration and will converge in few iterations. However, the storage of the 
-$p \times p$ Hessian, its computation, and the solution of the equation
-to compute $\rho_n$ all scale like $p^2$ and this can make the algorithm useless 
-for large $p$. 
-
-The standard Newton algorithm for a general objective function is implemented 
-in R via the function `nlm()`. Note that its interface differs from `optim()` 
-in terms of the order and type of the arguments, and the gradient 
-(and Hessian) are passed to `nlm()` as attributes to the objective function 
-rather than as arguments to `nlm()` itself. For non-linear least squares 
-problems the `nls()` function (with yet another interface) should be 
-considered. 
-
-We implement a standard Newton algorithm with backtracking below, which includes a
-callback option allowing us to trace the internals of the algorithm. It is a 
-straightforward modification of `grad_desc()` where we add the Hessian to the argument 
-list and change the descent direction.
-
-```{r Newton}
-newton <- function(
-  par, 
-  H,
-  gr,
-  hess,
-  d = 0.8, 
-  c = 0.1, 
-  gamma0 = 1, 
-  epsilon = 1e-10, 
-  maxit = 50,
-  cb = NULL
-) {
-  for(n in 1:maxit) {
-    value <- H(par)
-    grad <- gr(par)
-    grad_norm_sq <- sum(grad^2)
-    if(!is.null(cb)) cb()
-    if(grad_norm_sq <= epsilon) break
-    Hessian <- hess(par) 
-    rho <- - drop(solve(Hessian, grad)) 
-    gamma <- gamma0
-    par1 <- par + gamma * rho
-    h_prime <- t(grad) %*% rho 
-    while(H(par1) > value +  c * gamma * h_prime) { 
-      gamma <- d * gamma 
-      par1 <- par + gamma * rho
-    }
-    par <- par1 
-  }
-  if(n == maxit)
-    warning("Maximum number, ", maxit, ", of iterations reached")
-  par
-}
-```
-
-There exists a variety of alternatives to the Newton algorithm that replace
-the Hessian by another matrix that can be easier to compute and update. 
-That is, the descent directions are of the form 
-
-\[
-\rho_n = - B_n \nabla H(\theta_n)
-\]
-
-for a $p \times p$ matrix $B_n$. With $B_n = D^2 H(\theta_n)^{-1}$ we get 
-the standard Newton algorithm. Whether $\rho_n$ is actually a descent direction 
-depends on $B_n$. A sufficient condition is that $B_n$ is a positive 
-definite matrix. 
-
-### Poisson regression 
-
-We reconsider the Poisson regression model, `pois_model`, from Section 
-\@ref(regression), which was also considered in Section \@ref(conjugate-gradients).
-There we used conjugate gradient descent to estimate the 353 parameters. 
-Recall that the `veg_pois_large` list contains all the functions needed to 
-run the Newton algorithm---including the Hessian matrix. 
-
-```{r Newton-test, dependson=c("X-update", "Newton")}
 newton_tracer <- CSwR::tracer(
-  c("value", "gamma", "grad_norm_sq"), 
+  c("value", "gamma", "grad_norm_sq"),
   Delta = 0
 )
 pois_newton <- newton(
-  veg_pois_large$par, 
-  veg_pois_large$H, 
-  veg_pois_large$grad, 
-  veg_pois_large$Hessian, 
+  veg_pois_large$par,
+  veg_pois_large$H,
+  veg_pois_large$grad,
+  veg_pois_large$Hessian,
   cb = newton_tracer$tracer
 )
 ```
 
-We compare the resulting parameter estimates to those in `pois_model`, 
-computed using `glm.fit()`.
+We compare the resulting parameter estimates to those in `pois_model`, computed
+using `glm.fit()`.
 
-```{r Newton-comp, dependson=c("Newton-test", "pois-model")}
+```{r, dependson=c("Newton-test", "pois-model")}
+#| label: Newton-comp
+
 range(pois_newton - coefficients(pois_model))
 ```
 
-The differences between all parameters are very small. We can also compare the 
-corresponding values of the objective function, and we include in this comparison
-the value found using conjugate gradient.
+The differences are very small. The corresponding values of the negative
+log-likelihood agree to high precision as well:
 
-```{r Newton-object, dependson=c("X-update", "Newton-test", "pois-model"), echo=2}
+```{r, dependson=c("X-update", "Newton-test", "pois-model"), echo=2}
+#| label: Newton-object
+
 old_options = options(digits = 20)
 rbind(
-  pois_cg = veg_pois_large$H(pois_cg),
   pois_newton = veg_pois_large$H(pois_newton),
   pois_glm = veg_pois_large$H(coefficients(pois_model))
 )
 options(digits = old_options$digits)
 ```
 
-We see that these values are also extremely close with the first 12 digits 
-identical. 
+The trace information from the Newton run shows the algorithm reaching the
+stringent stopping criterion (squared gradient norm below $10^{-10}$) in only 10
+iterations.
 
-We finally study the trace information from running our Newton algorithm.
+```{r, dependson=c("Newton-test")}
+#| label: Newton-tracer-summary
 
-```{r Newton-tracer-summary, dependson=c("Newton-test")}
 summary(newton_tracer)
 ```
 
-We note the relatively few iterations used (10 in this case) to reach the 
-stringent stopping criterion that the squared gradient norm is less than $10^{-10}$. 
-This took less than $2$ seconds. Compare this to the $12$--$15$ seconds it took 
-the conjugate gradient algorithm to reach a similarly accurate value of 
-the minimizer. By inspecting the trace information (not shown) for 
-conjugate gradient it turns out that after the first $1$--$1.5$ second 
-(about 250 iterations) it reached roughly the same accuracy as Newton
-did in its first $7$ iterations. Thereafter, conjugate gradient spend
-the rest of the time improving the accuracy slowly while Newton in just 
-$3$ additional iterations converged to a very accurate minimizer. This 
-is a characteristic behavior of Newton, which has superlinear (in fact, quadratic)
-convergence.
+The whole run takes well under two seconds, and the per-iteration trace reveals
+the two-phase pattern: the first iterations are damped ($\gamma_n < 1$) while
+the iterates approach the basin of attraction; once inside, $\gamma_n = 1$ and
+the squared gradient norm drops by many orders of magnitude per step. This is
+the quadratic-convergence endgame in action.
 
-It is natural to ask if the R function `glm.fit()`, which also uses a Newton 
-algorithm (without backtracking), is faster than our implementation.
+R's built-in `glm.fit()` also uses a Newton iteration (without backtracking) and
+is a natural benchmark.
 
-```{r pois-glm.fit, dependson=c("X-update", "Newton-test")}
+```{r, dependson=c("X-update", "Newton-test")}
+#| label: pois-glm.fit
+
 env_pois <- environment(veg_pois_large$H)
 bench::bench_time(
   glm.fit(env_pois$X, env_pois$y, family = poisson())
 )
 ```
 
-Using `glm.fit()` is about a factor five faster on this example than 
-our Newton algorithm---but we should always be very careful when comparing 
-the runtimes of two different optimization algorithms. In this case they 
-have achieved about the same numerical precision, and by the comparison 
-above of the optimized value of the objective function, 
-the faster `glm.fit()` even obtained the smallest negative
-log-likelihood of the two.
+Using `glm.fit()` is about a factor five faster on this example than our Newton
+algorithm, but we should always be very careful when comparing the runtimes of
+two different optimization algorithms. In this case they have achieved about the
+same numerical precision, and by the comparison above of the optimized value of
+the objective function, the faster `glm.fit()` even obtained the smallest
+negative log-likelihood of the two.
 
-### Quasi-Newton algorithms
+## Quasi-Newton methods
 
-We turn to other descent direction algorithms that are more efficient 
-than gradient descent by choosing the descent direction in a more 
-clever way but less computationally demanding than the Newton 
-algorithm that requires the computation of the full Hessian in each 
-iteration. 
+Newton's method's per-iteration cost, $O(N p^2)$ to assemble the Hessian plus
+$O(p^3)$ for the linear solve, is fine for $p$ in the hundreds, as the Poisson
+regression example just demonstrated, but punitive for larger problems.
+*Quasi-Newton* methods keep the Newton update form
 
-We will only consider the application of the BFGS algorithm via the 
-implementation in the R function `optim()`.
+\[
+\rho_n = -B_n \nabla H(\theta_n)
+\]
 
-```{r BFGS, dependson=c("X-update")}
+but replace the inverse Hessian $[\nabla^2 H(\theta_n)]^{-1}$ with a cheaper
+positive-definite surrogate $B_n$ updated incrementally from gradient
+differences across iterations. Any positive-definite $B_n$ makes $\rho_n$ a
+descent direction, since
+$\rho_n^\top \nabla H(\theta_n) = -\nabla H(\theta_n)^\top B_n \nabla H(\theta_n) < 0$.
+
+The dominant quasi-Newton algorithm in practice is *BFGS*\index{BFGS}
+(Broyden--Fletcher--Goldfarb--Shanno), which maintains a rank-two update to
+$B_n$ satisfying a *secant condition*: $B_n$ maps the most recent gradient
+difference to the corresponding parameter difference, matching the true Hessian
+inverse along that direction. The update costs $O(p^2)$ per iteration without
+ever forming the Hessian. *L-BFGS*\index{L-BFGS} stores only the last few
+gradient and parameter differences, typically between five and twenty, and
+reconstructs $B_n$ on the fly. Its memory footprint is linear in $p$, and it is
+the de facto standard for problems with $p$ in the thousands or millions. We
+will not derive the BFGS update; @Nocedal:2006 has the details. R's `optim()`
+provides BFGS as one of its methods:
+
+```{r, dependson=c("X-update")}
+#| label: BFGS
+
 bench::bench_time(
   pois_bfgs <- optim(
-    veg_pois_large$par, 
-    veg_pois_large$H, 
-    veg_pois_large$grad, 
-    method = "BFGS", 
+    veg_pois_large$par,
+    veg_pois_large$H,
+    veg_pois_large$grad,
+    method = "BFGS",
     control = list(maxit = 10000)
   )
 )
 ```
 
-```{r BFGS-results, dependson="BFGS"}
+```{r, dependson=c("BFGS", "pois-model")}
+#| label: BFGS-results
+
 range(pois_bfgs$par - coefficients(pois_model))
 pois_bfgs[c("value", "counts")]
 ```
 
+BFGS reaches an estimate matching `pois_model` to high precision in seconds,
+without ever computing $\nabla^2 H$ explicitly. This is the default
+recommendation for general-purpose maximum-likelihood estimation in R when the
+gradient is available; both `optim()` and `nlminb()` use a quasi-Newton method
+underneath.
+
+### Nonlinear conjugate gradient
+
+A historical predecessor to BFGS, the *nonlinear conjugate
+gradient*\index{conjugate gradient} algorithm uses only gradient information but
+couples each step to the previous descent direction so as to escape the zig-zag
+pattern that slows plain gradient descent on ill-conditioned problems. In the
+Fletcher-- Reeves version the descent direction is
+
+\[
+\rho_n = -\nabla H(\theta_n) + \frac{\|\nabla H(\theta_n)\|_2^2}{\|\nabla H(\theta_{n-1})\|_2^2} \rho_{n-1},
+\]
+
+initialized at $\rho_0 = -\nabla H(\theta_0)$; the Polak--Ribière and
+Hestenes--Stiefel variants differ in the prefactor of $\rho_{n-1}$. Conjugate
+gradient uses only $O(p)$ memory and avoids matrix storage altogether, but needs
+many more iterations than BFGS to reach a given accuracy and is rarely the
+default choice today. R's `optim()` exposes the algorithm via `method = "CG"`:
+
+```{r, dependson=c("X-update")}
+#| label: cg-test
+
+bench::bench_time(
+  pois_cg <- optim(
+    veg_pois_large$par,
+    veg_pois_large$H,
+    veg_pois_large$grad,
+    method = "CG",
+    control = list(maxit = 10000)
+  )$par
+)
+```
+
+```{r, dependson="cg-test"}
+#| label: cg-objective
+
+veg_pois_large$H(pois_cg)
+```
+
+The CG run reaches the same minimizer as BFGS but spends substantially more
+wall-clock time on this problem. This is one reason BFGS, or L-BFGS for larger
+problems, is the better first choice.
+
+## Constrained optimization {#pep-moth-descent}
+
+Every algorithm in this chapter so far has assumed the parameter space is all of
+$\mathbb{R}^p$, but many statistical models are not so accommodating. The
+peppered-moth maximum-likelihood problem of Section\ \@ref(pep-moth) is
+\index{peppered moth!barrier method}\index{barrier method} inherently
+constrained: the allele frequencies $(p_C, p_I)$ must lie in the triangle
+$\{p_C \geq 0,\, p_I \geq 0,\, p_C + p_I \leq 1\}$. The implementation in
+Section\ \@ref(pep-moth) handled this by returning $+\infty$ at infeasible
+parameters, and Nelder--Mead's derivative-free search handles that gracefully,
+but the descent methods of Sections\ \@ref(grad-descent) and do not. A gradient
+step does not respect inequality constraints; a backtracking line search treats
+an infinite boundary as an arbitrarily steep wall but cannot see around it; and
+the gradient itself is undefined at $+\infty$. The right algorithm for the
+constrained problem is instead the *barrier method*, which is what we devote the
+sequel of this section to.
+
+Write the constrained problem in the standard form used by
+Theorem\ \@ref(thm:kkt):
+
+\[
+\operatorname*{minimize}_\theta H(\theta) \quad \text{subject to} \quad
+g_i(\theta) \leq 0, \quad i = 1, \ldots, r,
+\]
+
+with $H$ and the $g_i$ convex and differentiable. For peppered moths
+$\theta = (p_C, p_I)$, $H(\theta) = -\ell(\theta)$, and the three inequalities
+are
+
+\[
+g_1(\theta) = -p_C, \quad g_2(\theta) = -p_I, \quad g_3(\theta) = p_C + p_I - 1.
+\]
+
+The KKT conditions characterize the minimizer through stationarity, primal
+feasibility, and complementary slackness, but they presume one already *knows*
+which constraints are active at $\theta^\star$. A numerical algorithm cannot
+start from that knowledge; it has to discover the active set as it goes.
+
+The barrier method softens the hard inequalities into a smooth penalty that
+diverges at the boundary. The standard choice is the *logarithmic barrier*
+
+\begin{equation}
+\phi(\theta) = -\sum_{i=1}^r \log(-g_i(\theta)),
+(\#eq:log-barrier)
+\end{equation}
+
+defined on the strict interior
+$\{\theta : g_i(\theta) < 0,\ i = 1, \ldots, r\}$. For peppered moths,
+$\phi(\theta) = -\log p_C - \log p_I - \log(1 - p_C - p_I)$. Each term diverges
+as the corresponding constraint becomes tight, so $\phi$ acts as a one-sided
+wall pushing iterates away from the boundary. For each $t > 0$ consider the
+unconstrained *centering problem*
+
+\begin{equation}
+\operatorname*{minimize}_\theta \, t H(\theta) + \phi(\theta).
+(\#eq:centering)
+\end{equation}
+
+When $H$ is convex the centering objective is strictly convex on the interior,
+and its minimizer $\theta^\star(t)$, when it exists, lies strictly inside the
+feasible set. As $t$ grows the barrier matters less, iterates are allowed closer
+to the boundary, and $\theta^\star(t)$ approaches the constrained optimum
+$\theta^\star$. The map $t \mapsto \theta^\star(t)$ is the *central
+path*\index{central path}, and the gap between objective values along it admits
+a clean bound.
+
+::: {.theorem #barrier-suboptimality name="Barrier-method suboptimality"}
+Let $H$ and the $g_i$ be convex and differentiable, suppose the feasible set has
+nonempty interior, and suppose the constrained problem has a minimizer
+$\theta^\star$. For each $t > 0$ the centering problem \@ref(eq:centering) has a
+minimizer $\theta^\star(t)$, and
+
+\[
+H(\theta^\star(t)) - H(\theta^\star) \leq r / t.
+\]
+:::
+
+The proof, which we omith here, constructs an explicit dual-feasible point from
+$\theta^\star(t)$ via the KKT conditions for the centering problem and
+constructs the duality gap as $r/t$ (see @Boyd:2004, Section\ 11.2.2). The bound
+is essentially tight, so $r/t$ is the right tolerance to target: each
+multiplicative bump in $t$ shaves the suboptimality by the same factor, and
+reaching gap $\epsilon$ requires only $t \geq r / \epsilon$.
+
+The algorithm follows from the bound. Start from a strictly feasible
+$\theta^{(0)}$ and a modest $t_0 > 0$; minimize the centering problem to find
+$\theta^{(1)} = \theta^\star(t_0)$; multiply $t$ by some $\mu > 1$; re-minimize
+starting from $\theta^{(1)}$; iterate until $r / t < \epsilon$. Each inner
+subproblem is unconstrained and (for convex $H$) convex, so the descent
+algorithms of Sections\ \@ref(grad-descent)--\@ref(Newton) handle it. Warm
+starting from the previous central-path iterate keeps the inner solves cheap
+because consecutive points on the central path are close. Typical choices are
+$\mu \in [10, 100]$ with BFGS or damped Newton for the inner solve; @Boyd:2004
+(Section\ 11.3) discusses the tradeoff between aggressive $\mu$ (few outer
+iterations, each expensive) and gentle $\mu$ (many outer iterations, each
+cheap).
+
+Figure\ \@ref(fig:pep-central-path) plots the centering objective for the
+peppered-moth problem at four values of $t$. When $t$ is small the barrier
+dominates and the minimizer sits near the analytic center of the simplex; as $t$
+grows the iterate slides along the central path toward the maximum-likelihood
+estimate. Here the constrained optimum lies in the *interior* of the
+simplex---no constraint is active at $\theta^\star$---but the MLE is close
+enough to the $p_C = 0$ and $p_I = 0$ edges that the barrier visibly bends the
+contours away from them.
+
+```{r}
+#| label: pep-central-path
+#| echo: false
+#| warning: false
+#| fig-cap: "Contours of the centering objective $t H(\\theta) + \\phi(\\theta)$ for the peppered-moth problem at four values of $t$ (contour levels normalized within each panel). The dashed lines mark the simplex boundary, the white circle marks the constrained optimum $\\theta^\\star$, and the orange cross marks the minimizer of the centering problem at that $t$. As $t$ grows, the cross traces the central path from the analytic center of the simplex toward $\\theta^\\star$."
+#| fig-width: 6
+#| fig-height: 6.2
+
+ny_fig <- c(85, 196, 341)
+H_fig <- function(p) {
+  pT <- 1 - p[1] - p[2]
+  pD <- p[1]^2 + 2 * p[1] * p[2] + 2 * p[1] * pT
+  pM <- p[2]^2 + 2 * p[2] * pT
+  pL <- pT^2
+  -(ny_fig[1] * log(pD) + ny_fig[2] * log(pM) + ny_fig[3] * log(pL))
+}
+phi_fig <- function(p) -log(p[1]) - log(p[2]) - log(1 - p[1] - p[2])
+
+p1_grid <- seq(0.005, 0.995, length.out = 161)
+p2_grid <- seq(0.005, 0.995, length.out = 161)
+grid_df <- expand.grid(p1 = p1_grid, p2 = p2_grid)
+grid_df$pT <- 1 - grid_df$p1 - grid_df$p2
+grid_df <- subset(grid_df, pT > 0.001)
+grid_df$H <- -(ny_fig[1] *
+  log(
+    grid_df$p1^2 + 2 * grid_df$p1 * grid_df$p2 + 2 * grid_df$p1 * grid_df$pT
+  ) +
+  ny_fig[2] * log(grid_df$p2^2 + 2 * grid_df$p2 * grid_df$pT) +
+  ny_fig[3] * log(grid_df$pT^2))
+grid_df$phi <- -log(grid_df$p1) - log(grid_df$p2) - log(grid_df$pT)
+
+ts <- c(1e-4, 1e-3, 1e-2, 1)
+t_label <- function(t) paste0("t == ", formatC(t, format = "g", digits = 2))
+
+contour_df <- do.call(
+  rbind,
+  lapply(ts, function(t) {
+    z <- t * grid_df$H + grid_df$phi
+    data.frame(
+      p1 = grid_df$p1,
+      p2 = grid_df$p2,
+      z = (z - min(z)) / (max(z) - min(z)),
+      t = t
+    )
+  })
+)
+centering_df <- do.call(
+  rbind,
+  lapply(ts, function(t) {
+    star <- optim(
+      c(0.3, 0.3),
+      function(p) t * H_fig(p) + phi_fig(p),
+      method = "BFGS"
+    )$par
+    data.frame(p1 = star[1], p2 = star[2], t = t)
+  })
+)
+opt <- optim(c(0.3, 0.3), H_fig, method = "BFGS")$par
+opt_df <- data.frame(p1 = opt[1], p2 = opt[2], t = ts)
+
+contour_df$panel <- factor(t_label(contour_df$t), levels = t_label(ts))
+centering_df$panel <- factor(t_label(centering_df$t), levels = t_label(ts))
+opt_df$panel <- factor(t_label(opt_df$t), levels = t_label(ts))
+
+simplex_df <- data.frame(
+  x = c(0, 1, 0),
+  y = c(0, 0, 1),
+  xend = c(1, 0, 0),
+  yend = c(0, 1, 0)
+)
+
+ggplot() +
+  geom_contour(
+    data = contour_df,
+    aes(p1, p2, z = z, color = after_stat(level)),
+    breaks = seq(0, 0.4, length.out = 22),
+    linewidth = 0.3
+  ) +
+  geom_segment(
+    data = simplex_df,
+    aes(x = x, y = y, xend = xend, yend = yend),
+    linetype = "dashed",
+    color = "grey40"
+  ) +
+  geom_point(
+    data = opt_df,
+    aes(p1, p2),
+    shape = 21,
+    fill = "white",
+    color = "black",
+    size = 2.4,
+    stroke = 0.6
+  ) +
+  geom_point(
+    data = centering_df,
+    aes(p1, p2),
+    shape = 4,
+    color = "darkorange",
+    size = 2.8,
+    stroke = 1.3
+  ) +
+  facet_wrap(~panel, labeller = label_parsed) +
+  scale_color_viridis_c(guide = "none") +
+  coord_fixed(xlim = c(0, 1), ylim = c(0, 1), expand = FALSE) +
+  labs(x = expression(p[C]), y = expression(p[I])) +
+  theme_minimal()
+```
+
+For the peppered moths we re-implement the negative log-likelihood as a function
+of the allele frequencies, dropping the boundary check from
+Section\ \@ref(pep-moth) because the barrier will keep iterates in the interior:
+
+```{r}
+#| label: pep-neg-loglik
+
+neg_loglik_pep <- function(p, ny) {
+  p_T <- 1 - p[1] - p[2]
+  p_dark <- p[1]^2 + 2 * p[1] * p[2] + 2 * p[1] * p_T
+  p_mott <- p[2]^2 + 2 * p[2] * p_T
+  p_light <- p_T^2
+  -(ny[1] * log(p_dark) + ny[2] * log(p_mott) + ny[3] * log(p_light))
+}
+```
+
+The log-barrier is similarly direct:
+
+```{r}
+#| label: pep-barrier
+
+phi_pep <- function(p) {
+  -log(p[1]) - log(p[2]) - log(1 - p[1] - p[2])
+}
+```
+
+A straightforward implementation of the outer loop uses BFGS for each inner
+solve via `optim()`:
+
+```{r, dependson=c("pep-neg-loglik", "pep-barrier")}
+#| label: pep-barrier-loop
+#| warning: false
+
+ny <- c(85, 196, 341)
+r <- 3
+mu <- 10
+t <- 1
+theta <- c(0.3, 0.3)
+
+repeat {
+  centering <- function(p) t * neg_loglik_pep(p, ny) + phi_pep(p)
+  theta <- optim(theta, centering, method = "BFGS")$par
+
+  if (r / t < 1e-8) {
+    break
+  }
+
+  t <- mu * t
+}
+theta
+```
+
+R's `constrOptim()` packages this loop with an adaptive $\mu$ and its own
+stopping rule. It expects affine inequality constraints in the form
+$A\theta \succeq b$, supplied as a matrix `ui` and a vector `ci` with
+`ui %*% theta >= ci`. Rewriting $g_1, g_2, g_3 \leq 0$ in that form gives
+
+\[
+A = \begin{pmatrix} 1 & 0 \\ 0 & 1 \\ -1 & -1 \end{pmatrix},
+\quad b = \begin{pmatrix} \phantom{-}0 \\ \phantom{-}0 \\ -1 \end{pmatrix},
+\]
+
+so the same problem reduces to one call:
+
+```{r, dependson="pep-neg-loglik"}
+#| label: pep-constropt
+#| warning: false
+
+A <- rbind(c(1, 0), c(0, 1), c(-1, -1))
+b <- c(0, 0, -1)
+
+constrOptim(
+  c(0.3, 0.3),
+  neg_loglik_pep,
+  NULL,
+  ui = A,
+  ci = b,
+  ny = c(85, 196, 341)
+)$par
+```
+
+Both runs return the maximum-likelihood estimate found by Nelder--Mead in
+Section\ \@ref(pep-moth). The algorithms differ; the optimum does not.
+
+This example also illustrates the second strategy outlined in
+Section\ \@ref(constraints): keep the constraints and solve a sequence of smooth
+unconstrained problems. The first strategy, reparametrizing through the softmax
+to lift the simplex to all of $\mathbb{R}^K$, would also work here but it
+destroys convexity of the multinomial log-likelihood and forfeits the KKT-based
+suboptimality bound. A third approach: The EM algorithm (covered in
+Chapter\ \@ref(em)), exploits the latent-genotype structure specific to the
+peppered moths to sidestep the constraint problem entirely.
+
+## Algorithms in practice
+
+The previous sections introduced five algorithms: gradient descent, Newton's
+method, BFGS, nonlinear conjugate gradient, and the barrier method. We provided
+implementations in R that we one could inspect and modify. In an actual data
+analysis, R features a set of classical, well-tested algorithms through
+`optim()`, `constrOptim()`, and a handful other specialized interfaces, and
+these functions serve most basic use cases. This short section tries to link the
+algorithms to those interfaces, raises two common pitfalls, and revisits the
+Poisson-regression example to show what knowing the structure of the problem can
+sometimes gain us in terms of numerical performance.
+
+`optim()` is R's workhorse for general-purpose unconstrained minimization. Its
+`method` argument exposes Nelder--Mead (the default, derivative-free), `"BFGS"`,
+`"L-BFGS-B"` (box-constrained quasi-Newton), `"CG"` (Polak--Ribière conjugate
+gradient), and `"SANN"` (simulated annealing, not covered here). If you are able
+to supply a function to compute the gradient through `gr`, then you should
+typically opt for L-BFGS-B, which is a good off-the-shelf choice that also
+allows box constraints to be supplied through `lower` and `upper`. `nlminb()`
+and `nlm()` are alternatives that calls quasi-Newton routines and are sometimes
+faster on expensive objectives. For linear inequality constraints in the form
+$A\teta \succeq b$, we can use `constrOptim()`, which wraps `optim()` with the
+barrier method of Section\ \@ref(pep-moth-descent). If you are interested in an
+extensive guide to the optimization infrastructure R and other CRAN packages
+have to offer, we recommend @Nash:2014 and the [CRAN task view of optimization
+and mathematical programming](https://cran.r-project.org/view=Optimization).
+
+For canonical-link generalized linear models, `glm()` and `glm.fit()` implement
+iteratively reweighted least squares, which is exactly Newton's method on the
+negative log-likelihood specialized to the exponential family
+(Section\ \@ref(parametrization)). Bypassing `glm()` to call `optim()` directly
+is rarely worth it: the specialized implementation is both faster and more
+convenient to work with. The Poisson-regression code from
+Sections\ \@ref(grad-descent) and \@ref(Newton) was written by hand precisely to
+expose the descent algorithms. In practice, fitting the model comes down to a
+single line via `glm(..., family = "poisson")`.
+
+Here, we want to raise two common pitfalls. First, numerical gradients via
+finite differences are subject to a tradeoff between truncation and roundoff
+error. They work well in well-behaved regions of the optimization surface,but
+can stall a quasi-Newton method near an optimum. Supplying an analytic gradient
+is almost always worth the effort, both for speed and stability. Second, the
+default convergence tolerances assume $H \sim O(1)$---if the objective is far
+away from unity, the `parscale` and `fnscale` entries of `optim()`'s `control`
+argument may help by rescaling the parameters and the objective to a more
+typical range.
+
 ### Sparsity
 
-One of the benefits of the implementations of $H$ and its derivatives
-as well as of the descent algorithms is that they can exploit sparsity
-of $\mathbf{X}$ almost for free. The implementations have not done that in 
-previous computations, because $\mathbf{X}$ has been stored as a dense matrix. In 
-reality, $\mathbf{X}$ is a very sparse matrix (the vast majority of the matrix 
-entries are zero), 
-and if we convert it into a sparse matrix, all the matrix-vector products 
-will be more runtime efficient. Sparse matrices are implemented in the 
-R package Matrix. 
+The custom implementations of $H$ and its derivatives, like the descent
+algorithms that consume them, treat $\mathbf{X}$ as an abstract matrix and
+exploit sparsity essentially for free. The Poisson-regression implementations
+above used a dense $\mathbf{X}$ only because that is what `model.matrix()`
+faster. The Matrix package supplies the sparse class:
 
-```{r Matrix, cache=FALSE}
+```{r}
+#| label: Matrix
+#| cache: false
+
 library(Matrix)
 ```
 
-```{r sparse, dependson=c("pois-glm.fit", "X-update")}
+```{r, dependson=c("pois-glm.fit", "X-update")}
+#| label: sparse
+
 env_pois$X <- Matrix(env_pois$X)
 class(env_pois$X)
 ```
 
-Without changing any other code, we get an immediate 
-runtime improvement using, e.g., `optim()` and the BFGS algorithm.
+Without any other change, BFGS via `optim()` runs faster:
 
-```{r BFGS-sparse, dependson=c("X-update", "sparse")}
+```{r, dependson=c("X-update", "sparse")}
+#| label: BFGS-sparse
+
 bench::bench_time(
   pois_bfgs_sparse <- optim(
-    veg_pois_large$par, 
-    veg_pois_large$H, 
-    veg_pois_large$grad, 
-    method = "BFGS", 
+    veg_pois_large$par,
+    veg_pois_large$H,
+    veg_pois_large$grad,
+    method = "BFGS",
     control = list(maxit = 10000)
   )
 )
 ```
 
-We should in real applications avoid constructing a dense intermediate 
-model matrix as a step toward constructing a sparse model matrix. This 
-is possible by constructing the sparse model matrix directly using 
-a function from the R package MatrixModels. Ideally, we should reimplement
-`pois_model()` to support an option for using sparse matrices, but 
-to focus on the runtime benefits of sparse matrices, we simply 
-change the matrix in the appropriate environment directly.
+For real applications one should avoid constructing the dense matrix in the
+first place. `MatrixModels::model.Matrix()` builds a sparse model matrix
+directly from a formula:
 
-```{r sparse-model-matrix, dependson=c("pois-glm.fit"), echo=-1}
+```{r, dependson=c("pois-glm.fit"), echo=-1}
+#| label: sparse-model-matrix
+
 library(MatrixModels)
 env_pois$X <- MatrixModels::model.Matrix(
   ~ store + log(normalSale) - 1,
@@ -1665,7 +1971,11 @@ env_pois$X <- MatrixModels::model.Matrix(
 class(env_pois$X)
 ```
 
-```{r time-model.matrix, echo=FALSE, eval=FALSE}
+```{r}
+#| label: time-model.matrix
+#| echo: false
+#| eval: false
+
 library(MatrixModels)
 bench::mark(
   sparse = X_sparse <- model.Matrix(
@@ -1678,128 +1988,70 @@ bench::mark(
     data = CSwR::vegetables
   ),
   check = FALSE
-) %>%  autoplot()
+) %>%
+  autoplot()
+
 range(as.matrix(X_sparse) - X)
 ```
 
-The Newton implementation benefits enormously from using sparse matrices
-because the bottleneck is the computation of the Hessian. 
+Newton's method benefits the most. The bottleneck of the dense implementation is
+the per-iteration Hessian assembly; with a sparse $\mathbf{X}$, that assembly
+drops by orders of magnitude.
 
-```{r time-sparse-model-matrix, echo=2:4, dependson=c("X-update", "Newton", "sparse-model-matrix")}
-pois_newton <- newton( # Ensures more correct timings, perhaps due to lazy-loading?
+```{r, echo=2:4, dependson=c("X-update", "Newton", "sparse-model-matrix")}
+#| label: time-sparse-model-matrix
+
+pois_newton <- newton(
+  # warm up to avoid lazy-loading overhead in the timing
   veg_pois_large$par,
   veg_pois_large$H,
   veg_pois_large$grad,
   veg_pois_large$Hessian
 )
+
 newton_tracer <- CSwR::tracer(c("value", "h_prime", "gamma"), Delta = 0)
-  pois_newton <- newton(
+
+pois_newton <- newton(
   veg_pois_large$par,
   veg_pois_large$H,
   veg_pois_large$grad,
   veg_pois_large$Hessian,
   cb = newton_tracer$tracer
 )
+
 summary(newton_tracer)
 ```
 
-To summarize the runtimes we have measured for the Poisson regression example, 
-we found that the conjugate gradient algorithms took of the order of 10 seconds 
-to converge. The Newton-type algorithms in this section were faster and took 
-between 0.3 and 1.7 seconds to converge. The use of sparse matrices reduced the 
-runtime of the quasi-Newton algorithm BFGS by a factor 3, but it reduced the 
-runtime of the Newton algorithm by a factor 150 to about 0.009 seconds. One could
-be concerned that the construction of the sparse model matrix takes more time (which
-we did not measure), but if measured it turns out that for this example 
-it takes about the same time to construct the dense model matrix as it takes to 
-construct the sparse one. 
+Pulling the timings together: with a dense $\mathbf{X}$, the conjugate gradient
+algorithm took around 10 seconds on the 353-parameter Poisson problem, BFGS
+roughly 2--3 seconds, and Newton's method between 0.3 and 1.7 seconds. Switching
+to a sparse $\mathbf{X}$ cut BFGS's runtime by a factor of three and Newton's by
+a factor of roughly 150, to about 0.009 seconds. The construction of the sparse
+model matrix is no slower than the dense one. Memory tells a similar story:
 
-Runtime efficiency is not the only argument for using sparse matrices as they are 
-also more memory efficient. It is memory (and time) inefficient to use dense intermediates, 
-and for truly large scale problems impossible. Using sparse model matrices 
-for regression models allows us to work with larger models that have 
-more variables, more factor levels and more observations than if we use dense
-model matrices. For the Poisson regression model the memory used by either representation can be found. 
+```{r, dependson=c("pois-glm.fit", "sparse-model-matrix"), echo=c(2, 4)}
+#| label: X-size
+#| results: "hold"
 
-```{r X-size, dependson=c("pois-glm.fit", "sparse-model-matrix"), echo=c(2, 4), results='hold'}
 cat("Sparse matrix memory usage:\n")
 object.size(env_pois$X)
+
 cat("Dense matrix memory usage:\n")
 object.size(as.matrix(env_pois$X))
 ```
 
-We see that the dense matrix uses around a factor 30 more memory than the 
-sparse representation. In this case it means using around 3 MB for storing the 
-dense matrix instead of around 100 kB, which won't be a problem 
-on a contemporary computer. However, going from using 3 GB for
-storing a matrix to using 100 Mb could be the difference between 
-not being able to work with the matrix on a standard laptop to
-running the computations with no problems. Using `model.Matrix()` makes
-it possible to construct sparse model matrices directly and avoid 
-all dense intermediates. 
+The dense representation uses about thirty times more memory. At the
+353-parameter scale of this example, the absolute difference between 3\ MB and
+100\ kB is unimportant. At the scale where it *would* matter, say going from
+3\ GB to 100\ MB, the choice between dense and sparse can be the difference
+between fitting the model on a laptop and not being able to load the design at
+all.
 
-The function `glm4()` from the MatrixModels package for fitting regression models, 
-can exploit sparse model matrices directly, and can 
-thus be useful in cases where your model matrix becomes very large but sparse. 
-There are two main applications where the model matrix becomes sparse. 
-When you model the response using one or more factors, and possibly their 
-interactions, the model matrix will become particularly sparse if 
-the factors have many levels. Another case is when you model the response 
-via basis expansions of quantitative predictors and use basis functions 
-with local support. The B-splines form an important example of such a basis
-with local support that results in a sparse model matrix.  
-
-
-## Misc.
-
-If $\Phi$ is just *nonexpansive* (the 
-constant $c$ above is one), this is no longer true, but replacing $\Phi$ 
-by $\alpha \Phi + (1 - \alpha) I$ for $\alpha \in (0,1)$ we get 
-Krasnoselskii-Mann iterates of the form 
-
-\[
-  \theta_n = \alpha \Phi(\theta_{n-1}) + (1 - \alpha) \theta_{n-1}
-\]
-
-that will converge to a fixed point of $\Phi$ provided it has one. 
-
-Banach's fixed point theorem implies a convergence that is at least as fast as 
-linear convergence with asymptotic rate $c$. 
-Moreover, if $\Phi$ is just a contraction for $n \geq n_0$ for some $n_0$, 
-then for $n \geq n_0$
-
-\[
-  \|\theta_{n + 1} - \theta_{n}\| \leq c \| \theta_{n} - \theta_{n-1}\|.
-\]
-
-The convergence may be superlinear, but if it is linear, the rate is bounded by $c$.
-To indicate if $\Phi$ is asymptotically a contraction, we can introduce
-
-\[
-  R_n = \frac{\|\theta_{n + 1} - \theta_{n}\|}{\|\theta_{n} - \theta_{n- 1}\|}
-\]
-
-and monitor its behavior as $n \to \infty$. The constant
-
-\[
-  r = \limsup_{n \to \infty} R_n
-\]
-
-is then asymptotically the smallest possible contraction constant. 
-If convergence is sublinear and $R_n \to 1$ the sequence is 
-called logarithmically convergent (by definition), while $r \in (0,1)$ is an 
-indication of linear convergence with rate $r$, and $r = 0$ is an indication of 
-superlinear convergence.
-
-In practice, we can plot the ratio $R_n$ as the algorithm is running, and 
-use $R_n$ as an estimate of the rate $r$ for large $n$. However, 
-this can be a quite unstable method for estimating the rate.
-
-Finally, it is also possible to 
-estimate the order $q$ as well as the rate $r$ by using that 
-$$\log \|\theta_{n} - \theta_{N}\| \approx q \log \|\theta_{n-1} - \theta_{N}\| + \log(r)$$
-for $n \geq n_0$. We can estimate $q$ and $\log(r)$
-by fitting a linear function by least squares to these log-log transformed norms 
-of errors. 
-
-Iteration, fixed points, convergence criteria. Ref to [Nonlinear Parameter Optimization Using R Tools](http://onlinelibrary.wiley.com/book/10.1002/9781118884003).
+The `glm4()` function in MatrixModels accepts sparse model matrices directly and
+is the recommended choice when the design is large and sparse. Two common
+situations produce sparsity: high-cardinality factor predictors, especially
+their interactions, and basis expansions of quantitative predictors using
+locally supported bases such as B-splines. In either case, switching to a sparse
+model matrix is essentially free at the modeling level and pays substantial
+dividends in compute and memory for the algorithms developed in this chapter.
+dividends in compute and memory for the algorithms developed in this chapter.

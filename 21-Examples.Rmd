@@ -1,422 +1,1670 @@
 ---
 output: html_document
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
-# Likelihood and optimization
+# Optimization and statistical estimation
 
-This chapter introduces likelihood functions for parametrized statistical models
-and treats in some detail a collection of examples. For all parametric models, a
-central computational challenge is to fit the models to data via (penalized)
-likelihood maximization. Details about actual optimization algorithms and
-implementations are the topics of Chapters \@ref(numopt), \@ref(em) and
-\@ref(stochopt). The focus of this chapter is on the structure of the
-statistical models themselves to provide the necessary background for the later
-chapters.
+Many of the computational problems addressed in this book can be framed as an
+*optimization problem*: given a function $H$, find the parameter $\theta$ that
+minimizes (or maximizes) it. The function might be the negative log-likelihood
+of a parametric statistical model, the residual sum of squares of a regression
+fit, the empirical risk of a classifier, or something more exotic. The parameter
+might be a single number or a vector with thousands of entries. The structure of
+the function, whether it is smooth, whether it is convex, and whether the input
+is constrained, determines both how hard the problem is and which algorithm we
+should reach for.
 
-Statistical models come in many varieties. Mathematically, a statistical model
-is defined as a parametrized family of probability distributions. To say
-anything of interest, though, we need more structure on the model, such as
-structure on the parameter space, properties of the parametrized distributions,
-and properties of the mapping from the parameter space to the distributions. 
-Any specific model will have a lot of structure but often also an overwhelming
-amount of irrelevant details that will be more distracting than clarifying. The
-intention with this chapter, and the examples treated, is to illustrate
-how some quite different statistical models share important structures, 
-while we avoid getting lost in abstractions.
+This chapter develops the fundamentals of optimization. We introduce a *standard
+form* that makes it easier to classify and reason about optimization problems;
+define convexity and optimality conditions; develop the smoothness vocabulary we
+need to talk about algorithm convergence; and end with constraints. We use
+statistical estimation, primarily maximum likelihood, as running examples.
+Chapter\ \@ref(numopt) introduces the algorithms that solve the problems we set
+up here. Chapter\ \@ref(em) covers the EM algorithm for likelihood maximization
+with incomplete data, and Chapter\ \@ref(stochopt) covers stochastic
+optimization for the settings where the number of observations is too large to
+process them all at once.
 
-In the first section we introduce the key idea of a parametrized 
-statistical model and give some simple examples. We give the definition
-of the (log-)likelihood function and touch on the phenomenon that 
-computationally important properties of the log-likelihood function 
-may depend on the chosen parametrization. In the subsequent sections 
-we cover multinomial models, regression models, mixture models and random 
-effects models as four main examples.
+## What is an optimization problem? {#opt-problem}
 
-## Parametrized models and the likelihood
-
-In all our examples we will consider a parameter space $\Theta \subseteq \mathbb{R}^p$
-and a parametrized family of probability distributions on a common sample space 
-denoted $\mathcal{Y}$. The 
-distribution corresponding to $\theta \in \Theta$ is assumed to have a 
-density $f_{\theta}$ (w.r.t. a $\theta$-independent reference measure).
-
-In many applications, the sample space is a product space
+An optimization problem in *standard form* is
 
 \[
-  \mathcal{Y} = \mathcal{Y}_1 \times \ldots \times \mathcal{Y}_N
+\begin{aligned}
+& \operatorname*{minimize}_{\theta \in \mathbb{R}^p} && H(\theta) \\
+& \text{subject to} && g_i(\theta) \leq 0, \quad i = 1, \ldots, r, \\
+& && h_j(\theta) = 0, \quad j = 1, \ldots, s.
+\end{aligned}
 \]
 
-corresponding to observations $y_1 \in \mathcal{Y}_1, \ldots, y_N \in \mathcal{Y}_N$.
-We will in this case be  interested in modeling the observations 
-as independent but not necessarily identically distributed. Thus the joint 
-density is a product 
+The function $H : \mathbb{R}^p \to \mathbb{R}$ is the *objective function*.
+$g_i$ and $h_j$ define the $r$ inequality and $s$ equality constraints,
+respectively. We say that a point $\theta \in \mathbb{R}^p$ is *feasible* if it
+satisfies all of the constraints, and the set of feasible points is the
+*feasible set* $C$. The *optimal value* of the problem is
 
 \[
-  f_{\theta}(y_1, \ldots, y_N) = \prod_{i=1}^N f_{i,\theta}(y_i). \
+H^\star = \inf \{ H(\theta) : \theta \in C \},
 \]
 
-Note that the density, $f_{i,\theta}$, is a density for a probability 
-distribution on $\mathcal{Y}_i$, and that all these densities are parametrized 
-by the same parameter $\theta \in \Theta$, but due to the $i$-index they 
-may differ. If all the densities are equal, data is modeled as 
-independent *and* identically distributed (i.i.d.).
+and any feasible point that achieves this value is an *optimal point* or
+*minimizer*, which we denote by \index{argmin}
 
-The likelihood function is, for fixed data $y = (y_1, \ldots, y_N)$, the function 
-\index{likelihood function}
+\[
+\theta^\star \in \argmin_{\theta \in C} H(\theta),
+\]
+
+with the understanding that $\argmin$ is in general a *set*---there may be no
+minimizer, exactly one, or infinitely many, even when the optimal value
+$H^\star$ is uniquely defined. We write $\theta^\star$ for the abstract
+minimizer and reserve $\hat{\theta}$ for *estimators*, in keeping with
+statistical convention. The two refer to the same object whenever the
+optimization problem is parameter estimation, and we use whichever fits the
+context at hand.
+
+Maximization fits into the same framework, since maximizing $H$ is equivalent to
+minimizing $-H$, but we will typically prefer to phrase everything in terms of
+minimization to keep notation consistent with the optimization literature. When
+$r = s = 0$ the problem is *unconstrained*, which is the setting for most of
+this chapter as well as the algorithms of Chapter\ \@ref(numopt). We return to
+constraints in Section\ \@ref(constraints).
+
+Throughout the text, we will keep two running threads. The first is *maximum
+likelihood estimation*\ (MLE): given a parametric statistical model with density
+$f_\theta$ and observations $y_1, \ldots, y_N$, find the parameter
+$\hat{\theta}$ that makes the data most probable. We will see in the next
+section that this is the optimization problem
+
+\[
+\operatorname*{minimize}_{\theta \in \Theta} \left(-\ell(\theta) = -\sum_{i=1}^{N} \log f_\theta(y_i) \right).
+\]
+
+The second is *ordinary least squares*\ (OLS): given a response vector
+$\mathbf{y} \in \mathbb{R}^N$ and a model matrix
+$\mathbf{X} \in \mathbb{R}^{N \times p}$, find the coefficient vector $\beta$
+that minimizes the residual sum of squares,
+
+\[
+\operatorname*{minimize}_{\beta \in \mathbb{R}^p} \frac{1}{2}\; \|\mathbf{y} - \mathbf{X} \beta\|_2^2.
+\]
+
+OLS turns out to be a maximum-likelihood problem in disguise. It is the MLE for
+$\beta$ when $\mathbf{y}$ is Gaussian with mean $\mathbf{X} \beta$. But it is
+useful to hold the two examples apart: OLS features a simple quadratic objective
+whose landscape we can visualize and whose properties (convex, smooth, and
+unconstrained when $p < N$ and $\mathbf{X}$ has full column rank) make it easy
+and forgiving to work with. Maximum likelihood is the umbrella framework that
+encompasses a large group of statistical estimation problems, and the properties
+of the negative log-likelihood can vary widely across models and
+parametrizations. The Poisson and von Mises examples of the next section
+illustrate this variety.
+
+## Statistical estimation as optimization {#mle-as-opt}
+
+We consider a parametrized family of probability distributions on a sample space
+$\mathcal{Y}$, with the distribution corresponding to
+$\theta \in \Theta \subseteq \mathbb{R}^p$ having density $f_\theta$ with
+respect to a $\theta$-independent reference measure. In most applications the
+sample space is a product space
+
+\[
+\mathcal{Y} = \mathcal{Y}_1 \times \ldots \times \mathcal{Y}_N
+\]
+
+corresponding to observations $y_1, \ldots, y_N$ that we model as independent.
+The joint density then factors into
+
+\[
+f_\theta(y_1, \ldots, y_N) = \prod_{i=1}^N f_{i,\theta}(y_i),
+\]
+
+although the individual densities $f_{i,\theta}$ may differ, for instance when
+each observation has its own predictor in a regression model. When all of the
+marginals are equal the observations are independent and identically
+distributed.
+
+The *likelihood function* for fixed data $y = (y_1, \ldots, y_N)$ is the joint
+density formulated as a function of the parameter, \index{likelihood function}
 
 \[
 \mathcal{L}(\theta) = \prod_{i=1}^N f_{i,\theta}(y_i),
 \]
 
-as a function of the parameter $\theta$. The log-likelihood function is 
-\index{log-likelihood function}
+and the *log-likelihood* is its logarithm, \index{log-likelihood function}
 
 \[
-\ell(\theta) = \log (\mathcal{L}(\theta)) = \sum_{i=1}^N \log(f_{i,\theta}(y_i)),
+\ell(\theta) = \log \mathcal{L}(\theta) = \sum_{i=1}^N \log f_{i,\theta}(y_i).
 \]
 
-and the negative log-likelihood function is $-\ell$. In practice, we will 
-minimize the negative log-likelihood function over 
-the parameter space to find the model within the parametrized 
-family of distributions that best fits the data. The resulting parameter 
-estimate is known as the maximum-likelihood estimate. \index{maximum-likelihood!estimate}
-
-
-::: {.example .boxed #poisson-exponential}
-Poisson distributions with sample space $\mathcal{Y} = \mathbb{N}_0 = \{0, 1, 2, \ldots \}$ 
-are used to model non-negative integer counts. The Poisson distributions
-are parametrized by the mean parameter $\mu > 0$, and the density is given 
-by the point probabilities 
+The *maximum-likelihood estimate* is any $\hat{\theta}$ that maximizes
+$\mathcal{L}$ over $\Theta$. Equivalently, $\hat{\theta}$ minimizes the
+*negative log-likelihood* $-\ell$: \index{maximum-likelihood!estimate}
 
 \[
-f_{\mu}(y)= e^{-\mu} \frac{\mu^y}{y!}.
+\hat{\theta} \in \argmin_{\theta \in \Theta} \, -\ell(\theta).
 \]
 
-The parameter space is thus $\Theta = (0, \infty)$. 
+The jump from $\mathcal{L}$ to $-\ell$ is a matter of convenience that does not
+change the optimum, but it has three practical benefits. First, the logarithm
+turns the product into a sum, which avoids the floating-point overflow and
+underflow that would plague the product for large $N$. Second, the sum form
+differentiates more cleanly than the product, since the derivative of a sum is
+the sum of derivatives. Third, many densities of interest have a $\log f_\theta$
+that is simpler than $f_\theta$ itself; the Poisson and Gaussian densities are
+canonical examples, and we will encounter additional such. The choice to
+*minimize* $-\ell$ rather than maximize $\ell$ aligns maximum-likelihood
+estimation with the standard form of Section\ \@ref(opt-problem), and with the
+optimization literature more broadly.
 
-With i.i.d. observations $y_1, \ldots, y_N$ the negative log-likelihood is 
-given by 
+For most of this chapter and the next, we will use negative log-likelihoods as
+running examples of optimization. The two cases that follow illustrate the range
+of difficulty an MLE problem can present. The first has a closed-form solution
+and serves as a sanity check that we can recover a familiar estimator. The
+second has no closed-form solution and motivates the algorithms we will
+introduce in Chapter \@ref(numopt).
+
+::: {.example .boxed #poisson-mle}
+The Poisson distributions are used to model non-negative integer counts and have
+sample space $\mathcal{Y} = \mathbb{N}_0 = \{0, 1, 2, \ldots\}$. They are
+parametrized by the mean parameter $\mu > 0$, with density (with respect to
+counting measure)
 
 \[
-- \ell(\mu) = \sum_{i=1}^N \left( \mu - y_i \log(\mu) + \log(y!) \right) = 
-  N \mu - \log(\mu) \sum_{i=1}^N y_i + N \log(y!).
+f_\mu(y) = e^{-\mu} \frac{\mu^y}{y!}.
 \]
 
-For this model we can find an analytic expression for the maximum-likelihood 
-estimate. By differentiating twice we see that 
-
-\begin{align*}
-- \ell'(\mu) & =  N - \frac{1}{\mu} \sum_{i=1}^N y_i \\
-- \ell''(\mu) & = \frac{1}{\mu^2} \sum_{i=1}^N y_i \geq 0
-\end{align*}
-
-Since the second derivative is non-negative, the negative log-likelihood is 
-convex, and a solution to $- \ell'(\mu) = 0$ will be a global minimizer. We 
-see that if $\sum_{i=1}^N y_i > 0$, the unique solution to this equation is 
+The parameter space is $\Theta = (0, \infty)$. With i.i.d. observations
+$y_1, \ldots, y_N$ the negative log-likelihood is
 
 \[
- \hat{\mu} =\frac{1}{N} \sum_{i=1}^N y_i,
+-\ell(\mu) = \sum_{i=1}^N \left( \mu - y_i \log \mu + \log(y_i!) \right) =
+  N \mu - \log(\mu) \sum_{i=1}^N y_i + \sum_{i=1}^N \log(y_i!).
 \]
 
-and this is thus the maximum-likelihood estimate. 
+The final term does not depend on $\mu$ and therefore plays no role in the
+minimization. Differentiating with respect to $\mu$ and setting the result to
+zero gives
 
-If $\sum_{i=1}^N y_i = 0$ (which is equivalent to $y_1 = y_2 = \ldots = y_N = 0$)
-there is no minimizer in the open parameter space $(0, \infty)$. We could argue 
-that by extending the parameter space to include $0$, then $\hat{\mu} = 0$ 
-is the maximum-likelihood estimate when $\sum_{i=1}^N y_i = 0$. Working 
-with the closed parameter space $[0, \infty)$ may appear natural in this case.
-When we turn to numerical optimization algorithms we will, however, focus on the 
-case where the parameter space is open, and where a maximum-likelihood estimate
-is thus an interior point. 
+\[
+N - \frac{1}{\mu} \sum_{i=1}^N y_i = 0,
+\]
 
-Note that the (negative) log-likelihood depends on data only though the 
-data transformation $\sum_{i=1}^N y_i$. We call this sum a 
-*sufficient statistic* \index{sufficient statistic}
-since it is sufficient for the computation of the log-likelihood 
-and the maximum-likelihood estimate.
+so when $\sum_i y_i > 0$, the unique stationary point is
+
+\[
+\hat{\mu} = \frac{1}{N} \sum_{i=1}^N y_i.
+\]
+
+That the stationary point is the *global* minimizer of $-\ell$, rather than,
+say, a local maximum or a saddle point, requires an argument we defer until
+Section\ \@ref(opt-conditions). The missing ingredient is *convexity* of $-\ell$
+(Section\ \@ref(convexity)).
+
+If $\sum_i y_i = 0$, or equivalently $y_1 = \cdots = y_N = 0$, no minimizer
+exists in the open parameter space $(0, \infty)$ and the negative log-likelihood
+descends toward its infimum as $\mu \downarrow 0$. We could extend the parameter
+space to $[0, \infty)$ and set $\hat{\mu} = 0$, but the numerical optimization
+algorithms of Chapter \@ref(numopt) work best when the parameter space is open
+and the maximum-likelihood estimate is in the interior. We return to the
+distinction between open and closed parameter spaces in
+Section\ \@ref(constraints).
 :::
 
-The Poisson model with i.i.d. data is so simple that we can minimize the 
-negative log-likelihood analytically. This is not possible for many other 
-statistical models as the following example will illustrate. 
+The Poisson MLE is convenient: a single parameter, an elementary density, and a
+closed-form solution. Most parametric models of practical interest have neither
+a closed-form MLE nor a one-dimensional parameter space, and require numerical
+optimization as a result. Example\ \@ref(exm:von-Mises-mle), is one of the
+simplest, yet still non-trivial, instances of this.
 
-::: {.example .boxed #von-Mises-exponential} 
-Recall the von Mises distributions on the sample space $\mathcal{Y} = (-\pi, \pi],$
-which were introduced in Section \@ref(vM). They were introduced as a parametrized 
-family of probability distributions with density \index{von Mises distribution!statistical model}
-
-\[
-  f_{\theta}(y) = \frac{1}{\varphi(\theta)} e^{\theta_1 \cos(y) + \theta_2 \sin(y)}
-\]
-
-for $\theta = (\theta_1, \theta_2) \in \mathbb{R}^2$. That is, $\Theta = \mathbb{R}^2$.
-The function
+::: {.example .boxed #von-Mises-mle}
+The *von Mises distributions* are a family of probability distributions on
+the circle, with sample space $\mathcal{Y} = (-\pi, \pi]$. They were
+introduced in Section\ \@ref(vM) and used there for simulation; here we treat
+them as a parametric statistical model. The density is
+\index{von Mises distribution!statistical model}
 
 \[
-  \varphi(\theta) = \int_{-\pi}^{\pi} e^{\theta_1 \cos(u) + \theta_2 \sin(u)} \mathrm{d}u < \infty
+f_\theta(y) = \frac{1}{\varphi(\theta)} e^{\theta_1 \cos(y) + \theta_2 \sin(y)}
 \]
 
-for $\theta \in \Theta$ can be expressed in terms of a modified Bessel function, but 
-it cannot be expressed in terms of elementary functions.
-
-An alternative parametrization was also introduced in Section \@ref(vM)
-in terms of polar coordinates given by the reparametrization map
+for $\theta = (\theta_1, \theta_2) \in \mathbb{R}^2 = \Theta$. The normalizing
+constant
 
 \[
-  (\kappa, \mu) \mapsto \theta = \kappa \left(\begin{array}{c} \cos(\mu) \\ \sin(\mu) \end{array}\right)
+\varphi(\theta) = \int_{-\pi}^{\pi} e^{\theta_1 \cos(u) + \theta_2 \sin(u)} \, \mathrm{d}u
 \]
 
-that maps $[0,\infty) \times (-\pi, \pi]$ onto $\Theta$. 
-This alternative $(\kappa, \mu)$-parametrization has several problems.
-First, the $\mu$ parameter is not identifiable if $\kappa = 0$, which is 
-reflected by the fact that the reparametrization is not a one-to-one map. 
-Second, the parameter space is not open, which can be quite a nuisance
-for, e.g., maxmimum-likelihood estimation. We could circumvent these problems by restricting 
-attention to $(\kappa, \mu) \in (0,\infty) \times (-\pi, \pi)$, but 
-we would then miss some of the distributions parametrized by $\theta$---
-notably the uniform distribution corresponding to $\theta = 0$. 
+is finite for every $\theta \in \Theta$ and can be expressed in terms of a
+modified Bessel function, but not in terms of elementary functions.
 
-With observations $y_1, \ldots, y_N$ the negative log-likelihood in the 
-$\theta$-parametrization becomes 
+With observations $y_1, \ldots, y_N$ the negative log-likelihood becomes
 
 \[
- - \ell(\theta) = N \log \varphi(\theta) - \theta_1 \sum_{i=1}^N \cos(y_i) -  
-   \theta_2 \sum_{i=1}^N \sin(y_i).
+-\ell(\theta) = N \log \varphi(\theta) -
+  \theta_1 \sum_{i=1}^N \cos(y_i) -
+  \theta_2 \sum_{i=1}^N \sin(y_i).
 \]
 
-This function can be shown to be convex. Moreover, with this parametrization
-the log-likelihood only depends on data through the two statistics 
-$\sum_{i=1}^N \cos(y_i)$ and $\sum_{i=1}^N \sin(y_i)$, which are 
-thus sufficient statistics. 
-When minimizing the negative log-likelihood numerically, the sufficient statistics
-can be computed once upfront instead of repeatedly every time the 
-negative log-likelihood is evaluated.
+Unlike the Poisson case, setting the gradient to zero does not lead to a
+closed-form expression for the minimizer. The gradient depends on $\theta$
+through the partial derivatives of $\log \varphi$, which themselves involve
+Bessel functions, and the resulting system has no simple solution. The MLE
+*must* be computed numerically.
 
-Using the $(\kappa, \mu)$-parametrization the negative log-likelihood is
-
-\[
- - \ell(\kappa, \mu) = N \log \varphi(\kappa (\cos(\mu), \sin(\mu))^T) - 
-   \kappa \sum_{i=1}^N \cos(y_i - \mu),
-\]
-
-see also Section \@ref(vM). This function is not necessarily convex, and 
-without essentially reexpressing it in terms of the $\theta$-parametrization
-it does not reveal any sufficient statistics. 
-
-Irrespectively of the chosen parametrization, we will not be able to find an
-analytic formula for the maximum-likelihood estimate. We have to rely on
-numerical optimization procedures. When doing so, it can be beneficial to use an
-appropriate parametrization, e.g., one where the negative log-likelihood is
-convex and where computations of it and its gradient can be implemented
-efficiently.
+In Chapter\ \@ref(numopt), we introduce the algorithms we need to tackle this
+problem, and it turns out that this negative log-likelihood is well-behaved
+enough that even straightforward methods converge quickly. The function $-\ell$
+is *convex* (Section \@ref(convexity)) and its gradient is *Lipschitz
+continuous* (Section \@ref(smoothness)), which is exactly the structure
+algorithms depend upon. Both properties hold in the $\theta$-parametrization
+above. Section\ \@ref(parametrization) shows that a different but natural
+parametrization in terms of a mean direction and a concentration parameter loses
+convexity, and that the choice of parametrization is therefore as much an
+optimization question as it is a statistical one.
 :::
 
-The example above with the von Mises distributions illustrates how the 
-log-likelihood is specified in terms of the densities and data 
-as a function of the parameters. The example also shows that the 
-precise form of the log-likelihood depends on the specific parametrization. 
-The parametrization determines, for instance, whether the negative 
-log-likelihood is convex, and it can also reveal or hide whether there
-exist sufficient statistics. 
+We will return to these examples throughout the rest of the chapter. The Poisson
+example shows that maximum likelihood, treated as an optimization problem,
+sometimes has a clean analytic solution, whereas the von Mises example shows
+that it sometimes does not, which is why we sometimes need numerical algorithms.
+The intervening sections develop the concepts that let us reason about these
+cases: convexity, optimality conditions, smoothness, parametrization, and
+constraints.
 
-::: {.example .boxed #gaussian-exponential}
-The family of Gaussian distributions on $\mathbb{R}$ is most often parametrized 
-by the mean $\mu \in \mathbb{R}$ and variance $\sigma^2 > 0$. The density for 
-the $\mathcal{N}(\mu, \sigma^2)$-distribution is 
+## Convexity {#convexity}
 
-\begin{align*}
-f_{\mu, \sigma^2}(y) & = \frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{(y - \mu)^2}{2\sigma^2}\right) \\
-& =   \frac{1}{\sqrt{\pi}} \exp\left(\frac{\mu}{\sigma^2} y - \frac{1}{2\sigma^2} y^2 - \frac{\mu^2}{2\sigma^2} - 
-                                     \frac{1}{2}\log (2\sigma^2) \right),
-\end{align*}
+The property that typically determines whether an optimization problem is easy
+or hard is convexity. For a convex problem, every local minimum is global and
+the first-order condition $\nabla H(\theta^\star) = 0$ is both necessary and
+sufficient for optimality on the interior of the feasible set. This turns the
+search for a minimizer into a search for a stationary point. For a non-convex
+problem, none of that applies: a method may converge to a stationary point that
+is a saddle point, a local but not global minimum, or even a local maximum.
 
-and the parameter space is $\mathbb{R} \times (0, \infty)$. 
-
-Up to the factor $1/{\sqrt{\pi}}$, the negative log-likelihood 
-with $N$ observations is 
-
-\[ 
- - \ell(\mu, \sigma) =  \frac{\mu}{\sigma^2} \sum_{i=1}^N y_i - \frac{1}{2\sigma^2} 
- \sum_{i=1}^N y^2_i - N \frac{\mu^2}{2\sigma^2} - 
-                                     N \frac{1}{2}\log (2\sigma^2).
-\]
-
-We see that $\sum_{i=1}^N y_i$ and $\sum_{i=1}^N y_i^2$ constitute sufficient 
-statistics. It is possible to show that the unique maximum-likelihood estimate 
-(when at least two of the observations differ) equals 
-
-\begin{align*}
-\hat{\mu} & = \frac{1}{N} \sum_{i=1}^N y_i \\
-\hat{\sigma}^2 & = \frac{1}{N} \sum_{i=1}^N (y_i - \hat{\mu})^2. \\
-\end{align*}
-
-It is fairly straightforward to show that $(\hat{\mu}, \hat{\sigma}^2) \in 
-\mathbb{R} \times (0, \infty)$ is the unique stationary point, but 
-the negative log-likelihood is not convex in the $(\mu, \sigma^2)$-parametrization, 
-which makes it a bit tricky to show that the solution above is, indeed, 
-the global minimizer. 
-
-One possibility is to use the reparametrization 
-
-\[ 
-  \theta_1 = \frac{\mu}{\sigma^2} \quad \text{and} \quad \theta_2 = \frac{1}{2 \sigma^2},
-\]
-
-which gives 
-
-\[ 
- - \ell(\theta_1, \theta_2) =  \theta_1 \sum_{i=1}^N y_i - \theta_2 
- \sum_{i=1}^N y^2_i - N \frac{\theta_1^2}{4\theta_2} + 
-                                     N \frac{1}{2}\log (\theta_2).
-\]
-
-This function is convex in $\theta = (\theta_1, \theta_2)^T \in \mathbb{R} \times (0,\infty)$. If we 
-choose to minimize  $- \ell$ in this parametrization, we can return to the mean and variance 
-parameters via  
+A set $C \subseteq \mathbb{R}^p$ is *convex* if for any two points
+$\theta_1, \theta_2 \in C$ and any $\lambda \in [0, 1]$ the line segment between
+them stays inside $C$, that is, \index{convex set}
 
 \[
-  \mu = \frac{\theta_1}{2\theta_2} \quad \text{and} \quad  \sigma^2 = \frac{1}{2\theta_2}.
+\lambda \theta_1 + (1 - \lambda) \theta_2 \in C.
+\]
+
+Affine subspaces, half-spaces, balls, and the probability simplex
+$\Delta_K = \{p \in \mathbb{R}^K \mid p_i \geq 0, \sum_i p_i = 1\}$ are convex,
+and intersections of convex sets are convex. Figure\ \@ref(fig:convex-sets)
+shows four examples in $\mathbb{R}^2$.
+
+```{r}
+#| label: convex-sets
+#| echo: false
+#| fig-cap: "Examples of convex sets in $\\mathbb{R}^2$. From left to right: a
+#|   half-space, a ball, a polytope (intersection of finitely many half-spaces),
+#|   and the probability simplex $\\Delta_3$. In each case the segment between
+#|   any two points of the set stays inside the set."
+#| fig-width: 8
+#| fig-height: 2.2
+#| out-width: "100%"
+#| fig-align: "center"
+#| warning: false
+
+library(patchwork)
+
+fill_col <- "steelblue"
+fill_alpha <- 0.3
+
+panel_theme <- theme_void() +
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+
+box <- coord_equal(xlim = c(-1.2, 1.2), ylim = c(-1.2, 1.2))
+
+chord <- function(x1, y1, x2, y2) {
+  list(
+    geom_segment(
+      aes(x = x1, xend = x2, y = y1, yend = y2),
+      linetype = "dashed"
+    ),
+    geom_point(
+      data = data.frame(x = c(x1, x2), y = c(y1, y2)),
+      aes(x, y),
+      size = 1.2
+    )
+  )
+}
+
+# Half-space {(x, y) : x + y <= 1}, clipped to the viewport
+p_halfspace <- ggplot() +
+  geom_polygon(
+    data = data.frame(
+      x = c(-1.2, 1.2, 1.2, -0.2, -1.2),
+      y = c(-1.2, -1.2, -0.2, 1.2, 1.2)
+    ),
+    aes(x, y),
+    fill = fill_col,
+    alpha = fill_alpha
+  ) +
+  geom_segment(
+    aes(x = 1.2, xend = -0.2, y = -0.2, yend = 1.2)
+  ) +
+  chord(-0.8, -0.6, 0.5, -0.8) +
+  box +
+  labs(title = "Half-space") +
+  panel_theme
+
+# Ball: unit disk
+t <- seq(0, 2 * pi, length.out = 200)
+p_ball <- ggplot() +
+  geom_polygon(
+    data = data.frame(x = cos(t), y = sin(t)),
+    aes(x, y),
+    fill = fill_col,
+    alpha = fill_alpha,
+    color = "black"
+  ) +
+  chord(-0.6, 0.4, 0.5, -0.5) +
+  box +
+  labs(title = "Ball") +
+  panel_theme
+
+# Polytope: an irregular convex hexagon
+p_polytope <- ggplot() +
+  geom_polygon(
+    data = data.frame(
+      x = c(1.1, 0.6, -0.4, -1.1, -0.6, 0.7),
+      y = c(0.2, 1.0, 1.0, 0.1, -0.9, -0.7)
+    ),
+    aes(x, y),
+    fill = fill_col,
+    alpha = fill_alpha,
+    color = "black"
+  ) +
+  chord(-0.5, 0.5, 0.4, -0.2) +
+  box +
+  labs(title = "Polytope") +
+  panel_theme
+
+# Probability simplex Delta_3: equilateral triangle, centered and scaled
+# to fill the same viewport as the other panels
+p_simplex <- ggplot() +
+  geom_polygon(
+    data = data.frame(
+      x = c(-0.9, 0.9, 0),
+      y = c(-0.52, -0.52, 1.04)
+    ),
+    aes(x, y),
+    fill = fill_col,
+    alpha = fill_alpha,
+    color = "black"
+  ) +
+  chord(-0.4, -0.25, 0.3, 0.4) +
+  box +
+  labs(title = "Simplex") +
+  panel_theme
+
+p_halfspace + p_ball + p_polytope + p_simplex + plot_layout(nrow = 1)
+```
+
+A function $H : C \to \mathbb{R}$ defined on a convex domain $C$ is *convex* if
+\index{convex function}
+
+\[
+H(\lambda \theta_1 + (1 - \lambda) \theta_2) \leq
+  \lambda H(\theta_1) + (1 - \lambda) H(\theta_2)
+\]
+
+for all $\theta_1, \theta_2 \in C$ and $\lambda \in [0, 1]$. Geometrically, the
+chord between any two points on the graph of $H$ lies above the graph; see
+Figure\ \@ref(fig:convex-jensen) for an example and a non-example. The
+inequality is known as *Jensen's inequality*. \index{Jensen's inequality} When
+the inequality is strict for $\theta_1 \neq \theta_2$ and $\lambda \in (0, 1)$,
+the function is *strictly convex*^[Do not confuse *strictly* with *strongly*
+convex, which are two related but separate concepts.], and any minimizer is then
+unique. A function $H$ is *concave* if $-H$ is convex; affine functions are both
+convex and concave, and they are the only functions with that property.
+
+```{r}
+#| label: convex-jensen
+#| echo: false
+#| fig-cap: "Jensen's inequality. For a convex function (left) the chord
+#|   (dashed) between any two points on the graph lies above the graph; for
+#|   a non-convex function (right) the chord may cross below the graph,
+#|   violating the inequality."
+#| fig-width: 7
+#| fig-height: 2.5
+#| out-width: "100%"
+#| fig-align: "center"
+#| warning: false
+
+library(patchwork)
+
+jensen_panel <- function(H, thetas, theta1, theta2, title) {
+  ggplot(data.frame(theta = thetas, y = H(thetas)), aes(theta, y)) +
+    geom_line() +
+    geom_segment(
+      aes(x = theta1, xend = theta2, y = H(theta1), yend = H(theta2)),
+      linetype = "dashed",
+      color = "steelblue"
+    ) +
+    geom_point(
+      data = data.frame(
+        theta = c(theta1, theta2),
+        y = c(H(theta1), H(theta2))
+      )
+    ) +
+    annotate(
+      "text",
+      x = theta1 - 0.12,
+      y = H(theta1),
+      label = "theta[1]",
+      parse = TRUE
+    ) +
+    annotate(
+      "text",
+      x = theta2 + 0.12,
+      y = H(theta2),
+      label = "theta[2]",
+      parse = TRUE
+    ) +
+    theme_void() +
+    labs(x = NULL, y = NULL, title = title) +
+    theme(plot.title = element_text(hjust = 0.5, size = 11))
+}
+
+H_conv <- function(theta) theta^2
+H_nonconv <- function(theta) (theta^2 - 1)^2
+
+p_conv <- jensen_panel(
+  H_conv,
+  seq(-1.2, 1.5, length.out = 200),
+  -0.5,
+  1,
+  "Convex"
+)
+
+p_nonconv <- jensen_panel(
+  H_nonconv,
+  seq(-1.5, 1.5, length.out = 200),
+  -1.2,
+  1.2,
+  "Non-convex"
+)
+
+p_conv + p_nonconv
+```
+
+If $H$ is differentiable, convexity has an equivalent first-order
+characterization: $H$ is convex if and only if
+
+\[
+H(\theta_1) \geq H(\theta_2) + \nabla H(\theta_2)^\top (\theta_1 - \theta_2)
+\]
+
+for all $\theta_1, \theta_2 \in C$. The right-hand side is the first-order
+Taylor approximation of $H$ at $\theta_2$, so the condition says that the
+tangent hyperplane at any point lies entirely below the graph; see
+Figure\ \@ref(fig:convex-tangent). This characterization is the foundation of
+most of the optimality and convergence arguments to come---it provides a global
+lower bound on $H$ in terms of purely local first-order information.
+
+```{r}
+#| label: convex-tangent
+#| echo: false
+#| fig-cap: "First-order characterization of convexity. The tangent hyperplane (dashed) at any point lies below the graph of a convex function."
+#| fig-width: 4.5
+#| fig-height: 2.5
+#| out-width: "70%"
+#| fig-align: "center"
+#| warning: false
+
+H <- function(theta) theta^2
+Hp <- function(theta) 2 * theta
+
+theta2 <- 0.3
+thetas <- seq(-1.3, 1.5, length.out = 200)
+
+ggplot(data.frame(theta = thetas, y = H(thetas)), aes(theta, y)) +
+  geom_line() +
+  geom_abline(
+    slope = Hp(theta2),
+    intercept = H(theta2) - Hp(theta2) * theta2,
+    linetype = "dashed",
+    color = "steelblue"
+  ) +
+  geom_point(data = data.frame(theta = theta2, y = H(theta2))) +
+  annotate(
+    "text",
+    x = theta2 + 0.08,
+    y = H(theta2) - 0.25,
+    label = "theta[2]",
+    parse = TRUE
+  ) +
+  theme_void() +
+  coord_cartesian(ylim = c(-0.8, 2.4)) +
+  labs(x = NULL, y = expression(H(theta)))
+```
+
+If $H$ is twice differentiable, there is a still simpler test: $H$ is convex if
+and only if the Hessian is positive semidefinite at every point,
+
+\[
+\nabla^2 H(\theta) \succeq 0 \quad \text{for all } \theta \in C.
+\]
+
+In a single variable this reduces to $H''(\theta) \geq 0$. When the Hessian is
+positive definite throughout $C$, the function is strictly convex. If in
+addition the smallest eigenvalue of $\nabla^2 H(\theta)$ is bounded away from
+zero by some $m > 0$, then $H$ is *strongly convex*
+(Section\ \@ref(smoothness)).
+
+These concepts will pave the way for a proposition that we prove in
+Section\ \@ref(opt-conditions): if $H$ is convex and $C$ is convex, then *every*
+local minimum of $H$ on $C$ is a global minimum, and *any* stationary point in
+the interior of $C$ minimizes $H$. The practical consequence is that any
+stationary point we find is guaranteed, via convexity, to be a global minimizer,
+without us having to search elsewhere or rule out competing minima.
+
+Verifying convexity directly from the chord inequality is rarely the most
+convenient strategy. Several operations preserve convexity and let us assemble
+complicated convex functions from simple ones. Non-negative linear combinations
+of convex functions are convex; the composition of a convex function with an
+affine map is convex; and the pointwise supremum of any family of convex
+functions is convex. We will make use of the first two rules repeatedly in the
+examples that follow.
+
+A subtlety worth raising now is that convexity is a property of the
+*parameterization* of a statistical model. The same distribution can produce a
+convex negative log-likelihood under one parametrization and a non-convex one
+under another, so the choice of parametrization is a question with both
+statistical and computational consequences. In Section\ \@ref(parametrization),
+we return to this point as we tackle the von Mises distribution.
+
+::: {.example .boxed #poisson-mle-convex}
+Returning to the Poisson maximum-likelihood problem of
+Example\ \@ref(exm:poisson-mle), the negative log-likelihood on
+$\Theta = (0, \infty)$ is
+
+\[
+-\ell(\mu) = N \mu - \log(\mu) \sum_{i=1}^N y_i + \text{const},
+\]
+
+and its second derivative is
+
+\[
+-\ell''(\mu) = \frac{1}{\mu^2} \sum_{i=1}^N y_i.
+\]
+
+When $\sum_i y_i > 0$, this is strictly positive on all of $(0, \infty)$, so
+$-\ell$ is strictly convex and the stationary point
+$\hat{\mu} = N^{-1} \sum_i y_i$ identified in Example\ \@ref(exm:poisson-mle) is
+the unique global minimizer. When $\sum_i y_i = 0$ the second derivative
+vanishes identically and the negative log-likelihood reduces to $N \mu$, which
+is still convex but has no minimizer in the open parameter space, as we already
+observed in Example\ \@ref(exm:poisson-mle).
+:::
+
+::: {.example .boxed #von-Mises-mle-convex}
+The von Mises negative log-likelihood of Example\ \@ref(exm:von-Mises-mle) can
+be written as
+
+\[
+-\ell(\theta) = N \log \varphi(\theta) - \theta^\top s,
+\]
+
+where $s = \sum_{i=1}^N (\cos y_i, \sin y_i)^\top \in \mathbb{R}^2$ is a fixed
+data summary. The term $-\theta^\top s$ is linear in $\theta$ and therefore
+convex. By the nonnegative-combination rule, $-\ell$ is convex if and only if
+$\log \varphi$ is. Hölder's inequality applied to the integral defining
+$\varphi$ yields, for any $\lambda \in [0, 1]$ and any
+$\theta_a, \theta_b \in \mathbb{R}^2$,
+
+\[
+\varphi(\lambda \theta_a + (1 - \lambda) \theta_b) \leq
+  \varphi(\theta_a)^\lambda \, \varphi(\theta_b)^{1 - \lambda},
+\]
+
+so taking logarithms gives convexity of $\log \varphi$. Hence $-\ell$ is convex
+on $\Theta = \mathbb{R}^2$, and the numerical methods of Chapter\ \@ref(numopt)
+applied to it can be expected to converge to the global MLE. The convexity
+argument here is a special case of a more general result about so-called
+*canonical exponential families*, which we take up in
+Section\ \@ref(parametrization).
+:::
+
+## Optimality conditions {#opt-conditions}
+
+Section\ \@ref(convexity) introduced convexity and deferred two claims: that a
+stationary point of a convex objective minimizes it, and that any local minimum
+of a convex problem is global. In this section, we will develop the conditions
+we use throughout the rest of the book to recognize a minimizer when we have
+one. We separate *necessary* conditions, which picks candidates, from
+*sufficient* conditions, which certify one (or many) of them as optimal.
+
+Throughout the section, $H$ is at least once continuously differentiable on the
+interior of its domain. For an interior local minimizer $\theta^\star$ of $H$,
+the gradient must vanish, i.e.
+
+\[
+\nabla H(\theta^\star) = 0.
+\]
+
+If it did not, then $g(t) = H(\theta^\star - t \nabla H(\theta^\star))$ would
+satisfy $g'(0) = -\|\nabla H(\theta^\star)\|_2^2 < 0$, so
+$g(t) < g(0) = H(\theta^\star)$ for all sufficiently small $t > 0$,
+contradicting that $\theta^\star$ is a local minimum. Points satisfying
+$\nabla H(\theta^\star) = 0$ are called *stationary points*. Stationarity is
+*necessary* but not *sufficient* for a minimum: saddle points and local maxima
+are stationary too. \index{stationary point}
+
+When $H$ is convex, stationarity becomes sufficient and global.
+
+::: {.theorem #convex-stationary}
+Let $H$ be convex and differentiable on an open convex set $C$. Then
+$\theta^\star \in C$ is a global minimizer of $H$ over $C$ if and only if
+$\nabla H(\theta^\star) = 0$.
+:::
+
+::: {.proof .boxed}
+The only-if direction is the necessary condition above. For the if direction,
+the first-order characterization of convexity from Section\ \@ref(convexity)
+gives, for every $\theta \in C$,
+
+\[
+H(\theta) \geq H(\theta^\star) +
+  \nabla H(\theta^\star)^\top (\theta - \theta^\star) = H(\theta^\star),
+\]
+
+so $\theta^\star$ minimizes $H$ globally over $C$.
+:::
+
+We will repeatedly make use of Theorem\ \@ref(thm:convex-stationary) throughout
+the rest of the book. Whenever we can show that an objective is convex and a
+candidate point is stationary, the search is over.
+Theorem\ \@ref(thm:convex-local-global) provides a related and slightly more
+general statement that does not require differentiability.
+
+::: {.theorem #convex-local-global}
+Let $H$ be convex on a convex set $C$. Then every local minimizer of $H$ over
+$C$ is a global minimizer.
+:::
+
+::: {.proof .boxed}
+Suppose $\theta^\star$ is a local but not global minimizer, so there exists
+$\tilde{\theta} \in C$ with $H(\tilde{\theta}) < H(\theta^\star)$. Parametrize
+the segment from $\theta^\star$ to $\tilde{\theta}$ by
+$\theta_\lambda = (1 - \lambda) \theta^\star + \lambda \tilde{\theta}$ for
+$\lambda \in [0, 1]$. Then $\theta_\lambda \in C$ by convexity of $C$, and
+
+\[
+H(\theta_\lambda) \leq
+  (1 - \lambda) H(\theta^\star) + \lambda H(\tilde{\theta}) < H(\theta^\star)
+\]
+
+for every $\lambda \in (0, 1]$ by convexity of $H$. As $\lambda \to 0$, the
+$\theta_\lambda$ approach $\theta^\star$ while their values stay strictly below
+$H(\theta^\star)$, contradicting that $\theta^\star$ is a local minimum.
+:::
+
+If $H$ is twice continuously differentiable, the Hessian gives better
+information. At an interior local minimum, the second-order necessary condition
+
+\[
+\nabla^2 H(\theta^\star) \succeq 0
+\]
+
+holds in addition to $\nabla H(\theta^\star) = 0$. Conversely, if
+$\nabla H(\theta^\star) = 0$ and the Hessian is strictly positive definite at
+$\theta^\star$, then a second-order Taylor expansion shows that $\theta^\star$
+is a strict local minimizer, this time *without* requiring global convexity of
+$H$. The second-order test is the standard tool for sorting the stationary
+points of a non-convex objective into local minima, maxima, and saddle points.
+
+For constrained problems, the unconstrained first-order condition
+$\nabla H(\theta^\star) = 0$ need not hold at a boundary minimizer: the gradient
+can be nonzero so long as it points *outward*, since no feasible perturbation
+will then decrease $H$. The general first-order condition is the variational
+inequality
+
+\[
+\nabla H(\theta^\star)^\top (\theta - \theta^\star) \geq 0
+  \quad \text{for all } \theta \in C,
+\]
+
+which reduces to $\nabla H(\theta^\star) = 0$ when $\theta^\star$ lies in the
+interior of $C$. We return to constrained problems and their conditions,
+including the more practical formulation in terms of Lagrange multipliers and
+Karush--Kuhn--Tucker\ (KKT) conditions, in Section\ \@ref(constraints).
+
+The two examples below apply Theorem\ \@ref(thm:convex-stationary) to deliver
+closed-form solutions to two of the recurring problems set up in
+Section\ \@ref(opt-problem) and Section\ \@ref(mle-as-opt).
+
+::: {.example .boxed #poisson-mle-stationary}
+The Poisson negative log-likelihood of Example\ \@ref(exm:poisson-mle),
+
+\[
+-\ell(\mu) = N \mu - \log(\mu) \sum_{i=1}^N y_i + \text{const},
+\]
+
+has derivative
+
+\[
+-\ell'(\mu) = N - \frac{1}{\mu} \sum_{i=1}^N y_i.
+\]
+
+When $\sum_i y_i > 0$ the unique stationary point on $(0, \infty)$ is therefore
+$\hat{\mu} = N^{-1} \sum_i y_i$. Since $-\ell$ is strictly convex on
+$(0, \infty)$ in this case (Example\ \@ref(exm:poisson-mle-convex)),
+Theorem\ \@ref(thm:convex-stationary) certifies $\hat{\mu}$ as the global
+minimum of $-\ell$, and hence the MLE; Figure\ \@ref(fig:poisson-mle-curve)
+shows the convex bowl for a synthetic sample. The first-order condition alone,
+applied to a non-convex objective, would not have ruled out a saddle point or
+local maximum.
+:::
+
+```{r}
+#| label: poisson-mle-curve
+#| echo: false
+#| fig-cap: "The Poisson negative log-likelihood $-\\ell(\\mu)$ (up to an
+#|   additive constant) for a synthetic sample of size $N = 20$ from a Poisson
+#|   distribution. The curve is strictly convex on $(0, \\infty)$ and its
+#|   unique stationary point $\\hat{\\mu} = N^{-1} \\sum_i y_i$ is the global
+#|   minimizer."
+#| fig-width: 4
+#| fig-height: 3
+#| fig-align: "center"
+#| warning: false
+
+set.seed(2)
+N <- 20
+y <- rpois(N, lambda = 3)
+mu_hat <- mean(y)
+Sy <- sum(y)
+
+mu_grid <- seq(0.5, 8, length.out = 300)
+nll <- N * mu_grid - Sy * log(mu_grid)
+nll_min <- N * mu_hat - Sy * log(mu_hat)
+
+ggplot(data.frame(mu = mu_grid, nll), aes(mu, nll)) +
+  geom_line() +
+  geom_point(
+    data = data.frame(mu = mu_hat, nll = nll_min),
+    aes(mu, nll)
+  ) +
+  annotate(
+    "text",
+    x = mu_hat + 0.3,
+    y = nll_min + 4,
+    label = "hat(mu)",
+    parse = TRUE
+  ) +
+  labs(x = expression(mu), y = expression(paste("-", "l", "(", mu, ")")))
+```
+
+::: {.example .boxed #ols-normal-equations}
+The OLS objective of Section\ \@ref(opt-problem),
+
+\[
+H(\beta) = \tfrac{1}{2} \|\mathbf{y} - \mathbf{X} \beta\|_2^2,
+\]
+
+has gradient and Hessian
+
+\[
+\nabla H(\beta) = -\mathbf{X}^\top (\mathbf{y} - \mathbf{X} \beta), \quad
+\nabla^2 H(\beta) = \mathbf{X}^\top \mathbf{X}.
+\]
+
+The Hessian $\mathbf{X}^\top \mathbf{X}$ is positive semidefinite for any
+$\mathbf{X}$, so $H$ is convex; it is strictly convex precisely when
+$\mathbf{X}$ has full column rank, in which case the OLS problem has a unique
+minimizer. Setting $\nabla H(\beta) = 0$ yields the *normal equations*
+
+\[
+\mathbf{X}^\top \mathbf{X} \beta = \mathbf{X}^\top \mathbf{y},
+\]
+
+with closed-form solution
+$\hat{\beta} = (\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{X}^\top \mathbf{y}$
+when $\mathbf{X}^\top \mathbf{X}$ is invertible.
+Theorem\ \@ref(thm:convex-stationary) certifies this $\hat{\beta}$ as the global
+OLS minimizer. The level sets of $H$ are then nested ellipses around
+$\hat{\beta}$. Figure\ \@ref(fig:ols-contour) shows them for a small synthetic
+problem with $p = 2$. For poorly conditioned or rank-deficient $\mathbf{X}$, the
+matrix $\mathbf{X}^\top \mathbf{X}$ is near-singular or singular, and the
+closed-form expression should be replaced by a numerical method that avoids
+forming and inverting it---we return to this point when we discuss conditioning
+in Section\ \@ref(smoothness).
+:::
+
+```{r}
+#| label: ols-contour
+#| echo: false
+#| fig-cap: "Contours of the OLS objective
+#|   $H(\\beta) = \\tfrac{1}{2} \\|\\mathbf{y} - \\mathbf{X}\\beta\\|_2^2$ for a
+#|   simulated problem with $N = 50$ observations and $p = 2$ predictors. The
+#|   level sets are nested ellipses centered at the unique minimizer
+#|   $\\hat{\\beta}$, and their orientation is determined by the eigenvectors of
+#|   $\\mathbf{X}^\\top \\mathbf{X}$."
+#| fig-width: 4
+#| fig-height: 3.5
+#| fig-align: "center"
+#| warning: false
+
+set.seed(1)
+N <- 50
+x1 <- rnorm(N)
+x2 <- 0.6 * x1 + 0.8 * rnorm(N)
+X <- cbind(x1, x2)
+y <- X %*% c(1, -0.5) + 0.5 * rnorm(N)
+
+XtX <- crossprod(X)
+Xty <- crossprod(X, y)
+yty <- sum(y^2)
+beta_hat <- as.numeric(solve(XtX, Xty))
+
+grid <- expand.grid(
+  b1 = seq(beta_hat[1] - 1.4, beta_hat[1] + 1.4, length.out = 150),
+  b2 = seq(beta_hat[2] - 1.4, beta_hat[2] + 1.4, length.out = 150)
+)
+grid$z <- with(
+  grid,
+  0.5 *
+    (XtX[1, 1] *
+      b1^2 +
+      2 * XtX[1, 2] * b1 * b2 +
+      XtX[2, 2] * b2^2 -
+      2 * (Xty[1] * b1 + Xty[2] * b2) +
+      yty)
+)
+
+ggplot(grid, aes(b1, b2, z = z)) +
+  geom_contour(color = "steelblue", bins = 10) +
+  geom_point(
+    data = data.frame(b1 = beta_hat[1], b2 = beta_hat[2]),
+    inherit.aes = FALSE,
+    aes(b1, b2)
+  ) +
+  annotate(
+    "text",
+    x = beta_hat[1] + 0.2,
+    y = beta_hat[2] - 0.1,
+    label = "hat(beta)",
+    parse = TRUE
+  ) +
+  coord_equal() +
+  labs(x = expression(beta[1]), y = expression(beta[2]))
+```
+
+## Parametrization and sufficient statistics {#parametrization}
+
+Convexity is a property of a specific objective function on a specific domain,
+not of a statistical model in the abstract. The same model produces different
+optimization landscapes under different choices of parameter, and a
+reparametrization that does not respect the convex structure can turn a convex
+problem into a non-convex one. In this section, we give the principal source of
+convex maximum-likelihood problems, the canonical exponential families, and then
+show what goes wrong when we reparametrize them into the interpretable scales we
+usually report results in.
+
+A parametric family on $\mathcal{Y}$ is a *canonical exponential family* if its
+densities take the form \index{exponential family!canonical}
+
+\[
+f_\theta(y) = \exp\left(\theta^\top t(y) - \log \varphi(\theta) + h(y)\right),
+\]
+
+for a *sufficient statistic* $t : \mathcal{Y} \to \mathbb{R}^d$, a base measure
+factor $h : \mathcal{Y} \to \mathbb{R}$, and the *log-partition function*
+
+\[
+\log \varphi(\theta) = \log \int_\mathcal{Y}
+  \exp\left(\theta^\top t(y) + h(y)\right) \, \mathrm{d}\mu(y),
+\]
+
+with $\mu$ the reference measure. The vector $\theta \in \mathbb{R}^d$ is the
+*canonical parameter*, and the *canonical parameter space*
+$\Theta = \{\theta \in \mathbb{R}^d : \varphi(\theta) < \infty\}$ is where the
+density is well defined. The Poisson distributions form a one-parameter family
+with $t(y) = y$ and canonical parameter $\theta = \log \mu$; the von Mises
+distributions of Example\ \@ref(exm:von-Mises-mle) form a two-parameter family
+with $t(y) = (\cos y, \sin y)^\top$; the Gaussian, Bernoulli, gamma, beta, and
+multinomial distributions also fit.
+
+The convexity property promised in Section\ \@ref(convexity) and proved there
+for the von Mises generalizes to the whole class:
+
+::: {.theorem #log-partition-convex}
+The log-partition function $\log \varphi$ of a canonical exponential family is a
+convex function of $\theta$ on $\Theta$.
+:::
+
+::: {.proof .boxed}
+For $\lambda \in [0, 1]$ and $\theta_a, \theta_b \in \Theta$, Hölder's
+inequality applied with conjugate exponents $1/\lambda$ and $1/(1 - \lambda)$ to
+the integral defining $\varphi$ gives
+
+\[
+\varphi(\lambda \theta_a + (1 - \lambda) \theta_b) \leq
+  \varphi(\theta_a)^\lambda \, \varphi(\theta_b)^{1 - \lambda},
+\]
+
+and taking logarithms yields the convexity of $\log \varphi$. A side benefit is
+that the same inequality shows that $\Theta$ is itself a convex set, since the
+right-hand side is finite whenever $\varphi(\theta_a)$ and $\varphi(\theta_b)$
+are.
+:::
+
+For i.i.d. observations $y_1, \ldots, y_N$ the negative log-likelihood in the
+canonical parameter is
+
+\[
+-\ell(\theta) = N \log \varphi(\theta) - \theta^\top s
+  - \sum_{i=1}^N h(y_i),
+\]
+
+where $s = \sum_{i=1}^N t(y_i) \in \mathbb{R}^d$ aggregates the data. The term
+$-\theta^\top s$ is linear in $\theta$, the last term does not depend on
+$\theta$, and Theorem\ \@ref(thm:log-partition-convex) makes the remaining piece
+convex.
+
+::: {.theorem #canonical-nll-convex}
+The negative log-likelihood of a canonical exponential family is a convex
+function of the canonical parameter $\theta$ on $\Theta$.
+:::
+
+The MLE problem is therefore convex on the entire canonical parameter space, and
+the optimality conditions of Section\ \@ref(opt-conditions) certify any
+stationary point as the global MLE.
+
+The vector $s = \sum_i t(y_i)$ in the negative log-likelihood is the only place
+where the data enters the picture. This is the *computational* reading of
+*sufficient statistic*: the cost of evaluating $-\ell$ at any $\theta$ does not
+scale with the number of observations $N$ once $s$ has been computed.
+Aggregating the data into $s$ takes $O(Nd)$ work, after which each $-\ell$ or
+$\nabla \ell$ evaluation is $O(d)$ work in the partition function and its
+derivatives, independent of $N$. For the iterative algorithms of
+Chapter\ \@ref(numopt) this is a substantial saving: the inner loop carries no
+$N$-dependence beyond the one-time aggregation.
+
+Statisticians rarely report results in canonical parameters. The Gaussian
+distribution is more naturally described by its mean and variance than by
+$\theta_1 = \mu/\sigma^2$ and $\theta_2 = -1/(2\sigma^2)$, and the von Mises
+distribution is more naturally described by a mean direction and a concentration
+than by a pair of Cartesian coordinates on $\mathbb{R}^2$. The
+reparametrizations that recover these interpretable scales are smooth, but not
+affine, and *only affine reparametrizations preserve convexity*. Composing a
+convex function with a nonlinear smooth map produces curvature terms in the
+Hessian that can be either positive or negative, and convexity is generally
+lost.
+
+In the following two examples, we examplify this point for the von Mises and
+Gaussian distributions. In both cases the practical conclusion is the same: work
+with the canonical parameter when optimizing, and transform back to the
+interpretable scale only after the algorithm has converged.
+
+::: {.example .boxed #von-Mises-polar}
+The von Mises distribution of Example\ \@ref(exm:von-Mises-mle) is more often
+described by a mean direction $\mu \in (-\pi, \pi]$ and a concentration
+parameter $\kappa \geq 0$, related to the canonical parameters by the polar map
+
+\[
+\theta_1 = \kappa \cos \mu, \quad \theta_2 = \kappa \sin \mu.
+\]
+
+In the $(\kappa, \mu)$ parametrization, the density takes the more interpretable
+form $f(y) \propto \exp\!\left(\kappa \cos(y - \mu)\right)$, and the negative
+log-likelihood is
+
+\[
+-\ell(\kappa, \mu) = N \log \varphi_0(\kappa)
+  - \kappa \sum_{i=1}^N \cos(y_i - \mu),
+\]
+
+where $\varphi_0(\kappa) = 2\pi I_0(\kappa)$ depends only on $\kappa$ through
+the modified Bessel function $I_0.$
+
+For each fixed $\kappa > 0$ the function $\mu \mapsto -\ell(\kappa, \mu)$ is
+non-constant and $2\pi$-periodic in $\mu$, and a non-constant periodic function
+on $\mathbb{R}$ cannot be convex, since a convex function bounded above is
+constant. So $-\ell$ is not convex as a function of
+$(\kappa, \mu) \in (0, \infty) \times \mathbb{R}$. Restricting $\mu$ to
+$(-\pi, \pi]$ does not save the situation either: that parameter space is not
+convex, and the function still takes equal values at the two ends of the
+interval. To compute the MLE we work in $\theta$, where the problem is convex by
+Theorem\ \@ref(thm:canonical-nll-convex), and convert back to $(\kappa, \mu)$ at
+the end through
+
+$$
+\kappa = \sqrt{\theta_1^2 + \theta_2^2}\quad \text{and} \quad \mu = \mathrm{atan2}(\theta_2, \theta_1).
+$$
+:::
+
+::: {.example .boxed #gaussian-canonical}
+The Gaussian distributions on $\mathbb{R}$ with mean $\mu \in \mathbb{R}$ and
+variance $\sigma^2 > 0$ form a canonical exponential family with sufficient
+statistic $t(y) = (y, y^2)^\top$ and canonical parameters
+
+\[
+\theta_1 = \frac{\mu}{\sigma^2}, \quad \theta_2 = -\frac{1}{2 \sigma^2}.
+\]
+
+The canonical parameter space is $\Theta = \mathbb{R} \times (-\infty, 0)$, and
+the log-partition function evaluates to
+
+\[
+\log \varphi(\theta_1, \theta_2) = -\frac{\theta_1^2}{4 \theta_2}
+  - \frac{1}{2} \log(-2\theta_2) + \frac{1}{2} \log(2\pi).
+\]
+
+By Theorem\ \@ref(thm:canonical-nll-convex) the negative log-likelihood is
+convex in $(\theta_1, \theta_2)$ on $\Theta$.
+
+In the $(\mu, \sigma^2)$ parametrization, by contrast,
+
+\[
+-\ell(\mu, \sigma^2) = \frac{N}{2} \log(2\pi \sigma^2) +
+  \frac{1}{2 \sigma^2} \sum_{i=1}^N (y_i - \mu)^2.
+\]
+
+Set $\mu = \bar{y}$ and $\hat{\sigma}^2 = N^{-1} \sum_i (y_i - \bar{y})^2$. The
+gradient in $\mu$ vanishes, and the gradient in $\sigma^2$ vanishes at
+$\sigma^2 = \hat{\sigma}^2$. The second partial derivative with respect to
+$\sigma^2$ at $\mu = \bar{y}$ is
+
+\[
+\frac{\partial^2 (-\ell)}{\partial (\sigma^2)^2} 
+  = -\frac{N}{2 \sigma^4} + \frac{1}{\sigma^6} \sum_{i=1}^N (y_i - \bar{y})^2 
+  = \frac{1}{\sigma^4} \left( \frac{N \hat\sigma^2}{\sigma^2} - \frac{N}{2} \right),
+\]
+
+which is strictly negative whenever $\sigma^2 > 2 \hat{\sigma}^2$. The negative
+log-likelihood is therefore concave in $\sigma^2$ on that region, so
+$(\mu, \sigma^2) \mapsto -\ell(\mu, \sigma^2)$ is not convex on its natural
+parameter space $\mathbb{R} \times (0, \infty)$. The maximum-likelihood
+estimates $\hat{\mu} = \bar{y}$ and
+$\hat{\sigma}^2 = N^{-1} \sum_i (y_i - \bar{y})^2$ are nevertheless well known,
+and they emerge cleanly from the moment equation
+$\nabla \log \varphi(\theta) = N^{-1} s$ in the canonical parameter, where
+convexity guarantees that the stationary point is the global MLE.
+:::
+
+## Smoothness and conditioning {#smoothness}
+
+Convexity tells us *whether* an unconstrained minimum can be found reliably, but
+not *how quickly* an iterative algorithm will find it. The convergence-rate
+claims in Chapter\ \@ref(numopt) rest on two further properties of the
+objective. The first, *smoothness*, is an upper bound on how fast the gradient
+can change. The second, *strong convexity*, is a lower bound on how curved the
+function is. Their ratio is the *condition number*, and it broadly determines
+how much work our numerical optimizer needs to perform to reach the optimum.
+
+A differentiable function $H : \mathbb{R}^p \to \mathbb{R}$ is *$L$-smooth*, or
+has *$L$-Lipschitz gradient*, if there exists $L > 0$ such that
+\index{Lipschitz gradient}\index{smoothness}
+
+\[
+\|\nabla H(\theta) - \nabla H(\theta')\|_2 \leq L \|\theta - \theta'\|_2
+\]
+
+for all $\theta, \theta'$. Figure\ \@ref(fig:lipschitz-cone) gives the cone
+picture in one dimension: at any anchor point $\theta_0$ the gradient curve
+$\nabla H$ must stay inside the cone of slope $L$ centered at
+$(\theta_0, \nabla H(\theta_0))$, and the Lipschitz constant is the smallest $L$
+for which this holds at every anchor and every $\theta$.
+
+```{r}
+#| label: lipschitz-cone
+#| echo: false
+#| fig-cap: "The Lipschitz cone of slope $L = 2$, shown at three anchor points
+#|   $\\theta_0$ along the same gradient curve $\\nabla H$ (solid). The
+#|   Lipschitz condition requires the curve to stay inside the cone for *every*
+#|   anchor; $L$ is the smallest slope for which this holds. The bound is
+#|   tight where the curve is steep (left two panels) and has slack where it is
+#|   flatter (right panel)."
+#| fig-width: 8
+#| fig-height: 2.8
+#| out-width: "100%"
+#| fig-align: "center"
+#| warning: false
+
+library(patchwork)
+
+grad <- function(theta) {
+  ifelse(theta < 0, 2 * theta - 1, -1 / (1 + theta))
+}
+
+lipschitz_panel <- function(theta0, L = 2) {
+  theta <- seq(-2, 2, length.out = 200)
+  df <- data.frame(theta = theta, y = grad(theta))
+
+  ggplot(df, aes(theta, y)) +
+    geom_ribbon(
+      aes(
+        ymin = grad(theta0) - L * abs(theta - theta0),
+        ymax = grad(theta0) + L * abs(theta - theta0)
+      ),
+      fill = "steelblue",
+      alpha = 0.25
+    ) +
+    geom_line() +
+    geom_point(
+      data = data.frame(theta = theta0, y = grad(theta0)),
+      aes(theta, y)
+    ) +
+    coord_cartesian(ylim = c(-6, 3)) +
+    labs(
+      x = expression(theta),
+      y = expression(nabla * H(theta)),
+      title = bquote(theta[0] == .(theta0))
+    ) +
+    theme(plot.title = element_text(hjust = 0.5, size = 11))
+}
+
+lipschitz_panel(-1.5) +
+  lipschitz_panel(0) +
+  lipschitz_panel(1) +
+  plot_layout(axes = "collect")
+```
+
+When $H$ is twice continuously differentiable this is equivalent to a uniform
+upper bound on the Hessian,
+
+\[
+\nabla^2 H(\theta) \preceq L I \quad \text{for all } \theta,
+\]
+
+so $L$ is an upper bound on the largest eigenvalue of $\nabla^2 H$ over the
+whole domain. The smoothness assumption translates into a quadratic *upper*
+bound on $H$ itself.
+
+::: {.lemma #descent-lemma}
+If $H$ is $L$-smooth, then for all $\theta, \theta' \in \mathbb{R}^p$,
+
+\[
+H(\theta') \leq H(\theta) + \nabla H(\theta)^\top (\theta' - \theta) +
+  \frac{L}{2} \|\theta' - \theta\|_2^2.
 \]
 :::
 
-In all three examples above we found one parametrization where 
+::: {.proof .boxed}
+Write
+$H(\theta') - H(\theta) =
+  \int_0^1 \nabla H(\theta + t(\theta' - \theta))^\top (\theta' - \theta)
+  \, \mathrm{d}t$
+and add and subtract $\nabla H(\theta)^\top (\theta' - \theta)$:
 
-* we could identify sufficient statistics
-* and where the negative log-likelihood is convex
+\begin{align*}
+H(\theta') - H(\theta) - \nabla H(\theta)^\top (\theta' - \theta)
+& = \int_0^1 \big(\nabla H(\theta + t(\theta' - \theta)) -
+    \nabla H(\theta)\big)^\top (\theta' - \theta) \, \mathrm{d}t \\
+& \leq \int_0^1 L \, t \, \|\theta' - \theta\|_2^2 \, \mathrm{d}t =
+    \frac{L}{2} \|\theta' - \theta\|_2^2,
+\end{align*}
 
-The examples are all *exponential families*\index{exponential families}, with
-their canonical parametrizations leading to the two desirable properties above.
-It is far from all statistical models that are exponential families, but even
-the more complicated models are often build from simpler components that are, in
-fact, exponential families. We will in several cases take advantage of such an
-underlying exponential family structure of the components---even though we will
-avoid a full fledged treatment of exponential families, see @Lauritzen:2023. For
-the implementation of computations and optimization algorithms, what matters
-most is the possibility to exploit sufficient statistics and convexity of the
-negative log-likelihood to yield fast computations and convergence guarantees of
-the algorithms.
+by the Cauchy-Schwarz inequality and the Lipschitz bound on $\nabla H$.
+:::
+
+Lemma\ \@ref(lem:descent-lemma) is known as the *descent lemma*.
+\index{descent
+lemma} The right-hand side is a quadratic in $\theta'$ with
+Hessian $L I$ that lies *above* $H$ everywhere and touches $H$ at
+$\theta' = \theta$. Gradient descent in Chapter\ \@ref(numopt) is exactly the
+algorithm that, at each step, replaces $H$ with this quadratic surrogate and
+jumps to its minimizer; the step size $t = 1/L$ falls out of that derivation
+rather than being imposed by hand.
+
+The matching lower bound is *strong convexity*. A function $H$ is *$m$-strongly
+convex* if there exists $m > 0$ such that \index{strong convexity}
+
+\[
+H(\theta') \geq H(\theta) + \nabla H(\theta)^\top (\theta' - \theta) +
+  \frac{m}{2} \|\theta' - \theta\|_2^2
+\]
+
+for all $\theta, \theta'$, or equivalently, for twice differentiable $H$,
+
+\[
+\nabla^2 H(\theta) \succeq m I \quad \text{for all } \theta.
+\]
+
+Figure\ \@ref(fig:smoothness-sandwich) puts the two quadratic bounds side by
+side: an upper quadratic of curvature $L$ from the descent lemma and a lower
+quadratic of curvature $m$ from strong convexity, both agreeing with $H$ in
+value and gradient at the anchor and differing only in how fast they curve away
+from it.
+
+```{r}
+#| label: smoothness-sandwich
+#| echo: false
+#| fig-cap: "Quadratic bounds on a function $H$ that is both $L$-smooth and
+#|   $m$-strongly convex. At any anchor point $\\theta_0$, $H$ lies between
+#|   $H(\\theta_0) + \\nabla H(\\theta_0)^\\top (\\theta - \\theta_0) +
+#|   \\tfrac{L}{2}\\|\\theta - \\theta_0\\|_2^2$ (upper bound, from the descent
+#|   lemma) and the same expression with $L$ replaced by $m$ (lower bound, from
+#|   strong convexity). All three curves agree in value and gradient at
+#|   $\\theta_0$. The bounds diverge as $\\theta$ moves away, at a rate
+#|   controlled by the condition number $\\kappa = L/m$. Here $\\kappa = 4$."
+#| fig-width: 5.5
+#| fig-height: 3.2
+#| out-width: "75%"
+#| fig-align: "center"
+#| warning: false
+
+H <- function(theta) theta^2 / 2 + theta^4 / 4
+H_prime <- function(theta) theta + theta^3
+
+L_val <- 4
+m_val <- 1
+theta0 <- 0.6
+H0 <- H(theta0)
+g0 <- H_prime(theta0)
+
+theta_seq <- seq(-1, 1, length.out = 200)
+
+df <- data.frame(
+  theta = rep(theta_seq, 3),
+  y = c(
+    H(theta_seq),
+    H0 + g0 * (theta_seq - theta0) + 0.5 * L_val * (theta_seq - theta0)^2,
+    H0 + g0 * (theta_seq - theta0) + 0.5 * m_val * (theta_seq - theta0)^2
+  ),
+  curve = factor(
+    rep(c("H", "L_upper", "m_lower"), each = length(theta_seq)),
+    levels = c("H", "L_upper", "m_lower")
+  )
+)
+
+label_vec <- c(
+  H = "H",
+  L_upper = "Upper bound (L)",
+  m_lower = "Lower bound (m)"
+)
+
+ggplot(df, aes(theta, y, color = curve, linetype = curve)) +
+  geom_line() +
+  geom_point(
+    data = data.frame(theta = theta0, y = H0),
+    aes(theta, y),
+    inherit.aes = FALSE
+  ) +
+  scale_color_manual(
+    name = NULL,
+    values = c(H = "black", L_upper = "steelblue", m_lower = "darkorange"),
+    labels = label_vec
+  ) +
+  scale_linetype_manual(
+    name = NULL,
+    values = c(H = "solid", L_upper = "dashed", m_lower = "dashed"),
+    labels = label_vec
+  ) +
+  labs(x = expression(theta), y = NULL) +
+  theme_schematic()
+```
+
+Strong convexity is strictly stronger than convexity: the Hessian is bounded
+*away from zero* uniformly, so the curvature never flattens out, and a unique
+minimizer is guaranteed to exist. The same lower quadratic gives a useful
+two-sided bound on how the function value, the distance to the minimizer, and
+the gradient norm relate to one another.
+
+::: {.lemma #strong-convex-suboptimality}
+If $H$ is $m$-strongly convex with minimizer $\theta^\star$, then for all
+$\theta$,
+
+\[
+\frac{m}{2} \|\theta - \theta^\star\|_2^2 \leq H(\theta) - H(\theta^\star) \leq
+  \frac{1}{2m} \|\nabla H(\theta)\|_2^2.
+\]
+:::
+
+::: {.proof .boxed}
+The left inequality is the strong-convexity bound with $\theta \leftarrow
+\theta^\star$ and $\theta' \leftarrow \theta$, using
+$\nabla H(\theta^\star) = 0$. For the right inequality, minimize both sides of
+the strong-convexity bound
+
+\[
+H(\theta') \geq H(\theta) + \nabla H(\theta)^\top (\theta' - \theta) +
+  \frac{m}{2} \|\theta' - \theta\|_2^2
+\]
+
+over $\theta'$. The left-hand side attains its minimum at $\theta' =
+\theta^\star$ with value $H(\theta^\star)$; the right-hand side is a quadratic
+in $\theta'$ minimized at $\theta' = \theta - m^{-1} \nabla H(\theta)$ with
+value $H(\theta) - (2m)^{-1} \|\nabla H(\theta)\|_2^2$. Hence
+$H(\theta^\star) \geq H(\theta) - (2m)^{-1} \|\nabla H(\theta)\|_2^2$.
+:::
+
+When $H$ is both $L$-smooth and $m$-strongly convex with $m \leq L$, the ratio
+
+\[
+\kappa = \frac{L}{m} \geq 1
+\]
+
+is called the *condition number* of $H$. \index{condition number} It measures
+the aspect ratio of the level sets of $H$ near the minimum: when $\kappa$ is
+close to $1$, the level sets are nearly spherical and the negative gradient
+points roughly toward the minimum; when $\kappa$ is large, the level sets are
+elongated ellipses with axes of very different lengths, and the negative
+gradient can point almost orthogonally to the direction of the minimizer. The
+linear convergence rate of gradient descent in Chapter\ \@ref(numopt) scales
+like $1 - 1/\kappa$ per iteration, so the number of iterations to reach a target
+accuracy is proportional to $\kappa$.
+
+::: {.example .boxed #ols-condition-number}
+For the OLS objective of Example\ \@ref(exm:ols-normal-equations) the Hessian
+$\mathbf{X}^\top \mathbf{X}$ is constant in $\beta$, so the Lipschitz and
+strong-convexity constants are exactly the largest and smallest eigenvalues:
+
+\[
+L = \lambda_{\max}(\mathbf{X}^\top \mathbf{X}), \quad
+m = \lambda_{\min}(\mathbf{X}^\top \mathbf{X}),
+\]
+
+and the condition number $\kappa = L / m$ equals the squared condition number of
+$\mathbf{X}$ itself. OLS is strongly convex precisely when $\mathbf{X}$ has full
+column rank, in which case $m > 0$---near-collinear columns drive
+$\lambda_{\min}$ toward zero and $\kappa$ toward infinity. The condition number
+is therefore the precise translation of "ill-conditioned design matrix" into
+optimization terms.
+
+The two designs below illustrate the range. Both have $N = 200$ observations and
+$p = 2$ predictors; the second has two nearly collinear columns.
+
+```{r}
+#| label: ols-condition-number-demo
+
+set.seed(42)
+
+N <- 200
+X_well <- matrix(rnorm(N * 2), N, 2)
+X_ill <- cbind(X_well[, 1], X_well[, 1] + 0.01 * rnorm(N))
+
+condition_summary <- function(X) {
+  ev <- eigen(crossprod(X), only.values = TRUE)$values
+  c(L = max(ev), m = min(ev), kappa = max(ev) / min(ev))
+}
+
+rbind(
+  well_conditioned = condition_summary(X_well),
+  ill_conditioned = condition_summary(X_ill)
+)
+```
+
+The well-conditioned design has $\kappa$ close to $1$, while the ill-conditioned
+design has $\kappa$ several orders of magnitude larger. Gradient descent applied
+to the two OLS problems with these designs would need on the order of
+$\kappa_{\text{ill}} / \kappa_{\text{well}}$ times as many iterations to reach
+the same accuracy on the second as on the first, a ratio we will see play out
+concretely in Chapter\ \@ref(numopt). Figure\ \@ref(fig:ols-condition-contour)
+makes the geometry concrete: the aspect ratio of the elliptical level sets *is*
+the condition number, and ill-conditioning collapses the bowl into a narrow
+valley along the direction of smallest curvature.
+:::
+
+```{r}
+#| label: ols-condition-contour
+#| echo: false
+#| fig-cap: "OLS objective contours for a well-conditioned design (left,
+#|   independent columns, $\\kappa \\approx 1$) and a moderately ill-conditioned
+#|   design (right, columns with correlation $0.8$, $\\kappa \\approx 9$). The
+#|   aspect ratio of the elliptical level sets equals $\\kappa$, so
+#|   ill-conditioning stretches the bowl into a narrow valley along the
+#|   direction of smallest curvature; the negative gradient at a point off the
+#|   axis then points almost across the valley rather than along it toward
+#|   $\\hat{\\beta}$."
+#| fig-width: 7
+#| fig-height: 3.5
+#| out-width: "100%"
+#| fig-align: "center"
+#| warning: false
+
+library(patchwork)
+
+contour_panel <- function(X, y, title_label) {
+  XtX <- crossprod(X)
+  Xty <- crossprod(X, y)
+  yty <- sum(y^2)
+  beta_hat <- as.numeric(solve(XtX, Xty))
+  halfwidth <- 1.5
+
+  grid <- expand.grid(
+    b1 = seq(
+      beta_hat[1] - halfwidth,
+      beta_hat[1] + halfwidth,
+      length.out = 200
+    ),
+    b2 = seq(
+      beta_hat[2] - halfwidth,
+      beta_hat[2] + halfwidth,
+      length.out = 200
+    )
+  )
+  grid$z <- with(
+    grid,
+    0.5 *
+      (XtX[1, 1] *
+        b1^2 +
+        2 * XtX[1, 2] * b1 * b2 +
+        XtX[2, 2] * b2^2 -
+        2 * (Xty[1] * b1 + Xty[2] * b2) +
+        yty)
+  )
+
+  ggplot(grid, aes(b1, b2, z = z)) +
+    geom_contour(color = "steelblue", bins = 15) +
+    geom_point(
+      data = data.frame(b1 = beta_hat[1], b2 = beta_hat[2]),
+      inherit.aes = FALSE,
+      aes(b1, b2)
+    ) +
+    coord_equal() +
+    labs(
+      x = expression(beta[1]),
+      y = expression(beta[2]),
+      title = title_label
+    ) +
+    theme(plot.title = element_text(hjust = 0.5, size = 11))
+}
+
+set.seed(24)
+
+N_fig <- 100
+beta_fig <- c(1, 2)
+
+X_well_fig <- matrix(rnorm(N_fig * 2), N_fig, 2)
+z1 <- rnorm(N_fig)
+z2 <- rnorm(N_fig)
+X_ill_fig <- cbind(z1, 0.8 * z1 + sqrt(1 - 0.8^2) * z2)
+
+y_well_fig <- X_well_fig %*% beta_fig
+y_ill_fig <- X_ill_fig %*% beta_fig
+
+p_well <- contour_panel(X_well_fig, y_well_fig, "Well-conditioned")
+p_ill <- contour_panel(X_ill_fig, y_ill_fig, "Ill-conditioned")
+
+p_well + p_ill + plot_layout(axes = "collect")
+```
+
+## Constraints {#constraints}
+
+The optimization problems we have studied so far have all been unconstrained, or
+constrained only to an open parameter set on which the gradient was free to
+vanish. Many statistical estimation problems carry genuine inequality
+constraints---probabilities must be non-negative and sum to one, variances and
+rates must be positive, allele frequencies live in fixed intervals, and so on.
+In this section, we introduce the fundamentals for such problems (the convex
+constrained standard form, its optimality conditions, and the two main
+algorithmic strategies), using the multinomial MLE on the simplex as a running
+example. The algorithms themselves are introduced in Chapter\ \@ref(numopt).
+
+An optimization problem is a *convex problem* if both the objective and the
+feasible set are convex. \index{convex problem} In standard form,
+
+\[
+\begin{aligned}
+& \operatorname*{minimize}_{\theta \in \mathbb{R}^p} && H(\theta) \\
+& \text{subject to} && g_i(\theta) \leq 0, \quad i = 1, \ldots, r, \\
+& && a_j^\top \theta = b_j, \quad j = 1, \ldots, s,
+\end{aligned}
+\]
+
+this means that $H$ and each $g_i$ are convex functions and the equality
+constraints are affine. We restrict to affine equality constraints because a
+nonlinear equality $h_j(\theta) = 0$ defines a curved manifold, which is not in
+general a convex set. Convex feasible sets are produced by intersecting the
+sublevel sets of convex inequality constraints with affine subspaces. We assume
+convex constraints throughout the rest of the book.
+
+The feasible sets that recur in statistical estimation are simple. The
+*probability simplex* \index{simplex}
+
+\[
+\Delta_K = \left\{ p \in \mathbb{R}^K \mid p_k \geq 0,\,
+  \sum_{k=1}^K p_k = 1 \right\}
+\]
+
+arises whenever we estimate a discrete distribution, for instance for
+multinomial models, mixture weights, and transition probabilities in Markov
+chains. The *positive orthant* $\{\theta \in \mathbb{R}^p \mid \theta_k > 0\}$
+arises for variances, rates, and scale parameters. A *box*
+$\{\theta \in \mathbb{R}^p \mid l_k \leq \theta_k \leq u_k\}$ arises when
+parameters are known a priori to lie in a fixed range. All three are convex.
+
+A point on the boundary of the feasible set need not satisfy
+$\nabla H(\theta^\star) = 0$: the gradient may point outward, in which case no
+feasible perturbation decreases $H$. We hinted at this phenomenon in
+Section\ \@ref(opt-conditions) and it is handled formally by the
+*Karush--Kuhn--Tucker conditions*, which extend the first-order optimality
+condition to constrained problems by associating a Lagrange multiplier with each
+constraint.
+
+::: {.theorem #kkt}
+Consider the convex problem above with differentiable $H$ and $g_i$, and
+suppose Slater's condition holds: there is a point $\tilde{\theta}$ with
+$g_i(\tilde{\theta}) < 0$ for all $i$ and $a_j^\top \tilde{\theta} = b_j$ for
+all $j$. Then $\theta^\star$ is a global minimizer if and only if there exist
+Lagrange multipliers $\lambda^\star \in \mathbb{R}_{\geq 0}^r$ and
+$\nu^\star \in \mathbb{R}^s$ such that
+\index{Karush--Kuhn--Tucker conditions}
+
+\begin{align*}
+& \nabla H(\theta^\star) +
+  \sum_{i=1}^r \lambda_i^\star \nabla g_i(\theta^\star) +
+  \sum_{j=1}^s \nu_j^\star a_j = 0
+&& \text{(stationarity)}, \\
+& g_i(\theta^\star) \leq 0, \quad a_j^\top \theta^\star = b_j
+&& \text{(primal feasibility)}, \\
+& \lambda_i^\star g_i(\theta^\star) = 0
+&& \text{(complementary slackness)}.
+\end{align*}
+:::
+
+We omit the proof, which is a standard result in convex analysis. When all
+inequality constraints are strictly inactive at $\theta^\star$, complementary
+slackness forces every $\lambda_i^\star$ to vanish and the stationarity
+condition reduces to the unconstrained $\nabla H(\theta^\star) = 0$ on the
+affine subspace defined by the equality constraints. The geometric content of
+the KKT conditions is the same intuition as in Section\ \@ref(opt-conditions):
+at a minimizer on the boundary, the negative gradient lies in the cone generated
+by the outward normals of the active constraints, since otherwise some feasible
+direction would still decrease $H$.
+
+Two strategies are available for solving convex constrained problems. The first
+is to *reparametrize* the constraint away. A probability vector $p \in \Delta_K$
+with all $p_k > 0$ can be written as $p_k = e^{\theta_k} / \sum_l e^{\theta_l}$
+for $\theta \in \mathbb{R}^K$, mapping the simplex into all of $\mathbb{R}^K$. A
+positive parameter $\sigma^2 > 0$ can be replaced by an unconstrained
+log-variance $\tau = \log \sigma^2$. The pitfall, as
+Section\ \@ref(parametrization) showed, is that these reparametrizations are
+typically nonlinear and can spoil the convexity of the underlying problem.
+
+The second strategy is to *stay in the constrained formulation* and use a method
+that handles the inequality constraints explicitly. The dominant approach in
+this family is the *barrier method*, a member of the interior-point family that
+replaces the hard inequality constraints by a sequence of smooth barrier
+penalties and solves a sequence of unconstrained problems. In
+Chapter\ \@ref(numopt), we introduce the barrier method in detail and apply it
+to the multinomial example below.
+
+::: {.example .boxed #multinomial-mle-simplex}
+The multinomial maximum-likelihood problem for observed counts
+$n_1, \ldots, n_K$ from $N = \sum_k n_k$ i.i.d. draws is
+
+\[
+\operatorname*{minimize}_{p \in \mathbb{R}^K}
+  -\sum_{k=1}^K n_k \log p_k
+\quad \text{subject to} \quad
+p_k \geq 0,\, \sum_{k=1}^K p_k = 1.
+\]
+
+In standard form the objective $-\sum_k n_k \log p_k$ is convex on the positive
+orthant (each $-\log$ term is convex), the inequalities $-p_k \leq 0$ are linear
+(and hence convex), and the equality $\sum_k p_k - 1 = 0$ is affine. Slater's
+condition holds via the uniform point $p_k = 1/K$.
+
+When all $n_k > 0$ the MLE lies in the interior, so the inequality multipliers
+vanish by complementary slackness and the KKT stationarity condition reduces to
+
+\[
+-\frac{n_k}{p_k^\star} + \nu^\star = 0 \quad \text{for all } k,
+\]
+
+giving $p_k^\star = n_k / \nu^\star$. Summing and using $\sum_k p_k^\star = 1$
+forces $\nu^\star = N$, and we recover the familiar empirical MLE
+$\hat{p}_k = n_k / N$.
+:::
 
 ## Multinomial models
 
-The multinomial model is the model of all probability distributions on 
-a finite set $\mathcal{Y} = \{1, \ldots, K\}$. We refer to each individual 
-element of the sample space $\mathcal{Y}$ as a *category*, \index{category}
-and we say that there are $K$ categories. The full model is parametrized
-by the simplex \index{simplex}
-
-$$\Delta_K = \left\{(p_1, \ldots, p_K)^T \in \mathbb{R}^K \ \Biggm| \ p_y \geq 0, \ \sum_{y=1}^K p_y = 1\right\}.$$
-
-The distributions parametrized by the relative interior of $\Delta_K$ can be 
-reparametrized as 
-
-$$p_y = \frac{e^{\theta_y}}{\sum_{k=1}^K e^{\theta_l}} \in (0,1)$$
-
-for $\theta = (\theta_1, \ldots, \theta_K)^T \in \mathbb{R}^K.$ The entries of a 
-probability vector $p \in \Delta_K$ can then be expressed as 
-
-$$p_y = \frac{e^{t(y)^T \theta}}{\varphi(\theta)}$$
-
-where $t(y) = (\delta_{1y}, \ldots, \delta_{Ky})^T \in \mathbb{R}^{K}$
-(where $\delta_{ky} \in \{0, 1\}$ is the Kronecker delta being 1 if and only
-if $k = y$), and 
-
-$$\varphi(\theta) = \sum_{k=1}^K e^{\theta_l}.$$
-
-With $N$ i.i.d. observations from a multinomial distribution we find 
-that the log-likelihood function is 
-
-\begin{align*}
-\ell(\theta) & = \sum_{i=1}^N \sum_{k=1}^K \delta_{k y_i} \log(p_k(\theta)) \\
-& = \sum_{k=1}^K \underbrace{\sum_{i=1}^N \delta_{k y_i}}_{= n_k} \log(p_k(\theta)) \\ 
-& = \sum_{k=1}^K  n_k \log(p_k(\theta)) \\ 
-& = \theta^T  \mathbf{N} - N \log \left(\varphi(\theta) \right) \\
-& = \theta^T  \mathbf{N} - N \log \left(\sum_{k=1}^{K} e^{\theta_k} \right).
-\end{align*}
-
-where $\mathbf{N} = (n_1, \ldots, n_K)^T = \sum_{i=1}^N t(y_i) \in \mathbb{N}_0^K$ is the sufficient 
-statistic, which is simply a tabulation of the times the different elements in 
-$\{1, \ldots, K\}$ were observed. The term $\log \left(\varphi(\theta) \right)$ 
-is a convex function, and since the other term is linear, $- \ell$ is 
-convex in the $\theta$-parametrization. 
-
-The distribution of the tabulated data, $\mathbf{N}$, is a 
-multinomial distribution\index{multinomial distribution} with parameters $(N, p)$,
-and we often write $\mathbf{N} \sim \textrm{Mult}(N, p)$.
-
-We call the $\theta$-parametrization above with $\theta \in \mathbb{R}^K$ 
-the *symmetric* parametrization. Unfortunately, this parameter is not 
-identifiable from the probability vector $p$; adding a constant to all entries of $\theta$ 
-will give the same probability vector. The lack of identifiability is 
-traditionally fixed by setting $\theta_K = 0$. This 
-results in the parameter $\theta = (\theta_1, \ldots, \theta_{K-1})^T \in \mathbb{R}^{K-1},$
-in the sufficient statistic $t(y) = (\delta_{1y}, \ldots, \delta_{(K-1)y})^T \in \mathbb{R}^{K-1}$,
-and 
-
-\[
-\varphi(\theta) = 1 + \sum_{k=1}^{K-1} e^{\theta_k}.
-\]
-
-With this parametrization, the category $K$ is called the reference category, 
-\index{reference category} and the parameter $\theta_y$ 
-now expresses the difference relative to the reference category:   
-
-$$p_y = \left\{\begin{array}{ll} \frac{e^{\theta_y}}{\varphi(\theta)}  & \quad \text{if } y = 1, \ldots, K-1 \\  \frac{1}{\varphi(\theta)} & \quad \text{if } y = K. \end{array}\right.$$
-
-We see that $p_y = e^{\theta_y}p_K$ for $y = 1, \ldots, K-1$,
-with the probability of the reference category $K$ acting as a baseline probability,
-and the factor $e^{\theta_y}$ acting as a multiplicative modification of this 
-baseline. Moreover, the ratios 
-
-$$\frac{p_y}{p_k} = e^{\theta_y - \theta_k},$$
-
-are independent of the chosen baseline. The log-likelihood becomes 
+The multinomial distribution on $K$ categories is the natural model for
+categorical observations, and its parameter space is the probability simplex
+$\Delta_K$ \index{simplex} introduced in Section\ \@ref(constraints). Given $N$
+i.i.d. observations $y_1, \ldots, y_N \in \{1, \ldots, K\}$ with counts
+$n_k = \sum_{i=1}^N \mathbf{1}(y_i = k)$, the log-likelihood is
 \index{log-likelihood function!multinomial distribution}
 
-\begin{align*}
-\ell(\theta) & = \theta^T  \mathbf{N} - N \log \left(1 + \sum_{k=1}^{K - 1} e^{\theta_k} \right).
-\end{align*}
-
-In the special case of $K = 2$ the two elements $\mathcal{Y}$ are often given 
-other labels than $1$ and $2$. The most common labels are $\{0, 1\}$ and $\{-1, 1\}$.
-If we use the $0$-$1$-labels the convention is to use $p_0$ as the baseline and 
-thus 
-
 \[
-p_1 = \frac{e^{\theta}}{1 + e^{\theta}} = e^{\theta} p_0 = e^{\theta} (1 - p_1)
+\ell(p) = \sum_{k=1}^K n_k \log p_k,
 \]
 
-is parametrized by $\theta \in \mathbb{R}$. As this function of $\theta$ is 
-known as the *logistic function*,\index{logistic function} this parametrization of the probability 
-distributions on $\{0,1\}$ is called the logistic model.\index{logistic model} 
-From the above we see that 
+with the count vector $\mathbf{N} = (n_1, \ldots, n_K)$ as the sufficient
+statistic in the computational sense of Section\ \@ref(parametrization): the
+data enter the likelihood only through $\mathbf{N}$, so each evaluation costs
+$O(K)$ once the counts have been aggregated. When $p$ ranges freely over the
+relative interior of $\Delta_K$, Example\ \@ref(exm:multinomial-mle-simplex)
+derived the closed-form MLE $\hat{p}_k = n_k / N$ via the KKT conditions of
+Section\ \@ref(constraints). When some $n_k = 0$ the MLE is still
+$\hat{p}_k = 0$, but now on the boundary of the simplex where $-\log p_k$
+diverges, so a numerical method that evaluates the log-likelihood at every
+category has to handle this case with care. The multinomial is also a canonical
+exponential family in the parametrization $p_k(\theta) \propto e^{\theta_k}$, so
+by Theorem\ \@ref(thm:canonical-nll-convex) the negative log-likelihood is
+convex in $\theta$ on $\mathbb{R}^K$ modulo the global shift
+$\theta \mapsto \theta + c\mathbf{1}$, which leaves $p$ unchanged and is
+traditionally fixed by setting $\theta_K = 0$ (the *reference category*).
+\index{reference category} \index{multinomial distribution}
 
-\[
-\theta = \log \frac{p_1}{1 - p_1}
-\]
-
-is the log-odds. 
-
-If we use the $\pm 1$-labels, an alternative parametrization is 
-
-\[
-p_y = \frac{e^{y\theta}}{e^\theta + e^{-\theta}}
-\]
-
-for $\theta \in \mathbb{R}$ and $y \in \{-1, 1\}$. This gives a symmetric treatment 
-of the two labels while retaining the identifiability. 
+The free-simplex case is the easy one. The richer problem, and the one we will
+use as a running constrained-estimation example in Chapter\ \@ref(numopt), is
+*collapsed* multinomial estimation: the multinomial probability vector is
+restricted to a submanifold of $\Delta_K$ specified by a smaller parameter
+$\psi$, and some of the $K$ categories are merged before observation. The
+peppered-moths example, treated below, has both features at once: the allele
+frequencies parametrize a curve on $\Delta_6$ via Hardy-Weinberg equilibrium,
+and the six genotypes are observed only as three phenotypes.
 
 ### Parametrizations and collapsing of categories {#mult-collapse}
 
-In this section we make two additions to the multinomial model. We 
-allow for a parametrization of the multinomial probability vector, 
-which is a map $\psi \mapsto p(\psi) = (p_1(\psi), \ldots, p_K(\psi))$, 
-and we allow for a certain type of incomplete observations from 
-the mutinomial distribution where some categories are collapsed. 
+In this section we make two additions to the multinomial model. We allow for a
+parametrization of the multinomial probability vector, which is a map
+$\psi \mapsto p(\psi) = (p_1(\psi), \ldots, p_K(\psi))$, and we allow for a
+certain type of incomplete observations from the multinomial distribution where
+some categories are collapsed.
 
-
-A collapse of categories is described by a partition \index{collapsing of categories} 
+A collapse of categories is described by a partition
+\index{collapsing of categories}
 $A_1 \cup \ldots \cup A_{K_0} = \{1, \ldots, K\}$ and a map
 
 \[
@@ -429,26 +1677,26 @@ given by
 M((n_1, \ldots, n_K))_j = \sum_{k \in A_j} n_k.
 \]
 
-For a single observation $x \in \{1,\ldots,K\}$ we have a corresponding 
+For a single observation $x \in \{1,\ldots,K\}$ the corresponding indicator
+vector $t(x) = (\delta_{1x}, \ldots, \delta_{Kx})^\top \in \{0,1\}^K$ collapses
+to
 
 \[
 y = M(t(x)) = \left( \sum_{k \in A_1} \delta_{kx}, \ldots,
- \sum_{k \in A_{K_0}} \delta_{kx} \right) \in \mathbb{N}_0^{K_0}
+ \sum_{k \in A_{K_0}} \delta_{kx} \right) \in \mathbb{N}_0^{K_0},
 \]
 
-indicating which of the $K_0$ collapsed categories the observation $y$
-falls into. 
+indicating which of the $K_0$ collapsed categories the observation falls into.
 
-If $\mathbf{N}^x \sim \textrm{Mult}(N, p)$ with $p = (p_1, \ldots, p_K)$ then 
+If $\mathbf{N}^x \sim \textrm{Mult}(N, p)$ with $p = (p_1, \ldots, p_K)$ then
 the corresponding tabulation of $y$-values equals
 
-\[ 
+\[
 \mathbf{N} = M(\mathbf{N}^x) \sim \textrm{Mult}(N, M(p)).
 \]
 
-In terms of the parametrization $\psi \mapsto p(\psi)$ of the 
-multinomial probability vector,
-and having observed $\mathbf{N} = (n_1, \ldots, n_{K_0})$,
+In terms of the parametrization $\psi \mapsto p(\psi)$ of the multinomial
+probability vector, and having observed $\mathbf{N} = (n_1, \ldots, n_{K_0})$,
 the log-likelihood under the collapsed multinomial model is generally
 
 \begin{equation}
@@ -457,34 +1705,36 @@ the log-likelihood under the collapsed multinomial model is generally
 (\#eq:mult-col-loglik) 
 \end{equation}
 
-
 ### Peppered Moths {#pep-moth}
 
-The peppered moth (*Birkemåler* in Danish) is a moth species that is found 
-throughout the northern hemisphere. Its color can vary considereably from 
-very dark to very light. The light colored varieties can also have patterns 
-of darker spots. Figure \@ref(fig:moth-figure)
-shows examples of the color variation among individual moths. The peppered moth
-provided an [early demonstration of
+The peppered moth (*Birkemåler* in Danish) is a moth species that is found
+throughout the northern hemisphere. Its color can vary considereably from very
+dark to very light. The light colored varieties can also have patterns of darker
+spots. Figure \@ref(fig:moth-figure) shows examples of the color variation among
+individual moths. The peppered moth provided an [early demonstration of
 evolution](https://en.wikipedia.org/wiki/Peppered_moth_evolution) in the 19th
 century England, where the light colored moth was outnumbered by the dark
 colored variety. The dark color became dominant due to the increased pollution,
-where trees were darkened by soot, and the dark colored moths thus had a 
+where trees were darkened by soot, and the dark colored moths thus had a
 selective advantage.
 
 The color is the directly observable phenotype of the moth, while the genetics
-is a little more complicated to observe. For the purpose of this example, a
-moth is classified into one of three color categories: dark, mottled, or light
+is a little more complicated to observe. For the purpose of this example, a moth
+is classified into one of three color categories: dark, mottled, or light
 colored. The color of the moth is primarily determined by one gene that occurs
-in three different alleles denoted $C$, $I$ and $T$. The alleles are ordered in terms
-of dominance as $C > I > T$. Moths with a genotype including $C$ are dark. Moths 
-with genotype $TT$ are light colored. Moths with genotypes $II$ and $IT$ are 
-mottled. 
-Thus there a total of six different genotypes 
-($CC$, $CI$, $CT$, $II$, $IT$ and $TT$), which 
-results in three different color phenotypes.
+in three different alleles denoted $C$, $I$ and $T$. The alleles are ordered in
+terms of dominance as $C > I > T$. Moths with a genotype including $C$ are dark.
+Moths with genotype $TT$ are light colored. Moths with genotypes $II$ and $IT$
+are mottled. Thus there a total of six different genotypes ($CC$, $CI$, $CT$,
+$II$, $IT$ and $TT$), which results in three different color phenotypes.
 
-```{r moth-figure, echo = FALSE, out.width="100%", fig.align='center', fig.cap="Examples of the color variation of the peppered moth."}
+```{r}
+#| label: moth-figure
+#| echo: false
+#| out-width: "100%"
+#| fig-align: "center"
+#| fig-cap: "Examples of the color variation of the peppered moth."
+
 knitr::include_graphics("figures/moth.jpg")
 ```
 
@@ -503,10 +1753,10 @@ frequencies are
   p_{II} &=  p_I^2, \ p_{IT} = 2p_Ip_T, \ p_{TT} = p_T^2.
 \end{align*}
 
-The parametrization in terms of allele frequencies maps out a subset of the 
-full parameter space for the multinomial distribution with six categories. 
-If we could observe the genotypes, the multinomial log-likelihood, 
-parametrized by allele frequencies, would be 
+The parametrization in terms of allele frequencies maps out a subset of the full
+parameter space for the multinomial distribution with six categories. If we
+could observe the genotypes, the multinomial log-likelihood, parametrized by
+allele frequencies, would be
 
 \begin{align*}
  \ell(p_C, p_I) & = 2N_{CC} \log(p_C) + N_{CI} \log (2 p_C p_I) + N_{CT} \log(2 p_C p_T)  \\
@@ -515,25 +1765,25 @@ parametrized by allele frequencies, would be
 & \ \ + 2 N_{II} \log(p_I) + N_{IT} \log(2p_I (1 - p_C - p_I)) + 2 N_{TT} \log(1 - p_C - p_I). 
 \end{align*}
 
-The log-likelihood is given in terms of the genotype counts and the two 
-probability parameters $p_C, p_I \geq 0$ with $p_C + p_I \leq 1$. By differentiation,
-it is possible to find an analytic expression for the maximum-likelihood estimate,
-but we will postpone this exercise to Section \@ref(peppered-moths), because
-collecting moths and determining their color will only identify their phenotype, 
-not their genotype. Thus we observe $(N_C, N_T, N_I)$, where
+The log-likelihood is given in terms of the genotype counts and the two
+probability parameters $p_C, p_I \geq 0$ with $p_C + p_I \leq 1$. By
+differentiation, it is possible to find an analytic expression for the
+maximum-likelihood estimate, but we will postpone this exercise to Section
+\@ref(peppered-moths), because collecting moths and determining their color will
+only identify their phenotype, not their genotype. Thus we observe
+$(N_C, N_T, N_I)$, where
 
 \[
 N = \underbrace{N_{CC} + N_{CI} + N_{CT}}_{= N_C} + 
 \underbrace{N_{IT} + N_{II}}_{=N_I} + \underbrace{N_{TT}}_{=N_T}.
 \]
 
-For maximum-likelihood estimation of the parameters from 
-the observation $(N_C, N_T, N_I)$ we need the likelihood in the marginal 
-distribution of the observed variables. This is an example of 
-collapsing of categories as treated in Section \@ref(mult-collapse) 
-with $K = 6$, corresponding to the six genotypes, and $K_0 = 3$, 
-corresponding to the three phenotypes. The partition corresponding to 
-the phenotypes is
+For maximum-likelihood estimation of the parameters from the observation
+$(N_C, N_T, N_I)$ we need the likelihood in the marginal distribution of the
+observed variables. This is an example of collapsing of categories as treated in
+Section \@ref(mult-collapse) with $K = 6$, corresponding to the six genotypes,
+and $K_0 = 3$, corresponding to the three phenotypes. The partition
+corresponding to the phenotypes is
 
 \[
 \{CC, CI, CT\} \cup \{IT, II\} \cup \{TT\} = \{CC, \ldots, TT\},
@@ -546,35 +1796,207 @@ and
 & = (N_{CC} + N_{CI} + N_{CT}, N_{IT} + N_{II}, N_{TT}).
 \end{align*}
 
-In terms of the $\psi = (p_C, p_I)$-parametrization, $p_T = 1 - p_C - p_I$ and 
+In terms of the $\psi = (p_C, p_I)$-parametrization, $p_T = 1 - p_C - p_I$ and
 
 \[
 p = (p_C^2, 2p_Cp_I, 2p_Cp_T, p_I^2,  2p_Ip_T, p_T^2).
 \]
 
-Hence 
+Hence
 
 \[
 M(p) = (p_C^2 + 2p_Cp_I + 2p_Cp_T, p_I^2 +2p_Ip_T, p_T^2).
 \]
 
+Figure\ \@ref(fig:moth-phenotype) shows the partition diagrammatically. The nine
+ordered allele pairs are arranged in a grid and colored by phenotype; summing
+the probabilities inside each color region gives the corresponding component of
+$M(p)$. The factor of $2$ on the heterozygous probabilities in the
+Hardy--Weinberg formula is exactly the count of off-diagonal cells that share a
+probability.
+
+```{r}
+#| label: moth-phenotype
+#| echo: false
+#| fig-cap: "Hardy–Weinberg probabilities for the nine ordered allele pairs,
+#|   colored by the resulting phenotype. The partition into dark, mottled, and
+#|   light cells is the collapsing map $M$, and summing the probabilities
+#|   inside each color region gives the corresponding component of $M(p)$."
+#| fig-width: 4.5
+#| fig-height: 3.5
+#| fig-align: "center"
+#| warning: false
+
+alleles <- c("C", "I", "T")
+
+phenotype_grid <- expand.grid(
+  allele_row = alleles,
+  allele_col = alleles,
+  stringsAsFactors = FALSE
+)
+
+phenotype_grid$phenotype <- with(
+  phenotype_grid,
+  ifelse(
+    allele_row == "C" | allele_col == "C",
+    "dark",
+    ifelse(allele_row == "T" & allele_col == "T", "light", "mottled")
+  )
+)
+
+prob_label <- function(a, b) {
+  if (a == b) {
+    sprintf("p[%s]^2", a)
+  } else {
+    pair <- sort(c(a, b))
+    sprintf("p[%s] * p[%s]", pair[1], pair[2])
+  }
+}
+
+phenotype_grid$prob <- mapply(
+  prob_label,
+  phenotype_grid$allele_row,
+  phenotype_grid$allele_col
+)
+
+phenotype_grid$allele_row <- factor(
+  phenotype_grid$allele_row,
+  levels = rev(alleles)
+)
+phenotype_grid$allele_col <- factor(
+  phenotype_grid$allele_col,
+  levels = alleles
+)
+phenotype_grid$phenotype <- factor(
+  phenotype_grid$phenotype,
+  levels = c("dark", "mottled", "light")
+)
+
+axis_labels <- parse(text = sprintf("italic(%s)", alleles))
+
+ggplot(
+  phenotype_grid,
+  aes(allele_col, allele_row, fill = phenotype)
+) +
+  geom_tile(color = "white", linewidth = 1.5) +
+  geom_text(
+    aes(label = prob, color = phenotype),
+    parse = TRUE,
+    size = 3.8
+  ) +
+  scale_fill_manual(
+    values = c(dark = "grey25", mottled = "grey70", light = "grey92")
+  ) +
+  scale_color_manual(
+    values = c(dark = "white", mottled = "white", light = "black"),
+    guide = "none"
+  ) +
+  scale_x_discrete(labels = axis_labels) +
+  scale_y_discrete(labels = rev(axis_labels)) +
+  coord_equal() +
+  labs(x = NULL, y = NULL, fill = "Phenotype") +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.ticks = element_blank()
+  )
+```
+
 The log-likelihood equals
 
 \begin{align*}
-\ell(p_C, p_I) & = N_C \log(p_C^2 + 2p_Cp_I + 2p_Cp_T) + 
+\ell(p_C, p_I) & = N_C \log(p_C^2 + 2p_Cp_I + 2p_Cp_T) +
 N_I \log(p_I^2 +2p_Ip_T) + N_T \log (p_T^2).
 \end{align*}
 
-We first implement the (negative) log-likelihood in a very problem 
-specific way below.
-The implementation checks if the parameter constraints 
-are fulfilled, that is, if  $(p_C, p_I, p_T)$ is a probability vector.
-If the parameters are out of bounds the function returns the value 
-$+\infty$. It is fairly standard in optimization to encode constraints by 
-letting the function return the value $+\infty$ (for minimization) 
-when parameters are out of bounds.
+Figure\ \@ref(fig:moth-contour) shows the contours of $-\ell(p_C, p_I)$ on the
+simplex for the data $(N_C, N_I, N_T) = (85, 196, 341)$ we use throughout this
+section. The objective tends to $+\infty$ on the boundary, where one of the
+three phenotype probabilities vanishes, and has a unique interior minimizer.
 
-```{r moth-likelihood}
+```{r}
+#| label: moth-contour
+#| echo: false
+#| fig-cap: "Contours of the negative log-likelihood $-\\ell(p_C, p_I)$ for the
+#|   peppered moth data $(N_C, N_I, N_T) = (85, 196, 341)$. The feasible region
+#|   is the simplex $\\{(p_C, p_I) : p_C, p_I \\geq 0, \\ p_C + p_I \\leq 1\\}$,
+#|   outlined in black; outside it the objective is undefined. The unique
+#|   interior minimizer is marked."
+#| fig-width: 4
+#| fig-height: 3.5
+#| fig-align: "center"
+#| warning: false
+
+ny <- c(85, 196, 341)
+
+grid <- expand.grid(
+  p_C = seq(0.005, 0.995, length.out = 200),
+  p_I = seq(0.005, 0.995, length.out = 200)
+)
+grid$p_T <- 1 - grid$p_C - grid$p_I
+grid$z <- ifelse(
+  grid$p_T > 0,
+  -(ny[1] *
+    log(grid$p_C^2 + 2 * grid$p_C * grid$p_I + 2 * grid$p_C * grid$p_T) +
+    ny[2] * log(grid$p_I^2 + 2 * grid$p_I * grid$p_T) +
+    ny[3] * log(grid$p_T^2)),
+  NA_real_
+)
+
+p_hat <- optim(
+  c(0.3, 0.3),
+  function(p) {
+    p_T <- 1 - p[1] - p[2]
+    if (p[1] <= 0 || p[2] <= 0 || p_T <= 0) {
+      return(Inf)
+    }
+    -(ny[1] *
+      log(p[1]^2 + 2 * p[1] * p[2] + 2 * p[1] * p_T) +
+      ny[2] * log(p[2]^2 + 2 * p[2] * p_T) +
+      ny[3] * log(p_T^2))
+  }
+)$par
+
+z_min <- min(grid$z, na.rm = TRUE)
+levels <- z_min * exp(seq(0, log(5), length.out = 18))
+
+simplex <- data.frame(p_C = c(0, 1, 0), p_I = c(0, 0, 1))
+
+ggplot(grid, aes(p_C, p_I, z = z)) +
+  geom_contour(color = "steelblue", breaks = levels) +
+  geom_polygon(
+    data = simplex,
+    inherit.aes = FALSE,
+    aes(p_C, p_I),
+    fill = NA,
+    color = "black"
+  ) +
+  geom_point(
+    data = data.frame(p_C = p_hat[1], p_I = p_hat[2]),
+    inherit.aes = FALSE,
+    aes(p_C, p_I)
+  ) +
+  coord_equal(xlim = c(0, 1), ylim = c(0, 1)) +
+  labs(x = expression(p[C]), y = expression(p[I]))
+```
+
+<!-- TODO: revisit in ch 22 / 25 — show the softmax reparametrization
+$p_j = e^{\theta_j} / \sum_i e^{\theta_i}$ as the canonical example of an
+unconstrained reformulation that removes the simplex constraint at the cost
+of convexity. A companion contour plot of $-\ell$ in $(\theta_1, \theta_2)$
+makes the non-convexity (curved level sets, ridge through the optimum)
+visible at a glance. Slide draft of the figure exists. -->
+
+We first implement the (negative) log-likelihood in a very problem specific way
+below. The implementation checks if the parameter constraints are fulfilled,
+that is, if $(p_C, p_I, p_T)$ is a probability vector. If the parameters are out
+of bounds the function returns the value $+\infty$. It is fairly standard in
+optimization to encode constraints by letting the function return the value
+$+\infty$ (for minimization) when parameters are out of bounds.
+
+```{r}
+#| label: moth-likelihood
+
 # p = c(p_C, p_I), p_T = 1 - p_C - p_I
 # ny is the data vector of counts of length 3
 neg_loglik_pep <- function(p, ny) {
@@ -582,166 +2004,192 @@ neg_loglik_pep <- function(p, ny) {
 
   out_of_bounds <-
     p[1] > 1 || p[1] < 0 || p[2] > 1 || p[2] < 0 || p_T < 0
-  if (out_of_bounds) return(Inf)
+
+  if (out_of_bounds) {
+    return(Inf)
+  }
 
   p_dark <- p[1]^2 + 2 * p[1] * p[2] + 2 * p[1] * p_T
   p_mott <- p[2]^2 + 2 * p[2] * p_T
   p_light <- p_T^2
+
   # The function returns the negative log-likelihood
-  - (ny[1] * log(p_dark) + ny[2] * log(p_mott) + ny[3] * log(p_light))
+  -(ny[1] * log(p_dark) + ny[2] * log(p_mott) + ny[3] * log(p_light))
 }
 ```
 
-It is possible to use `optim()` in R with just this implementation to 
-compute the maximum-likelihood estimate of the allele parameters. 
+It is possible to use `optim()` in R with just this implementation to compute
+the maximum-likelihood estimate of the allele parameters.
 
-```{r moth-optim, dependson="moth-likelihood"}
+```{r, dependson="moth-likelihood"}
+#| label: moth-optim
+
 optim(c(0.3, 0.3), neg_loglik_pep, ny = c(85, 196, 341))
 ```
 
-The `optim()` function uses an algorithm called [Nelder-Mead](https://en.wikipedia.org/wiki/Nelder–Mead_method) 
-as the default algorithm, which relies on log-likelihood evaluations only. It
-is slow but fairly robust. A bit of thought has to go into the initial 
-parameter choice, though. 
-Starting the algorithm at a boundary value, where the negative log-likelihood attains
-the value $\infty$, does not work. 
+The `optim()` function uses an algorithm called
+[Nelder-Mead](https://en.wikipedia.org/wiki/Nelder–Mead_method) as the default
+algorithm, which relies on log-likelihood evaluations only. It is slow but
+fairly robust. A bit of thought has to go into the initial parameter choice,
+though. Starting the algorithm at a boundary value, where the negative
+log-likelihood attains the value $\infty$, does not work.
 
-```{r  moth-optim-error, error = TRUE, dependson="moth-likelihood"}
+```{r, dependson="moth-likelihood"}
+#| label: moth-optim-error
+#| error: true
+
 optim(c(0, 0), neg_loglik_pep, ny = c(85, 196, 341))
 ```
 
 The computations can beneficially be implemented in greater generality. The R
-function `mult_collapse()` below implements collapsing of categories for  
-multinomial data---the 
-map denoted $M$ in the mathematical formulas. The implementation 
-works by adding up the entries of all
-cells belonging to the same group as specified by the `group` argument.
+function `mult_collapse()` below implements collapsing of categories for\
+multinomial data---the map denoted $M$ in the mathematical formulas. The
+implementation works by adding up the entries of all cells belonging to the same
+group as specified by the `group` argument.
 
-```{r moth-M}
+```{r}
+#| label: moth-M
+
 mult_collapse <- function(ny, group) {
   as.vector(tapply(ny, group, sum))
 }
 ```
 
-The log-likelihood for possibly collapsed data, `loglik_mult()` below,
-is implemented via `mult_collapse()` and two problem specific arguments. 
-One argument, `prob`, is a function that determines the 
-parametrization mapping the parameter that we optimize over to the
-multinomial probability vector. The other argument is a vector specifying 
-the grouping structure of the collapsing. In the implementation it is assumed 
-that the function passed on `prob` encodes parameter constraints 
-by returning `NULL` if parameters are out of bounds. 
+The log-likelihood for possibly collapsed data, `loglik_mult()` below, is
+implemented via `mult_collapse()` and two problem specific arguments. One
+argument, `prob`, is a function that determines the parametrization mapping the
+parameter that we optimize over to the multinomial probability vector. The other
+argument is a vector specifying the grouping structure of the collapsing. In the
+implementation it is assumed that the function passed on `prob` encodes
+parameter constraints by returning `NULL` if parameters are out of bounds.
 
-```{r moth-loglikelihood, dependson=c("moth-M", "moth-prob")}
+```{r, dependson=c("moth-M", "moth-prob")}
+#| label: moth-loglikelihood
+
 neg_loglik_mult <- function(par, ny, prob, group) {
   p <- prob(par)
-  if (is.null(p)) return(Inf)
-  - sum(ny * log(mult_collapse(p, group)))
+
+  if (is.null(p)) {
+    return(Inf)
+  }
+
+  -sum(ny * log(mult_collapse(p, group)))
 }
 ```
 
 The function `prob()` is implemented specifically for the peppered moth example
-as follows. 
+as follows.
 
-```{r moth-prob}
+```{r}
+#| label: moth-prob
+
 prob_pep <- function(p) {
   p[3] <- 1 - p[1] - p[2]
 
   out_of_bounds <-
     p[1] > 1 || p[1] < 0 || p[2] > 1 || p[2] < 0 || p[3] < 0
-  if (out_of_bounds) return(NULL)
 
-  c(p[1]^2, 2 * p[1] * p[2], 2 * p[1] * p[3],
-    p[2]^2, 2 * p[2] * p[3], p[3]^2
-  )
+  if (out_of_bounds) {
+    return(NULL)
+  }
+
+  c(p[1]^2, 2 * p[1] * p[2], 2 * p[1] * p[3], p[2]^2, 2 * p[2] * p[3], p[3]^2)
 }
 ```
 
-We test that the new implementation gives the same maximum-likelihood estimate 
+We test that the new implementation gives the same maximum-likelihood estimate
 as the problem specific implementation above.
 
-```{r moth-optim2, dependson=c("moth-likelihood", "moth-prob", "moth-M")}
-optim(c(0.3, 0.3), neg_loglik_mult,
+```{r, dependson=c("moth-likelihood", "moth-prob", "moth-M")}
+#| label: moth-optim2
+
+optim(
+  c(0.3, 0.3),
+  neg_loglik_mult,
   ny = c(85, 196, 341),
   prob = prob_pep,
   group = c(1, 1, 1, 2, 2, 3)
 )
 ```
 
-Once we have found an estimate of the parameters, we can compute a prediction 
-of the unobserved genotype counts from the phenotype counts, $\mathbf{N}^x$, using 
-the conditional distribution of the genotypes given the phenotypes. 
-This is straightforward as the conditional distribution of $\mathbf{N}_{A_j}^x = (N_k^x)_{k \in A_j}$
-given $N_j = n_j$ is also a multinomial distribution;
+Once we have found an estimate of the parameters, we can compute a prediction of
+the unobserved genotype counts from the phenotype counts, $\mathbf{N}^x$, using
+the conditional distribution of the genotypes given the phenotypes. This is
+straightforward as the conditional distribution of
+$\mathbf{N}_{A_j}^x = (N_k^x)_{k \in A_j}$ given $N_j = n_j$ is also a
+multinomial distribution;
 
 \[
 \mathbf{N}_{A_j}^x \mid N_j = n_j \sim \textrm{Mult}\left( n_j, \frac{p_{A_j}}{M(p)_j} \right).
 \]
 
-The probability parameters are simply $p$ restricted to $A_j$ and renormalized 
+The probability parameters are simply $p$ restricted to $A_j$ and renormalized
 to a probability vector. Observe that this gives
 
 \[
 E (N_k^x \mid N_j = n_j) = \frac{n_j p_k}{M(p)_j}
 \]
 
-for $k \in A_j$. Using the estimated parameters and the `mult_collapse()` function implemented above, we can compute a prediction of the genotype counts as follows.
+for $k \in A_j$. Using the estimated parameters and the `mult_collapse()`
+function implemented above, we can compute a prediction of the genotype counts
+as follows.
 
-```{r moth-predict, dependson=c("moth-M", "moth-prob")}
+```{r, dependson=c("moth-M", "moth-prob")}
+#| label: moth-predict
+
 ny <- c(85, 196, 341)
 group <- c(1, 1, 1, 2, 2, 3)
 p <- prob_pep(c(0.07084643, 0.18871900))
 ny[group] * p / mult_collapse(p, group)[group]
 ```
 
-This is of interest in itself, but computing these conditional expectations
-will also be central for the EM algorithm in Chapter \@ref(em). 
-
+This is of interest in itself, but computing these conditional expectations will
+also be central for the EM algorithm in Chapter \@ref(em).
 
 ## Finite mixture models
 
-A finite mixture model is a model of a pair of random variables $(Y, Z)$
-with $Z \in \{1, \ldots, K\}$, $P(Z = k) = p_k$, and the conditional distribution 
-of $Y$ given $Z = k$ having density $f_k( \cdot \mid \theta_k)$. The joint 
-density is then 
+A finite mixture model is a model of a pair of random variables $(Y, Z)$ with
+$Z \in \{1, \ldots, K\}$, $P(Z = k) = p_k$, and the conditional distribution of
+$Y$ given $Z = k$ having density $f_k( \cdot \mid \theta_k)$. The joint density
+is then
 
 \[
- (y, k) \mapsto f_k(y \mid \theta_k) p_k,
+(y, k) \mapsto f_k(y \mid \theta_k) p_k,
 \]
 
 and the marginal density for the distribution of $Y$ is
 
-\[ 
+\[
 f(y \mid \theta) =  \sum_{k=1}^K f_k(y \mid \theta_k) p_k
 \]
 
-where $\theta$ is the vector of all parameters. We say that the 
-model has $K$ mixture components and call $f_k( \cdot \mid \theta_k)$
-the mixture distributions and $p_k$ the mixture weights. 
+where $\theta$ is the vector of all parameters. We say that the model has $K$
+mixture components and call $f_k( \cdot \mid \theta_k)$ the mixture
+distributions and $p_k$ the mixture weights.
 
-The main usage of mixture models is to situations where $Z$ is not observed. 
-In practice, only $Y$ is observed, and parameter estimation has to be 
-based on the marginal distribution of $Y$ with density $f(\cdot \mid \theta)$,
-which is a weighted sum of the mixture distributions.
+The main usage of mixture models is to situations where $Z$ is not observed. In
+practice, only $Y$ is observed, and parameter estimation has to be based on the
+marginal distribution of $Y$ with density $f(\cdot \mid \theta)$, which is a
+weighted sum of the mixture distributions.
 
-The set of all probability measures on $\{1, \ldots, K\}$ is an exponential 
+The set of all probability measures on $\{1, \ldots, K\}$ is an exponential
 family with sufficient statistic
 
 \[
 \tilde{t}_0(k) = (\delta_{1k}, \delta_{2k}, \ldots, \delta_{(K-1)k}) \in \mathbb{R}^{K-1},
 \]
 
-canonical parameter $\alpha = (\alpha_1, \ldots, \alpha_{K-1}) \in \mathbb{R}^{K-1}$
-and 
+canonical parameter
+$\alpha = (\alpha_1, \ldots, \alpha_{K-1}) \in \mathbb{R}^{K-1}$ and
 
 \[
 p_k = \frac{e^{\alpha_k}}{1 + \sum_{l=1}^{K-1} e^{\alpha_l}}.
 \]
 
 When $f_k$ is an exponential family as well with sufficient statistic
-$\tilde{t}_k : \mathcal{Y} \to \mathbb{R}^{p_k}$ and $\theta_k$ the 
-canonical parameter, we bundle $\alpha, \theta_1, \ldots, \theta_K$ 
-into $\theta$ and define
+$\tilde{t}_k : \mathcal{Y} \to \mathbb{R}^{p_k}$ and $\theta_k$ the canonical
+parameter, we bundle $\alpha, \theta_1, \ldots, \theta_K$ into $\theta$ and
+define
 
 \[
 t_1(y) = \left(\begin{array}{c}
@@ -754,7 +2202,7 @@ t_1(y) = \left(\begin{array}{c}
 \right)
 \]
 
-together with 
+together with
 
 \[
 t_2(y \mid k) = \left(\begin{array}{c}
@@ -768,309 +2216,89 @@ t_2(y \mid k) = \left(\begin{array}{c}
 \]
 
 we see that we have an exponential family of the joint distribution of $(Y, Z)$
-with the $p = K-1 +  p_1 + \ldots + p_K$-dimensional canonical parameter $\theta$,
-with the sufficient statistic $t_1$ determining the marginal distribution of $Z$
-and with the sufficient statistic $t_2$ determining the *conditional* distribution
-of $Y$ given $Z$. We have here made the conditioning variable explicit.
+with the $p = K-1 +  p_1 + \ldots + p_K$-dimensional canonical parameter
+$\theta$, with the sufficient statistic $t_1$ determining the marginal
+distribution of $Z$ and with the sufficient statistic $t_2$ determining the
+*conditional* distribution of $Y$ given $Z$. We have here made the conditioning
+variable explicit.
 
-The marginal density of $Y$ in the exponential family parametrization then 
+The marginal density of $Y$ in the exponential family parametrization then
 becomes
 
 \[
-  f(y \mid \theta) = \sum_{k=1}^K  e^{\theta^T (t_1(k) + t_2(y \mid k)) - \log \varphi_1(\theta) - \log \varphi_2(\theta \mid k)}.
+f(y \mid \theta) = \sum_{k=1}^K  e^{\theta^\top (t_1(k) + t_2(y \mid k)) - \log \varphi_1(\theta) - \log \varphi_2(\theta \mid k)}.
 \]
 
-For small $K$ it is usually unproblematic to implement the computation of 
-the marginal density using the formula above.
-
-### Gaussian mixtures {#Gauss-mix-ex}
-
-A Gaussian mixture model is a mixture model where all the  mixture distributions are  
-Gaussian distributions but potentially with different means and variances. In this 
-section we focus on the simplest Gaussian mixture model with $K = 2$ mixture 
-components. 
-
-When $K = 2$, the Gaussian mixture model is parametrized by the five parameters: 
-the mixture weight $p = \P(Z = 1) \in (0, 1)$, the two means $\mu_1, \mu_2 \in \mathbb{R}$, 
-and the two standard deviations $\sigma_1, \sigma_2 > 0$. First 
-we will simply simulate random variables from this model. 
-
-```{r mixture-gaus-sim}
-sigma1 <- 1
-sigma2 <- 2
-mu1 <- -0.5
-mu2 <- 4
-p <- 0.5
-N <- 5000
-z <- sample(c(TRUE, FALSE), N, replace = TRUE, prob = c(p, 1 - p))
-## Conditional simulation from the mixture components
-y <- numeric(N)
-N1 <- sum(z)
-y[z] <- rnorm(N1, mu1, sigma1)
-y[!z] <- rnorm(N - N1, mu2, sigma2)
-```
-
-The simulation above generated `r N` observations from a two-component
-Gaussian mixture model with mixture distributions $\mathcal{N}(-0.5, 1)$
-and $\mathcal{N}(4, 4)$, and with each component having weight $0.5$. 
-This gives a bimodal distribution as illustrated by the histogram on Figure 
-\@ref(fig:mixture-gaus-histogram). 
-
-```{r mixture-gaus-histogram, dependson="mixture-gaus-sim", fig.cap="Histogram and density estimate (red) of data simulated from a two-component Gaussian mixture distribution. The true mixture distribution has "}
-yy <- seq(-3, 11, 0.1)
-dens <- p * dnorm(yy, mu1, sigma1) + (1 - p) * dnorm(yy, mu2, sigma2)
-ggplot(mapping = aes(y, after_stat(density))) +
-  geom_histogram(bins = 20) +
-  geom_line(aes(yy, dens), color = "blue", size = 1) +
-  stat_density(bw = "sj", geom = "line", color = "red", size = 1)
-```
-
-It is possible to give a mathematically different representation of the 
-marginal distribution of $Y$ that is sometimes useful. Though it gives
-the same marginal distribution from the same components, it does provide a
-different interpretation of what a mixture model is a model of, and it does 
-provide a different way of simulating from a mixture distribution. 
-
-If we let $Y_1 \sim \mathcal{N}(\mu_1, \sigma_1^2)$ and $Y_2 \sim \mathcal{N}(\mu_2, \sigma_2^2)$ 
-be independent, and independent of $Z$, we can define 
-
-\begin{equation}
-Y = 1(Z = 1) Y_1 + 1(Z = 2) Y_2 = Y_{Z}.
-(\#eq:mixturerep)
-\end{equation}
-
-Clearly, the conditional distribution of $Y$ given $Z = k$ is $f_k$.
-From \@ref(eq:mixturerep) it follows directly that
-
-$$
-  E(Y^N) = P(Z = 1) E(Y_1^N) + P(Z = 2) E(Y_2^N) = p m_1(n) + (1 - p) m_2(n)
-$$
-
-where $m_k(n)$ denotes the $N$th non-central moment of the $k$th mixture
-component. In particular,
-
-$$E(Y) = p \mu_1 + (1 - p) \mu_2.$$
-
-The variance can be found from the second moment as
-
-\begin{align}
-V(Y) & = p(\mu_1^2 + \sigma_1^2) + (1-p)(\mu_2^2 + \sigma_2^2) -  (p \mu_1 + (1 - p) \mu_2)^2 \\
-& = p\sigma_1^2 + (1 - p) \sigma_2^2 + p(1-p)(\mu_1^2 + \mu_2^2 - 2 \mu_1 \mu_2).
-\end{align}
-
-While it is certainly possible to derive this formula by other means, using 
-\@ref(eq:mixturerep) gives a simple argument based on 
-elementary properties of expectation and independence
-of $(Y_1, Y_2)$ and $Z$.  
-
-The construction via \@ref(eq:mixturerep) has an interpretation that differs 
-from how a mixture model was defined in the first place. Though $(Y, Z)$ has 
-the correct joint distribution, $Y$ is by \@ref(eq:mixturerep) the result of $Z$ *selecting* one 
-out of two possible observations. The difference is illustrated by 
-the following example. Suppose that we have a population of twins 
-with each pair of twins consisting of a male and a female. 
-We can draw a sample of individuals (ignoring the relations 
-between the twins) from this population and let $Z$ denote the sex and $Y$ the 
-height of the individual. Then $Y$ follows a mixture distribution with two 
-components corresponding to males and females according to the definition. 
-We could then also draw a sample
-of twins, and for each pair of twins flip a coin to decide whether to report
-the male's or the female's height. This corresponds to the construction 
-of $Y$ by \@ref(eq:mixturerep). We get the same marginal mixture 
-distribution of heights though. 
-
-Arguably the heights of two twins are not 
-independent, but this is actually immaterial. Any dependence structure between
-$Y_1$ and $Y_2$ is lost in the transformation  \@ref(eq:mixturerep), and we
-can just as well assume them independent for mathematical convenience. 
-We will not be able to tell the difference from observing only $Y$ (and $Z$) anyway. 
-
-We illustrate below how \@ref(eq:mixturerep) can be used for alternative
-implementations of ways to simulate from the mixture model. We compare empirical 
-means and variances to the theoretical values to test if all the implementations
-actually simulate from the Gaussian mixture model.
-
-```{r sim-gaus-mix, dependson="mixture-gaus-sim"}
-## Mean
-mu <- p * mu1 + (1 - p) * mu2
-
-## Variance
-sigmasq <- p * sigma1^2 + (1 - p) * sigma2^2 +
-  p * (1 - p) * (mu1^2 + mu2^2 - 2 * mu1 * mu2)
-
-## Simulation using the selection formulation via 'ifelse'
-y2 <- ifelse(z, rnorm(n, mu1, sigma1), rnorm(n, mu2, sigma2))
-
-## Yet another way of simulating from a mixture model
-## using arithmetic instead of 'ifelse' for the selection
-## and with Y_1 and Y_2 actually being dependent
-y3 <- rnorm(n)
-y3 <- z * (sigma1 * y3 + mu1) + (!z) * (sigma2 * y3 + mu2)
-
-## Returning to the definition again, this last method simulates conditionally
-## from the mixture components via transformation of an underlying Gaussian
-## variable with me an 0 and variance 1
-y4 <- rnorm(N)
-y4[z] <- sigma1 * y4[z] + mu1
-y4[!z] <- sigma2 * y4[!z] + mu2
-
-## Tests
-data.frame(
-  mean = c(mu, mean(y), mean(y2), mean(y3), mean(y4)),
-  variance = c(sigmasq, var(y), var(y2), var(y3), var(y4)),
-  row.names = c("true", "conditional", "ifelse",
-                "arithmetic", "conditional2")
-)
-```
-
-In terms of runtime there is not a big difference between three of 
-the ways of simulating from a mixture model. A benchmark study (not shown)  
-revealed that the first and third methods are comparable in terms of runtime
-and a bit faster than the fourth, while the second using `ifelse()` takes 
-about twice as long time as the two fastest. This is 
-unsurprising as the `ifelse()` method takes \@ref(eq:mixturerep) very literally 
-and generates twice the number of Gaussian variables actually needed. 
-
-
-```{r mix-sim-bench, eval = FALSE, include=FALSE}
-N <- 10000
-z <- sample(c(TRUE, FALSE), N, replace = TRUE, prob = c(p, 1 - p))
-bench::mark({
-  x <- numeric(N)
-  N1 <- sum(z)
-  x[z] <- rnorm(N1, mu1, sigma1)
-  x[!z] <- rnorm(N - N1, mu2, sigma2)
-},
-x <- ifelse(z, rnorm(N, mu1, sigma1), rnorm(N, mu2, sigma2)),
-{
-  x <- rnorm(N)
-  x <- z * (sigma1 * x + mu1) + (!z) * (sigma2 * x + mu2)
-},
-{
-  x <- rnorm(N)
-  x[z] <- sigma1 * x[z] + mu1
-  x[!z] <- sigma2 * x[!z] + mu2
-},
-  check = FALSE
-)
-```
-
-
-The marginal density of $Y$ is
-
-\[
-f(y) = p \frac{1}{\sqrt{2 \pi \sigma_1^2}} e^{-\frac{(y - \mu_1)^2}{2 \sigma_1^2}} + 
-(1 - p)\frac{1}{\sqrt{2 \pi \sigma_2^2}}e^{-\frac{(y - \mu_2)^2}{2 \sigma_2^2}}
-\]
-
-as given in terms of the parameters $p$, $\mu_1, \mu_2$, $\sigma_1^2$ and $\sigma_2^2$. 
-
-
-Returning to the canonical parameters we see that they are given as 
-follows: 
-
-\[
-\theta_1  = \log \frac{p}{1 - p}, \quad 
-\theta_2  = \frac{\mu_1}{2\sigma_1^2}, \quad
-\theta_3  = \frac{1}{2\sigma_1^2}, \quad
-\theta_4  = \frac{\mu_2}{\sigma_2^2}, \quad
-\theta_5  = \frac{1}{2\sigma_2^2}.
-\]
-
-The joint density in this parametrization then becomes 
-
-\[
-(y,k) \mapsto \left\{ \begin{array}{ll} 
-\exp\left(\theta_1 + \theta_2 y - \theta_3 y^2 - \log (1 + e^{\theta_1}) - \frac{ \theta_2^2}{4\theta_3}+ \frac{1}{2} \log(\theta_3) \right) & \quad \text{if } k = 1 \\
-\exp\left(\theta_4 y - \theta_5 y^2 - \log (1 + e^{\theta_1}) - \frac{\theta_4^2}{4\theta_5} + \frac{1}{2}\log(\theta_5) \right) &  \quad \text{if } k = 2 
-\end{array} \right. 
-\]
-
-and the marginal density for $Y$ is 
-
-\begin{align}
-f(y \mid \theta) & = \exp\left(\theta_1 + \theta_2 y - \theta_3 y^2 - \log (1 + e^{\theta_1}) - \frac{ \theta_2^2}{4\theta_3}+ \frac{1}{2} \log(\theta_3) \right) \\ 
-& + \exp\left(\theta_4 y - \theta_5 y^2 - \log (1 + e^{\theta_1}) - \frac{\theta_4^2}{4\theta_5} + \frac{1}{2}\log(\theta_5) \right).
-\end{align}
-
-There is no apparent benefit to the canonical parametrization when considering
-the marginal density. It is, however, of value when we need the logarithm of 
-the joint density as we will for the EM algorithm. 
+For small $K$ it is usually unproblematic to implement the computation of the
+marginal density using the formula above.
 
 ## Regression models {#regression}
 
-Regression models are models of one variable, called the response,
-conditionally on one or more other variables, called the predictors.
-Typically we use models that assume conditional independence of the responses 
-given the predictors, and a particularly convenient class of regression 
-models is based on exponential families. 
+Regression models describe a *response* variable conditionally on one or more
+*predictors*. Section\ \@ref(parametrization) developed the convex-analysis
+picture in the i.i.d. setting; the regression version is the same picture with a
+predictor-dependent canonical parameter $\theta_i = x_i^\top \beta$, where
+$x_i \in \mathbb{R}^p$ is the predictor vector for the $i$th observation and
+$\beta \in \mathbb{R}^p$ collects the regression coefficients. Stacking the
+$x_i^\top$ as rows produces the $N \times p$ *model matrix* $\mathbf{X}$.
 
-If we let $y_i \in \mathbb{R}$ denote the $i$th response and $x_i \in \mathbb{R}^p$ 
-the $i$th predictor we can consider the exponential family of models with joint density
+We will use Poisson regression as the running example for the algorithms of
+Chapter\ \@ref(numopt). For counts $y_i \in \mathbb{N}_0$ with mean $\mu(x_i)$,
+the log-linear parametrization $\log \mu(x_i) = x_i^\top \beta$ makes $\beta$
+the canonical parameter of an exponential family, so by
+Theorem\ \@ref(thm:canonical-nll-convex) the negative log-likelihood
 
 \[
-f(\mathbf{y} \mid \mathbf{X}, \beta) = \prod_{i=1}^N e^{\theta^T t_i(y_i \mid x_i) - \log \varphi_i(\theta)}
+H(\beta) = \sum_{i=1}^N \left( e^{x_i^\top \beta} - y_i x_i^\top \beta \right)
 \]
 
-for suitably chosen base measures. Here 
+is convex on $\mathbb{R}^p$ (dropping the $\beta$-independent $\log y_i!$
+terms). The data enter only through the sufficient statistic
+$\mathbf{X}^\top \mathbf{y}$, so once that vector has been precomputed each
+evaluation of $H$, $\nabla H$, or $\nabla^2 H$ scales with the parameter
+dimension rather than the sample size. Direct differentiation gives
 
 \[
-\mathbf{X} = \left( \begin{array}{c} x_1^T \\ x_2^T \\ \vdots \\ x_{n-1}^T \\ x_N^T \end{array} \right)
+\nabla H(\beta) = \mathbf{X}^\top \left( e^{\mathbf{X} \beta} - \mathbf{y} \right),
+\qquad
+\nabla^2 H(\beta) = \mathbf{X}^\top \mathbf{W}(\beta)\, \mathbf{X},
 \]
 
-is called the *model matrix* and is an $n \times p$ matrix. 
+where $\mathbf{W}(\beta)$ is the diagonal weight matrix with entries
+$e^{x_i^\top \beta}$. The Hessian is positive semidefinite, and positive
+definite whenever $\mathbf{X}$ has full column rank, so $H$ is strictly convex
+and the MLE is unique under that mild design condition.
 
-::: {.example .boxed #poisson-regression} 
-If $y_i \in \mathbb{N}_0$ are counts we often use a Poisson regression model 
-with point probabilities (density w.r.t. counting measure)
-$$p_i(y_i \mid x_i) = e^{-\mu(x_i)} \frac{\mu(x_i)^{y_i}}{y_i!}.$$
-If the mean depends on the predictors in a log-linear way, $\log(\mu(x_i)) = x_i^T \beta$,
-then 
-$$p_i(y_i \mid x_i) = e^{\beta^T x_i y_i - \exp( x_i^T \beta)} \frac{1}{y_i!}.$$
-The factor $1/y_i!$ can be absorbed into the base measure, and we recognize 
-this Poisson regression model as an exponential family with sufficient statistics
-$$t_i(y_i) = x_i y_i$$
-and 
-$$\log \varphi_i(\beta) =  \exp( x_i^T \beta).$$
+To illustrate the use of a Poisson regression model we consider the following
+dataset from a major Swedish supermarket chain. It contains the number of bags
+of frozen vegetables sold in a given week in a given store under a marketing
+campaign. A predicted number of items sold in a normal week (without a campaign)
+based on historic sales is included. It is of interest to recalibrate this
+number to give a good prediction of the number of items actually sold.\
 
-To implement numerical optimization algorithms for computing the 
-maximum-likelihood estimate we note that 
-$$t(\mathbf{y}) = \sum_{i=1}^N x_i y_i = \mathbf{X}^T \mathbf{y} \quad \text{and} \quad
-\kappa(\beta) = \sum_{i=1}^N e^{x_i^T \beta},$$
-that 
-$$\nabla \kappa(\beta) = \sum_{i=1}^N x_i e^{x_i^T \beta},$$
-and that
-$$D^2 \kappa(\beta) = \sum_{i=1}^N x_i x_i^T e^{x_i^T \beta} = \mathbf{X}^T \mathbf{W}(\beta) \mathbf{X}$$
-where $\mathbf{W}(\beta)$ is a diagonal matrix with $\mathbf{W}(\beta)_{ii} = \exp(x_i^T \beta).$ 
-All these formulas follow directly from the general formulas for exponential 
-families.
-:::
+```{r}
+#| label: vegetables-summary
 
-To illustrate the use of a Poisson regression model we consider 
-the following data set from a major Swedish supermarket chain. It contains
-the number of bags of frozen vegetables sold in a given week in a given store
-under a marketing campaign. A predicted number of items sold in a normal week 
-(without a campaign) based on historic sales is included. It is of interest to 
-recalibrate this number to give a good prediction of the number of items 
-actually sold.  
-
-```{r vegetables-summary}
 summary(CSwR::vegetables)
 ```
 
-It is natural to model the number of sold items using a Poisson regression 
+It is natural to model the number of sold items using a Poisson regression
 model, and we will consider the following simple log-linear model:
 
-$$\log(E(\text{sale} \mid \text{normalSale})) = \beta_0 + \beta_1 \log(\text{normalSale}).$$
+$$
+\log(E(\text{sale} \mid \text{normalSale})) = \beta_0 + \beta_1 \log(\text{normalSale}).
+$$
 
-This is an example of an exponential family regression model as above with 
-a Poisson response distribution. It is a standard regression model that can
-be fitted to data using the `glm` function and using the formula interface 
-to specify how the response should depend on the normal sale. The model is 
-fitted by computing the maximum-likelihood estimate of the two parameters 
-$\beta_0$ and $\beta_1$. 
+This is an example of an exponential family regression model as above with a
+Poisson response distribution. It is a standard regression model that can be
+fitted to data using the `glm()` function and using the formula interface to
+specify how the response should depend on the normal sale. The model is fitted
+by computing the maximum-likelihood estimate of the two parameters $\beta_0$ and
+$\beta_1$.
 
-```{r pois-model-null}
+```{r}
+#| label: pois-model-null
+
 # A Poisson regression model
 pois_model_null <- glm(
   sale ~ log(normalSale),
@@ -1079,28 +2307,36 @@ pois_model_null <- glm(
 )
 ```
 
-```{r pois-sum-null, echo=2, dependson="pois-model-null"}
+```{r, echo=2, dependson="pois-model-null"}
+#| label: pois-sum-null
+
 old_options <- options(digits = 4)
 summary(pois_model_null)
 options(digits = old_options$digits)
 ```
 
-The fitted model of the expected sale as a function of the normal sale, $x$, is    
-$$x \mapsto e^{1.46 + 0.92 \times \log(x)} = (4.31 \times x^{-0.08}) \times x.$$
-This model roughly predicts a four-fold increase of the sale during a 
-campaign, though the effect decays with increasing $x$. If the normal 
-sale is 10 items the factor is $4.31 \times 10^{-0.08} = 3.58$, and if 
-the normal sale is 100 items the factor reduces to $4.31 \times 100^{-0.08} = 2.98$.
+The fitted model of the expected sale as a function of the normal sale, $x$, is\
+$$
+x \mapsto e^{1.46 + 0.92 \times \log(x)} = (4.31 \times x^{-0.08}) \times x.
+$$
+This model roughly predicts a four-fold increase of the sale during a campaign,
+though the effect decays with increasing $x$. If the normal sale is 10 items the
+factor is $4.31 \times 10^{-0.08} = 3.58$, and if the normal sale is 100 items
+the factor reduces to $4.31 \times 100^{-0.08} = 2.98$.
 
-We are not entirely satisfied with this model. It is fitted across all 
-stores in the data set, and it is not obvious that the same effect should 
-apply across all stores. Thus we would like to fit a model of the form
+We are not entirely satisfied with this model. It is fitted across all stores in
+the dataset, and it is not obvious that the same effect should apply across all
+stores. Thus we would like to fit a model of the form
 
-$$\log(E(\text{sale})) = \beta_{\text{store}} + \beta_1 \log(\text{normalSale})$$
+$$
+\log(E(\text{sale})) = \beta_{\text{store}} + \beta_1 \log(\text{normalSale})
+$$
 
-instead. Fortunately, this is also straightforward using `glm`. 
+instead. Fortunately, this is also straightforward using `glm()`.
 
-```{r pois-model, dependson="data"}
+```{r, dependson="data"}
+#| label: pois-model
+
 ## Note, variable store is a factor! The 'intercept' is removed
 ## in the formula to obtain a parametrization as above.
 pois_model <- glm(
@@ -1110,93 +2346,107 @@ pois_model <- glm(
 )
 ```
 
-We will not print all the individual store effects as there are 352
-individual stores. 
+We will not print all the individual store effects as there are 352 individual
+stores.
 
-```{r pois-sum, echo=2, dependson="pois-model"}
+```{r, echo=2, dependson="pois-model"}
+#| label: pois-sum
+
 old_options <- options(digits = 4)
 summary(pois_model)$coefficients[c(1, 2, 3, 4, 353), ]
 options(digits = old_options$digits)
 ```
 
-We should note that the coefficient of $\log(\text{normalSale})$ has 
-changed considerably, and the model is a somewhat different model now 
-for the individual stores. 
+We should note that the coefficient of $\log(\text{normalSale})$ has changed
+considerably, and the model is a somewhat different model now for the individual
+stores.
 
-From a computational viewpoint the most important thing that has changed is
-that the number of parameters has increased a lot. In the first and simple 
-model there are two parameters. In the second model there are 353 parameters. 
+From a computational viewpoint the most important thing that has changed is that
+the number of parameters has increased a lot. In the first and simple model
+there are two parameters. In the second model there are 353 parameters.
 Computing the maximum-likelihood estimate is a considerably more difficult
-problem in the second case. 
+problem in the second case.
 
 ## Mixed models
 
-A mixed model is a regression model of observations that allows for 
-random variation at two different levels. In this section we will 
-focus on mixed models in an exponential family context. Mixed models can be 
-considered in greater generality but there will then be little shared
-structure and one has to deal with the models much more on a case-by-case
-manner.
+A mixed model is a regression model of observations that allows for random
+variation at two different levels. In this section we will focus on mixed models
+in an exponential family context. Mixed models can be considered in greater
+generality but there will then be little shared structure and one has to deal
+with the models much more on a case-by-case manner.
 
-In a mixed model we have observations $y_j \in \mathcal{Y}$
-and $z \in \mathcal{Z}$ such that: 
+In a mixed model we have observations $y_j \in \mathcal{Y}$ and
+$z \in \mathcal{Z}$ such that:
 
-* the distribution of $z$ is an exponential family with canonical parameter
-$\theta_0$ 
-* *conditionally* on $z$ the $y_j$s are independent with a distribution from an exponential
-family with sufficient statistics $t_j( \cdot \mid z)$. 
+- the distribution of $z$ is an exponential family with canonical parameter
+  $\theta_0$
+- *conditionally* on $z$ the $y_j$s are independent with a distribution from an
+  exponential family with sufficient statistics $t_j( \cdot \mid z)$.
 
-This definition emphasizes how the $y_j$s have variation at two levels. 
-There is variation in the underlying $z$, which is the first level of variation 
-(often called the *random effect*), 
-and then there is variation among the $y_j$s given the $z$, which is the 
-second level of variation. It is a special case of hierarchical models
-(Bayesian networks with tree graphs) also known as *multilevel* models, with the 
-mixed model having only two levels. When we observe data from such a model 
-we typically observe independent replications, $(y_{ij})_{j=1, \ldots, m_i}$ 
-for $i = 1, \ldots, n$, of the $y_j$s only. Note that we allow for a different
-number, $m_i$, of $y_j$s for each $i$. 
+This definition emphasizes how the $y_j$s have variation at two levels. There is
+variation in the underlying $z$, which is the first level of variation (often
+called the *random effect*), and then there is variation among the $y_j$s given
+the $z$, which is the second level of variation. It is a special case of
+hierarchical models (Bayesian networks with tree graphs) also known as
+*multilevel* models, with the mixed model having only two levels. When we
+observe data from such a model we typically observe independent replications,
+$(y_{ij})_{j=1, \ldots, m_i}$ for $i = 1, \ldots, n$, of the $y_j$s only. Note
+that we allow for a different number, $m_i$, of $y_j$s for each $i$.
 
-The simplest class of mixed models is obtained by $t_j = t$ not 
-depending on $j$, and 
-$$t(y_j \mid z) = \left(\begin{array}{cc} t_1(y_j) \\ t_2(y_j, z) \end{array} \right)$$
-for some fixed maps $t_1 : \mathcal{Y} \mapsto \mathbb{R}^{p_1}$ and $t_2 : \mathcal{Y} \times \mathcal{Z} \mapsto \mathbb{R}^{p_2}$. 
-This is called a *random effects* model (this is a model where there are no *fixed effects* in
-the sense that $t_j$ does not depend on $j$, and given the random effect 
-$z$ the $y_j$s are i.i.d.). The canonical parameters associated with such a model
-are $\theta_0$ that enters into the distribution of the random effect, 
+The simplest class of mixed models is obtained by $t_j = t$ not depending on
+$j$, and
+
+$$
+t(y_j \mid z) = \left(\begin{array}{cc} t_1(y_j) \\ t_2(y_j, z) \end{array} \right)
+$$
+
+for some fixed maps $t_1 : \mathcal{Y} \mapsto \mathbb{R}^{p_1}$ and
+$t_2 : \mathcal{Y} \times \mathcal{Z} \mapsto \mathbb{R}^{p_2}$. This is called
+a *random effects* model (this is a model where there are no *fixed effects* in
+the sense that $t_j$ does not depend on $j$, and given the random effect $z$ the
+$y_j$s are i.i.d.). The canonical parameters associated with such a model are
+$\theta_0$ that enters into the distribution of the random effect,
 $\theta_1 \in \mathbb{R}^{p_1}$ and $\theta_2 \in \mathbb{R}^{p_2}$ that enter
-into the conditional distribution of $y_j$ given $z$. 
+into the conditional distribution of $y_j$ given $z$.
 
 ::: {.example .boxed #gaussian-mixed}
-The special case of a *Gaussian, linear* random effects model is the model where 
-$z$ is $\mathcal{N}(0, 1)$ distributed, $\mathcal{Y} = \mathbb{R}$ 
-  (with base measure proportional to Lebesgue measure)
-and the sufficient statistic is
-$$t(y_j \mid z) = \left(\begin{array}{cc} y_j \\ - y_j^2 \\ zy_j \end{array}\right).$$
-There are no free parameters in the distribution of $z$. 
+The special case of a *Gaussian, linear* random effects model is the model where
+$z$ is $\mathcal{N}(0, 1)$ distributed, $\mathcal{Y} = \mathbb{R}$ (with base
+measure proportional to Lebesgue measure) and the sufficient statistic is
 
-From Example \@ref(exm:gaussian-exponential)
-it follows that the conditional variance of $y$ given $z$ is 
-$$\sigma^2 = \frac{1}{2\theta_2}$$
-and the conditional mean of $y$ given $z$ is 
-$$\frac{\theta_1 + \theta_3 z}{2 \theta_2} = \sigma^2 \theta_1 + \sigma^2 \theta_3 z.$$
-Reparametrizing in terms of $\sigma^2$, $\beta_0 = \sigma^2 \theta_1$ and 
-$\nu = \sigma^2 \theta_3$ we see how the conditional distribution of $y_j$ 
-given $z$ is $\mathcal{N}(\beta_0 + \nu z, \sigma^2)$. From this it is clear
-how the mixed model of $y_j$ *conditionally on $z$* is a regression model. However,
-we do not observe $z$ in practice. 
+$$
+t(y_j \mid z) = \left(\begin{array}{cc} y_j \\ - y_j^2 \\ zy_j \end{array}\right).
+$$
+There are no free parameters in the distribution of $z$.
 
-Using the above distributional result we can see that
-the Gaussian random effects model of observations $y_{ij}$ can 
-equivalently be stated as 
+From Example\ \@ref(exm:gaussian-canonical) it follows that the conditional
+variance of $y$ given $z$ is
 
-$$Y_{ij} = \beta_0 + \nu Z_i + \varepsilon_{ij}$$
+$$
+\sigma^2 = \frac{1}{2\theta_2}
+$$
 
-for $i = 1, \ldots, n$ and $j = 1, \ldots, m_i$ where 
-$Z_1, \ldots, Z_N$ are i.i.d. $\mathcal{N}(0, 1)$-distributed
-and independent of 
+and the conditional mean of $y$ given $z$ is
+
+$$
+\frac{\theta_1 + \theta_3 z}{2 \theta_2} = \sigma^2 \theta_1 + \sigma^2 \theta_3 z.
+$$
+
+Reparametrizing in terms of $\sigma^2$, $\beta_0 = \sigma^2 \theta_1$ and
+$\nu = \sigma^2 \theta_3$ we see how the conditional distribution of $y_j$ given
+$z$ is $\mathcal{N}(\beta_0 + \nu z, \sigma^2)$. From this it is clear how the
+mixed model of $y_j$ *conditionally on $z$* is a regression model. However, we
+do not observe $z$ in practice.
+
+Using the above distributional result we can see that the Gaussian random
+effects model of observations $y_{ij}$ can equivalently be stated as
+
+$$
+Y_{ij} = \beta_0 + \nu Z_i + \varepsilon_{ij}
+$$
+
+for $i = 1, \ldots, n$ and $j = 1, \ldots, m_i$ where $Z_1, \ldots, Z_N$ are
+i.i.d. $\mathcal{N}(0, 1)$-distributed and independent of
 $\varepsilon_{11}, \varepsilon_{12}, \ldots, \varepsilon_{1n_1}, \ldots, \varepsilon_{mn_m}$
-that are themselves i.i.d. $\mathcal{N}(0, \sigma^2)$-distributed. 
+that are themselves i.i.d. $\mathcal{N}(0, \sigma^2)$-distributed.
 :::
-
