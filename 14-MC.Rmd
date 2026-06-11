@@ -2029,10 +2029,10 @@ balance.
 #| warning: false
 #| fig-cap: >-
 #|   Confidence intervals for importance sampling estimates of network nodes 1
-#|   and 10 being disconnected under independent edge failures with
-#|   probability 0.05 (top), and the corresponding contribution effective sample
-#|   sizes (bottom), for a range of proposal edge-failure probabilities. The red
-#|   line is the true probability computed by complete enumeration.
+#|   and 10 being disconnected under independent edge failures with probability
+#|   0.05 (top), and the corresponding effective sample sizes (ESS, bottom), for
+#|   a range of proposal edge-failure probabilities. The red line is the true
+#|   probability computed by complete enumeration.
 
 p_grid <- c(0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4)
 network_stats <- lapply(p_grid, function(p0) {
@@ -2671,4 +2671,30 @@ Simulate from a proposal \(g\) and use importance sampling to estimate
     \(g = 0.9\,\mathcal{N}(3,1) + 0.1\,\mathcal{N}(0,4^2)\).
 (b) For each, compute the estimate, ESS, and CV.
 (c) Explain which proposal is best and why.
+:::
+
+::: {#clt-coverage .exercise}
+The central limit theorem only guarantees that the nominal 95% confidence
+interval covers $\mu$ with probability approximately $0.95$ for $N$ large, and
+the *actual* coverage can be smaller, see Section \@ref(CLT-gamma). This
+exercise investigates the actual coverage by simulation.
+
+(a) Consider the gamma example from Section \@ref(CLT-gamma), where $\mu = 8$.
+    For a fixed $N$, simulate $X_1, \ldots, X_N$ i.i.d. from a
+    $\mathrm{Gamma}(8)$ distribution, form the nominal 95% interval
+    $\hat{\mu}_{\textrm{MC}} \pm 1.96 \, \hat{\sigma}_{\textrm{MC}} / \sqrt{N}$,
+    and record whether it covers $\mu$. Repeat this $M = 1000$ times and
+    estimate the actual coverage as the fraction of intervals that cover $\mu$.
+
+(b) Plot the estimated coverage against $N$ for
+    $N \in \{5, 10, 20, 50, 100, 500\}$. How large must $N$ be before the actual
+    coverage is close to the nominal $0.95$?
+
+(c) Repeat the coverage estimation for the integrand $h$ from Section
+    \@ref(hd-int), sampling $X \sim \mathcal{N}(0, I_p)$ with $p = 100$ and
+    using $N = 1000$, where the target value is $\mu = 1$. Do this for both
+    $\alpha = 0.1$ and $\alpha = 0.25$. Even though the variance is finite in
+    both cases (Exercise \@ref(exr:finvar)), you should find that the actual
+    coverage is markedly below $0.95$ for $\alpha = 0.25$. Explain this in light
+    of the sample path in Figure \@ref(fig:MC-CLT2).
 :::
