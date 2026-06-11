@@ -3,6 +3,7 @@
 ```{r}
 #| label: mc-setup
 #| include: false
+
 library(tidyverse)
 
 knitr::opts_chunk$set(
@@ -574,6 +575,7 @@ will end up far from the origin (Figure \@ref(poor-is-demo)).
 ```{r}
 #| label: poor-is-demo-setup
 #| echo: false
+
 set.seed(1)
 n <- 1000
 mu <- 2
@@ -591,6 +593,7 @@ grid$proposal <- dnorm(grid$x, mean = mu, sd = 1)
 #| warning: false
 #| fig-cap: Target (blue, dashed) and proposal (orange) densities with samples
 #|   from the proposal distribution.
+
 library(patchwork)
 library(dplyr)
 
@@ -645,6 +648,7 @@ responsible for a major part of the estimate.
 #| fig-cap: "Histogram and boxplot of importance weights, showing weight degeneracy."
 #| warning: false
 #| message: false
+
 p1 <- ggplot(df, aes(w_star)) +
   geom_histogram() +
   lims(x = c(-5, NA)) +
@@ -675,6 +679,7 @@ given by the importance weights.
 #| label: weighted-histogram
 #| fig-cap: Weighted histogram of samples from the proposal distribution, where
 #|   the  weights are given by the importance weights.
+
 df <- data.frame(x = x, w = w_star)
 df_grid <- tibble(
   x = seq(-3, 3, length.out = 200),
@@ -735,6 +740,7 @@ In the following code snippet, we compute the ESS and CV for the example above.
 
 ```{r}
 #| label: ess-computation
+
 w <- w_star / sum(w_star)
 ess <- 1 / sum(w^2)
 cv <- sqrt(n * sum(w^2) - 1)
@@ -794,6 +800,7 @@ $[-2, 2]$ as our proposal distribution (Figure
 #| fig-cap: Target (black) and proposal (orange) densities for a demonstration
 #|   of the importance of support coverage in importance sampling.
 #| fig-height: 2.5
+
 x <- seq(-4, 4, length.out = 1000)
 
 df <- tibble(
@@ -820,6 +827,7 @@ will fail completely because it will never generate samples in the region.
 
 ```{r}
 #| label: support-coverage-demo
+
 set.seed(53)
 n <- 1e4
 
@@ -862,9 +870,10 @@ proposal distribution for this example.
 #| echo: false
 #| fig-height: 2.5
 #| fig-width: 5
-#| fig-cap: Integrand (black) and proposal density
-#|   (orange) for a demonstration of the importance of matching the shape of the
-#|   integrand in importance sampling.
+#| fig-cap: Integrand (black) and proposal density (orange) for a demonstration
+#|   of the importance of matching the shape of the integrand in importance
+#|   sampling.
+
 x <- seq(-3, 6, length.out = 1000)
 
 f <- dnorm(x)
@@ -908,6 +917,7 @@ proposal distribution does not generate any samples in the tail region.
 #| fig-cap: Integrand (solid black) and proposal density (dashed orange) for a
 #|   demonstration of the importance of matching the tails of the integrand in
 #|   importance sampling.
+
 x <- seq(0, 10, length.out = 1000)
 f <- dgamma(x, shape = 2, rate = 1)
 
@@ -939,6 +949,7 @@ region where the integrand is large.
 #| label: tail-matching-demo-IS
 #| fig-height: 2
 #| fig-width: 5
+
 set.seed(49)
 
 n <- 1e3
@@ -984,8 +995,8 @@ $$
 f(x) = \frac{1}{2} x^2 e^{-x}, \quad x > 0.
 $$
 
-And assume we want to compute the second moment, so that $h(x) = x^2$.
-Then the integrand is
+And assume we want to compute the second moment, so that $h(x) = x^2$. Then the
+integrand is
 $$
 |h(x)| f(x) = \tfrac{1}{2} x^4 e^{-x}.
 $$
@@ -1007,8 +1018,9 @@ but it does not capture the tail behavior of the integrand very well.
 #| fig-height: 2.5
 #| fig-width: 5
 #| fig-cap: >-
-#|   Integrand (solid black) and Laplace approximation (dashed orange)
-#|   for a $\operatorname{Gamma}(3,1)$ target with $h(x)=x^2$.
+#|   Integrand (solid black) and Laplace approximation (dashed orange) for a
+#|   $\operatorname{Gamma}(3,1)$ target with $h(x)=x^2$.
+
 f_density <- function(x) dgamma(x, shape = 3, rate = 1) # Gamma(3,1)
 integrand <- function(x) f_density(x) * x^2
 
@@ -1045,7 +1057,6 @@ ggplot(df, aes(x = x, y = value, color = Density, linetype = Density)) +
     linetype = NULL
   )
 ```
-
 :::
 
 #### Adaptive importance sampling
@@ -1086,6 +1097,7 @@ mode and we can better track the target's multimodal shape.
 ```{r}
 #| echo: false
 #| label: adaptive-importance-demo
+
 f_density <- function(x) 0.4 * dnorm(x, -2, 1) + 0.6 * dnorm(x, 3, 0.5)
 
 # Mixture density and simulator helpers
@@ -1218,6 +1230,7 @@ plot_step <- function(iter) {
 #| cache: false
 #| fig-cap: Adaptive importance sampling with a two-component Gaussian mixture
 #|   proposal.
+
 p1 <- plot_step(1)
 p2 <- plot_step(2)
 p3 <- plot_step(3)
@@ -1273,6 +1286,7 @@ fewer extreme weights, together with a larger ESS and smaller CV.
 #|   coefficient of variation (CV) of the weights.
 #| echo: false
 #| fig-height: 3.5
+
 set.seed(1234)
 B <- 1000
 n_comp <- rbinom(B, 1, 0.8)
@@ -1553,6 +1567,7 @@ smaller than $N$, and the largest normalized contribution can be substantial.
 
 ```{r, dependson="MC-loop2"}
 #| label: MC-contribution-diagnostics
+
 w_contr <- evaluations / sum(evaluations)
 ess_contr <- 1 / sum(w_contr^2)
 max_w_contr <- max(w_contr)
@@ -1824,6 +1839,7 @@ Aup[lower.tri(Aup)] <- 0
 
 ```{r, dependson=c("network_simNet", "network_Aup")}
 #| label: network_bench
+
 bench::bench_time(replicate(1e5, {
   sim_net(Aup, 0.5)
   NULL
@@ -2010,8 +2026,8 @@ balance.
 #| fig-cap: >-
 #|   Confidence intervals for importance sampling estimates of network
 #|   nodes 1 and 10 being disconnected under independent edge failures with
-#|   probability 0.05 (top), and the corresponding effective sample sizes
-#|   (ESS, bottom), for a range of proposal edge-failure probabilities. The red line
+#|   probability 0.05 (top), and the corresponding effective sample sizes (ESS,
+#|   bottom), for a range of proposal edge-failure probabilities. The red line
 #|   is the true probability computed by complete enumeration.
 
 p_grid <- c(0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4)
@@ -2648,4 +2664,30 @@ Simulate from a proposal \(g\) and use importance sampling to estimate
     \(g=0.9\,\mathcal{N}(3,1)+0.1\,\mathcal{N}(0,4^2)\).
 (b) For each, compute the estimate, ESS, and CV.
 (c) Explain which proposal is best and why.
+:::
+
+::: {#clt-coverage .exercise}
+The central limit theorem only guarantees that the nominal 95% confidence
+interval covers $\mu$ with probability approximately $0.95$ for $N$ large, and
+the *actual* coverage can be smaller, see Section \@ref(CLT-gamma). This
+exercise investigates the actual coverage by simulation.
+
+(a) Consider the gamma example from Section \@ref(CLT-gamma), where $\mu = 8$.
+    For a fixed $N$, simulate $X_1, \ldots, X_N$ i.i.d. from a
+    $\mathrm{Gamma}(8)$ distribution, form the nominal 95% interval
+    $\hat{\mu}_{\textrm{MC}} \pm 1.96 \, \hat{\sigma}_{\textrm{MC}} / \sqrt{N}$,
+    and record whether it covers $\mu$. Repeat this $M = 1000$ times and
+    estimate the actual coverage as the fraction of intervals that cover $\mu$.
+
+(b) Plot the estimated coverage against $N$ for
+    $N \in \{5, 10, 20, 50, 100, 500\}$. How large must $N$ be before the actual
+    coverage is close to the nominal $0.95$?
+
+(c) Repeat the coverage estimation for the integrand $h$ from Section
+    \@ref(hd-int), sampling $X \sim \mathcal{N}(0, I_p)$ with $p = 100$ and
+    using $N = 1000$, where the target value is $\mu = 1$. Do this for both
+    $\alpha = 0.1$ and $\alpha = 0.25$. Even though the variance is finite in
+    both cases (Exercise \@ref(exr:finvar)), you should find that the actual
+    coverage is markedly below $0.95$ for $\alpha = 0.25$. Explain this in light
+    of the sample path in Figure \@ref(fig:MC-CLT2).
 :::
