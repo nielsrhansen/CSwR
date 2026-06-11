@@ -6,9 +6,9 @@ nuuk <- read_table(
   col_names = c("Year", 1:12),
   na = "-999",
   skip = 1
-) %>%
-  gather(key = "Month", value = "Temp_nuuk", -Year, convert = TRUE) %>%
-  mutate(Temp_nuuk = Temp_nuuk / 10) %>%
+) |>
+  gather(key = "Month", value = "Temp_nuuk", -Year, convert = TRUE) |>
+  mutate(Temp_nuuk = Temp_nuuk / 10) |>
   filter(Year > 1866)
 
 Qaqortoq <- read_table(
@@ -16,17 +16,17 @@ Qaqortoq <- read_table(
   col_names = c("Year", 1:12),
   na = "-999",
   skip = 1
-) %>%
-  gather(key = "Month", value = "Temp_Qaqortoq", -Year, convert = TRUE) %>%
-  mutate(Temp_Qaqortoq = Temp_Qaqortoq / 10) %>%
+) |>
+  gather(key = "Month", value = "Temp_Qaqortoq", -Year, convert = TRUE) |>
+  mutate(Temp_Qaqortoq = Temp_Qaqortoq / 10) |>
   filter(Year > 1866)
 
-greenland <- left_join(nuuk, Qaqortoq) %>%
-  filter(complete.cases(.)) %>%
-  mutate(Temp_diff = Temp_nuuk - Temp_Qaqortoq) %>%
+greenland <- left_join(nuuk, Qaqortoq) |>
+  drop_na() |>
+  mutate(Temp_diff = Temp_nuuk - Temp_Qaqortoq) |>
   as.data.frame()
 
-Qaqortoq <- group_by(Qaqortoq, Year) %>%
+Qaqortoq <- group_by(Qaqortoq, Year) |>
   summarise(
     Median = median(Temp_Qaqortoq),
     High = max(Temp_Qaqortoq),
@@ -35,14 +35,14 @@ Qaqortoq <- group_by(Qaqortoq, Year) %>%
     Range = High - Low
   )
 
-nuuk <- group_by(nuuk, Year) %>%
+nuuk <- group_by(nuuk, Year) |>
   summarise(
     Temperature = mean(Temp_nuuk),
     Median = median(Temp_nuuk),
     High = max(Temp_nuuk),
     Low = min(Temp_nuuk),
     Range = High - Low
-  ) %>%
+  ) |>
   as.data.frame()
 
 save(greenland, file = "../CSwR_package/data/greenland.RData")

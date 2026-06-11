@@ -12,7 +12,6 @@ output:
 
 ```{r decay}
 library(ggplot2)
-library(magrittr)
 decay_scheduler <- function(gamma0 = 1, a = 1, K = 1, gamma1, n1) {
   force(a)
   if (!missing(gamma1) && !missing(n1))
@@ -67,8 +66,8 @@ beta[[N]]  # Compare this to beta_true
 beta_all <- rbind(
   cbind(as.data.frame(do.call(rbind, beta)),
         data.frame(iteration = 1:N, loss = "log-likelihood")),
-  beta_SE) %>% 
-  tidyr::pivot_longer(cols = c("beta0", "beta1"), names_to = "Parameter") %>% 
+  beta_SE) |> 
+  tidyr::pivot_longer(cols = c("beta0", "beta1"), names_to = "Parameter") |> 
   dplyr::filter(iteration %% 50 == 0)
 
 ggplot(beta_all, aes(iteration, value, color = Parameter)) + 
