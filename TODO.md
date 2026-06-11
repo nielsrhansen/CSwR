@@ -12,7 +12,7 @@
 - [ ] Improve examples on mixtures and mixed models
 - [ ] Rewrite EM chapter on mixture and mixed models
 - [ ] Write last chapter on stochastic EM
-- [ ] Finish appendix on performance and objects
+- [x] Finish appendix on performance and objects
 - [ ] Add exercises throughout
       - [x] One or two more in Rejection Sampling chapter
       - [ ] One or two more in MC chapter
