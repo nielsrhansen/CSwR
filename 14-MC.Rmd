@@ -3,6 +3,7 @@
 ```{r}
 #| label: mc-setup
 #| include: false
+
 library(tidyverse)
 
 knitr::opts_chunk$set(
@@ -156,6 +157,7 @@ distribution\index{Gamma Distribution} via Monte Carlo integration.
 #| label: gammaMCCLT
 #| fig-cap: Sample path with pointwise 95% confidence band for Monte Carlo
 #|   integration of the mean of a gamma distributed random variable.
+
 set.seed(123)
 N <- 1000
 x <- rgamma(N, 8) # h(x) = x
@@ -310,6 +312,7 @@ gamma distribution via simulations from a Gaussian distribution, cf. Section
 
 ```{r, dependson="gammaMCCLT", echo=-1}
 #| label: gamma-sim-IS
+
 set.seed(123)
 x <- rnorm(N, 10, 3)
 w_star <- dgamma(x, 8) / dnorm(x, 10, 3)
@@ -348,6 +351,7 @@ and a 95% standard confidence interval is computed as
 ```{r, echo=1:2, dependson="gamma-sim-IS"}
 #| label: gamma-IS-fig2
 #| fig-cap: "Sample path with confidence band for importance sampling Monte Carlo integration of the mean of a gamma distributed random variable via simulations from a Gaussian distribution."
+
 sigma_hat_IS <- sd(x * w_star)
 sigma_hat_IS # Theoretical value ??
 ggplot(mapping = aes(1:N, mu_hat_IS)) +
@@ -423,6 +427,7 @@ without the normalization constants.
 
 ```{r, dependson="gamma-sim-IS"}
 #| label: gamma-sim-ISw
+
 w_star <- numeric(N)
 x_pos <- x[x > 0]
 w_star[x > 0] <- exp((x_pos - 10)^2 / 18 - x_pos + 7 * log(x_pos))
@@ -478,6 +483,7 @@ estimate of the variance.
 
 ```{r, dependson="gamma-sim-ISw"}
 #| label: ISw-emp-estimates
+
 c_hat <- mean(w_star)
 sigma_hat_IS <- sd(x * w_star)
 sigma_hat_w_star <- sd(w_star)
@@ -495,8 +501,9 @@ sigma_hat_IS_w
 #| label: gamma-IS-fig3
 #| echo: false
 #| fig-cap: Sample path with confidence band for importance sampling Monte Carlo
-#|   integration of the mean of a gamma distributed random variable via simulations
-#|   from a Gaussian distribution and using normalized weights.
+#|   integration of the mean of a gamma distributed random variable via
+#|   simulations from a Gaussian distribution and using normalized weights.
+
 ggplot(mapping = aes(1:N, mu_hat_IS)) +
   geom_line() +
   geom_point() +
@@ -563,6 +570,7 @@ will end up far from the origin (Figure \@ref(poor-is-demo)).
 ```{r}
 #| label: poor-is-demo-setup
 #| echo: false
+
 set.seed(1)
 n <- 1000
 mu <- 2
@@ -580,6 +588,7 @@ grid$proposal <- dnorm(grid$x, mean = mu, sd = 1)
 #| warning: false
 #| fig-cap: Target (blue, dashed) and proposal (orange) densities with samples
 #|   from the proposal distribution.
+
 library(patchwork)
 library(dplyr)
 
@@ -634,6 +643,7 @@ responsible for a major part of the estimate.
 #| fig-cap: "Histogram and boxplot of importance weights, showing weight degeneracy."
 #| warning: false
 #| message: false
+
 p1 <- ggplot(df, aes(w_star)) +
   geom_histogram() +
   lims(x = c(-5, NA)) +
@@ -664,6 +674,7 @@ given by the importance weights.
 #| label: weighted-histogram
 #| fig-cap: Weighted histogram of samples from the proposal distribution, where
 #|   the  weights are given by the importance weights.
+
 df <- data.frame(x = x, w = w_star)
 df_grid <- tibble(
   x = seq(-3, 3, length.out = 200),
@@ -724,6 +735,7 @@ In the following code snippet, we compute the ESS and CV for the example above.
 
 ```{r}
 #| label: ess-computation
+
 w <- w_star / sum(w_star)
 ess <- 1 / sum(w^2)
 cv <- sqrt(n * sum(w^2) - 1)
@@ -783,6 +795,7 @@ $[-2, 2]$ as our proposal distribution (Figure
 #| fig-cap: Target (black) and proposal (orange) densities for a demonstration
 #|   of the importance of support coverage in importance sampling.
 #| fig-height: 2.5
+
 x <- seq(-4, 4, length.out = 1000)
 
 df <- tibble(
@@ -809,6 +822,7 @@ will fail completely because it will never generate samples in the region.
 
 ```{r}
 #| label: support-coverage-demo
+
 set.seed(53)
 n <- 1e4
 
@@ -851,9 +865,10 @@ proposal distribution for this example.
 #| echo: false
 #| fig-height: 2.5
 #| fig-width: 5
-#| fig-cap: Integrand (black) and proposal density
-#|   (orange) for a demonstration of the importance of matching the shape of the
-#|   integrand in importance sampling.
+#| fig-cap: Integrand (black) and proposal density (orange) for a demonstration
+#|   of the importance of matching the shape of the integrand in importance
+#|   sampling.
+
 x <- seq(-3, 6, length.out = 1000)
 
 f <- dnorm(x)
@@ -897,6 +912,7 @@ proposal distribution does not generate any samples in the tail region.
 #| fig-cap: Integrand (solid black) and proposal density (dashed orange) for a
 #|   demonstration of the importance of matching the tails of the integrand in
 #|   importance sampling.
+
 x <- seq(0, 10, length.out = 1000)
 f <- dgamma(x, shape = 2, rate = 1)
 
@@ -928,6 +944,7 @@ region where the integrand is large.
 #| label: tail-matching-demo-IS
 #| fig-height: 2
 #| fig-width: 5
+
 set.seed(49)
 
 n <- 1e3
@@ -973,8 +990,8 @@ $$
 f(x) = \frac{1}{2} x^2 e^{-x}, \quad x > 0.
 $$
 
-And assume we want to compute the second moment, so that $h(x) = x^2$.
-Then the integrand is
+And assume we want to compute the second moment, so that $h(x) = x^2$. Then the
+integrand is
 $$
 |h(x)| f(x) = \tfrac{1}{2} x^4 e^{-x}.
 $$
@@ -996,8 +1013,9 @@ but it does not capture the tail behavior of the integrand very well.
 #| fig-height: 2.5
 #| fig-width: 5
 #| fig-cap: >-
-#|   Integrand (solid black) and Laplace approximation (dashed orange)
-#|   for a $\operatorname{Gamma}(3,1)$ target with $h(x)=x^2$.
+#|   Integrand (solid black) and Laplace approximation (dashed orange) for a
+#|   $\operatorname{Gamma}(3,1)$ target with $h(x)=x^2$.
+
 f_density <- function(x) dgamma(x, shape = 3, rate = 1) # Gamma(3,1)
 integrand <- function(x) f_density(x) * x^2
 
@@ -1034,7 +1052,6 @@ ggplot(df, aes(x = x, y = value, color = Density, linetype = Density)) +
     linetype = NULL
   )
 ```
-
 :::
 
 #### Adaptive importance sampling
@@ -1075,6 +1092,7 @@ mode and we can better track the target's multimodal shape.
 ```{r}
 #| echo: false
 #| label: adaptive-importance-demo
+
 f_density <- function(x) 0.4 * dnorm(x, -2, 1) + 0.6 * dnorm(x, 3, 0.5)
 
 # Mixture density and simulator helpers
@@ -1207,6 +1225,7 @@ plot_step <- function(iter) {
 #| cache: false
 #| fig-cap: Adaptive importance sampling with a two-component Gaussian mixture
 #|   proposal.
+
 p1 <- plot_step(1)
 p2 <- plot_step(2)
 p3 <- plot_step(3)
@@ -1262,6 +1281,7 @@ fewer extreme weights, together with a larger ESS and smaller CV.
 #|   coefficient of variation (CV) of the weights.
 #| echo: false
 #| fig-height: 3.5
+
 set.seed(1234)
 B <- 1000
 n_comp <- rbinom(B, 1, 0.8)
@@ -1351,9 +1371,8 @@ We now choose the specific function
 h_0(x) = \exp\left(-\frac{1}{2}\left(x_1^2 + \sum_{k = 2}^p (x_k - \alpha x_{k-1})^2\right)\right).
 \]
 
-Since $x_1^2 + \sum_{k = 2}^p (x_k - \alpha x_{k-1})^2
-= \|x\|_2^2 + \sum\_{k =
-2}^p (\alpha^2 x_{k-1}^2 - 2\alpha x_k x_{k-1})$, we have
+Since $x_1^2 + \sum\_{k = 2}^p (x_k - \alpha x\_{k-1})^2 = \|x\|*2^2 + \sum\_{k
+= 2}^p (\alpha^2 x*{k-1}^2 - 2\alpha x_k x\_{k-1})$, we have
 
 \[
 h(x) = \exp\left(- \frac{1}{2} \sum_{k = 2}^p (\alpha^2 x_{k-1}^2 - 2\alpha x_k x_{k-1})\right).
@@ -1384,6 +1403,7 @@ First, we implement the function we want to integrate.
 
 ```{r}
 #| label: MC_hfun
+
 h <- function(x, alpha = 0.1) {
   p <- length(x)
   tmp <- alpha * x[1:(p - 1)]
@@ -1395,6 +1415,7 @@ Then we specify various parameters.
 
 ```{r}
 #| label: MC_par
+
 N <- 10000 # The number of random variables to generate
 p <- 100 # The dimension of each random variable
 ```
@@ -1404,6 +1425,7 @@ at the case with $\alpha = 0.1$.
 
 ```{r, dependson=c("MC_hfun", "MC_par"), echo=-1}
 #| label: MC_loop
+
 set.seed(123)
 x <- matrix(rnorm(N * p), N, p)
 evaluations <- apply(x, 1, h)
@@ -1421,6 +1443,7 @@ inequality or the CLT.
 #| fig-cap: "Sample path for the Monte Carlo average ($\\alpha = 0.1$) and pointwise 95% confidence intervals using either Chebychev's inequality or the CLT."
 #| out-width: "100%"
 #| fig-height: 3
+
 mu_hat <- cumsum(evaluations) / 1:N
 se <- sd(evaluations) / sqrt((1:N))
 
@@ -1467,6 +1490,7 @@ still finite.
 
 ```{r, dependson=c("MC_hfun", "MC_par"), echo=-(1:2)}
 #| label: MC-loop2
+
 set.seed(12345)
 x <- matrix(rnorm(N * p), N, p)
 alpha <- 0.25
@@ -1479,6 +1503,7 @@ evaluations <- apply(x, 1, h, alpha)
 #| fig-cap: "Histogram of the log-distribution and sample path for the Monte Carlo average $(\\alpha = 0.25)$ with pointwise 95% confidence intervals based on the CLT."
 #| out-width: "100%"
 #| fig-height: 3
+
 mu_hat <- cumsum(evaluations) / 1:N
 se <- sd(evaluations) / sqrt(1:N)
 
@@ -1529,6 +1554,7 @@ smaller than $N$, and the largest normalized contribution can be substantial.
 
 ```{r, dependson="MC-loop2"}
 #| label: MC-contribution-diagnostics
+
 w_contr <- evaluations / sum(evaluations)
 ess_contr <- 1 / sum(w_contr^2)
 max_w_contr <- max(w_contr)
@@ -1547,6 +1573,7 @@ confidence intervals.
 #| out-width: "100%"
 #| fig-cap: Four sample paths for the Monte Carlo average ($\alpha = 0.4$) and
 #|   pointwise 95% confidence intervals based on the CLT.
+
 sim <- tibble::tibble(
   x = matrix(rnorm(N * p), N, p),
   evaluations = apply(x, 1, h, alpha = alpha),
@@ -1654,6 +1681,7 @@ where the variables are dependent, a problem we will return to in Section
 #| label: gaus_weight
 #| eval: false
 #| echo: false
+
 # Experiments with different proposals, e.g., Gaussian with different variance
 # and multivariate t-distributions. The idea was to make the distribution more
 # wide, but it turns out not to do much of a difference
@@ -1677,6 +1705,7 @@ w <- function(x, nu, sigma) {
 #| label: MC_loop3
 #| eval: false
 #| echo: false
+
 # set.seed(123)
 nu <- 3
 sigma <- (nu - 2) / nu
@@ -1693,6 +1722,7 @@ evaluations <- apply(x, 1, function(x) w(x, nu = nu, sigma = sigma))
 #| label: MC_CLT3
 #| eval: false
 #| echo: false
+
 plot(cumsum(evaluations) / 1:N, pch = 20, ylim = c(0, 2), xlab = "N")
 me <- cumsum(evaluations) / 1:N
 ve <- var(evaluations)
@@ -1717,6 +1747,7 @@ the nodes connected.
 #| label: network_fig
 #| echo: false
 #| out-width: "85%"
+
 knitr::include_graphics("figures/networkfig.png")
 ```
 
@@ -1742,6 +1773,7 @@ $A_{ij} = 0$ otherwise).
 
 ```{r, echo=12}
 #| label: network_adj
+
 A <- matrix(0, 10, 10)
 A[1, c(2, 4, 5)] <- 1
 A[2, c(1, 3, 6)] <- 1
@@ -1763,6 +1795,7 @@ adjacency matrix.
 
 ```{r}
 #| label: network_simNet
+
 sim_net <- function(Aup, p) {
   ones <- which(Aup == 1)
   Aup[ones] <- sample(
@@ -1785,12 +1818,14 @@ It is fairly fast to sample even a large number of random graphs this way.
 
 ```{r, dependson="network_adj"}
 #| label: network_Aup
+
 Aup <- A
 Aup[lower.tri(Aup)] <- 0
 ```
 
 ```{r, dependson=c("network_simNet", "network_Aup")}
 #| label: network_bench
+
 bench::bench_time(replicate(1e5, {
   sim_net(Aup, 0.5)
   NULL
@@ -1807,6 +1842,7 @@ shortened.
 
 ```{r}
 #| label: network_connect
+
 discon <- function(Aup) {
   A <- Aup + t(Aup)
   i <- 3
@@ -1824,6 +1860,7 @@ disconnected using Monte Carlo integration.
 
 ```{r, dependson=c("network_connect", "network_simNet", "network_Aup")}
 #| label: network_sim
+
 seed <- 27092016
 set.seed(seed)
 n <- 1e5
@@ -1843,6 +1880,7 @@ asymptotic variance.
 
 ```{r, dependson="network_sim", echo=2}
 #| label: network_conf
+
 old_options <- options(digits = 3)
 mu_hat + 1.96 * sqrt(mu_hat * (1 - mu_hat) / n) * c(-1, 0, 1)
 options(digits = old_options$digits)
@@ -1867,6 +1905,7 @@ of $p$, and the weights are only computed if node 1 and 10 are disconnected.
 
 ```{r}
 #| label: network_weights
+
 weights <- function(Aup, Aup0, p0, p) {
   w <- discon(Aup0)
   if (w) {
@@ -1888,6 +1927,7 @@ The importance sampling estimate of $\mu$ is then computed.
 
 ```{r, dependson=c("network_sim", "network_weights", "network_simNet", "network_Aup")}
 #| label: network_sim2
+
 set.seed(seed)
 tmp <- replicate(n, weights(Aup, sim_net(Aup, 0.2), 0.2, 0.05))
 mu_hat_IS <- mean(tmp)
@@ -1898,6 +1938,7 @@ estimate $\hat{\sigma}^2$.
 
 ```{r, dependson="network_sim2", echo=2}
 #| label: network_conf2
+
 old_options <- options(digits = 3)
 mu_hat_IS + 1.96 * sd(tmp) / sqrt(n) * c(-1, 0, 1)
 options(digits = old_options$digits)
@@ -1908,6 +1949,7 @@ sampling estimate is
 
 ```{r, dependson=c("network_sim", "network_sim2")}
 #| label: network_varRatio
+
 mu_hat * (1 - mu_hat) / var(tmp)
 ```
 
@@ -1928,6 +1970,7 @@ different fail and non-fail combinations for the edges.
 
 ```{r}
 #| label: network_enumeration
+
 ones <- which(Aup == 1)
 Atmp <- Aup
 p <- 0.05
@@ -1947,6 +1990,7 @@ sum of all the probabilities in `prob`.
 
 ```{r, dependson="network_enumeration"}
 #| label: network_fail_prob
+
 sum(prob)
 ```
 
@@ -1965,9 +2009,10 @@ balance.
 #| warning: false
 #| fig-cap: Confidence intervals for importance sampling estimates of network
 #|   nodes 1 and 10 being disconnected under independent edge failures with
-#|   probability 0.05 (top), and the corresponding effective sample sizes
-#|   (ESS, bottom), for a range of proposal edge-failure probabilities. The red line
+#|   probability 0.05 (top), and the corresponding effective sample sizes (ESS,
+#|   bottom), for a range of proposal edge-failure probabilities. The red line
 #|   is the true probability computed by complete enumeration.
+
 p_grid <- c(0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4)
 network_stats <- lapply(p_grid, function(p0) {
   if (p0 == 0.05) {
@@ -2026,6 +2071,7 @@ arguments and returns a list with class label `"network"`.
 
 ```{r, dependson="network_Aup"}
 #| label: network_constructor
+
 network <- function(A, p) {
   Aup <- A
   Aup[lower.tri(Aup)] <- 0
@@ -2047,6 +2093,7 @@ We use the constructor function `network()` to construct and object of class
 
 ```{r, dependson=c("network_constructor", "network_adj")}
 #| label: construtor_use
+
 my_net <- network(A, p = 0.05)
 str(my_net)
 class(my_net)
@@ -2064,6 +2111,7 @@ corresponding generic functions.
 
 ```{r}
 #| label: network_generic
+
 sim <- function(x, ...) {
   UseMethod("sim")
 }
@@ -2078,6 +2126,7 @@ The method for simulation is then implemented as a function with name
 
 ```{r}
 #| label: simnetwork
+
 sim.network <- function(x) {
   Aup <- x$Aup
   Aup[x$ones] <- sample(
@@ -2091,12 +2140,12 @@ sim.network <- function(x) {
 ```
 
 It is implemented using essentially the same implementation as `sim_net()`
-except that `Aup` and `p` are extracted as components from the object `x` 
-instead of being arguments, and `ones` is extracted from `x` as well instead 
-of being computed. One could argue that the `sim()` method should return an object 
-of class network — that would be natural. However, then we need to call the\
-constructor with the full adjacency matrix, this will take some time and we do 
-not want to do that as a default. Thus we simply return the upper triangular 
+except that `Aup` and `p` are extracted as components from the object `x`
+instead of being arguments, and `ones` is extracted from `x` as well instead of
+being computed. One could argue that the `sim()` method should return an object
+of class network --- that would be natural. However, then we need to call the\
+constructor with the full adjacency matrix, this will take some time and we do
+not want to do that as a default. Thus we simply return the upper triangular
 part of the adjacency matrix from `sim()`.
 
 The `failure()` method implements plain Monte Carlo integration as well as
@@ -2106,6 +2155,7 @@ functions `discon()` and `weights()`.
 
 ```{r, dependson=c("simnetwork", "network_weights", "network_connect")}
 #| label: failure
+
 failure.network <- function(x, n, p0 = NULL) {
   if (is.null(p0)) {
     # Plain Monte Carlo simulation
@@ -2132,6 +2182,7 @@ We test the implementation against the previously computed results.
 
 ```{r, dependson="failure", echo=2:5}
 #| label: network_object_MC
+
 old_options <- options(digits = 3)
 set.seed(seed) # Resetting seed
 failure(my_net, n)
@@ -2151,6 +2202,7 @@ On the other hand, `sim()` does not recompute `ones` every time.
 
 ```{r, echo=2, dependson=c("network_simNet", "simnetwork", "network_bench", "network_constructor")}
 #| label: network_bench2
+
 old_options <- options(digits = 3)
 bench::mark(
   sim_net = sim_net(Aup, 0.05),
@@ -2169,6 +2221,7 @@ these benchmark computations.
 #| label: test-method-dispatch-time
 #| echo: false
 #| eval: false
+
 fun1 <- function(x) x
 fun2 <- function(x) {
   UseMethod("fun2")
@@ -2190,6 +2243,7 @@ function already exists, we simply need to implement a method for class
 
 ```{r}
 #| label: network_print
+
 print.network <- function(x) {
   cat("#vertices:", nrow(x$A), "\n")
   cat("#edges:", sum(x$Aup), "\n")
@@ -2199,6 +2253,7 @@ print.network <- function(x) {
 
 ```{r, dependson="network_constructor"}
 #| label: network_printing
+
 my_net # Implicitly calls 'print'
 ```
 
@@ -2215,6 +2270,7 @@ We start by constructing a new graph object from the adjacency matrix.
 ```{r, dependson="network_adj"}
 #| label: network_igraph
 #| message: false
+
 net <- graph_from_adjacency_matrix(A, mode = "undirected")
 class(net)
 net # Illustrates the print method for objects of class 'igraph'
@@ -2229,6 +2285,7 @@ igraph. But before doing so, we will specify a layout of the graph.
 
 ```{r, dependson="network_igraph"}
 #| label: network_layout
+
 # You can generate a layout ...
 net_layout <- layout_(net, nicely())
 # ... or you can specify one yourself
@@ -2245,6 +2302,7 @@ The layout we have specified makes it easy to recognize the graph.
 ```{r, dependson=c("network_layout", "network_igraph")}
 #| label: network_plot
 #| crop: true
+
 plot(net, layout = net_layout, asp = 0)
 ```
 
@@ -2255,6 +2313,7 @@ simulation is still based on `sample()`.
 
 ```{r}
 #| label: network_sim_igraph
+
 sim.igraph <- function(x, p) {
   deledges <- sample(
     c(TRUE, FALSE),
@@ -2275,6 +2334,7 @@ plot a simulated graph.
 
 ```{r, dependson=c("network_igraph", "network_layout", "network_sim_igraph")}
 #| label: network_simulated
+
 plot(sim(net, 0.25), layout = net_layout, asp = 0)
 ```
 
@@ -2283,6 +2343,7 @@ matrix representation alone as in `sim_net()`.
 
 ```{r, dependson=c("network_igraph", "network_sim_igraph")}
 #| label: network_bench3
+
 system.time(replicate(1e5, {
   sim(net, 0.05)
   NULL
@@ -2459,11 +2520,10 @@ Likewise, the conditional smoothing expectation can be approximated by
 
 ### AR(1) sequential importance sampling {#AR1-importance}
 
-We revisit the AR(1) model from Section \@ref(kalman) with a small 
-notational difference. In Section \@ref(kalman) we used $f_k$ to 
-denote the $k$-th value of the unobserved Gaussian process, while 
-we will use $Z_k$ in this section. Thus the update equation is linear 
-and given as\
+We revisit the AR(1) model from Section \@ref(kalman) with a small notational
+difference. In Section \@ref(kalman) we used $f_k$ to denote the $k$-th value of
+the unobserved Gaussian process, while we will use $Z_k$ in this section. Thus
+the update equation is linear and given as\
 
 \[
 Z_k = \alpha Z_{k-1} + \tau U_k
@@ -2494,7 +2554,9 @@ w^*(Z_{k}) = \exp\left( - \frac{\left( y_k - Z_k \right)^2}{2 \sigma^2} \right).
 
 ### Particle filters for the AR(1) process
 
-```{Rcpp, KalmanFilt}
+```{Rcpp}
+//| label: KalmanFilt
+
 #include <Rcpp.h>
 using namespace Rcpp;
 
@@ -2585,4 +2647,30 @@ Simulate from a proposal \(g\) and use importance sampling to estimate
     \(g=0.9\,\mathcal{N}(3,1)+0.1\,\mathcal{N}(0,4^2)\).
 (b) For each, compute the estimate, ESS, and CV.
 (c) Explain which proposal is best and why.
+:::
+
+::: {#clt-coverage .exercise}
+The central limit theorem only guarantees that the nominal 95% confidence
+interval covers $\mu$ with probability approximately $0.95$ for $N$ large, and
+the *actual* coverage can be smaller, see Section \@ref(CLT-gamma). This
+exercise investigates the actual coverage by simulation.
+
+(a) Consider the gamma example from Section \@ref(CLT-gamma), where $\mu = 8$.
+    For a fixed $N$, simulate $X_1, \ldots, X_N$ i.i.d. from a
+    $\mathrm{Gamma}(8)$ distribution, form the nominal 95% interval
+    $\hat{\mu}_{\textrm{MC}} \pm 1.96 \, \hat{\sigma}_{\textrm{MC}} / \sqrt{N}$,
+    and record whether it covers $\mu$. Repeat this $M = 1000$ times and
+    estimate the actual coverage as the fraction of intervals that cover $\mu$.
+
+(b) Plot the estimated coverage against $N$ for
+    $N \in \{5, 10, 20, 50, 100, 500\}$. How large must $N$ be before the actual
+    coverage is close to the nominal $0.95$?
+
+(c) Repeat the coverage estimation for the integrand $h$ from Section
+    \@ref(hd-int), sampling $X \sim \mathcal{N}(0, I_p)$ with $p = 100$ and
+    using $N = 1000$, where the target value is $\mu = 1$. Do this for both
+    $\alpha = 0.1$ and $\alpha = 0.25$. Even though the variance is finite in
+    both cases (Exercise \@ref(exr:finvar)), you should find that the actual
+    coverage is markedly below $0.95$ for $\alpha = 0.25$. Explain this in light
+    of the sample path in Figure \@ref(fig:MC-CLT2).
 :::
