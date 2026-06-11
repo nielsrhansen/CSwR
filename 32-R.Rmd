@@ -1283,9 +1283,9 @@ In addition to the visual summary above, the [interactive
 HTML](figures/rng_stream_profile.html) widget shows the data in the form of a
 flame graph,\index{flame graph} and it includes an alternative summarized view
 of the profiling data. The profiling data itself is collected by
-`profvis()`\index{profvis()} via the `Rprof()` function from the utils
-package. The main advantage of using `profvis()` is the way it processes and
-formats the data---see `?Rprof` to understand how the profiler actually works.
+`profvis()`\index{profvis()} via the `Rprof()` function from the utils package.
+The main advantage of using `profvis()` is the way it processes and formats the
+data---see `?Rprof` to understand how the profiler actually works.
 
 For `profvis()` to connect the profiling data to lines of code it must have
 access to the source code. In the example above the source code of
@@ -1415,8 +1415,8 @@ without touching the implementation of the function or affecting its performance
 when we are not tracing its behavior.
 
 Using tracer objects with a function requires that we can call the object's
-tracer function inside the body of the function. It is possible to inject such
-a function call into any function using the base R function `trace()`, and to
+tracer function inside the body of the function. It is possible to inject such a
+function call into any function using the base R function `trace()`, and to
 remove it again with the `untrace()` function. This can be done
 programmatically, but it may be impossible to position the tracer call at the
 right place this way, in which case we need to manually edit the code. This is
@@ -1673,6 +1673,7 @@ opposite if often the case, as we will illustrate next.
 #|   Benchmarking the runtime of a for-loop-based implementation of the
 #|   logarithm of a vector against an implementation using `vapply()`, which is
 #|   a vectorized function.
+#|
 #| fig-height: 3
 
 x <- runif(1e5, 1, 2)
@@ -1699,8 +1700,8 @@ The *actual* reason for why vectorization often helps has nothing at all to do
 with vectorization itself, but is instead that they are implemented in a
 compiled language. And it is this property that we should try to profit from.
 
-If base R does not sport the function you need to speed up your code, you
-can sometimes find it in a package instead. For instance, the
+If base R does not sport the function you need to speed up your code, you can
+sometimes find it in a package instead. For instance, the
 [`matrixStats`](https://cran.r-project.org/package=matrixStats) package contains
 a large number of useful functions for operating on rows and columns of
 matrices, and these functions are implemented in C and are thus much faster than
@@ -1997,8 +1998,8 @@ of this behavior.
 
 In general, you should avoid modifying any Rcpp object that comes from an
 argument on the R side. It can absolutely be helpful for performance, but users
-of R are not typically used to this kind of side-effect from calling a function, so
-it is best avoided.
+of R are not typically used to this kind of side-effect from calling a function,
+so it is best avoided.
 
 ### Parallelization
 
@@ -2265,11 +2266,12 @@ oranges.
 All computations, and thus all performance measurements, in the present book
 were done on a MacBook Pro with an M2 Max chip, running
 `r R.Version()$version.string`. The reference BLAS implementation shipped with R
-was also used. Some of the comparisons could come out differently if run with a
-different configuration, e.g., using Apple's BLAS implementation from the
-Accelerate framework. A simple reproducibility test across platforms was done by
-also compiling the book on a Linux system with xx chip running Ubuntu xx, again
-using the reference BLAS implementation. TODO: conclusion?
+was also used. <!--- TODO: is that in fact true? --> Some of the comparisons
+could come out differently if run with a different configuration, e.g., using
+Apple's BLAS implementation from the Accelerate framework. A simple
+reproducibility test across platforms was done by also compiling the book on a
+Linux system with xx chip running Ubuntu xx, again using the reference BLAS
+implementation. TODO: conclusion?
 
 With the above considerations in mind, the reader is therefore asked *not* to
 draw general conclusions from any of the specific performance comparisons. These
@@ -2280,7 +2282,245 @@ about the performance of R vs. C++, say.
 
 ## Objects and methods {#objects}
 
-Something
+Several times in this chapter we have called the same function on different
+kinds of objects and gotten behavior tailored to each. In Section \@ref(tracing)
+we called `summary()` on a tracer object and got back a data frame of traced
+values, whereas `summary()` of a numeric vector returns a few quantiles and
+`summary()` of a data frame summarizes each column. Likewise, `plot()` rendered
+a benchmark as timing distributions in Section \@ref(measuring-performance), but
+`plot()` of two numeric vectors draws a scatterplot. Functions that adapt their
+behavior to the kind of object they are given are called *generic
+functions*,\index{generic function} and the machinery that picks the right
+behavior for the right object is R's simplest and most widely used object
+system, known as *S3*.
+
+S3 is informal and lightweight. It is what the CSwR package uses for its tracer
+objects, and it is what we reach for whenever we want the return value of one of
+our own functions to print, summarize, or plot nicely instead of dumping its raw
+internals. The three other commonly used object systems in R,
+[S4](https://adv-r.hadley.nz/s4.html), [R6](https://adv-r.hadley.nz/r6.html) and
+[S7](https://cran.r-project.org/package=S7) offer more structure and formality,
+but they are not used in this book and are not covered here.
+
+We will illustrate S3 by wrapping the Gaussian kernel density estimator from
+Section \@ref(vectorization) in an object that carries its own evaluation grid,
+so that it can be printed, summarized, and plotted as a unit.
+
+### Classes and constructors
+
+An S3 object is nothing more than a base object---most often a list---with a
+`class` attribute attached. The class is a character vector, and it is what
+generic functions dispatch on. While we can attach a class to any object after
+the fact with `class<-`, it is good practice to wrap the creation of an object
+in a *constructor* function, just as it is good practice to keep any other well
+defined computation in its own function (Section \@ref(functions)).
+
+The constructor below evaluates the kernel density estimator $\overline{f}_h$ on
+an equidistant grid spanning the range of the data and returns the grid, the
+estimated density, the bandwidth, and the number of observations bundled
+together in a list of class `kde`.
+
+```{r, dependson="gauss-kernel"}
+#| label: kde-constructor
+
+new_kde <- function(x, h, m = 512) {
+  grid <- seq(min(x), max(x), length.out = m)
+  y <- rowMeans(outer(grid, x, function(a, b) gauss(a - b, h)))
+
+  structure(
+    list(x = grid, y = y, h = h, n = length(x)),
+    class = "kde"
+  )
+}
+```
+
+The `structure()` function is a convenient way of creating an object and setting
+its attributes---here just the class---in a single call. We construct a density
+estimate for the eruption durations in the `faithful` dataset.
+
+```{r, dependson="kde-constructor"}
+#| label: kde-object
+
+dens <- new_kde(faithful$eruptions, h = 0.3)
+
+class(dens)
+names(dens)
+```
+
+The object `dens` is, underneath its class, an ordinary list, and we could
+access its entries with `dens$x` and `dens$y` as for any other list. Because we
+have not yet told R how a `kde` object should be displayed, printing `dens`
+would simply dump all 512 grid values and densities to the console. We fix that
+next.
+
+### Generic functions and method dispatch
+
+`print()`, `summary()`, and `plot()` are all generic functions. A generic does
+little on its own; its job is to inspect the class of its first argument and
+hand the work over to a *method*---a function whose name follows the convention
+`generic.class`.\index{method dispatch} When we call `print(dens)`, R looks for
+a function called `print.kde()`, and if it does not find one it falls back to
+`print.default()`. Defining a method for our class is therefore just a matter of
+writing a function with the right name.
+
+```{r, dependson="kde-object"}
+#| label: print-kde
+
+print.kde <- function(x, ...) {
+  cat("Kernel density estimate\n")
+  cat("  Observations:", x$n, "\n")
+  cat("  Bandwidth:   ", x$h, "\n")
+  cat("  Grid points: ", length(x$x), "\n")
+  invisible(x)
+}
+
+dens
+```
+
+A few conventions are worth noting. The first argument of `print.kde()` is
+called `x` to match the generic `print()`, and the method ends with
+`invisible(x)`, which returns the object without printing it a second time---the
+standard behavior for print methods. The `...` argument lets the method accept
+and ignore (or pass on) any further arguments, which is required because the
+generic `print()` has a `...` argument too.
+
+The `summary()` generic conventionally returns a more compact representation of
+an object rather than printing it. Here we return a data frame with the grid and
+the estimated density, which is convenient for further computation or plotting.
+
+```{r, dependson="kde-object"}
+#| label: summary-kde
+
+summary.kde <- function(object, ...) {
+  data.frame(x = object$x, density = object$y)
+}
+
+head(summary(dens))
+```
+
+Note that the first argument of `summary.kde()` is named `object`, again to
+match the generic `summary()`. Using the same argument names as the generic
+ensures that arguments passed by name are matched correctly during dispatch.
+
+A `plot()` method lets us visualize the object directly.
+
+```{r, dependson="kde-object"}
+#| label: plot-kde
+#| fig-height: 3
+#| fig-cap: The kernel density estimate plotted via the `plot()` method for
+#|   objects of class `kde`.
+
+plot.kde <- function(x, ...) {
+  plot(x$x, x$y, type = "l", xlab = "x", ylab = "Density", ...)
+}
+
+plot(dens)
+```
+
+Because the body of `plot.kde()` passes `...` on to the inner `plot()` call, a
+user can still set standard graphical parameters, e.g.,
+`plot(dens, col = "blue")`, even though we never mention `col` in our method.
+
+So far we have written methods for generics that already exist in R. We can just
+as easily define our own generic. A generic is a function whose body consists of
+a call to `UseMethod()`\index{UseMethod()} with the name of the generic. The
+following `peak()` generic returns, for a `kde` object, the location of the
+highest mode of the density.
+
+```{r, dependson="kde-object"}
+#| label: peak-kde
+
+peak <- function(object, ...) {
+  UseMethod("peak")
+}
+
+peak.default <- function(object, ...) {
+  stop("no 'peak' method for objects of class ", class(object)[1])
+}
+
+peak.kde <- function(object, ...) {
+  object$x[which.max(object$y)]
+}
+
+peak(dens)
+```
+
+The `peak.default()` method is called for any object without a more specific
+method, and here it simply raises an informative error. Defining a sensible
+default---or a default that fails with a clear message---is good practice when
+you write a generic.
+
+### Inheritance
+
+The class attribute can be a vector of more than one class, and this is how S3
+expresses *inheritance*.\index{inheritance} When dispatching, R tries each class
+in turn from left to right and uses the first matching method it finds. This
+makes it possible to give an object specialized behavior for some generics while
+letting it fall back on an existing class for others.
+
+A typical situation is that we want an object to print in our own way but
+otherwise behave like an object from a class that R already knows how to handle.
+The `hist()` function, for instance, returns an object of class `histogram` for
+which the graphics package already provides a `plot()` method.
+
+```{r}
+#| label: hist-inherit
+
+h <- hist(faithful$eruptions, plot = FALSE)
+class(h)
+
+# Prepend our own class in front of the existing one
+class(h) <- c("brief_histogram", "histogram")
+
+print.brief_histogram <- function(x, ...) {
+  cat("Histogram with", length(x$counts), "cells\n")
+  invisible(x)
+}
+
+h
+```
+
+Printing `h` now dispatches to `print.brief_histogram()`, because
+`brief_histogram` comes first in the class vector. Plotting `h`, on the other
+hand, finds no `plot.brief_histogram()` and falls through to `plot.histogram()`,
+so the object still draws as an ordinary histogram.
+
+```{r, dependson="hist-inherit"}
+#| label: hist-inherit-plot
+#| fig-height: 3
+#| fig-cap: "An object of class `c('brief_histogram', 'histogram')` still plots
+#|   via the inherited `plot.histogram()` method."
+
+plot(h)
+```
+
+A method can also explicitly hand off to the next class in the vector by calling
+`NextMethod()`,\index{NextMethod()} which is useful when our method should add
+something and then defer the rest of the work to the inherited method. The
+function `inherits()` tests whether an object has a given class, e.g.,
+`inherits(h, "histogram")` returns `TRUE`.
+
+### S3 in the wild
+
+The tracer objects from Section \@ref(tracing) are a real example of everything
+above. A tracer is an S3 object, and the calls we made earlier dispatched to
+methods written for its class.
+
+```{r}
+#| label: tracer-class
+
+mean_tracer <- CSwR::tracer("x_sum")
+class(mean_tracer)
+```
+
+When we wrote `summary(mean_tracer)` we were calling a `summary.tracer()` method
+that turns the stored trace into a data frame, and `autoplot(mean_tracer)`
+dispatched to an `autoplot.tracer()` method. The `autoplot()` generic is itself
+defined by the ggplot2 package rather than by base R, which illustrates that we
+can write methods for generics from any package, not just the base generics like
+`print()` and `summary()`. Reading the implementation of `tracer()` in the CSwR
+package is a good way to see how S3 methods, generics, and environments (Section
+\@ref(environments)) work together in a small but realistic piece of code.
 
 ## Exercises {#app-ex}
 
