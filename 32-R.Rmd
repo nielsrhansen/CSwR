@@ -714,6 +714,37 @@ The overall aspects to writing an R function can be summarized as follows:
   and arguments can be passed to the function by position as well as by name.
 - Functions should do a single well defined computation and be well tested.
 
+### The pipe operator {#pipe}
+
+Since complex behavior is achieved by composing functions, we often need to feed
+the result of one function call into another. R provides the *pipe operator*
+`|>`\index{pipe operator} as a convenient syntax for doing so. The expression
+`x |> f()` is equivalent to `f(x)`: the pipe takes the value on its left and
+inserts it as the first argument of the call on its right. More generally,
+`x |> f(y)` is equivalent to `f(x, y)`. Note that the function on the right is
+written with its parentheses, even when no further arguments are passed.
+
+The benefit of the pipe is readability when several calls are nested. A nested
+expression has to be read from the inside out, while the equivalent piped
+expression reads from left to right in the order the operations are applied.
+
+```{r}
+#| label: pipe-example
+
+x <- c(3, 1, 2, 1, 3)
+
+# Nested: read inside out
+head(sort(unique(x)))
+
+# Piped: read left to right
+x |> unique() |> sort() |> head()
+```
+
+The two computations are identical. We use the pipe in this way in several
+places in this appendix and elsewhere in the book. You may also encounter the
+related `%>%` pipe from the magrittr package, which is widely used in Tidyverse
+code and behaves similarly, but we use the base R pipe `|>` throughout.
+
 ### Vectorization {#vectorization}
 
 In Section \@ref(app-data-structures) we showed how comparison operators work in
