@@ -18,19 +18,19 @@ When $H$ is convex, every stationary point is a global minimizer
 (Section\ \@ref(opt-conditions)) and the algorithms considered in this section
 produce a certified optimum. When it is not, they produce a local minimizer or
 merely a stationary point. That does not, however, mean that the solutions are
-meaningless. @Kiefer:1978, for instance, showed that the Gaussian-mixture
-likelihood of Section\ \@ref(Gauss-mix-ex) is unbounded above, yet $\nabla
-H(\theta) = 0$ admits a consistent sequence of solutions as $N \to \infty$.
-Convexity is convenient but not essential.
+without value. The Gaussian-mixture likelihood is for instance unbounded
+above\ (Section\ \@ref(Gauss-mix-ex)), yet the EM algorithm still converges to a
+local maximum that is statistically consistent. Convexity is convenient but not
+essential.
 
-Throughout the rest of this chapter, two recurrent themes will emerge. First,
-our goal is typically not the minimizer of $H$ for a particular dataset---what
-matters is the statistical estimate it represents. Driving an optimizer to
-machine precision is rarely worth the computational effort when the statistical
-uncertainty of the estimate is orders of magnitude larger, and our budget is
-then better spent exploring many models and starting values and quantifying
-parameter uncertainty. Second, the runtime of every algorithm in this chapter is
-dominated by the cost of evaluating $H$ and its derivatives. For
+Throughout the rest of this chapter, two recurrent themes will emerge. First, we
+observe that our goal is typically not the minimizer of $H$ for a particular
+dataset---what matters is the statistical estimate it represents. Driving an
+optimizer to machine precision is rarely worth the computational effort when the
+statistical uncertainty of the estimate is orders of magnitude larger, and our
+budget is then better spent exploring many models and starting values and
+quantifying parameter uncertainty. Second, the runtime of every algorithm in
+this chapter is dominated by the cost of evaluating $H$ and its derivatives. For
 exponential-family models, that cost collapses to a one-time
 sufficient-statistic computation (Section\ \@ref(parametrization)), making each
 iteration $O(p)$ rather than $O(Np)$. We will exploit this structure repeatedly.
@@ -42,10 +42,10 @@ $\theta_0 \in \Theta$ they generate a sequence $\theta_1, \theta_2, \ldots$ via
 a step map $\Phi : \Theta \to \Theta$ with
 
 \[
-\theta_n = \Phi(\theta_{n-1}).
+  \theta_n = \Phi(\theta_{n - 1}).
 \]
 
-We hope that $\theta_n \to \theta^\star$ for some minimizer
+Our hope is that $\theta_n \to \theta^\star$ for some minimizer
 $\theta^\star \in \argmin_\theta H(\theta)$. When this happens, continuity of
 $\Phi$ forces $\Phi(\theta^\star) = \theta^\star$, so the limit is a *fixed
 point* of the step map. We thus specify $\Phi$ so that its fixed points are
@@ -64,36 +64,36 @@ step moves $\theta_n$ in a *descent direction* $\rho_n \in \mathbb{R}^p$ scaled
 by a *step size* $t_n > 0$:
 
 \[
-\theta_{n+1} = \theta_n + t_n \rho_n.
+  \theta_{n + 1} = \theta_n + t_n \rho_n.
 \]
 
 The direction $\rho_n$ is called a descent direction at $\theta_n$ when
 
 \[
-\rho_n^\top \nabla H(\theta_n) < 0
+  \rho_n^\top \nabla H(\theta_n) < 0
 \]
 
 whenever $\theta_n$ is not a stationary point. The first-order Taylor expansion
 
 \[
-H(\theta_n + t \rho_n) = H(\theta_n) + t \rho_n^\top \nabla H(\theta_n) + o(t)
+  H(\theta_n + t \rho_n) = H(\theta_n) + t \rho_n^\top \nabla H(\theta_n) + o(t)
 \]
 
 then guarantees $H(\theta_n + t \rho_n) < H(\theta_n)$ for sufficiently small
 $t > 0$. The algorithms in this chapter differ in how they choose $\rho_n$ and
-$t_n$. The simplest choice is gradient descent (Section\ \@ref(grad-descent)),
+$t_n$. The simplest choice is gradient descent\ (Section\ \@ref(grad-descent)),
 which moves opposite the gradient, taking $\rho_n = -\nabla H(\theta_n)$.
-Newton's method (Section\ \@ref(Newton)) uses the curvature of $H$ (the Hessian)
-to correct the gradient direction, resulting in
-$\rho_n = -\nabla^2 H(\theta_n)^{-1} \nabla H(\theta_n)$, provided the Hessian
-is positive definite. Quasi-Newton methods replace the Hessian inverse with a
+Newton's method\ (Section\ \@ref(Newton)) uses the curvature of $H$ (the
+Hessian) to correct the gradient direction, resulting in
+$\rho_n = -\nabla^2 H(\theta_n)^{-1} \nabla H(\theta_n)$ (provided the Hessian
+is positive definite). Quasi-Newton methods replace the Hessian inverse with a
 cheaper surrogate. Step sizes can be fixed, chosen by line search, or obtained
 by minimizing exactly along the ray $t \mapsto H(\theta_n + t \rho_n)$.
 
 A sequence generated this way is called a *descent sequence* if
 
 \[
-H(\theta_0) \geq H(\theta_1) \geq H(\theta_2) \geq \ldots,
+  H(\theta_0) \geq H(\theta_1) \geq H(\theta_2) \geq \ldots,
 \]
 
 and a *strict* descent sequence if the inequalities are sharp at every
@@ -104,16 +104,15 @@ which holds in particular when that level set is compact. But descent alone does
 not imply convergence to a stationary point---an algorithm can take ever-smaller
 steps and stall short of any minimizer. What we need is *sufficient* descent at
 each step, controlled by a quantitative lower bound on
-$H(\theta_n) - H(\theta_{n+1})$ in terms of the gradient. The rest of the
-chapter is largely devoted to establishing such bounds and deriving convergence
-rates from them.
+$H(\theta_n) - H(\theta_{n + 1})$ in terms of the gradient. The rest of the
+chapter is largely devoted to this.
 
 ## Gradient descent {#grad-descent}
 
 Gradient descent is the quintessential first-order optimization algorithm. At
 each iteration we take $\rho_n = -\nabla H(\theta_n)$, the steepest descent
 direction, pick a step size $t_n > 0$, and update our current best guess of
-$\theta$ (Algorithm\ 1).
+$\theta$\ (Algorithm\ 1).
 
 ```{algorithm, gd-basic}
 \begin{algorithm}
@@ -199,35 +198,39 @@ ggplot(curve_df, aes(x, y)) +
 ```
 
 But how do we set $t$? If we set it too large, then we risk overshooting the
-target, possibly even diverging. If we set it too small, then we might never
-reach the optimum within our time budget. The answer hinges on the *smoothness*
-of $H$. Recall from Section\ \@ref(smoothness) that $H$ is *$L$-smooth* on
-$\Theta$ when $\nabla^2 H(\theta) \preceq L I$ for all $\theta \in \Theta$, and
-that the descent lemma (Lemma\ \@ref(lem:descent-lemma)) then guarantees
+target, possibly even diverging. If we set it too small, then we might not reach
+the optimum within our time budget. The answer hinges on the *smoothness* of
+$H$. Recall from Section\ \@ref(smoothness) that $H$ is *$L$-smooth* on $\Theta$
+when $\nabla^2 H(\theta) \preceq L I$ for all $\theta \in \Theta$, and that the
+descent lemma (Lemma\ \@ref(lem:descent-lemma)) then guarantees
 
 \[
-H(\theta') \leq H(\theta) + \nabla H(\theta)^\top (\theta' - \theta) + \frac{L}{2} \|\theta' - \theta\|_2^2
+  H(\theta') \leq H(\theta)
+                  + \nabla H(\theta)^\top (\theta' - \theta)
+                  + \frac{L}{2} \|\theta'
+                  - \theta\|_2^2
 \]
 
 for all $\theta, \theta' \in \Theta$. Setting
 $\theta' = \theta - t \nabla H(\theta)$ in this inequality yields
 
 \begin{align}
-H(\theta - t \nabla H(\theta)) & \leq H(\theta) - t \left(1 - \frac{tL}{2}\right) \|\nabla H(\theta)\|_2^2.
-(\#eq:gd-descent-bound)
+  H(\theta - t \nabla H(\theta)) & \leq H(\theta) - t \left(1 - \frac{tL}{2}\right) \|\nabla H(\theta)\|_2^2.
+  (\#eq:gd-descent-bound)
 \end{align}
 
 The right-hand side is minimized over $t > 0$ at $t = 1/L$, where the bound
 collapses to
 
 \[
-H(\theta - L^{-1} \nabla H(\theta)) \leq H(\theta) - \frac{1}{2L} \|\nabla H(\theta)\|_2^2.
+  H(\theta - L^{-1} \nabla H(\theta)) \leq H(\theta)
+                                           - \frac{1}{2L} \|\nabla H(\theta)\|_2^2.
 \]
 
 The gradient descent step we will analyze in this section is correspondingly
 
 \begin{align}
-\theta_{n+1} & = \theta_n - \frac{1}{L} \nabla H(\theta_n).  (\#eq:gd-step)
+  \theta_{n + 1} & = \theta_n - \frac{1}{L} \nabla H(\theta_n). (\#eq:gd-step)
 \end{align}
 
 Every iteration decreases $H$ by at least
@@ -235,28 +238,30 @@ $(2L)^{-1} \|\nabla H(\theta_n)\|_2^2$, so $(\theta_n)$ is a strict descent
 sequence unless it hits a stationary point. The corresponding step map
 
 \[
-\Phi(\theta) = \theta - \frac{1}{L} \nabla H(\theta)
+  \Phi(\theta) = \theta - \frac{1}{L} \nabla H(\theta)
 \]
 
 has $\theta$ as a fixed point if and only if $\nabla H(\theta) = 0$, so the
-fixed points of $\Phi$ are exactly the stationary points of $H$. Knowing $L$ in
-advance is rarely realistic in practice, and Section\ \@ref(stop-crit) and the
-line-search material that follows show how a backtracking step size adapts the
-step length without requiring it explicitly.
-
-Figure\ \@ref(fig:gd-step-sizes) illustrates the three regimes on a simple step
-near $1/L$ converges in a handful of iterations; a step approaching the step
-near $1/L$ converges in a handful of iterations; a step approaching the
-stability boundary $2/L$ (where the descent inequality
-\@ref(eq:gd-descent-bound) becomes vacuous) oscillates across the steep
-direction. For $t > 2/L$ the iterates diverge.
+fixed points of $\Phi$ are exactly the stationary points of $H$. Unfortunately,
+knowing or computing $L$ in advance is rarely realistic in practice, which means
+that we often have to pick it adaptively. The problem is that doing so is not a
+trivial matter. Figure\ \@ref(fig:gd-step-sizes) illustrates the three step size
+choices on a simple quadratic problem. A step far below $1/L$ crawls slowly
+towards the optimum; a step at exactly $1/L$ converges in a handful of
+iterations; and a step just above the stability boundary $2/L$ (where the
+descent inequality \@ref(eq:gd-descent-bound) breaks) diverges.
 
 ```{r}
 #| label: gd-step-sizes
 #| echo: false
 #| fig-width: 7
 #| fig-height: 3
-#| fig-cap: "Gradient descent on $H(\\theta) = (\\theta_1^2 + 4\\theta_2^2)/2$ (so $L = 4$) for three step sizes, starting from $\\theta_0 = (-2.5, 1.5)$. Contours are level sets of $H$; dots are the iterates. A step much smaller than $1/L$ descends slowly; a step near $1/L$ converges efficiently; a step near the stability boundary $2/L = 0.5$ oscillates across the steep direction."
+#| fig-cap: >-
+#|   Gradient descent on $H(\theta) = (\theta_1^2 + 4\theta_2^2)/2$ (so $L = 4$)
+#|   for three step sizes, starting from $\theta_0 = (-2.5, 1.5)$. Contours are
+#|   level sets of $H$; dots are the iterates. A step much smaller than $1/L$
+#|   descends slowly; a step at $1/L$ converges efficiently; and a step above
+#|   the stability boundary $2/L = 0.5$ diverges.
 
 library(patchwork)
 
@@ -295,9 +300,13 @@ make_panel <- function(t, title) {
 
 make_panel(0.05, "t = 0.05") +
   make_panel(0.20, "t = 0.20") +
-  make_panel(0.45, "t = 0.45") +
+  make_panel(0.51, "t = 0.51") +
   plot_layout(axes = "collect")
 ```
+
+In Section\ \@ref(line-search) we will discuss how to choose $t_n$ adaptively at
+each iteration via a line search. For now, however, we will assume that $L$ is
+known and fixed, and analyze the convergence of the gradient descent iterates.
 
 ### Convergence rates
 
@@ -312,7 +321,7 @@ attains its minimum at some $\theta^\star$. The gradient descent iterates
 \@ref(eq:gd-step) starting from $\theta_0 \in \mathbb{R}^p$ satisfy
 
 \[
-H(\theta_n) - H(\theta^\star) \leq \frac{L \|\theta_0 - \theta^\star\|_2^2}{2n}
+  H(\theta_n) - H(\theta^\star) \leq \frac{L \|\theta_0 - \theta^\star\|_2^2}{2n}
 \]
 
 for every $n \geq 1$.
@@ -322,34 +331,36 @@ for every $n \geq 1$.
 Apply \@ref(eq:gd-descent-bound) at $\theta = \theta_i$ with $t = 1/L$ to get
 
 \[
-H(\theta_{i+1}) \leq H(\theta_i) - \frac{1}{2L} \|\nabla H(\theta_i)\|_2^2.
+  H(\theta_{i + 1}) \leq H(\theta_i) - \frac{1}{2L} \|\nabla H(\theta_i)\|_2^2.
 \]
 
 By the first-order characterization of convexity (Section\ \@ref(convexity)),
 
 $$
-H(\theta^\star) \geq H(\theta_i) + \nabla H(\theta_i)^\top (\theta^\star - \theta_i),
+  H(\theta^\star) \geq H(\theta_i)
+                       + \nabla H(\theta_i)^\top (\theta^\star - \theta_i),
 $$
 
 so
 
 $$
-H(\theta_i) - H(\theta^\star) \leq \nabla H(\theta_i)^\top (\theta_i - \theta^\star).
+  H(\theta_i) - H(\theta^\star) \leq \nabla H(\theta_i)^\top (\theta_i - \theta^\star).
 $$
 
 Combining with the previous display,
 
 \begin{align*}
-  H(\theta_{i+1}) - H(\theta^\star) & \leq \nabla H(\theta_i)^\top (\theta_i - \theta^\star) - \frac{1}{2L} \|\nabla H(\theta_i)\|_2^2 \\
-  & = \frac{L}{2} \left( \|\theta_i - \theta^\star\|_2^2 - \|\theta_i - \theta^\star - L^{-1} \nabla H(\theta_i)\|_2^2 \right) \\
-  & = \frac{L}{2} \left( \|\theta_i - \theta^\star\|_2^2 - \|\theta_{i+1} - \theta^\star\|_2^2 \right),
+  H(\theta_{i + 1}) - H(\theta^\star) & \leq \nabla H(\theta_i)^\top (\theta_i - \theta^\star) - \frac{1}{2L} \|\nabla H(\theta_i)\|_2^2                           \\
+                                      & = \frac{L}{2} \left( \|\theta_i - \theta^\star\|_2^2 - \|\theta_i - \theta^\star - L^{-1} \nabla H(\theta_i)\|_2^2 \right) \\
+                                      & = \frac{L}{2} \left( \|\theta_i - \theta^\star\|_2^2 - \|\theta_{i + 1} - \theta^\star\|_2^2 \right),
 \end{align*}
 
 where the second line completes the square. Summing from $i = 0$ to $n - 1$
 gives us
 
 \[
-\sum_{i=0}^{n-1} \left( H(\theta_{i+1}) - H(\theta^\star) \right) \leq \frac{L}{2} \|\theta_0 - \theta^\star\|_2^2.
+  \sum_{i = 0}^{n - 1} \left( H(\theta_{i + 1}) - H(\theta^\star) \right) \leq \frac{L}{2} \|\theta_0
+                                                                               - \theta^\star\|_2^2.
 \]
 
 The descent property ensures $H(\theta_n) - H(\theta^\star)$ is decreasing in
@@ -358,16 +369,17 @@ $n$, so the left-hand side is at least $n (H(\theta_n) - H(\theta^\star))$.
 
 The suboptimality $H(\theta_n) - H(\theta^\star)$ thus decays like $1/n$. This
 is *sublinear* convergence: the number of correct digits in $H(\theta_n)$ grows
-like $\log n$. Doubling the accuracy requires doubling the iteration count, a
-slow rate when many digits are needed, but one that places remarkably weak
-demands on $H$ (just convexity and smoothness).
+according to $\log n$. Doubling the accuracy requires doubling the iteration
+count, which is a slow rate when many digits are needed, but one that places
+remarkably weak demands on $H$ (just convexity and smoothness).
 
-Adding strong convexity sharpens the picture dramatically. If $H$ is
+Adding strong convexity improves the picture dramatically. If $H$ is
 $m$-strongly convex in addition to $L$-smooth, then
 Lemma\ \@ref(lem:strong-convex-suboptimality) gives the two-sided bound
 
 \[
-\frac{m}{2} \|\theta - \theta^\star\|_2^2 \leq H(\theta) - H(\theta^\star) \leq \frac{1}{2m} \|\nabla H(\theta)\|_2^2.
+  \frac{m}{2} \|\theta - \theta^\star\|_2^2 \leq H(\theta) - H(\theta^\star)
+                                            \leq \frac{1}{2m} \|\nabla H(\theta)\|_2^2.
 \]
 
 The right inequality says that suboptimality is controlled by gradient norm,
@@ -381,13 +393,13 @@ $0 < m \leq L$, and let $\theta^\star$ be its unique minimizer. The gradient
 descent iterates \@ref(eq:gd-step) satisfy
 
 \[
-H(\theta_{n+1}) - H(\theta^\star) \leq \left( 1 - \frac{m}{L} \right) \left( H(\theta_n) - H(\theta^\star) \right),
+  H(\theta_{n + 1}) H(\theta^\star) \leq \left( 1 - \frac{m}{L} \right) \left( H(\theta_n) - H(\theta^\star) \right),
 \]
 
 and therefore
 
 \[
-H(\theta_n) - H(\theta^\star) \leq \left( 1 - \frac{1}{\kappa} \right)^n \left( H(\theta_0) - H(\theta^\star) \right),
+  H(\theta_n) - H(\theta^\star) \leq \left( 1 - \frac{1}{\kappa} \right)^n \left( H(\theta_0) - H(\theta^\star) \right),
 \]
 
 where $\kappa = L/m$ is the condition number from Section\ \@ref(smoothness).
@@ -397,30 +409,31 @@ where $\kappa = L/m$ is the condition number from Section\ \@ref(smoothness).
 The strong-convexity bound rearranges to
 
 $$
-\|\nabla H(\theta_n)\|_2^2 \geq 2m (H(\theta_n) - H(\theta^\star)).
+  \|\nabla H(\theta_n)\|_2^2 \geq 2m (H(\theta_n) - H(\theta^\star)).
 $$
 
 Substituting into the per-step decrease,
 
 \begin{align*}
-  H(\theta_{n+1}) & \leq H(\theta_n) - \frac{1}{2L} \|\nabla H(\theta_n)\|_2^2 \\
-  & \leq H(\theta_n) - \frac{m}{L} (H(\theta_n) - H(\theta^\star)).
+  H(\theta_{n + 1}) & \leq H(\theta_n) - \frac{1}{2L} \|\nabla H(\theta_n)\|_2^2      \\
+                    & \leq H(\theta_n) - \frac{m}{L} (H(\theta_n) - H(\theta^\star)).
 \end{align*}
 
-Subtracting $H(\theta^\star)$ from both sides gives the one-step contraction;
-iterating gives the geometric rate.
+Subtracting $H(\theta^\star)$ from both sides gives the one-step contraction.
+Iterating gives the geometric rate.
 :::
 
 Convergence at a geometric rate is called *linear* convergence in the
 numerical-optimization literature, because the number of correct digits in
 $H(\theta_n) - H(\theta^\star)$ grows linearly in $n$. The contraction factor
 $1 - 1/\kappa$ depends only on the condition number. Well-conditioned problems
-($\kappa$ close to $1$) converge in ewiterations. Ill-conditioned problems
-($\kappa$ large) crawl slowly towards convergence with the iterates tracing a
+($\kappa$ close to $1$) converge in few iterations. Ill-conditioned problems
+($\kappa$ large) crawl slowly towards convergence, with the iterates tracing a
 long zigzag along the floor of a narrow ravine. In Section\ \@ref(smoothness),
-we provided the geometric interpretation: $\kappa$ is the aspect ratio of the
-level sets of $H$. Newton's method (Section\ \@ref(Newton)) corrects for the
-conditioning at the cost of solving a linear system per iteration.
+we provided the geometric interpretation for this: $\kappa$ is the aspect ratio
+of the level sets of $H$. The classical solution to this is to use Newton's
+method\ (Section\ \@ref(Newton)) instead, which corrects for the conditioning at
+the cost of solving a linear system per iteration.
 
 Both theorems assume $\Theta = \mathbb{R}^p$. The arguments go through on any
 open convex $\Theta$ provided the iterates remain in $\Theta$, but ensuring that
@@ -437,7 +450,7 @@ $\log(H(\theta_n) - H(\theta_M))$ against $n$. Linear convergence with rate $r$
 means
 
 \[
-\log(H(\theta_n) - H(\theta_M)) \approx n \log r + \text{const}
+  \log(H(\theta_n) - H(\theta_M)) \approx n \log r + \text{const}
 \]
 
 for sufficiently large $n$, so the slope of a linear fit to the late iterations
@@ -448,31 +461,34 @@ The same idea can be applied to $\theta_n$ or to $\|\nabla H(\theta_n)\|$, the
 latter being especially convenient because the limit is known to be zero, so we
 can monitor it without waiting for the algorithm to finish.
 
-Per-iteration rates are useful for analyzing a single algorithm but not for
-comparing different algorithms, which may spend wildly different amounts of time
-per iteration. Throughout the chapter we will also report *per-second*
-convergence rates by plotting against measured runtime rather than iteration
-count. If one iteration takes $\delta$ seconds the per-second rate is
-$r^{1/\delta}$; in practice we estimate $\delta$ as $t_M / M$ for $M$ large.
+Per-iteration rates are useful for analyzing a single algorithm but can be
+misleading when comparing different algorithms, which may spend varying amounts
+of time per iteration. Throughout the chapter we will therefore also report
+*per-second* convergence rates by plotting against measured runtime rather than
+iteration count. On the other hand, runtime also has downsides in that it is
+affected by both implementation and hardware, which for instance means that
+results that for an algorithm implemented in R may not hold for the same
+algorithm implemented in C++ or run on a different machine.
 
 ## Step size and stopping criteria
 
 The convergence theorems of Section\ \@ref(grad-descent) used the fixed step
 $t = 1/L$, which requires knowing the smoothness (Lipschitz) constant $L$. In
-practice $L$ is rarely available analytically, since it may vary across the
-parameter space, and a generic Lipschitz bound is often so pessimistic that
-fixed-step iterations slow to almost a stop. Practical implementations therefore
-often choose the step length adaptively at each iteration via a *line search*.
-The general step is
+practice, however, $L$ is often not available analytically or is so pessimistic
+(since it has to be a bound over the entire parameter space) that our
+algorithm's convergence speed suffers. It is therefore often more practical to
+choose the step length adaptively at each iteration via a *line search*. The
+general update in a line search method is
 
 \[
-\theta_{n+1} = \theta_n + \gamma_n \rho_n
+  \theta_{n + 1} = \theta_n + \gamma_n \rho_n
 \]
 
 for a descent direction $\rho_n$ and a step length $\gamma_n > 0$ that is
-allowed to depend on $\theta_n$ and $\rho_n$. In this section we introduce
-backtracking line search, which we use throughout the rest of the chapter, and
-then turn to the question of when to terminate our algorithm.
+allowed to depend on $\theta_n$ and $\rho_n$. One of the simplest and most
+common types of line searches is backtracking line search, which we will
+introduce next and use throughout the rest of the chapter. We will then turn to
+the question of when to terminate our algorithm.
 
 ### Line search {#line-search}
 
@@ -480,33 +496,35 @@ Given $\theta_n$ and a descent direction $\rho_n$, restrict $H$ to the ray
 emanating from $\theta_n$ in the direction $\rho_n$:
 
 \[
-h(\gamma) = H(\theta_n + \gamma \rho_n), \qquad \gamma \in [0, \infty).
+  h(\gamma) = H(\theta_n + \gamma \rho_n), \qquad \gamma \in [0, \infty).
 \]
 
 Then $h'(\gamma) = \nabla H(\theta_n + \gamma \rho_n)^\top \rho_n$ and the
-descent-direction property gives $h'(0) = \nabla H(\theta_n)^\top \rho_n < 0$,
-so $h$ is decreasing at $0$. The *exact line search* strategy picks
-$\gamma_n = \argmin_{\gamma > 0} h(\gamma)$, which delivers the maximal possible
-descent along the ray. It is rarely worth the compute unless the inner
-minimization admits a closed form.
+descent-direction property yields $h'(0) = \nabla H(\theta_n)^\top \rho_n < 0$,
+which means that $h$ is decreasing at $0$. Picking
+$\gamma_n = \argmin_{\gamma > 0} h(\gamma)$---an *exact line search*
+strategy---may seem like a good idea since it delivers the maximal possible
+descent for each step. In reality however, it is rarely worth the extra
+computational effort unless the inner minimization admits a closed form.
 
 Inexact line search settles for *sufficient* descent. Fix $c \in (0, 1)$. The
 *Armijo condition*\index{Armijo condition}
 
 \[
-h(\gamma) \leq h(0) + c \gamma h'(0)
+  h(\gamma) \leq h(0) + c \gamma h'(0)
 \]
 
 requires $h$ to descend by at least the fraction $c$ of the linear prediction
-along the tangent at $0$. Since $h'(0) < 0$ the right-hand side sits below
-$h(0)$, and the condition reduces to one evaluation of $H$. For any
+along the tangent at $0$. Since $h'(0) < 0$ the right-hand side is strictly less
+than $h(0)$, and the condition reduces to one evaluation of $H$. For any
 $c \in (0, 1)$ the Armijo condition holds on some interval $[0, \varepsilon)$,
 so a small enough step always works. Figure\ \@ref(fig:armijo) shows the
 condition geometrically: $h$ must lie at or below the lower dashed line
 $h(0) + c \gamma h'(0)$ to be accepted, while the steeper tangent
-$h(0) + \gamma h'(0)$ is ceiling. Choosing $c$ close to $0$ asks for very little
-descent and admits most steps, whilst choosing $c$ close to $1$ asks fr a almost
-full linear prediction of descent and rules out most steps.
+$h(0) + \gamma h'(0)$ is ceiling. Choosing $c$ close to $0$ requires little
+descent before holdings and therefore allows most steps, whilst choosing $c$
+close to $1$ requires an almost full linear prediction of descent and rules out
+most steps.
 
 ```{r}
 #| label: armijo
@@ -514,7 +532,13 @@ full linear prediction of descent and rules out most steps.
 #| fig-width: 4
 #| fig-height: 3.2
 #| fig-align: "center"
-#| fig-cap: "The Armijo condition. Solid: the restriction $h(\\gamma) = H(\\theta + \\gamma \\rho)$ along a descent direction $\\rho$. Dashed orange: the tangent $h(0) + \\gamma h'(0)$, the linear prediction of descent at rate $h'(0)$. Dashed blue: the Armijo line $h(0) + c \\gamma h'(0)$ with $c = 0.35$. The shaded interval marks the values of $\\gamma$ for which the Armijo condition $h(\\gamma) \\leq h(0) + c \\gamma h'(0)$ holds."
+#| fig-cap: >-
+#|   The Armijo condition. Solid: the restriction $h(\gamma) = H(\theta + \gamma
+#|   \rho)$ along a descent direction $\rho$. Dashed orange: the tangent $h(0) +
+#|   \gamma h'(0)$, the linear prediction of descent at rate $h'(0)$. Dashed
+#|   blue: the Armijo line $h(0) + c \gamma h'(0)$ with $c = 0.35$. The shaded
+#|   interval marks the values of $\gamma$ for which the Armijo condition
+#|   $h(\gamma) \leq h(0) + c \gamma h'(0)$ holds.
 
 h_fun <- function(g) 0.5 * (g - 1.3)^2 - 0.4
 h0 <- h_fun(0)
@@ -606,11 +630,11 @@ ggplot() +
 ```
 
 The Armijo criterion alone can yield arbitrarily small step sizes, which can
-stall the algorithm venathough we are far from stationary point. The *curvature
-condition*
+stall the algorithm even though we are far from a stationary point. The
+*curvature condition*
 
 \[
-h'(\gamma) \geq \tilde{c}\, h'(0)
+  h'(\gamma) \geq \tilde{c}\, h'(0)
 \]
 
 for some $\tilde{c} \in (c, 1)$ forces the slope at $\gamma$ to be less negative
@@ -625,7 +649,7 @@ picks a starting step $\gamma_0 > 0$ and a shrinkage factor $d \in (0, 1)$, then
 tests the sequence
 
 \[
-\gamma_0, \, d \gamma_0, \, d^2 \gamma_0, \, d^3 \gamma_0, \ldots
+  \gamma_0, \, d \gamma_0, \, d^2 \gamma_0, \, d^3 \gamma_0, \ldots
 \]
 
 stopping at the first $\gamma = d^k \gamma_0$ satisfying the Armijo condition.
@@ -647,26 +671,27 @@ bound.
 \end{algorithm}
 ```
 
-Three constants control the search: the initial step $\gamma_0$, the shrinkage
-factor $d$, and the Armijo slope $c$. Typical defaults are $d \in [0.5, 0.9]$
-and $c \in [10^{-4}, 0.1]$. For Newton's method (Section\ \@ref(Newton)) the
-choice $\gamma_0 = 1$ is a natural choice. For plain gradient descent there is
-no universal default and $\gamma_0$ has to be tuned to the scale of the problem.
+The search is controlled by three constants: the initial step $\gamma_0$, the
+shrinkage factor $d$, and the Armijo slope $c$. Typical defaults are
+$d \in [0.5, 0.9]$ and $c \in [10^{-4}, 0.1]$. For Newton's method
+(Section\ \@ref(Newton)) the choice $\gamma_0 = 1$ is a natural choice. For
+plain gradient descent there is no universal default and $\gamma_0$ has to be
+tuned to the scale of the problem.
 
 ### Stopping criteria {#stop-crit}
 
 No algorithm can run forever and every implementation needs a rule for when to
 terminate. But choosing an appropriate one is notoriously difficult. Next, we
-will provide four common stopping criter a, each of which is easy to implement
+will provide four common stopping criteria, each of which is easy to implement
 and common in practice, but none of which actually guarantees convergence to a
 minimum. We also note that each should be combined with a *maximum iteration
-count* as a safeguard against infinite loops.
+count* or time budget as a safeguard against infinite loops.
 
 ::: {.boxed}
 *Maximum number of iterations.* Stop when
 
 \[
-n = M
+  n = M
 \]
 
 for a fixed maximum number of iterations $M$. The simplest criterion: it
@@ -684,7 +709,7 @@ is met, with the understanding that this is shorthand.
 *Small relative change.* Stop when
 
 \[
-\|\theta_n - \theta_{n-1}\| \leq \varepsilon (\|\theta_n\| + \varepsilon).
+  \|\theta_n - \theta_{n - 1}\| \leq \varepsilon (\|\theta_n\| + \varepsilon).
 \]
 
 A step that barely moves $\theta_n$ suggests proximity to a fixed point of the
@@ -702,7 +727,8 @@ $H(\theta_n) - H(\theta^\star)$ is small.
 *Small relative descent.* Stop when
 
 \[
-H(\theta_{n-1}) - H(\theta_n) \leq \varepsilon (|H(\theta_n)| + \varepsilon).
+  H(\theta_{n - 1})
+                                       - H(\theta_n) \leq \varepsilon (|H(\theta_n)| + \varepsilon).
 \]
 
 Sensible only for descent algorithms. The relative form neutralizes a global
@@ -717,7 +743,7 @@ occur in flat regions of $\Theta$ without proximity to a minimizer.
 *Small gradient.* Stop when
 
 \[
-\|\nabla H(\theta_n)\| \leq \varepsilon.
+  \|\nabla H(\theta_n)\| \leq \varepsilon.
 \]
 
 This criterion measures whether $\theta_n$ is close to being a stationary point,
@@ -733,7 +759,8 @@ The picture improves under strong convexity. If $H$ is $m$-strongly convex,
 Lemma\ \@ref(lem:strong-convex-suboptimality) gives
 
 \[
-\frac{m}{2} \|\theta_n - \theta^\star\|_2^2 \leq H(\theta_n) - H(\theta^\star) \leq \frac{1}{2m} \|\nabla H(\theta_n)\|_2^2,
+  \frac{m}{2} \|\theta_n - \theta^\star\|_2^2 \leq H(\theta_n) - H(\theta^\star)
+                                              \leq \frac{1}{2m} \|\nabla H(\theta_n)\|_2^2,
 \]
 
 so a small gradient norm does imply both proximity to $\theta^\star$ and small
@@ -749,7 +776,7 @@ $\theta \in \mathrm{lev}(\theta_0)$ when the algorithm is a descent algorithm).
 Then
 
 \[
-0 \leq H(\theta_n) - H(\theta^\star) \leq H(\theta_n) - \tilde{H}(\theta_n),
+  0 \leq H(\theta_n) - H(\theta^\star) \leq H(\theta_n) - \tilde{H}(\theta_n),
 \]
 
 and the right-hand side gives a computable upper bound on the suboptimality.
@@ -766,7 +793,8 @@ We implement gradient descent with backtracking below as the function
 choosing the smallest $k \geq 0$ such that
 
 \[
-H(\theta_{n} - d^k \gamma_0 \nabla H(\theta_{n})) \leq H(\theta_n) -  cd^k \gamma_0 \|\nabla H(\theta_{n})\|_2^2.
+  H(\theta_{n} - d^k \gamma_0 \nabla H(\theta_{n})) \leq H(\theta_n)
+                                                         - cd^k \gamma_0 \|\nabla H(\theta_{n})\|_2^2.
 \]
 
 The `grad_desc()` function takes the starting point, $\theta_0$, the objective
@@ -928,7 +956,7 @@ the parameters fitted using `glm()` is just slightly smaller.
 #| label: gd-object
 #| results: "hold"
 
-old_options = options(digits = 15)
+old_options <- options(digits = 15)
 veg_pois$H(coefficients(pois_model_null))
 veg_pois$H(pois_gd)
 options(digits = old_options$digits)
@@ -1000,7 +1028,11 @@ gd_tracer[377]
 ```{r, dependson=c("gd-trace", "veg-pois")}
 #| label: gd-trace-plot
 #| echo: false
-#| fig-cap: "Gradient norm (left) and value of the negative log-likelihood (right) above the limit value $H(\\theta_{\\infty})$. The straight line is fitted to the data points except the first ten using least squares, and the rate is computed from this estimate and reported per ms."
+#| fig-cap: >-
+#|   Gradient norm (left) and value of the negative log-likelihood (right) above
+#|   the limit value $H(\theta_{\infty})$. The straight line is fitted to the
+#|   data points except the first ten using least squares, and the rate is
+#|   computed from this estimate and reported per ms.
 #| out-width: "100%"
 #| fig-width: 8
 #| fig-height: 3
@@ -1080,7 +1112,9 @@ will lead us straight to Newton's method. Take the second-order Taylor expansion
 of $H$ around $\theta$,
 
 \[
-H(\theta + \rho) \approx H(\theta) + \nabla H(\theta)^\top \rho + \frac{1}{2} \rho^\top \nabla^2 H(\theta) \rho,
+  H(\theta + \rho) \approx H(\theta)
+                           + \nabla H(\theta)^\top \rho
+                           + \frac{1}{2} \rho^\top \nabla^2 H(\theta) \rho,
 \]
 
 and replace the Hessian $\nabla^2 H(\theta)$ with the conservative diagonal
@@ -1098,7 +1132,12 @@ descent step.
 #| echo: false
 #| fig-width: 4
 #| fig-height: 3
-#| fig-cap: "Gradient descent as surrogate minimization. The dashed quadratic, obtained from the second-order Taylor expansion of $H$ around $\\theta$ with the Hessian replaced by $(1/t)I$, has minimizer $\\theta^+ = \\theta - t \\nabla H(\\theta)$ (open circle). The filled dots mark $\\theta$ and the next iterate $\\theta^+$ on $H$. Newton's method instead keeps the true Hessian."
+#| fig-cap: >-
+#|   Gradient descent as surrogate minimization. The dashed quadratic, obtained
+#|   from the second-order Taylor expansion of $H$ around $\theta$ with the
+#|   Hessian replaced by $(1/t)I$, has minimizer $\theta^+ = \theta - t \nabla
+#|   H(\theta)$ (open circle). The filled dots mark $\theta$ and the next
+#|   iterate $\theta^+$ on $H$. Newton's method instead keeps the true Hessian.
 #| warning: false
 
 H <- function(theta) (theta - 2)^2 + 1
@@ -1158,7 +1197,7 @@ $\rho \mapsto \nabla H(\theta)^\top \rho + \frac{1}{2} \rho^\top \nabla^2 H(\the
 is
 
 \[
-\rho_{\mathrm{N}}(\theta) = -[\nabla^2 H(\theta)]^{-1} \nabla H(\theta),
+  \rho_{\mathrm{N}}(\theta) = -[\nabla^2 H(\theta)]^{-1} \nabla H(\theta),
 \]
 
 the *Newton direction*.\index{Newton direction}
@@ -1179,7 +1218,17 @@ paid by gradient descent in geometric form.
 #| echo: false
 #| fig-width: 8
 #| fig-height: 4.5
-#| fig-cap: "Surrogate models and iterates for the OLS objective on the ill-conditioned design of Figure\\ \\@ref(fig:ols-condition-contour) (right panel). Both panels start from the filled dot $\\beta_0$. Solid grey contours are level sets of $H(\\beta) = \\tfrac{1}{2}\\lVert y - X\\beta \\rVert^2$; dashed blue contours are level sets of the surrogate built at $\\beta_0$, drawn at the same values. Left: gradient descent at step size $t = 1/L$. The surrogate is isotropic and misses the elongation of $H$, and the iterates trace a zigzag across the valley. Right: Newton's method. The surrogate coincides with $H$ (the dashed contours overlay the grey ones), and a single step reaches $\\hat{\\beta}$."
+#| fig-cap: >-
+#|   Surrogate models and iterates for the OLS objective on the ill-conditioned
+#|   design of Figure\ \@ref(fig:ols-condition-contour) (right panel). Both
+#|   panels start from the filled dot $\beta_0$. Solid grey contours are level
+#|   sets of $H(\beta) = \tfrac{1}{2}\lVert y - X\beta \rVert^2$; dashed blue
+#|   contours are level sets of the surrogate built at $\beta_0$, drawn at the
+#|   same values. Left: gradient descent at step size $t = 1/L$. The surrogate
+#|   is isotropic and misses the elongation of $H$, and the iterates trace a
+#|   zigzag across the valley. Right: Newton's method. The surrogate coincides
+#|   with $H$ (the dashed contours overlay the grey ones), and a single step
+#|   reaches $\hat{\beta}$.
 
 library(patchwork)
 
@@ -1267,7 +1316,7 @@ panel("gd_surr", gd_df, "Gradient descent") +
 ```
 
 The Newton iteration is then
-$\theta_{n+1} = \theta_n + \gamma_n \rho_{\mathrm{N}}(\theta_n)$. Pure Newton
+$\theta_{n + 1} = \theta_n + \gamma_n \rho_{\mathrm{N}}(\theta_n)$. Pure Newton
 takes $\gamma_n = 1$, which is the right choice near a minimizer with
 positive-definite Hessian. Far from a minimizer, the model may be a poor guide
 and the natural unit step can overshoot, so the practical version combines the
@@ -1279,7 +1328,8 @@ The Newton direction is automatically a descent direction whenever
 $\nabla^2 H(\theta_n)$ is positive definite:
 
 \[
-\rho_{\mathrm{N}}(\theta_n)^\top \nabla H(\theta_n) = -\nabla H(\theta_n)^\top [\nabla^2 H(\theta_n)]^{-1} \nabla H(\theta_n) < 0.
+  \rho_{\mathrm{N}}(\theta_n)^\top \nabla H(\theta_n) = -\nabla H(\theta_n)^\top [\nabla^2 H(\theta_n)]^{-1} \nabla H(\theta_n)
+                                                      < 0.
 \]
 
 When the Hessian is not positive definite, which can happen for non-convex $H$,
@@ -1297,7 +1347,7 @@ minimizer where the Hessian is positive definite and Lipschitz continuous, pure
 Newton converges *quadratically*: there is a constant $M$ such that
 
 \[
-\|\theta_{n+1} - \theta^\star\|_2 \leq M \|\theta_n - \theta^\star\|_2^2,
+  \|\theta_{n + 1} - \theta^\star\|_2 \leq M \|\theta_n - \theta^\star\|_2^2,
 \]
 
 so the number of correct digits roughly doubles per iteration. We state this
@@ -1422,7 +1472,7 @@ log-likelihood agree to high precision as well:
 ```{r, dependson=c("X-update", "Newton-test", "pois-model"), echo=2}
 #| label: Newton-object
 
-old_options = options(digits = 20)
+old_options <- options(digits = 20)
 rbind(
   pois_newton = veg_pois_large$H(pois_newton),
   pois_glm = veg_pois_large$H(coefficients(pois_model))
@@ -1473,7 +1523,7 @@ regression example just demonstrated, but punitive for larger problems.
 *Quasi-Newton* methods keep the Newton update form
 
 \[
-\rho_n = -B_n \nabla H(\theta_n)
+  \rho_n = -B_n \nabla H(\theta_n)
 \]
 
 but replace the inverse Hessian $[\nabla^2 H(\theta_n)]^{-1}$ with a cheaper
@@ -1530,11 +1580,12 @@ pattern that slows plain gradient descent on ill-conditioned problems. In the
 Fletcher-- Reeves version the descent direction is
 
 \[
-\rho_n = -\nabla H(\theta_n) + \frac{\|\nabla H(\theta_n)\|_2^2}{\|\nabla H(\theta_{n-1})\|_2^2} \rho_{n-1},
+  \rho_n = -\nabla H(\theta_n)
+           + \frac{\|\nabla H(\theta_n)\|_2^2}{\|\nabla H(\theta_{n - 1})\|_2^2} \rho_{n - 1},
 \]
 
 initialized at $\rho_0 = -\nabla H(\theta_0)$; the Polak--Ribière and
-Hestenes--Stiefel variants differ in the prefactor of $\rho_{n-1}$. Conjugate
+Hestenes--Stiefel variants differ in the prefactor of $\rho_{n - 1}$. Conjugate
 gradient uses only $O(p)$ memory and avoids matrix storage altogether, but needs
 many more iterations than BFGS to reach a given accuracy and is rarely the
 default choice today. R's `optim()` exposes the algorithm via `method = "CG"`:
@@ -1584,8 +1635,9 @@ Write the constrained problem in the standard form used by
 Theorem\ \@ref(thm:kkt):
 
 \[
-\operatorname*{minimize}_\theta H(\theta) \quad \text{subject to} \quad
-g_i(\theta) \leq 0, \quad i = 1, \ldots, r,
+  \operatorname
+                                                                                             * {minimize}_\theta H(\theta) \quad \text{subject to} \quad g_i(\theta) \leq 0, \quad i
+                                                                                        = 1, \ldots, r,
 \]
 
 with $H$ and the $g_i$ convex and differentiable. For peppered moths
@@ -1593,7 +1645,9 @@ $\theta = (p_C, p_I)$, $H(\theta) = -\ell(\theta)$, and the three inequalities
 are
 
 \[
-g_1(\theta) = -p_C, \quad g_2(\theta) = -p_I, \quad g_3(\theta) = p_C + p_I - 1.
+  g_1(\theta) = -p_C, \quad g_2(\theta)
+              = -p_I, \quad g_3(\theta)
+              = p_C + p_I - 1.
 \]
 
 The KKT conditions characterize the minimizer through stationarity, primal
@@ -1605,8 +1659,8 @@ The barrier method softens the hard inequalities into a smooth penalty that
 diverges at the boundary. The standard choice is the *logarithmic barrier*
 
 \begin{equation}
-\phi(\theta) = -\sum_{i=1}^r \log(-g_i(\theta)),
-(\#eq:log-barrier)
+  \phi(\theta) = -\sum_{i = 1}^r \log(-g_i(\theta)),
+  (\#eq:log-barrier)
 \end{equation}
 
 defined on the strict interior
@@ -1617,8 +1671,8 @@ wall pushing iterates away from the boundary. For each $t > 0$ consider the
 unconstrained *centering problem*
 
 \begin{equation}
-\operatorname*{minimize}_\theta \, t H(\theta) + \phi(\theta).
-(\#eq:centering)
+  \operatorname * {minimize}_\theta \, t H(\theta) + \phi(\theta).
+  (\#eq:centering)
 \end{equation}
 
 When $H$ is convex the centering objective is strictly convex on the interior,
@@ -1636,7 +1690,7 @@ $\theta^\star$. For each $t > 0$ the centering problem \@ref(eq:centering) has a
 minimizer $\theta^\star(t)$, and
 
 \[
-H(\theta^\star(t)) - H(\theta^\star) \leq r / t.
+  H(\theta^\star(t)) - H(\theta^\star) \leq r / t.
 \]
 :::
 
@@ -1673,7 +1727,14 @@ contours away from them.
 #| label: pep-central-path
 #| echo: false
 #| warning: false
-#| fig-cap: "Contours of the centering objective $t H(\\theta) + \\phi(\\theta)$ for the peppered-moth problem at four values of $t$ (contour levels normalized within each panel). The dashed lines mark the simplex boundary, the white circle marks the constrained optimum $\\theta^\\star$, and the orange cross marks the minimizer of the centering problem at that $t$. As $t$ grows, the cross traces the central path from the analytic center of the simplex toward $\\theta^\\star$."
+#| fig-cap: >-
+#|   Contours of the centering objective $t H(\theta) + \phi(\theta)$ for the
+#|   peppered-moth problem at four values of $t$ (contour levels normalized
+#|   within each panel). The dashed lines mark the simplex boundary, the white
+#|   circle marks the constrained optimum $\theta^\star$, and the orange cross
+#|   marks the minimizer of the centering problem at that $t$. As $t$ grows, the
+#|   cross traces the central path from the analytic center of the simplex
+#|   toward $\theta^\star$.
 #| fig-width: 6
 #| fig-height: 6.2
 
@@ -1834,10 +1895,19 @@ stopping rule. It expects affine inequality constraints in the form
 $A\theta \succeq b$, supplied as a matrix `ui` and a vector `ci` with
 `ui %*% theta >= ci`. Rewriting $g_1, g_2, g_3 \leq 0$ in that form gives
 
-\[
-A = \begin{pmatrix} 1 & 0 \\ 0 & 1 \\ -1 & -1 \end{pmatrix},
-\quad b = \begin{pmatrix} \phantom{-}0 \\ \phantom{-}0 \\ -1 \end{pmatrix},
-\]
+\[ A =
+\begin{pmatrix}
+  1  & 0  \\
+  0  & 1  \\
+  -1 & -1
+\end{pmatrix}
+, \quad b =
+\begin{pmatrix}
+  \phantom{-}0 \\
+  \phantom{-}0 \\
+  -1
+\end{pmatrix}
+, \]
 
 so the same problem reduces to one call:
 
