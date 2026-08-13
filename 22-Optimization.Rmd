@@ -523,6 +523,66 @@ A large conditioning number for the second derivative indicates that the graph
 of $H$ looks like a narrow ravine, in which case we can expect the 
 gradient descent algorithm to be slow.
 
+The step length is important for the convergence of the gradient descent
+algorithm. If the step length is too small, the algorithm will converge slowly.
+If the step length is too large, the algorithm may diverge. Figure
+\@ref(fig:gd-step-sizes) illustrates three situations on a simple quadratic
+in two dimensions, whose Hessian has eigenvalues $1$ and $L = 4$. A step far
+below $1/L$ crawls toward the optimum, a step at $1/L$ converges in a handful
+of iterations, and a step above the stability boundary $2/L$ diverges.
+
+```{r}
+#| label: gd-step-sizes
+#| echo: false
+#| fig-width: 7
+#| fig-height: 3
+#| fig-cap: >-
+#|   Gradient descent on the quadratic problem $H(\theta) = (\theta_1^2 + 4\theta_2^2)/2$ (so $L = 4$)
+#|   for three step sizes. A step much smaller than $1/L$
+#|   descends slowly whereas a step at $1/L$ converges efficiently. And a step above
+#|   the stability boundary $2/L = 0.5$ diverges.
+
+library(patchwork)
+
+A <- diag(c(1, 4))
+grad_H <- function(theta) drop(A %*% theta)
+
+gd_path <- function(t, theta0, n_steps) {
+  path <- matrix(0, n_steps + 1, 2)
+  path[1, ] <- theta0
+  for (i in 1:n_steps) {
+    path[i + 1, ] <- path[i, ] - t * grad_H(path[i, ])
+  }
+  data.frame(theta1 = path[, 1], theta2 = path[, 2])
+}
+
+theta0 <- c(-2.5, 1.5)
+n_steps <- 12
+grid <- expand.grid(
+  theta1 = seq(-3, 1, length.out = 120),
+  theta2 = seq(-2, 2, length.out = 120)
+)
+grid$H <- 0.5 * (grid$theta1^2 + 4 * grid$theta2^2)
+
+make_panel <- function(t, title) {
+  path <- gd_path(t, theta0, n_steps)
+  ggplot(grid, aes(theta1, theta2)) +
+    geom_contour(aes(z = H), color = "grey70", bins = 8) +
+    geom_path(data = path) +
+    geom_point(data = path, size = 1) +
+    labs(
+      title = title,
+      x = expression(theta[1]),
+      y = expression(theta[2])
+    )
+}
+
+make_panel(0.05, "t = 0.05") +
+  make_panel(0.20, "t = 0.20") +
+  make_panel(0.51, "t = 0.51") +
+  plot_layout(axes = "collect")
+```
+
 ### Convergence rate
 
 When $\theta_n = \Phi^{\circ n}(\theta_0)$ for a contraction $\Phi$, 
