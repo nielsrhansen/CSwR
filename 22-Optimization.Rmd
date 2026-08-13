@@ -1563,6 +1563,182 @@ replaced by
 
 as a descent direction.
 
+Both algorithms can be read as minimizing a local quadratic model of $H$. For
+gradient descent with step length $t$, that model is the second-order Taylor
+expansion around $\theta_n$ with the Hessian replaced by $t^{-1} I$, and its
+minimizer is exactly $\theta_n - t \nabla H(\theta_n)$ (see Figure
+\@ref(fig:gd-taylor-surrogate)). 
+
+```{r}
+#| label: gd-taylor-surrogate
+#| echo: false
+#| fig-width: 4
+#| fig-height: 3
+#| fig-cap: >
+#|   Gradient descent as surrogate minimization. The dashed quadratic, obtained
+#|   from the second-order Taylor expansion of $H$ around $\theta$ with the
+#|   Hessian replaced by $(1/t)I$, has minimizer $\theta^+ = \theta - t \nabla
+#|   H(\theta)$ (open circle). The filled dots mark $\theta$ and the next
+#|   iterate $\theta^+$ on $H$. Newton's method instead keeps the true Hessian.
+#| warning: false
+
+H <- function(theta) (theta - 2)^2 + 1
+grad_H_1d <- function(theta) 2 * (theta - 2)
+
+theta <- 0
+t <- 0.2
+theta_p <- theta - t * grad_H_1d(theta)
+
+x_grid <- seq(theta - 0.5, theta + 1.7, length.out = 200)
+surrogate <- function(x) {
+  H(theta) + grad_H_1d(theta) * (x - theta) + (x - theta)^2 / (2 * t)
+}
+
+curve_df <- data.frame(
+  x = x_grid,
+  H_val = H(x_grid),
+  surr_val = surrogate(x_grid)
+)
+
+iterate_pts <- data.frame(
+  x = c(theta, theta_p),
+  y = c(H(theta), H(theta_p)),
+  label = c("theta", "theta^{`+`}")
+)
+
+surr_min <- data.frame(x = theta_p, y = surrogate(theta_p))
+
+ggplot(curve_df, aes(x)) +
+  geom_line(aes(y = H_val)) +
+  geom_line(aes(y = surr_val), linetype = "dashed", col = "steelblue") +
+  geom_segment(
+    aes(
+      x = theta_p,
+      xend = theta_p,
+      y = H(theta_p),
+      yend = surrogate(theta_p)
+    ),
+    linetype = "dotted"
+  ) +
+  geom_point(data = iterate_pts, aes(x = x, y = y)) +
+  geom_point(data = surr_min, aes(x = x, y = y), shape = 1) +
+  geom_text(
+    data = iterate_pts,
+    aes(x = x, y = y, label = label),
+    parse = TRUE,
+    nudge_y = -0.35
+  ) +
+  labs(x = expression(theta), y = expression(H(theta))) +
+  theme_schematic()
+```
+
+Newton's method keeps the true Hessian, so its
+model matches the local curvature of $H$ instead of assuming that the curvature
+is the same in every direction. Figure \@ref(fig:gd-vs-newton-surrogate)
+contrasts the two on an ill-conditioned least squares problem.
+
+
+```{r}
+#| label: gd-vs-newton-surrogate
+#| echo: false
+#| fig-width: 8
+#| fig-height: 4.5
+#| fig-cap: >-
+#|   Surrogate models and iterates for the OLS objective on an ill-conditioned
+#|   design whose two columns have correlation $0.8$. Solid grey contours are level
+#|   sets of $H(\beta) = \tfrac{1}{2}\lVert y - X\beta \rVert^2$ whilst dashed blue
+#|   contours are level sets of the surrogate built at $\beta_0$, drawn at the
+#|   same values. Left: gradient descent at step size $t = 1/L$. The surrogate
+#|   is isotropic and misses the elongation of $H$, and the iterates trace a
+#|   zigzag across the valley. Right: Newton's method. The surrogate coincides
+#|   with $H$ (the dashed contours overlay the grey ones), and a single step
+#|   reaches $\hat{\beta}$.
+
+library(patchwork)
+
+set.seed(24)
+N_fig <- 100
+z1 <- rnorm(N_fig)
+z2 <- rnorm(N_fig)
+X <- cbind(z1, 0.8 * z1 + sqrt(1 - 0.8^2) * z2)
+beta_true <- c(1, 2)
+y <- X %*% beta_true
+
+XtX <- crossprod(X)
+Xty <- crossprod(X, y)
+beta_hat <- as.numeric(solve(XtX, Xty))
+eig <- eigen(XtX, symmetric = TRUE)
+L <- eig$values[1]
+flat_dir <- eig$vectors[, 2]
+steep_dir <- eig$vectors[, 1]
+grad_f <- function(b) drop(XtX %*% b - Xty)
+
+beta0 <- beta_hat + 1.8 * steep_dir + 0.6 * flat_dir
+g0 <- grad_f(beta0)
+f0 <- 0.5 * sum((beta0 - beta_hat) * (XtX %*% (beta0 - beta_hat)))
+t_gd <- 1 / L
+
+n_steps <- 30
+gd_path <- matrix(0, n_steps + 1, 2)
+gd_path[1, ] <- beta0
+for (i in seq_len(n_steps)) {
+  gd_path[i + 1, ] <- gd_path[i, ] - t_gd * grad_f(gd_path[i, ])
+}
+newton_path <- rbind(beta0, beta_hat)
+
+halfwidth <- 2.5
+
+grid <- expand.grid(
+  b1 = seq(beta_hat[1] - halfwidth, beta_hat[1] + halfwidth, length.out = 200),
+  b2 = seq(beta_hat[2] - halfwidth, beta_hat[2] + halfwidth, length.out = 200)
+)
+
+de1 <- grid$b1 - beta_hat[1]
+de2 <- grid$b2 - beta_hat[2]
+grid$H <- 0.5 *
+  (XtX[1, 1] * de1^2 + 2 * XtX[1, 2] * de1 * de2 + XtX[2, 2] * de2^2)
+
+d1 <- grid$b1 - beta0[1]
+d2 <- grid$b2 - beta0[2]
+grid$gd_surr <- f0 + g0[1] * d1 + g0[2] * d2 + (d1^2 + d2^2) / (2 * t_gd)
+grid$newton_surr <- f0 +
+  g0[1] * d1 +
+  g0[2] * d2 +
+  0.5 * (XtX[1, 1] * d1^2 + 2 * XtX[1, 2] * d1 * d2 + XtX[2, 2] * d2^2)
+
+start_pt <- data.frame(b1 = beta0[1], b2 = beta0[2])
+gd_df <- data.frame(b1 = gd_path[, 1], b2 = gd_path[, 2])
+newton_df <- data.frame(b1 = newton_path[, 1], b2 = newton_path[, 2])
+breaks <- c(10, 30, 80, 200, 400, 700)
+
+panel <- function(z_col, path_df, title) {
+  ggplot(grid, aes(b1, b2)) +
+    geom_contour(aes(z = H), color = "grey70", breaks = breaks) +
+    geom_contour(
+      aes(z = .data[[z_col]]),
+      color = "steelblue",
+      linetype = "dashed",
+      breaks = breaks
+    ) +
+    geom_path(data = path_df, linewidth = 0.4) +
+    geom_point(data = path_df, size = 0.8) +
+    geom_point(data = start_pt, size = 2) +
+    # coord_equal(
+    #   xlim = beta_hat[1] + c(-1, 1) * halfwidth,
+    #   ylim = beta_hat[2] + c(-1, 1) * halfwidth
+    # ) +
+    labs(
+      x = expression(beta[1]),
+      y = expression(beta[2]),
+      title = title
+    )
+}
+
+panel("gd_surr", gd_df, "Gradient descent") +
+  panel("newton_surr", newton_df, "Newton") +
+  plot_layout(axes = "collect")
+```
+
 The Newton algorithm is typically much more efficient than gradient 
 descent per iteration and will converge in few iterations. However, the storage of the 
 $p \times p$ Hessian, its computation, and the solution of the equation
