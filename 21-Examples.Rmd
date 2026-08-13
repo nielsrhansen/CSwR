@@ -581,6 +581,101 @@ Hence
   M(p) = (p_C^2 + 2p_Cp_I + 2p_Cp_T, p_I^2 + 2p_Ip_T, p_T^2).
 \]
 
+Figure\ \@ref(fig:moth-phenotype) shows the partition diagrammatically. The nine
+ordered allele pairs are arranged in a grid and colored by phenotype. If we sum
+the probabilities inside each color region, we get the corresponding component
+of $M(p)$. The factor of $2$ on the heterozygous probabilities in the
+Hardy--Weinberg formula is exactly the count of off-diagonal cells that share a
+probability.
+
+```{r}
+#| label: moth-phenotype
+#| echo: false
+#| fig-cap: >
+#|   Hardy--Weinberg probabilities for the nine ordered allele pairs, colored by
+#|   the resulting phenotype. The partition into dark, mottled, and light cells
+#|   is the collapsing map $M$, and summing the probabilities inside each color
+#|   region gives the corresponding component of $M(p)$.
+#| fig-width: 4.5
+#| fig-height: 3.5
+#| fig-align: "center"
+#| warning: false
+
+alleles <- c("C", "I", "T")
+
+phenotype_grid <- expand.grid(
+  allele_row = alleles,
+  allele_col = alleles,
+  stringsAsFactors = FALSE
+)
+
+phenotype_grid$phenotype <- with(
+  phenotype_grid,
+  ifelse(
+    allele_row == "C" | allele_col == "C",
+    "dark",
+    ifelse(allele_row == "T" & allele_col == "T", "light", "mottled")
+  )
+)
+
+prob_label <- function(a, b) {
+  if (a == b) {
+    sprintf("p[%s]^2", a)
+  } else {
+    pair <- sort(c(a, b))
+    sprintf("p[%s] * p[%s]", pair[1], pair[2])
+  }
+}
+
+phenotype_grid$prob <- mapply(
+  prob_label,
+  phenotype_grid$allele_row,
+  phenotype_grid$allele_col
+)
+
+phenotype_grid$allele_row <- factor(
+  phenotype_grid$allele_row,
+  levels = rev(alleles)
+)
+phenotype_grid$allele_col <- factor(
+  phenotype_grid$allele_col,
+  levels = alleles
+)
+phenotype_grid$phenotype <- factor(
+  phenotype_grid$phenotype,
+  levels = c("dark", "mottled", "light")
+)
+
+axis_labels <- parse(text = sprintf("italic(%s)", alleles))
+
+ggplot(
+  phenotype_grid,
+  aes(allele_col, allele_row, fill = phenotype)
+) +
+  geom_tile(color = "white", linewidth = 1.5) +
+  geom_text(
+    aes(label = prob, color = phenotype),
+    parse = TRUE,
+    size = 3.8
+  ) +
+  scale_fill_manual(
+    values = c(dark = "grey25", mottled = "grey70", light = "grey92")
+  ) +
+  scale_color_manual(
+    values = c(dark = "white", mottled = "white", light = "black"),
+    guide = "none"
+  ) +
+  scale_x_discrete(labels = axis_labels) +
+  scale_y_discrete(labels = rev(axis_labels)) +
+  coord_equal() +
+  labs(x = NULL, y = NULL, fill = "Phenotype") +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.ticks = element_blank()
+  )
+```
+
 The log-likelihood equals
 
 \begin{align*}
