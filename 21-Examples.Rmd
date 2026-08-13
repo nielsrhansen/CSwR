@@ -683,6 +683,77 @@ The log-likelihood equals
   N_I \log(p_I^2 + 2p_Ip_T) + N_T \log (p_T^2).
 \end{align*}
 
+Figure\ \@ref(fig:moth-contour) shows the contours of $-\ell(p_C, p_I)$ on the
+simplex for the data $(N_C, N_I, N_T) = (85, 196, 341)$ we use throughout this
+section. The objective tends to $+\infty$ on the boundary, where one of the
+three phenotype probabilities vanishes, and has a unique interior minimizer.
+
+```{r}
+#| label: moth-contour
+#| echo: false
+#| fig-cap: "Contours of the negative log-likelihood $-\\ell(p_C, p_I)$ for the
+#|   peppered moth data $(N_C, N_I, N_T) = (85, 196, 341)$. The feasible region
+#|   is the simplex $\\{(p_C, p_I) : p_C, p_I \\geq 0, \\ p_C + p_I \\leq 1\\}$,
+#|   outlined in black; outside it the objective is undefined. The unique
+#|   interior minimizer is marked."
+#| fig-width: 4
+#| fig-height: 3.5
+#| fig-align: "center"
+#| warning: false
+
+ny <- c(85, 196, 341)
+
+grid <- expand.grid(
+  p_C = seq(0.005, 0.995, length.out = 200),
+  p_I = seq(0.005, 0.995, length.out = 200)
+)
+grid$p_T <- 1 - grid$p_C - grid$p_I
+grid$z <- ifelse(
+  grid$p_T > 0,
+  -(ny[1] *
+    log(grid$p_C^2 + 2 * grid$p_C * grid$p_I + 2 * grid$p_C * grid$p_T) +
+    ny[2] * log(grid$p_I^2 + 2 * grid$p_I * grid$p_T) +
+    ny[3] * log(grid$p_T^2)),
+  NA_real_
+)
+
+p_hat <- optim(
+  c(0.3, 0.3),
+  function(p) {
+    p_T <- 1 - p[1] - p[2]
+    if (p[1] <= 0 || p[2] <= 0 || p_T <= 0) {
+      return(Inf)
+    }
+    -(ny[1] *
+      log(p[1]^2 + 2 * p[1] * p[2] + 2 * p[1] * p_T) +
+      ny[2] * log(p[2]^2 + 2 * p[2] * p_T) +
+      ny[3] * log(p_T^2))
+  }
+)$par
+
+z_min <- min(grid$z, na.rm = TRUE)
+levels <- z_min * exp(seq(0, log(5), length.out = 18))
+
+simplex <- data.frame(p_C = c(0, 1, 0), p_I = c(0, 0, 1))
+
+ggplot(grid, aes(p_C, p_I, z = z)) +
+  geom_contour(color = "steelblue", breaks = levels) +
+  geom_polygon(
+    data = simplex,
+    inherit.aes = FALSE,
+    aes(p_C, p_I),
+    fill = NA,
+    color = "black"
+  ) +
+  geom_point(
+    data = data.frame(p_C = p_hat[1], p_I = p_hat[2]),
+    inherit.aes = FALSE,
+    aes(p_C, p_I)
+  ) +
+  coord_equal(xlim = c(0, 1), ylim = c(0, 1)) +
+  labs(x = expression(p[C]), y = expression(p[I]))
+```
+
 We first implement the (negative) log-likelihood in a very problem specific way
 below. The implementation checks if the parameter constraints are fulfilled,
 that is, if $(p_C, p_I, p_T)$ is a probability vector. If the parameters are out
