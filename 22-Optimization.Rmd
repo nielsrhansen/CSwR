@@ -336,6 +336,76 @@ for all $\theta \in \Theta$ and $\gamma \in \mathbb{R}^p$. The
 \theta_{n} & = \theta_{n-1} - \frac{1}{L + 1} \nabla H(\theta_{n-1}).  (\#eq:grad-descent)
 \end{align}
 
+Geometrically, a gradient descent step replaces $\theta_{n-1}$ with a point
+displaced opposite to the local slope, by an amount proportional to its
+magnitude. Figure\ \@ref(fig:gd-step-1d) shows one such step on a
+one-dimensional convex $H$, written with a generic step length $t > 0$ in
+place of the fixed $1/(L + 1)$ above.
+
+```{r}
+#| label: gd-step-1d
+#| echo: false
+#| fig-width: 5
+#| fig-height: 3
+#| fig-cap: "One step of gradient descent. The tangent at $\\theta_n$ has slope
+#|   $\\nabla H(\\theta_n)$; the update moves $\\theta_n$ by $-t \\nabla H(\\theta_n)$
+#|   along the parameter axis, towards lower $H$."
+#| warning: false
+
+f <- function(x) 0.4 * (x - 2)^2 + 0.5
+f_prime <- function(x) 0.8 * (x - 2)
+
+theta_n <- -0.5
+t <- 0.6
+theta_n1 <- theta_n - t * f_prime(theta_n)
+
+x_grid <- seq(-1.5, 4, length.out = 200)
+curve_df <- data.frame(x = x_grid, y = f(x_grid))
+
+tan_x <- c(theta_n - 0.9, theta_n + 0.9)
+tan_df <- data.frame(
+  x = tan_x,
+  y = f(theta_n) + f_prime(theta_n) * (tan_x - theta_n)
+)
+
+pts <- data.frame(
+  x = c(theta_n, theta_n1),
+  y = c(f(theta_n), f(theta_n1)),
+  label = c("theta[n]", "theta[n+1]")
+)
+
+ggplot(curve_df, aes(x, y)) +
+  geom_line() +
+  geom_line(data = tan_df, linetype = "dashed", color = "steelblue") +
+  geom_segment(
+    data = pts,
+    aes(x = x, xend = x, y = 0, yend = y),
+    linetype = "dotted"
+  ) +
+  geom_segment(
+    aes(x = theta_n, xend = theta_n1, y = -0.15, yend = -0.15),
+    arrow = arrow(length = unit(0.15, "cm"), type = "closed")
+  ) +
+  annotate(
+    "text",
+    x = (theta_n + theta_n1) / 2,
+    y = -0.4,
+    label = "-t * nabla * H(theta[n])",
+    parse = TRUE
+  ) +
+  geom_point(data = pts) +
+  geom_text(
+    data = pts,
+    aes(label = label),
+    parse = TRUE,
+    nudge_y = 0.3,
+    nudge_x = c(0.15, 0.15)
+  ) +
+  labs(x = expression(theta), y = expression(H(theta))) +
+  coord_cartesian(ylim = c(-0.6, NA)) +
+  theme_schematic()
+```
+
 Fixing $n$ there is by Taylor's theorem a
 $\tilde{\theta} = \alpha \theta_{n} + (1- \alpha)\theta_{n-1}$ (where $\alpha \in [0,1]$) 
 on the line between $\theta_n$ and $\theta_{n-1}$ such that
