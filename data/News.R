@@ -9,7 +9,7 @@ news <- dplyr::select(
   -n_non_stop_unique_tokens,
   -self_reference_max_shares,
   -kw_min_max
-) %>%
+) |>
   as.data.frame()
 
 save(news, file = "../CSwR_package/data/news.RData", compress = "xz")

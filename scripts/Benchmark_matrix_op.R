@@ -41,7 +41,7 @@ mark(
   gradt(beta, samp[i]),
   # i <- i + 1,
   check = TRUE
-) %>%
+) |>
   autoplot()
 
 i <- 1
@@ -69,7 +69,7 @@ mark(
   X %*% beta,
   tbeta %*% tX,
   check = FALSE
-) %>%
+) |>
   autoplot()
 
 samp <- sample(nrow(X))
@@ -90,5 +90,5 @@ mark(
   },
   i <- i + 1,
   check = FALSE
-) %>%
+) |>
   autoplot()
