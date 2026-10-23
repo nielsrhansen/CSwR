@@ -39,6 +39,7 @@
             downlit
             dqrng
             foreach
+            fontawesome
             future
             ggbeeswarm
             gridExtra
