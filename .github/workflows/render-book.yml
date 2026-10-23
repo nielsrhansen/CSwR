@@ -51,9 +51,20 @@ jobs:
           restore-keys: bookdown-
 
       - name: Render book
-        run: devenv shell Rscript -e 'bookdown::render_book("index.Rmd", output_format = "bookdown::bs4_book")'
+        run: |
+          # Ubuntu's AppArmor policy does not cover Nix's Chromium sandbox.
+          cat > "$PAGEDOWN_CHROME" <<'EOF'
+          #!/usr/bin/env bash
+          exec chromium --no-sandbox "$@"
+          EOF
+          chmod +x "$PAGEDOWN_CHROME"
+          devenv shell Rscript -e '
+            # Allow up to a minute for Chromium to start on hosted runners.
+            options(pagedown.remote.maxattempts = 120L)
+            bookdown::render_book("index.Rmd", output_format = "bookdown::bs4_book")
+          '
         env:
-          CHROMOTE_CHROME: chromium
+          PAGEDOWN_CHROME: ${{ runner.temp }}/chromium-ci
           RENV_CONFIG_AUTOLOADER_ENABLED: "false"
 
       - name: Upload artifact
