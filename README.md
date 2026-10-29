@@ -6,6 +6,5 @@ published by Chapman & Hall/CRC Press.
 
 The book is written in R Markdown and compiled with the `bookdown` package.
 
-The companion R package
-[`CSwR`](https://github.com/nielsrhansen/CSwR/tree/master/CSwR_package) contains
-data and some functions used in the book.
+The companion R package [`CSwR`](https://github.com/jolars/CSwR-Package)
+contains data and some functions used in the book.
